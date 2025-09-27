@@ -1,0 +1,1442 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  Platform,
+  Image,
+  ActivityIndicator,
+  Modal,
+} from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { launchImageLibrary, launchCamera, MediaType } from 'react-native-image-picker';
+import Toast from 'react-native-simple-toast';
+import SimpleIcon from '../components/SimpleIcon';
+import { createApiInstance, addAuthInterceptor } from '../services/course';
+
+interface Question {
+  id: string;
+  type: 'mcq' | 'truefalse' | 'qa';
+  question: string;
+  options?: string[];
+  correctAnswer?: string;
+  points: number;
+}
+
+interface AssessmentCategory {
+  _id: string;
+  name: string;
+}
+
+const CreateAssessmentPage = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { courseId, chapterId, lessonId, semesterId, quarterId } = route.params as any;
+
+  // Assessment type state
+  const [assessmentType, setAssessmentType] = useState<'question' | 'file'>('question');
+  
+  // Basic assessment details
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<AssessmentCategory | null>(null);
+  const [dueDate, setDueDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  // Categories
+  const [categories, setCategories] = useState<AssessmentCategory[]>([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryWeight, setNewCategoryWeight] = useState<string>('0');
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  
+  // Quarter dates
+  const [quarterDates, setQuarterDates] = useState<{startDate: string, endDate: string} | null>(null);
+  
+  // Questions for question-based assessment
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
+  
+  // Current question being added
+  const [currentQuestion, setCurrentQuestion] = useState<Partial<Question>>({
+    type: 'mcq',
+    question: '',
+    options: ['', '', '', ''],
+    correctAnswer: '',
+    points: 1,
+  });
+  
+  // File upload for file-based assessment
+  const [selectedFiles, setSelectedFiles] = useState<any[]>([]);
+  
+  // Loading states
+  const [loading, setLoading] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchQuarterDates();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+      
+      const response = await api.get(`/api/assessmentCategory/${courseId}`);
+      setCategories(response.data.categories || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      Toast.show('Failed to fetch categories', Toast.LONG);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim();
+    const weight = parseFloat(newCategoryWeight);
+    if (!name) {
+      Toast.show('Please enter topic name', Toast.SHORT);
+      return;
+    }
+    if (Number.isNaN(weight) || weight <= 0) {
+      Toast.show('Please enter a valid weight (> 0)', Toast.SHORT);
+      return;
+    }
+
+    try {
+      setCreatingCategory(true);
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+      const payload = { name, weight, course: courseId } as any;
+      const response = await api.post(`/api/assessmentCategory/${courseId}` , payload);
+      Toast.show('Assessment category created successfully', Toast.LONG);
+      const created = response.data?.category || response.data?.data || null;
+      if (created) {
+        setSelectedCategory({ _id: created._id, name: created.name });
+      }
+      setShowAddCategoryModal(false);
+      setNewCategoryName('');
+      setNewCategoryWeight('0');
+      await fetchCategories();
+    } catch (e: any) {
+      console.error('Create category error:', e);
+      Toast.show(e?.response?.data?.message || e.message || 'Failed to create category', Toast.LONG);
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
+
+  const fetchQuarterDates = async () => {
+    try {
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+      
+      const response = await api.get(`/api/quarter/getDatesofQuarter/${quarterId}`);
+      setQuarterDates({
+        startDate: response.data.startDate,
+        endDate: response.data.endDate
+      });
+    } catch (error) {
+      console.error('Error fetching quarter dates:', error);
+      // Don't show error toast as this is not critical
+    }
+  };
+
+  const handleAssessmentTypeChange = (type: 'question' | 'file') => {
+    setAssessmentType(type);
+    if (type === 'file') {
+      setQuestions([]);
+    } else {
+      setSelectedFiles([]);
+    }
+  };
+
+  const handleAddQuestion = () => {
+    if (!currentQuestion.question?.trim()) {
+      Toast.show('Please enter a question', Toast.SHORT);
+      return;
+    }
+    
+    if (currentQuestion.type === 'mcq' && (!currentQuestion.options || currentQuestion.options.length < 2)) {
+      Toast.show('Please add at least 2 options for multiple choice', Toast.SHORT);
+      return;
+    }
+    
+    if (currentQuestion.type === 'mcq' && !currentQuestion.correctAnswer) {
+      Toast.show('Please select a correct answer', Toast.SHORT);
+      return;
+    }
+    
+    if (!currentQuestion.points || currentQuestion.points <= 0) {
+      Toast.show('Please enter valid points', Toast.SHORT);
+      return;
+    }
+
+    const newQuestion: Question = {
+      id: Date.now().toString(),
+      type: currentQuestion.type as 'mcq' | 'truefalse' | 'qa',
+      question: currentQuestion.question,
+      options: currentQuestion.type === 'mcq' ? currentQuestion.options : undefined,
+      correctAnswer: currentQuestion.correctAnswer,
+      points: currentQuestion.points,
+    };
+
+    setQuestions([...questions, newQuestion]);
+    setCurrentQuestion({
+      type: 'mcq',
+      question: '',
+      options: ['', '', '', ''],
+      correctAnswer: '',
+      points: 1,
+    });
+    setShowAddQuestionModal(false);
+  };
+
+  const handleDeleteQuestion = (questionId: string) => {
+    setQuestions(questions.filter(q => q.id !== questionId));
+  };
+
+  const handleMoveQuestion = (questionId: string, direction: 'up' | 'down') => {
+    const currentIndex = questions.findIndex(q => q.id === questionId);
+    if (direction === 'up' && currentIndex > 0) {
+      const newQuestions = [...questions];
+      [newQuestions[currentIndex - 1], newQuestions[currentIndex]] = [newQuestions[currentIndex], newQuestions[currentIndex - 1]];
+      setQuestions(newQuestions);
+    } else if (direction === 'down' && currentIndex < questions.length - 1) {
+      const newQuestions = [...questions];
+      [newQuestions[currentIndex], newQuestions[currentIndex + 1]] = [newQuestions[currentIndex + 1], newQuestions[currentIndex]];
+      setQuestions(newQuestions);
+    }
+  };
+
+  const handleFilePick = () => {
+    const options: any = {
+      mediaType: 'mixed' as MediaType,
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+    };
+
+    launchImageLibrary(options, (response) => {
+      if (response.didCancel || response.errorMessage) {
+        return;
+      }
+
+      if (response.assets && response.assets.length > 0) {
+        const newFiles = response.assets.map(asset => ({
+          uri: asset.uri,
+          type: asset.type,
+          fileName: asset.fileName || asset.uri?.split('/').pop() || 'file',
+          fileSize: asset.fileSize || 0,
+        }));
+
+        // Check file size limit (5MB total)
+        const totalSize = [...selectedFiles, ...newFiles].reduce((sum, file) => sum + (file.fileSize || 0), 0);
+        if (totalSize > 5 * 1024 * 1024) {
+          Toast.show('Total file size cannot exceed 5MB', Toast.LONG);
+          return;
+        }
+
+        setSelectedFiles([...selectedFiles, ...newFiles]);
+      }
+    });
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitAssessment = async () => {
+    if (!title.trim()) {
+      Toast.show('Please enter assessment title', Toast.SHORT);
+      return;
+    }
+
+    if (!description.trim()) {
+      Toast.show('Please enter assessment description', Toast.SHORT);
+      return;
+    }
+
+    if (!selectedCategory) {
+      Toast.show('Please select a category', Toast.SHORT);
+      return;
+    }
+
+    if (assessmentType === 'question' && questions.length === 0) {
+      Toast.show('Please add at least one question', Toast.SHORT);
+      return;
+    }
+
+    if (assessmentType === 'file' && selectedFiles.length === 0) {
+      Toast.show('Please upload at least one file', Toast.SHORT);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+
+      const normalizedQuestions = assessmentType === 'question' ? questions.map(q => ({
+        type: q.type,
+        question: (q.question && q.question.includes('<')) ? q.question : `<p>${q.question || ''}</p>`,
+        options: (q.options || []).filter(Boolean),
+        correctAnswer: q.correctAnswer,
+        points: q.points,
+      })) : [];
+
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('description', description.trim());
+      formData.append('category', selectedCategory._id);
+      formData.append('assessmentType', assessmentType);
+      formData.append('chapter', chapterId);
+      formData.append('course', courseId);
+      formData.append('dueDate', dueDate.toISOString());
+      formData.append('semester', semesterId);
+      formData.append('quarter', quarterId);
+      formData.append('questions', JSON.stringify(normalizedQuestions));
+      
+      // Add lesson field if lessonId is provided (for lesson-based assessments)
+      if (lessonId) {
+        formData.append('lesson', lessonId);
+      }
+
+      console.log('Creating assessment with form data:', {
+        title: title.trim(),
+        description: description.trim(),
+        category: selectedCategory._id,
+        assessmentType: assessmentType,
+        chapter: chapterId,
+        lesson: lessonId || 'not provided',
+        course: courseId,
+        dueDate: dueDate.toISOString(),
+        semester: semesterId,
+        quarter: quarterId,
+        questions: JSON.stringify(normalizedQuestions),
+      });
+      
+      const response = await api.post('/api/assessment/createAssessment/updated', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Assessment creation response:', response.data);
+      
+      Toast.show('Assessment created successfully!', Toast.LONG);
+      navigation.goBack();
+    } catch (error: any) {
+      console.error('Error creating assessment:', error?.response?.status, error?.response?.data || error);
+      console.error('Full error object:', JSON.stringify(error?.response?.data, null, 2));
+      const backendMessage = error?.response?.data?.message || error?.message || 'Failed to create assessment';
+      Toast.show(backendMessage, Toast.LONG);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <SimpleIcon name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Create New Assessment</Text>
+          <Text style={styles.headerSubtitle}>Create a new Assessment for students.</Text>
+        </View>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Assessment Type Selection */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Assessment Type</Text>
+          <View style={styles.typeSelectionContainer}>
+            <TouchableOpacity
+              style={[
+                styles.typeCard,
+                assessmentType === 'question' && styles.typeCardSelected
+              ]}
+              onPress={() => handleAssessmentTypeChange('question')}
+            >
+              <View style={styles.typeCardContent}>
+                <View style={[
+                  styles.typeIcon,
+                  assessmentType === 'question' && styles.typeIconSelected
+                ]}>
+                  <SimpleIcon 
+                    name="help-circle" 
+                    size={24} 
+                    color={assessmentType === 'question' ? '#fff' : '#10B144'} 
+                  />
+                </View>
+                <Text style={[
+                  styles.typeTitle,
+                  assessmentType === 'question' && styles.typeTitleSelected
+                ]}>
+                  Question-Based
+                </Text>
+                <Text style={styles.typeDescription}>
+                  Create custom questions (MCQ, True/False, Q&A)
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.typeCard,
+                assessmentType === 'file' && styles.typeCardSelected
+              ]}
+              onPress={() => handleAssessmentTypeChange('file')}
+            >
+              <View style={styles.typeCardContent}>
+                <View style={[
+                  styles.typeIcon,
+                  assessmentType === 'file' && styles.typeIconSelected
+                ]}>
+                  <SimpleIcon 
+                    name="document" 
+                    size={20} 
+                    color={assessmentType === 'file' ? '#fff' : '#10B144'} 
+                    style={{ marginRight: 4 }}
+                  />
+                  <SimpleIcon 
+                    name="percent" 
+                    size={16} 
+                    color={assessmentType === 'file' ? '#fff' : '#10B144'} 
+                  />
+                </View>
+                <Text style={[
+                  styles.typeTitle,
+                  assessmentType === 'file' && styles.typeTitleSelected
+                ]}>
+                  File-Based
+                </Text>
+                <Text style={styles.typeDescription}>
+                  Upload PDF files or images (1-5 files, max 5MB total)
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Assessment Details */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Assessment Details</Text>
+          
+          {/* Title */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Assessment Title</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter Assessment title"
+              value={title}
+              onChangeText={setTitle}
+              maxLength={120}
+            />
+            <Text style={styles.characterCount}>{title.length}/120</Text>
+          </View>
+
+          {/* Description */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Description</Text>
+            <TextInput
+              style={[styles.textInput, styles.textArea]}
+              placeholder="Enter description and instructions"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              maxLength={1000}
+            />
+            <Text style={styles.characterCount}>{description.length}/1000</Text>
+          </View>
+
+          {/* Category */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Category</Text>
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => setShowCategoryModal(true)}
+            >
+              <Text style={[
+                styles.dropdownText,
+                !selectedCategory && styles.dropdownPlaceholder
+              ]}>
+                {selectedCategory ? selectedCategory.name : 'Select a Topics'}
+              </Text>
+              <SimpleIcon name="chevron-down" size={20} color="#7b8794" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Due Date */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Due Date</Text>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.dateText}>
+                {formatDate(dueDate)} at {formatTime(dueDate)}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Questions Section - Only show for question-based assessment */}
+        {assessmentType === 'question' && (
+          <View style={styles.section}>
+            <View style={styles.questionsHeader}>
+              <Text style={styles.sectionTitle}>Questions</Text>
+              <TouchableOpacity
+                style={styles.addQuestionButton}
+                onPress={() => setShowAddQuestionModal(true)}
+              >
+                <SimpleIcon name="add" size={20} color="#fff" />
+                <Text style={styles.addQuestionButtonText}>Add Question</Text>
+              </TouchableOpacity>
+            </View>
+
+            {questions.map((question, index) => (
+              <View key={question.id} style={styles.questionCard}>
+                <View style={styles.questionHeader}>
+                  <Text style={styles.questionNumber}>Question {index + 1}</Text>
+                  <View style={styles.questionActions}>
+                    <TouchableOpacity
+                      onPress={() => handleMoveQuestion(question.id, 'up')}
+                      disabled={index === 0}
+                    >
+                      <SimpleIcon 
+                        name="arrow-up" 
+                        size={20} 
+                        color={index === 0 ? '#ccc' : '#666'} 
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleMoveQuestion(question.id, 'down')}
+                      disabled={index === questions.length - 1}
+                    >
+                      <SimpleIcon 
+                        name="arrow-down" 
+                        size={20} 
+                        color={index === questions.length - 1 ? '#ccc' : '#666'} 
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteQuestion(question.id)}>
+                      <SimpleIcon name="trash" size={20} color="#dc2626" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.questionDetails}>
+                  <View style={styles.questionTypeRow}>
+                    <Text style={styles.questionTypeLabel}>Question Type:</Text>
+                    <Text style={styles.questionTypeValue}>
+                      {question.type === 'mcq' ? 'Multiple Choice' : 
+                       question.type === 'truefalse' ? 'True/False' : 'Question & Answer'}
+                    </Text>
+                  </View>
+                  <View style={styles.questionPointsRow}>
+                    <Text style={styles.questionPointsLabel}>Points:</Text>
+                    <Text style={styles.questionPointsValue}>{question.points}</Text>
+                  </View>
+                  <Text style={styles.questionText}>
+                    {question.question.replace(/<[^>]*>?/gm, '')}
+                  </Text>
+                  {question.options && question.options.length > 0 && (
+                    <View style={styles.questionOptions}>
+                      <Text style={styles.questionOptionsLabel}>Options:</Text>
+                      {question.options.map((option, optIndex) => (
+                        <Text key={optIndex} style={styles.questionOption}>
+                          {String.fromCharCode(65 + optIndex)}. {option}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                  {question.correctAnswer && (
+                    <Text style={styles.correctAnswer}>
+                      Correct Answer: {question.correctAnswer}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* File Upload Section - Only show for file-based assessment */}
+        {assessmentType === 'file' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Upload Files</Text>
+            <Text style={styles.fileUploadDescription}>
+              Upload PDF files or images (1-5 files, max 5MB total)
+            </Text>
+            
+            <TouchableOpacity style={styles.fileUploadButton} onPress={handleFilePick}>
+              <SimpleIcon name="cloud-upload" size={24} color="#10B144" />
+              <Text style={styles.fileUploadButtonText}>Choose Files</Text>
+            </TouchableOpacity>
+
+            {selectedFiles.length > 0 && (
+              <View style={styles.fileList}>
+                {selectedFiles.map((file, index) => (
+                  <View key={index} style={styles.fileItem}>
+                    <SimpleIcon name="document" size={20} color="#10B144" />
+                    <Text style={styles.fileName} numberOfLines={1}>
+                      {file.fileName}
+                    </Text>
+                    <TouchableOpacity onPress={() => handleRemoveFile(index)}>
+                      <SimpleIcon name="close-circle" size={20} color="#dc2626" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            (!title.trim() || !description.trim() || !selectedCategory || 
+             (assessmentType === 'question' && questions.length === 0) ||
+             (assessmentType === 'file' && selectedFiles.length === 0)) && styles.submitButtonDisabled
+          ]}
+          onPress={handleSubmitAssessment}
+          disabled={loading || !title.trim() || !description.trim() || !selectedCategory || 
+                   (assessmentType === 'question' && questions.length === 0) ||
+                   (assessmentType === 'file' && selectedFiles.length === 0)}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.submitButtonText}>Submit Assessment</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Category Selection Modal */}
+      <Modal
+        visible={showCategoryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Category</Text>
+            <ScrollView style={styles.categoryList}>
+              {loadingCategories ? (
+                <ActivityIndicator size="large" color="#10B144" />
+              ) : categories.length > 0 ? (
+                categories.map((category) => (
+                  <TouchableOpacity
+                    key={category._id}
+                    style={[
+                      styles.categoryItem,
+                      selectedCategory?._id === category._id && styles.categoryItemSelected
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory(category);
+                      setShowCategoryModal(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.categoryItemText,
+                      selectedCategory?._id === category._id && styles.categoryItemTextSelected
+                    ]}>
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noCategoriesText}>No categories available</Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowCategoryModal(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+
+            {/* Add New Topic CTA */}
+            <TouchableOpacity
+              style={[styles.modalCloseButton, { backgroundColor: '#111' }]}
+              onPress={() => {
+                setShowCategoryModal(false);
+                setShowAddCategoryModal(true);
+              }}
+            >
+              <Text style={[styles.modalCloseButtonText, { color: '#fff' }]}>+ Add New Topic</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add New Topic Modal */}
+      <Modal
+        visible={showAddCategoryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAddCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Topic</Text>
+            <Text style={{ color: '#6b7280', marginBottom: 16 }}>
+              Create a new assessment category for this course.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Topic Name</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g., Midterm Exam, Quiz, Assignment"
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Weight (%)</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="0"
+                value={newCategoryWeight}
+                onChangeText={setNewCategoryWeight}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+              <TouchableOpacity
+                style={[styles.cancelQuestionButton]}
+                onPress={() => setShowAddCategoryModal(false)}
+                disabled={creatingCategory}
+              >
+                <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveQuestionButton]}
+                onPress={handleCreateCategory}
+                disabled={creatingCategory}
+              >
+                {creatingCategory ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveQuestionButtonText}>Create Category</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add Question Modal */}
+      <Modal
+        visible={showAddQuestionModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAddQuestionModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, styles.questionModalContent]}>
+            <Text style={styles.modalTitle}>Add Question</Text>
+            
+            <ScrollView style={styles.questionForm}>
+              {/* Question Type */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Question Type</Text>
+                <TouchableOpacity
+                  style={styles.dropdownButton}
+                  onPress={() => {
+                    // This would open a question type picker
+                    // For now, we'll cycle through types
+                    const types = ['mcq', 'truefalse', 'qa'];
+                    const currentIndex = types.indexOf(currentQuestion.type || 'mcq');
+                    const nextType = types[(currentIndex + 1) % types.length];
+                    setCurrentQuestion({...currentQuestion, type: nextType as any});
+                  }}
+                >
+                  <Text style={styles.dropdownText}>
+                    {currentQuestion.type === 'mcq' ? 'Multiple Choice' : 
+                     currentQuestion.type === 'truefalse' ? 'True/False' : 'Question & Answer'}
+                  </Text>
+                  <SimpleIcon name="chevron-down" size={20} color="#7b8794" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Points */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Points</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter points"
+                  value={currentQuestion.points?.toString() || ''}
+                  onChangeText={(text) => setCurrentQuestion({...currentQuestion, points: parseInt(text) || 0})}
+                  keyboardType="numeric"
+                />
+              </View>
+
+              {/* Question Text */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Question</Text>
+                <View style={styles.richTextEditor}>
+                  <TextInput
+                    style={styles.richTextInput}
+                    placeholder="Start writing..."
+                    value={currentQuestion.question}
+                    onChangeText={(text) => setCurrentQuestion({...currentQuestion, question: text})}
+                    multiline
+                    numberOfLines={4}
+                  />
+                  <View style={styles.richTextFooter}>
+                    <Text style={styles.richTextCounter}>
+                      CHARS: {currentQuestion.question?.length || 0} WORDS: {currentQuestion.question?.split(/\s+/).filter(Boolean).length || 0} POWERED BY JODIT
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Options for MCQ */}
+              {currentQuestion.type === 'mcq' && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Answer Options</Text>
+                  <Text style={styles.optionsHint}>Maximum of 4 options allowed.</Text>
+                  {currentQuestion.options?.map((option, index) => (
+                    <View key={index} style={styles.optionRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.optionRadio,
+                          currentQuestion.correctAnswer === option && styles.optionRadioSelected
+                        ]}
+                        onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: option})}
+                      >
+                        {currentQuestion.correctAnswer === option && (
+                          <View style={styles.optionRadioInner} />
+                        )}
+                      </TouchableOpacity>
+                      <TextInput
+                        style={styles.optionInput}
+                        placeholder={`Option ${index + 1}`}
+                        value={option}
+                        onChangeText={(text) => {
+                          const newOptions = [...(currentQuestion.options || [])];
+                          newOptions[index] = text;
+                          setCurrentQuestion({...currentQuestion, options: newOptions});
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => {
+                          const newOptions = currentQuestion.options?.filter((_, i) => i !== index) || [];
+                          setCurrentQuestion({...currentQuestion, options: newOptions});
+                        }}
+                      >
+                        <SimpleIcon name="trash" size={20} color="#dc2626" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {currentQuestion.options && currentQuestion.options.length < 4 && (
+                    <TouchableOpacity
+                      style={styles.addOptionButton}
+                      onPress={() => {
+                        const newOptions = [...(currentQuestion.options || []), ''];
+                        setCurrentQuestion({...currentQuestion, options: newOptions});
+                      }}
+                    >
+                      <SimpleIcon name="add-circle-outline" size={20} color="#10B144" />
+                      <Text style={styles.addOptionButtonText}>Add Option</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* True/False Options */}
+              {currentQuestion.type === 'truefalse' && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Correct Answer</Text>
+                  <View style={styles.trueFalseContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.trueFalseOption,
+                        currentQuestion.correctAnswer === 'True' && styles.trueFalseOptionSelected
+                      ]}
+                      onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: 'True'})}
+                    >
+                      <Text style={[
+                        styles.trueFalseText,
+                        currentQuestion.correctAnswer === 'True' && styles.trueFalseTextSelected
+                      ]}>
+                        True
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.trueFalseOption,
+                        currentQuestion.correctAnswer === 'False' && styles.trueFalseOptionSelected
+                      ]}
+                      onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: 'False'})}
+                    >
+                      <Text style={[
+                        styles.trueFalseText,
+                        currentQuestion.correctAnswer === 'False' && styles.trueFalseTextSelected
+                      ]}>
+                        False
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
+            <View style={styles.questionModalActions}>
+              <TouchableOpacity
+                style={styles.saveQuestionButton}
+                onPress={handleAddQuestion}
+              >
+                <Text style={styles.saveQuestionButtonText}>Save Question</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelQuestionButton}
+                onPress={() => setShowAddQuestionModal(false)}
+              >
+                <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={dueDate}
+          mode="datetime"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) {
+              setDueDate(selectedDate);
+            }
+          }}
+          minimumDate={new Date()}
+        />
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  typeSelectionContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  typeCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  typeCardSelected: {
+    borderColor: '#10B144',
+    backgroundColor: '#f0fdf4',
+  },
+  typeCardContent: {
+    alignItems: 'center',
+  },
+  typeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#10B144',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    flexDirection: 'row',
+  },
+  typeIconSelected: {
+    backgroundColor: '#10B144',
+  },
+  typeTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  typeTitleSelected: {
+    color: '#10B144',
+  },
+  typeDescription: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#7b8794',
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  dropdownButton: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  dropdownPlaceholder: {
+    color: '#7b8794',
+  },
+  dateButton: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#fff',
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  questionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addQuestionButton: {
+    backgroundColor: '#10B144',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addQuestionButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  questionCard: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: '#fff',
+  },
+  questionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  questionNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  questionActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  questionDetails: {
+    gap: 8,
+  },
+  questionTypeRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  questionTypeLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  questionTypeValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  questionPointsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  questionPointsLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  questionPointsValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  questionText: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 4,
+  },
+  questionOptions: {
+    marginTop: 8,
+  },
+  questionOptionsLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  questionOption: {
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 8,
+  },
+  correctAnswer: {
+    fontSize: 14,
+    color: '#10B144',
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  fileUploadDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  fileUploadButton: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  fileUploadButtonText: {
+    fontSize: 16,
+    color: '#10B144',
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  fileList: {
+    marginTop: 12,
+  },
+  fileItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  fileName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 8,
+  },
+  submitButton: {
+    backgroundColor: '#222',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 55,
+  },
+  submitButtonDisabled: {
+    opacity: 0.5,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+  },
+  questionModalContent: {
+    maxHeight: '90%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111',
+    marginBottom: 16,
+  },
+  categoryList: {
+    maxHeight: 200,
+  },
+  categoryItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  categoryItemSelected: {
+    backgroundColor: '#f0fdf4',
+  },
+  categoryItemText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  categoryItemTextSelected: {
+    color: '#10B144',
+    fontWeight: 'bold',
+  },
+  noCategoriesText: {
+    textAlign: 'center',
+    color: '#7b8794',
+    paddingVertical: 20,
+  },
+  modalCloseButton: {
+    backgroundColor: '#eee',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  modalCloseButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#555',
+  },
+  questionForm: {
+    maxHeight: 400,
+  },
+  richTextEditor: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+  },
+  richTextInput: {
+    padding: 12,
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  richTextFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  richTextCounter: {
+    fontSize: 12,
+    color: '#7b8794',
+  },
+  optionsHint: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  optionRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  optionRadioSelected: {
+    borderColor: '#10B144',
+  },
+  optionRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#10B144',
+  },
+  optionInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginRight: 8,
+  },
+  addOptionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  addOptionButtonText: {
+    color: '#10B144',
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  trueFalseContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  trueFalseOption: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  trueFalseOptionSelected: {
+    borderColor: '#10B144',
+    backgroundColor: '#f0fdf4',
+  },
+  trueFalseText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  trueFalseTextSelected: {
+    color: '#10B144',
+  },
+  questionModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  saveQuestionButton: {
+    flex: 1,
+    backgroundColor: '#222',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  saveQuestionButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  cancelQuestionButton: {
+    flex: 1,
+    backgroundColor: '#eee',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelQuestionButtonText: {
+    color: '#555',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+});
+
+export default CreateAssessmentPage;

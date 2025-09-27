@@ -1,0 +1,19 @@
+current directory: /Users/marianoor/Desktop/SpeakYourMenu/vendor/bundle/ruby/3.2.0/gems/nkf-0.2.0/ext/nkf
+/Users/marianoor/.rbenv/versions/3.2.0/bin/ruby -I /Users/marianoor/.rbenv/versions/3.2.0/lib/ruby/3.2.0 extconf.rb
+creating Makefile
+
+current directory: /Users/marianoor/Desktop/SpeakYourMenu/vendor/bundle/ruby/3.2.0/gems/nkf-0.2.0/ext/nkf
+make DESTDIR\= sitearchdir\=./.gem.20250422-56562-djpjlq sitelibdir\=./.gem.20250422-56562-djpjlq clean
+
+current directory: /Users/marianoor/Desktop/SpeakYourMenu/vendor/bundle/ruby/3.2.0/gems/nkf-0.2.0/ext/nkf
+make DESTDIR\= sitearchdir\=./.gem.20250422-56562-djpjlq sitelibdir\=./.gem.20250422-56562-djpjlq
+compiling nkf.c
+linking shared-object nkf.bundle
+ld: warning: ignoring duplicate libraries: '-lruby.3.2'
+
+current directory: /Users/marianoor/Desktop/SpeakYourMenu/vendor/bundle/ruby/3.2.0/gems/nkf-0.2.0/ext/nkf
+make DESTDIR\= sitearchdir\=./.gem.20250422-56562-djpjlq sitelibdir\=./.gem.20250422-56562-djpjlq install
+/usr/bin/install -c -m 0755 nkf.bundle ./.gem.20250422-56562-djpjlq
+
+current directory: /Users/marianoor/Desktop/SpeakYourMenu/vendor/bundle/ruby/3.2.0/gems/nkf-0.2.0/ext/nkf
+make DESTDIR\= sitearchdir\=./.gem.20250422-56562-djpjlq sitelibdir\=./.gem.20250422-56562-djpjlq clean
