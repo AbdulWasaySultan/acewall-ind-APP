@@ -14,7 +14,12 @@ import {
   Linking,
   TouchableWithoutFeedback,
 } from "react-native";
-import { useRoute, useNavigation, RouteProp, useFocusEffect } from "@react-navigation/native";
+import {
+  useRoute,
+  useNavigation,
+  RouteProp,
+  useFocusEffect,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
   getCourseDetails,
@@ -46,20 +51,26 @@ import {
   getChapterDetailsWithLessons,
   editChapter,
 } from "../services/course";
-import { getCourseRating, isCourseRated, createRating } from '../services/rating';
-import { getComments, sendComment } from '../services/comment';
-import { deletePage } from '../services/page';
+import {
+  getCourseRating,
+  isCourseRated,
+  createRating,
+} from "../services/rating";
+import { getComments, sendComment } from "../services/comment";
+import { deletePage } from "../services/page";
 import SimpleIcon from "../components/SimpleIcon";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "react-native-image-picker";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import Toast from "react-native-simple-toast";
-import { getCourseGradebook } from '../services/gradebook';
+import { getCourseGradebook } from "../services/gradebook";
 import { pick } from "@react-native-documents/picker";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"; 
 
 const fallbackImage = require("../assets/jpg.jpg");
 
 const CourseDetailsPage = () => {
+  const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<RootStackParamList, "CourseDetails">>();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -96,8 +107,6 @@ const CourseDetailsPage = () => {
   const [assessmentCategories, setAssessmentCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
-
-
 
   const [showDeleteAssessmentModal, setShowDeleteAssessmentModal] =
     useState(false);
@@ -168,14 +177,16 @@ const CourseDetailsPage = () => {
   const [selectedAssessmentForModal, setSelectedAssessmentForModal] =
     useState<any>(null);
   const [expandedMcq, setExpandedMcq] = useState(true);
-  
+
   // Edit assessment modal states
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
   const [editAssessmentLoading, setEditAssessmentLoading] = useState(false);
-  const [editAssessmentTitle, setEditAssessmentTitle] = useState('');
-  const [editAssessmentDescription, setEditAssessmentDescription] = useState('');
-  const [editAssessmentCategory, setEditAssessmentCategory] = useState('');
-  const [editAssessmentDueDate, setEditAssessmentDueDate] = useState<Date | null>(null);
+  const [editAssessmentTitle, setEditAssessmentTitle] = useState("");
+  const [editAssessmentDescription, setEditAssessmentDescription] =
+    useState("");
+  const [editAssessmentCategory, setEditAssessmentCategory] = useState("");
+  const [editAssessmentDueDate, setEditAssessmentDueDate] =
+    useState<Date | null>(null);
 
   const [showGradebookModal, setShowGradebookModal] = useState(false);
   const [gradebookLoading, setGradebookLoading] = useState(false);
@@ -188,22 +199,22 @@ const CourseDetailsPage = () => {
   const [averageRating, setAverageRating] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
   const [comments, setComments] = useState<any[]>([]);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
   const [editCourseLoading, setEditCourseLoading] = useState(false);
   const [editCourseError, setEditCourseError] = useState<string | null>(null);
-  const [editCourseTitle, setEditCourseTitle] = useState('');
-  const [editCourseCategory, setEditCourseCategory] = useState('');
-  const [editCourseSubcategory, setEditCourseSubcategory] = useState('');
-  const [editCourseLanguage, setEditCourseLanguage] = useState('');
+  const [editCourseTitle, setEditCourseTitle] = useState("");
+  const [editCourseCategory, setEditCourseCategory] = useState("");
+  const [editCourseSubcategory, setEditCourseSubcategory] = useState("");
+  const [editCourseLanguage, setEditCourseLanguage] = useState("");
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
   const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-  const [editCourseDescription, setEditCourseDescription] = useState('');
+  const [editCourseDescription, setEditCourseDescription] = useState("");
   const [editTeachingPoints, setEditTeachingPoints] = useState<string[]>([]);
   const [editRequirements, setEditRequirements] = useState<string[]>([]);
 
@@ -211,18 +222,26 @@ const CourseDetailsPage = () => {
   const [showChapterDetailsModal, setShowChapterDetailsModal] = useState(false);
   const [chapterDetails, setChapterDetails] = useState<any>(null);
   const [chapterDetailsLoading, setChapterDetailsLoading] = useState(false);
-  const [chapterDetailsError, setChapterDetailsError] = useState<string | null>(null);
+  const [chapterDetailsError, setChapterDetailsError] = useState<string | null>(
+    null
+  );
 
   // Lesson creation modal states
   const [showLessonCreationModal, setShowLessonCreationModal] = useState(false);
   const [lessonCreationTitle, setLessonCreationTitle] = useState("");
-  const [lessonCreationDescription, setLessonCreationDescription] = useState("");
-  const [lessonCreationYoutubeLink, setLessonCreationYoutubeLink] = useState("");
+  const [lessonCreationDescription, setLessonCreationDescription] =
+    useState("");
+  const [lessonCreationYoutubeLink, setLessonCreationYoutubeLink] =
+    useState("");
   const [lessonCreationOtherLink, setLessonCreationOtherLink] = useState("");
   const [lessonCreationFiles, setLessonCreationFiles] = useState<any[]>([]);
   const [lessonCreationLoading, setLessonCreationLoading] = useState(false);
-  const [lessonCreationError, setLessonCreationError] = useState<string | null>(null);
-  const [currentChapterForLesson, setCurrentChapterForLesson] = useState<string | null>(null);
+  const [lessonCreationError, setLessonCreationError] = useState<string | null>(
+    null
+  );
+  const [currentChapterForLesson, setCurrentChapterForLesson] = useState<
+    string | null
+  >(null);
 
   // Lesson edit modal states
   const [showLessonEditModal, setShowLessonEditModal] = useState(false);
@@ -232,7 +251,9 @@ const CourseDetailsPage = () => {
   const [lessonEditOtherLink, setLessonEditOtherLink] = useState("");
   const [lessonEditLoading, setLessonEditLoading] = useState(false);
   const [lessonEditError, setLessonEditError] = useState<string | null>(null);
-  const [currentLessonForEdit, setCurrentLessonForEdit] = useState<string | null>(null);
+  const [currentLessonForEdit, setCurrentLessonForEdit] = useState<
+    string | null
+  >(null);
 
   // Add files modal states
   const [showAddFilesModal, setShowAddFilesModal] = useState(false);
@@ -247,12 +268,15 @@ const CourseDetailsPage = () => {
   const [editChapterDescription, setEditChapterDescription] = useState("");
   const [editChapterLoading, setEditChapterLoading] = useState(false);
   const [editChapterError, setEditChapterError] = useState<string | null>(null);
-  const [currentChapterForEdit, setCurrentChapterForEdit] = useState<string | null>(null);
+  const [currentChapterForEdit, setCurrentChapterForEdit] = useState<
+    string | null
+  >(null);
 
   // Dropdown and new modal states
   const [showPlusDropdown, setShowPlusDropdown] = useState(false);
   const [showLessonsPlusDropdown, setShowLessonsPlusDropdown] = useState(false);
-  const [currentLessonForAssessment, setCurrentLessonForAssessment] = useState<any>(null);
+  const [currentLessonForAssessment, setCurrentLessonForAssessment] =
+    useState<any>(null);
   const [showAddAssessmentModal, setShowAddAssessmentModal] = useState(false);
   const [showAddPageModal, setShowAddPageModal] = useState(false);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
@@ -340,7 +364,6 @@ const CourseDetailsPage = () => {
     }, [])
   );
 
-
   const fetchRatingAndComments = async () => {
     setCommentsLoading(true);
     try {
@@ -367,7 +390,7 @@ const CourseDetailsPage = () => {
       const response = await sendComment(course._id, comment.trim());
       if (response.comment) {
         setComments((prev) => [response.comment, ...prev]);
-        setComment('');
+        setComment("");
       }
     } catch (err) {
       // Optionally handle error
@@ -580,10 +603,6 @@ const CourseDetailsPage = () => {
     }
   };
 
-
-
-
-
   const handleDelete = async () => {
     try {
       setLoading(true);
@@ -636,10 +655,12 @@ const CourseDetailsPage = () => {
       // Refresh chapter details if we're in the chapter details modal
       if (chapterDetails && chapterDetails._id) {
         try {
-          const response = await getChapterDetailsWithLessons(chapterDetails._id);
+          const response = await getChapterDetailsWithLessons(
+            chapterDetails._id
+          );
           setChapterDetails(response.chapter);
         } catch (error) {
-          console.error('Error refreshing chapter details:', error);
+          console.error("Error refreshing chapter details:", error);
         }
       }
 
@@ -662,10 +683,12 @@ const CourseDetailsPage = () => {
       // Refresh chapter details if we're in the chapter details modal
       if (chapterDetails && chapterDetails._id) {
         try {
-          const response = await getChapterDetailsWithLessons(chapterDetails._id);
+          const response = await getChapterDetailsWithLessons(
+            chapterDetails._id
+          );
           setChapterDetails(response.chapter);
         } catch (error) {
-          console.error('Error refreshing chapter details:', error);
+          console.error("Error refreshing chapter details:", error);
         }
       }
 
@@ -674,16 +697,21 @@ const CourseDetailsPage = () => {
         await refreshChaptersForQuarter(selectedQuarterId);
       }
     } catch (err: any) {
-      console.error('Error deleting assessment:', err);
+      console.error("Error deleting assessment:", err);
       Toast.show(err.message || "Failed to delete assessment.", Toast.LONG);
     }
   };
 
   const handleEditAssessment = async () => {
     if (!selectedAssessmentForModal) return;
-    
-    if (!editAssessmentTitle.trim() || !editAssessmentDescription.trim() || !editAssessmentCategory || !editAssessmentDueDate) {
-      Toast.show('All fields are required', Toast.LONG);
+
+    if (
+      !editAssessmentTitle.trim() ||
+      !editAssessmentDescription.trim() ||
+      !editAssessmentCategory ||
+      !editAssessmentDueDate
+    ) {
+      Toast.show("All fields are required", Toast.LONG);
       return;
     }
 
@@ -695,21 +723,23 @@ const CourseDetailsPage = () => {
         category: editAssessmentCategory,
         dueDate: editAssessmentDueDate.toISOString(),
       };
-      
+
       await editAssessment(selectedAssessmentForModal._id, payload);
-      Toast.show('Assessment updated successfully', Toast.LONG);
-      
+      Toast.show("Assessment updated successfully", Toast.LONG);
+
       // Close modals and refresh data
       setShowEditAssessmentModal(false);
       setShowAssessmentDetailsModal(false);
-      
+
       // Refresh chapter details if we're in the chapter details modal
       if (chapterDetails && chapterDetails._id) {
         try {
-          const response = await getChapterDetailsWithLessons(chapterDetails._id);
+          const response = await getChapterDetailsWithLessons(
+            chapterDetails._id
+          );
           setChapterDetails(response.chapter);
         } catch (error) {
-          console.error('Error refreshing chapter details:', error);
+          console.error("Error refreshing chapter details:", error);
         }
       }
 
@@ -718,7 +748,7 @@ const CourseDetailsPage = () => {
         await refreshChaptersForQuarter(selectedQuarterId);
       }
     } catch (err: any) {
-      Toast.show(err.message || 'Failed to update assessment', Toast.LONG);
+      Toast.show(err.message || "Failed to update assessment", Toast.LONG);
     } finally {
       setEditAssessmentLoading(false);
     }
@@ -728,18 +758,18 @@ const CourseDetailsPage = () => {
     setSelectedAssessmentForModal(assessment);
     setEditAssessmentTitle(assessment.title);
     setEditAssessmentDescription(assessment.description);
-    setEditAssessmentCategory(assessment.category?._id || '');
-    
+    setEditAssessmentCategory(assessment.category?._id || "");
+
     // Parse due date
     if (assessment.dueDate?.date) {
       const dueDate = new Date(assessment.dueDate.date);
       if (assessment.dueDate.time) {
-        const [hours, minutes] = assessment.dueDate.time.split(':');
+        const [hours, minutes] = assessment.dueDate.time.split(":");
         dueDate.setHours(parseInt(hours), parseInt(minutes));
       }
       setEditAssessmentDueDate(dueDate);
     }
-    
+
     setShowEditAssessmentModal(true);
   };
 
@@ -751,10 +781,12 @@ const CourseDetailsPage = () => {
       // Refresh chapter details if we're in the chapter details modal
       if (chapterDetails && chapterDetails._id) {
         try {
-          const response = await getChapterDetailsWithLessons(chapterDetails._id);
+          const response = await getChapterDetailsWithLessons(
+            chapterDetails._id
+          );
           setChapterDetails(response.chapter);
         } catch (error) {
-          console.error('Error refreshing chapter details:', error);
+          console.error("Error refreshing chapter details:", error);
         }
       }
 
@@ -763,7 +795,7 @@ const CourseDetailsPage = () => {
         await refreshChaptersForQuarter(selectedQuarterId);
       }
     } catch (err: any) {
-      console.error('Error deleting page:', err);
+      console.error("Error deleting page:", err);
       Toast.show(err.message || "Failed to delete page.", Toast.LONG);
     }
   };
@@ -794,7 +826,6 @@ const CourseDetailsPage = () => {
     }
   };
 
-
   const handleChapterSelect = (chapterId: string) => {
     setCurrentChapterId(chapterId);
     setCurrentChapterForLesson(chapterId);
@@ -805,18 +836,23 @@ const CourseDetailsPage = () => {
     try {
       // Close the chapters modal first
       setShowChaptersForQuarterModal(false);
-      
+
       setChapterDetailsLoading(true);
       setChapterDetailsError(null);
       const response = await getChapterDetailsWithLessons(chapterId);
-      console.log('Chapter details response:', response);
-      console.log('Chapter assessments:', response.chapter?.chapter_assessments);
+      console.log("Chapter details response:", response);
+      console.log(
+        "Chapter assessments:",
+        response.chapter?.chapter_assessments
+      );
       setChapterDetails(response.chapter);
       setCurrentChapterForLesson(chapterId);
       setShowChapterDetailsModal(true);
     } catch (error: any) {
-      console.error('Error fetching chapter details:', error);
-      setChapterDetailsError(error.message || 'Failed to fetch chapter details');
+      console.error("Error fetching chapter details:", error);
+      setChapterDetailsError(
+        error.message || "Failed to fetch chapter details"
+      );
     } finally {
       setChapterDetailsLoading(false);
     }
@@ -844,48 +880,52 @@ const CourseDetailsPage = () => {
 
   const handleDropdownOption = (option: string) => {
     setShowPlusDropdown(false);
-    
+
     switch (option) {
-      case 'lesson':
+      case "lesson":
         handleAddLesson();
         break;
-      case 'assessment':
+      case "assessment":
         // Close any open modals and navigate to CreateAssessmentPage
         setShowAddAssessmentModal(false);
         setShowChapterDetailsModal(false);
         if (chapterDetails && selectedQuarterId) {
           // Find semester ID from the quarter data
-          const semesterId = selectedQuarter?.semester || course?.semester?.[0]?._id;
-          navigation.navigate('CreateAssessment', {
+          const semesterId =
+            selectedQuarter?.semester || course?.semester?.[0]?._id;
+          navigation.navigate("CreateAssessment", {
             courseId: courseId,
             chapterId: chapterDetails._id,
-            semesterId: semesterId || '',
-            quarterId: selectedQuarterId
+            semesterId: semesterId || "",
+            quarterId: selectedQuarterId,
           });
         } else {
-          Toast.show('Please select a chapter and quarter first', Toast.LONG);
+          Toast.show("Please select a chapter and quarter first", Toast.LONG);
         }
         break;
-      case 'page':
+      case "page":
         // Navigate to Chapter Pages view
         if (chapterDetails && course?._id) {
           setShowChapterDetailsModal(false);
-          (navigation as any).navigate('ChapterPages', { courseId: course._id, chapterId: chapterDetails._id });
+          (navigation as any).navigate("ChapterPages", {
+            courseId: course._id,
+            chapterId: chapterDetails._id,
+          });
         } else {
-          Toast.show('Please open a chapter first', Toast.LONG);
+          Toast.show("Please open a chapter first", Toast.LONG);
         }
         break;
-      case 'discussion':
+      case "discussion":
         if (chapterDetails) {
           setShowChapterDetailsModal(false);
-          (navigation as any).navigate('ChapterDiscussions', {
+          (navigation as any).navigate("ChapterDiscussions", {
             chapterId: chapterDetails._id,
             courseId: course._id,
             semesterId: selectedQuarter?.semester || course?.semester?.[0]?._id,
             quarterId: selectedQuarterId || undefined,
           });
         } else {
-          Toast.show('Please open a chapter first', Toast.LONG);
+          Toast.show("Please open a chapter first", Toast.LONG);
         }
         break;
     }
@@ -893,50 +933,51 @@ const CourseDetailsPage = () => {
 
   const handleLessonsDropdownOption = (option: string) => {
     setShowLessonsPlusDropdown(false);
-    
+
     switch (option) {
-      case 'assessment':
+      case "assessment":
         // Close any open modals and navigate to CreateAssessmentPage
         setShowAddAssessmentModal(false);
         setShowChapterDetailsModal(false);
         if (currentLessonForAssessment && selectedQuarterId) {
           // Find semester ID from the quarter data
-          const semesterId = selectedQuarter?.semester || course?.semester?.[0]?._id;
-          (navigation as any).navigate('CreateAssessment', {
+          const semesterId =
+            selectedQuarter?.semester || course?.semester?.[0]?._id;
+          (navigation as any).navigate("CreateAssessment", {
             courseId: courseId,
             chapterId: chapterDetails._id,
             lessonId: currentLessonForAssessment._id, // Pass lesson ID instead of chapter ID
-            semesterId: semesterId || '',
-            quarterId: selectedQuarterId
+            semesterId: semesterId || "",
+            quarterId: selectedQuarterId,
           });
         } else {
-          Toast.show('Please select a lesson and quarter first', Toast.LONG);
+          Toast.show("Please select a lesson and quarter first", Toast.LONG);
         }
         break;
-      case 'page':
+      case "page":
         if (currentLessonForAssessment && course?._id) {
           setShowChapterDetailsModal(false);
-          (navigation as any).navigate('ChapterPages', { 
-            courseId: course._id, 
+          (navigation as any).navigate("ChapterPages", {
+            courseId: course._id,
             chapterId: chapterDetails._id,
-            lessonId: currentLessonForAssessment._id 
+            lessonId: currentLessonForAssessment._id,
           });
         } else {
-          Toast.show('Please select a lesson first', Toast.LONG);
+          Toast.show("Please select a lesson first", Toast.LONG);
         }
         break;
-      case 'discussion':
+      case "discussion":
         if (chapterDetails && currentLessonForAssessment) {
           setShowChapterDetailsModal(false);
-          (navigation as any).navigate('ChapterDiscussions', {
+          (navigation as any).navigate("ChapterDiscussions", {
             chapterId: chapterDetails._id,
             courseId: course._id,
             semesterId: selectedQuarter?.semester || course?.semester?.[0]?._id,
             quarterId: selectedQuarterId || undefined,
-            lessonId: currentLessonForAssessment._id
+            lessonId: currentLessonForAssessment._id,
           });
         } else {
-          Toast.show('Please select a lesson first', Toast.LONG);
+          Toast.show("Please select a lesson first", Toast.LONG);
         }
         break;
     }
@@ -956,12 +997,12 @@ const CourseDetailsPage = () => {
 
   const handleUpdateChapter = async () => {
     if (!editChapterTitle.trim() || !editChapterDescription.trim()) {
-      Toast.show('Chapter title and description are required', Toast.LONG);
+      Toast.show("Chapter title and description are required", Toast.LONG);
       return;
     }
 
     if (!currentChapterForEdit) {
-      Toast.show('Chapter not found', Toast.LONG);
+      Toast.show("Chapter not found", Toast.LONG);
       return;
     }
 
@@ -969,23 +1010,28 @@ const CourseDetailsPage = () => {
       setEditChapterLoading(true);
       setEditChapterError(null);
 
-      await editChapter(currentChapterForEdit, editChapterTitle, editChapterDescription);
+      await editChapter(
+        currentChapterForEdit,
+        editChapterTitle,
+        editChapterDescription
+      );
 
-      Toast.show('Chapter updated successfully', Toast.LONG);
-      
+      Toast.show("Chapter updated successfully", Toast.LONG);
+
       // Close edit modal
       setShowEditChapterModal(false);
-      
+
       // Refresh chapter details to show the updated data
-      const updatedResponse = await getChapterDetailsWithLessons(currentChapterForEdit);
+      const updatedResponse = await getChapterDetailsWithLessons(
+        currentChapterForEdit
+      );
       setChapterDetails(updatedResponse.chapter);
-      
+
       // Reopen chapter details modal to show updated data
       setShowChapterDetailsModal(true);
-      
     } catch (error: any) {
-      console.error('Error updating chapter:', error);
-      setEditChapterError(error.message || 'Failed to update chapter');
+      console.error("Error updating chapter:", error);
+      setEditChapterError(error.message || "Failed to update chapter");
     } finally {
       setEditChapterLoading(false);
     }
@@ -994,44 +1040,47 @@ const CourseDetailsPage = () => {
   const handleFilePickForLessonCreation = async () => {
     try {
       const result = await pick({
-        type: ['application/pdf'],
-        copyTo: 'cachesDirectory',
+        type: ["application/pdf"],
+        copyTo: "cachesDirectory",
       });
-      
+
       if (result && result.length > 0) {
         const file = result[0];
         const fileSizeMB = file.size ? file.size / (1024 * 1024) : 0;
-        
+
         if (fileSizeMB > 5) {
-          Toast.show('File size must be less than 5MB', Toast.LONG);
+          Toast.show("File size must be less than 5MB", Toast.LONG);
           return;
         }
-        
-        setLessonCreationFiles(prev => [...prev, {
-          uri: file.uri,
-          name: file.name || file.uri.split('/').pop(),
-          type: 'application/pdf',
-          size: file.size
-        }]);
+
+        setLessonCreationFiles((prev) => [
+          ...prev,
+          {
+            uri: file.uri,
+            name: file.name || file.uri.split("/").pop(),
+            type: "application/pdf",
+            size: file.size,
+          },
+        ]);
       }
     } catch (error) {
-      console.error('Error picking file:', error);
-      Toast.show('Error picking file', Toast.LONG);
+      console.error("Error picking file:", error);
+      Toast.show("Error picking file", Toast.LONG);
     }
   };
 
   const handleRemoveFile = (index: number) => {
-    setLessonCreationFiles(prev => prev.filter((_, i) => i !== index));
+    setLessonCreationFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleCreateLesson = async () => {
     if (!lessonCreationTitle.trim() || !lessonCreationDescription.trim()) {
-      Toast.show('Lesson title and description are required', Toast.LONG);
+      Toast.show("Lesson title and description are required", Toast.LONG);
       return;
     }
 
     if (!currentChapterForLesson) {
-      Toast.show('Chapter not found', Toast.LONG);
+      Toast.show("Chapter not found", Toast.LONG);
       return;
     }
 
@@ -1048,28 +1097,29 @@ const CourseDetailsPage = () => {
         lessonCreationFiles
       );
 
-      Toast.show('Lesson created successfully', Toast.LONG);
-      
+      Toast.show("Lesson created successfully", Toast.LONG);
+
       // Reset form
       setLessonCreationTitle("");
       setLessonCreationDescription("");
       setLessonCreationYoutubeLink("");
       setLessonCreationOtherLink("");
       setLessonCreationFiles([]);
-      
+
       // Close lesson creation modal
       setShowLessonCreationModal(false);
-      
+
       // Refresh chapter details to show the new lesson
-      const updatedResponse = await getChapterDetailsWithLessons(currentChapterForLesson);
+      const updatedResponse = await getChapterDetailsWithLessons(
+        currentChapterForLesson
+      );
       setChapterDetails(updatedResponse.chapter);
-      
+
       // Reopen chapter details modal to show the updated data
       setShowChapterDetailsModal(true);
-      
     } catch (error: any) {
-      console.error('Error creating lesson:', error);
-      setLessonCreationError(error.message || 'Failed to create lesson');
+      console.error("Error creating lesson:", error);
+      setLessonCreationError(error.message || "Failed to create lesson");
     } finally {
       setLessonCreationLoading(false);
     }
@@ -1089,12 +1139,12 @@ const CourseDetailsPage = () => {
 
   const handleUpdateLesson = async () => {
     if (!lessonEditTitle.trim() || !lessonEditDescription.trim()) {
-      Toast.show('Lesson title and description are required', Toast.LONG);
+      Toast.show("Lesson title and description are required", Toast.LONG);
       return;
     }
 
     if (!currentLessonForEdit) {
-      Toast.show('Lesson not found', Toast.LONG);
+      Toast.show("Lesson not found", Toast.LONG);
       return;
     }
 
@@ -1110,23 +1160,24 @@ const CourseDetailsPage = () => {
         lessonEditOtherLink
       );
 
-      Toast.show('Lesson updated successfully', Toast.LONG);
-      
+      Toast.show("Lesson updated successfully", Toast.LONG);
+
       // Close edit modal
       setShowLessonEditModal(false);
-      
+
       // Refresh chapter details to show the updated data
       if (currentChapterForLesson) {
-        const updatedResponse = await getChapterDetailsWithLessons(currentChapterForLesson);
+        const updatedResponse = await getChapterDetailsWithLessons(
+          currentChapterForLesson
+        );
         setChapterDetails(updatedResponse.chapter);
       }
-      
+
       // Reopen chapter details modal to show updated data
       setShowChapterDetailsModal(true);
-      
     } catch (error: any) {
-      console.error('Error updating lesson:', error);
-      setLessonEditError(error.message || 'Failed to update lesson');
+      console.error("Error updating lesson:", error);
+      setLessonEditError(error.message || "Failed to update lesson");
     } finally {
       setLessonEditLoading(false);
     }
@@ -1145,70 +1196,85 @@ const CourseDetailsPage = () => {
 
   const handleFileSelection = (files: any[]) => {
     setSelectedFiles(files);
-    const totalSize = files.reduce((sum, file) => sum + (file.fileSize || 0), 0);
+    const totalSize = files.reduce(
+      (sum, file) => sum + (file.fileSize || 0),
+      0
+    );
     setTotalFileSize(totalSize);
   };
 
   const handleRemoveSelectedFile = (index: number) => {
     const newFiles = selectedFiles.filter((_, i) => i !== index);
     setSelectedFiles(newFiles);
-    const totalSize = newFiles.reduce((sum, file) => sum + (file.fileSize || 0), 0);
+    const totalSize = newFiles.reduce(
+      (sum, file) => sum + (file.fileSize || 0),
+      0
+    );
     setTotalFileSize(totalSize);
   };
 
   const handleFilePickForAddFiles = async () => {
     try {
       const result = await pick({
-        type: ['application/pdf'],
-        copyTo: 'cachesDirectory',
+        type: ["application/pdf"],
+        copyTo: "cachesDirectory",
       });
-      
+
       if (result && result.length > 0) {
         const file = result[0];
         const fileSizeMB = file.size ? file.size / (1024 * 1024) : 0;
-        
+
         if (fileSizeMB > 5) {
-          Toast.show('File size must be less than 5MB', Toast.LONG);
+          Toast.show("File size must be less than 5MB", Toast.LONG);
           return;
         }
-        
+
         const newFile = {
           uri: file.uri,
-          fileName: file.name || file.uri.split('/').pop(),
+          fileName: file.name || file.uri.split("/").pop(),
           fileSize: file.size,
-          type: 'application/pdf'
+          type: "application/pdf",
         };
-        
+
         const updatedFiles = [...selectedFiles, newFile];
-        const totalSize = updatedFiles.reduce((sum, f) => sum + (f.fileSize || 0), 0);
-        
+        const totalSize = updatedFiles.reduce(
+          (sum, f) => sum + (f.fileSize || 0),
+          0
+        );
+
         if (totalSize > MAX_PDF_SIZE_BYTES) {
-          Toast.show(`Total file size cannot exceed ${MAX_PDF_SIZE_MB}MB`, Toast.LONG);
+          Toast.show(
+            `Total file size cannot exceed ${MAX_PDF_SIZE_MB}MB`,
+            Toast.LONG
+          );
           return;
         }
-        
+
         setSelectedFiles(updatedFiles);
         setTotalFileSize(totalSize);
       }
     } catch (error) {
-      console.error('Error picking files:', error);
-      Toast.show('Failed to pick files. Please try again.', Toast.LONG);
+      console.error("Error picking files:", error);
+      Toast.show("Failed to pick files. Please try again.", Toast.LONG);
     }
   };
 
   const handleAddFiles = async () => {
     if (selectedFiles.length === 0) {
-      Toast.show('Please select files to upload', Toast.LONG);
+      Toast.show("Please select files to upload", Toast.LONG);
       return;
     }
 
     if (totalFileSize > MAX_PDF_SIZE_BYTES) {
-      Toast.show(`Total file size must not exceed ${MAX_PDF_SIZE_MB}MB`, Toast.LONG);
+      Toast.show(
+        `Total file size must not exceed ${MAX_PDF_SIZE_MB}MB`,
+        Toast.LONG
+      );
       return;
     }
 
     if (!currentLessonForEdit) {
-      Toast.show('Lesson not found', Toast.LONG);
+      Toast.show("Lesson not found", Toast.LONG);
       return;
     }
 
@@ -1218,22 +1284,23 @@ const CourseDetailsPage = () => {
 
       await addMoreFilesToLesson(currentLessonForEdit, selectedFiles);
 
-      Toast.show('Files added successfully', Toast.LONG);
-      
+      Toast.show("Files added successfully", Toast.LONG);
+
       // Close add files modal
       setShowAddFilesModal(false);
-      
+
       // Refresh chapter details to show the updated data
       if (currentChapterForLesson) {
-        const updatedResponse = await getChapterDetailsWithLessons(currentChapterForLesson);
+        const updatedResponse = await getChapterDetailsWithLessons(
+          currentChapterForLesson
+        );
         setChapterDetails(updatedResponse.chapter);
         // Reopen chapter details modal to show the updated data
         setShowChapterDetailsModal(true);
       }
-      
     } catch (error: any) {
-      console.error('Error adding files:', error);
-      setAddFilesError(error.message || 'Failed to add files');
+      console.error("Error adding files:", error);
+      setAddFilesError(error.message || "Failed to add files");
     } finally {
       setAddFilesLoading(false);
     }
@@ -1246,7 +1313,7 @@ const CourseDetailsPage = () => {
       [
         {
           text: "Cancel",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "Confirm Delete",
@@ -1254,20 +1321,21 @@ const CourseDetailsPage = () => {
           onPress: async () => {
             try {
               await deleteLessonFile(lessonId, fileId);
-              Toast.show('File deleted successfully', Toast.LONG);
-              
+              Toast.show("File deleted successfully", Toast.LONG);
+
               // Refresh chapter details to show the updated data
               if (currentChapterForLesson) {
-                const updatedResponse = await getChapterDetailsWithLessons(currentChapterForLesson);
+                const updatedResponse = await getChapterDetailsWithLessons(
+                  currentChapterForLesson
+                );
                 setChapterDetails(updatedResponse.chapter);
               }
-              
             } catch (error: any) {
-              console.error('Error deleting file:', error);
-              Toast.show(error.message || 'Failed to delete file', Toast.LONG);
+              console.error("Error deleting file:", error);
+              Toast.show(error.message || "Failed to delete file", Toast.LONG);
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -1285,7 +1353,7 @@ const CourseDetailsPage = () => {
       [
         {
           text: "Cancel",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "Confirm Delete",
@@ -1293,24 +1361,27 @@ const CourseDetailsPage = () => {
           onPress: async () => {
             try {
               await deleteLesson(lessonId);
-              Toast.show('Lesson deleted successfully', Toast.LONG);
-              
+              Toast.show("Lesson deleted successfully", Toast.LONG);
+
               // Refresh chapter details to show the updated data
               if (currentChapterForLesson) {
-                const updatedResponse = await getChapterDetailsWithLessons(currentChapterForLesson);
+                const updatedResponse = await getChapterDetailsWithLessons(
+                  currentChapterForLesson
+                );
                 setChapterDetails(updatedResponse.chapter);
               }
-              
             } catch (error: any) {
-              console.error('Error deleting lesson:', error);
-              Toast.show(error.message || 'Failed to delete lesson', Toast.LONG);
+              console.error("Error deleting lesson:", error);
+              Toast.show(
+                error.message || "Failed to delete lesson",
+                Toast.LONG
+              );
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
-
 
   const handleCreateChapter = async () => {
     if (!chapterTitle.trim() || !chapterDescription.trim()) {
@@ -1420,7 +1491,7 @@ const CourseDetailsPage = () => {
       const data = await getSubcategories(categoryId);
       setSubcategories(data.data || []);
     } catch (err: any) {
-      console.error('Error fetching subcategories:', err);
+      console.error("Error fetching subcategories:", err);
       setSubcategories([]);
     } finally {
       setSubcategoriesLoading(false);
@@ -1429,7 +1500,7 @@ const CourseDetailsPage = () => {
 
   const handleThumbnailUpload = () => {
     const options = {
-      mediaType: 'photo' as const,
+      mediaType: "photo" as const,
       quality: 0.8 as const,
       includeBase64: false,
     };
@@ -1449,23 +1520,23 @@ const CourseDetailsPage = () => {
   const uploadThumbnail = async (thumbnail: any) => {
     setThumbnailUploading(true);
     setThumbnailError(null);
-    
+
     try {
       const response = await updateCourseThumbnail(courseId, thumbnail);
-      
+
       // Update the course state with new thumbnail
       setCourse((prevCourse: any) => ({
         ...prevCourse,
         thumbnail: {
           url: thumbnail.uri,
-          filename: thumbnail.fileName || 'thumbnail.jpg'
-        }
+          filename: thumbnail.fileName || "thumbnail.jpg",
+        },
       }));
-      
-      Toast.show('Thumbnail updated successfully!', Toast.SHORT);
+
+      Toast.show("Thumbnail updated successfully!", Toast.SHORT);
     } catch (err: any) {
-      setThumbnailError(err.message || 'Failed to update thumbnail');
-      Toast.show(err.message || 'Failed to update thumbnail', Toast.LONG);
+      setThumbnailError(err.message || "Failed to update thumbnail");
+      Toast.show(err.message || "Failed to update thumbnail", Toast.LONG);
     } finally {
       setThumbnailUploading(false);
     }
@@ -1488,23 +1559,25 @@ const CourseDetailsPage = () => {
   }
 
   return (
-    <TouchableOpacity 
-      style={{ flex: 1, backgroundColor: "#fff" }} 
-      activeOpacity={1} 
-      onPress={() => {
-        setShowPlusDropdown(false);
-        setShowLessonsPlusDropdown(false);
-      }}
+    <View
+      style={{ flex: 1, backgroundColor: "#fff",}}
+      // activeOpacity={1}
+      // onPress={() => {
+      //   setShowPlusDropdown(false);
+      //   setShowLessonsPlusDropdown(false);
+      // }}
     >
       <View
         style={{
-          height: 56,
+          // height: 56,
+
           backgroundColor: "#10B144",
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: 16,
           elevation: 4,
           shadowColor: "#000",
+          paddingTop: insets.top,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.2,
           shadowRadius: 2,
@@ -1564,11 +1637,19 @@ const CourseDetailsPage = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <SimpleIcon name="warning" size={24} color="#FF6B35" style={{ marginRight: 8 }} />
-              <Text style={[styles.modalTitle, { color: "#FF6B35" }]}>Confirm Archive</Text>
+              <SimpleIcon
+                name="warning"
+                size={24}
+                color="#FF6B35"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.modalTitle, { color: "#FF6B35" }]}>
+                Confirm Archive
+              </Text>
             </View>
             <Text style={styles.modalText}>
-              Are you sure you want to archive this course? This action can be reversed later.
+              Are you sure you want to archive this course? This action can be
+              reversed later.
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -1581,7 +1662,11 @@ const CourseDetailsPage = () => {
                 style={[styles.modalButton, { backgroundColor: "#FF6B35" }]}
                 onPress={handleArchiveCourse}
               >
-                <Text style={[styles.deleteConfirmButtonText, { color: "#fff" }]}>Yes Archive</Text>
+                <Text
+                  style={[styles.deleteConfirmButtonText, { color: "#fff" }]}
+                >
+                  Yes Archive
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1598,11 +1683,19 @@ const CourseDetailsPage = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <SimpleIcon name="checkmark-circle" size={24} color="#43a047" style={{ marginRight: 8 }} />
-              <Text style={[styles.modalTitle, { color: "#43a047" }]}>Confirm Unarchive</Text>
+              <SimpleIcon
+                name="checkmark-circle"
+                size={24}
+                color="#43a047"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.modalTitle, { color: "#43a047" }]}>
+                Confirm Unarchive
+              </Text>
             </View>
             <Text style={styles.modalText}>
-              Are you sure you want to unarchive this course? This will make the course available again.
+              Are you sure you want to unarchive this course? This will make the
+              course available again.
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -1615,7 +1708,11 @@ const CourseDetailsPage = () => {
                 style={[styles.modalButton, { backgroundColor: "#43a047" }]}
                 onPress={handleUnarchiveCourse}
               >
-                <Text style={[styles.deleteConfirmButtonText, { color: "#fff" }]}>Yes Unarchive</Text>
+                <Text
+                  style={[styles.deleteConfirmButtonText, { color: "#fff" }]}
+                >
+                  Yes Unarchive
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1626,120 +1723,137 @@ const CourseDetailsPage = () => {
         visible={showCreateChapterModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setShowCreateChapterModal(false)}
+        onRequestClose={() => {
+          setShowCreateChapterModal(false);
+          setShowChaptersForQuarterModal(true);
+        }}
       >
         <View style={styles.chaptersModalContainer}>
           <View style={styles.chaptersModalHeader}>
             <Text style={styles.chaptersModalTitle}>Create New Chapter</Text>
             <TouchableOpacity
-              onPress={() => setShowCreateChapterModal(false)}
+              onPress={() => {
+                setShowCreateChapterModal(false);
+                setShowChaptersForQuarterModal(true);
+              }}
             >
               <SimpleIcon name="close" size={32} color="#333" />
             </TouchableOpacity>
           </View>
           <View style={styles.chaptersContent}>
-            <View style={[styles.modalContent, { width: "100%", maxWidth: "100%" }]}>
-            <Text style={styles.createChapterModalTitle}>
-              Create New Chapter
-            </Text>
-
-            <View style={styles.inputGroup}>
-              <TextInput
-                style={styles.createChapterInput}
-                placeholder="Chapter Title"
-                placeholderTextColor="#999"
-                value={chapterTitle}
-                onChangeText={(text) => setChapterTitle(text)}
-                maxLength={100}
-              />
-              <Text style={styles.charCounter}>{chapterTitle.length}/100</Text>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <TextInput
-                style={[
-                  styles.createChapterInput,
-                  { height: 120, textAlignVertical: "top" },
-                ]}
-                placeholder="Chapter Description"
-                placeholderTextColor="#999"
-                value={chapterDescription}
-                onChangeText={(text) => setChapterDescription(text)}
-                maxLength={500}
-                multiline
-              />
-              <Text style={styles.charCounter}>
-                {chapterDescription.length}/500
+            <View
+              style={[styles.modalContent, { width: "100%", maxWidth: "100%" }]}
+            >
+              <Text style={styles.createChapterModalTitle}>
+                Create New Chapter
               </Text>
-            </View>
 
-            <View style={{ marginTop: 24 }}>
-              <TouchableOpacity
-                style={[
-                  styles.createChapterModalButton,
-                  styles.createChapterModalButtonPrimary,
-                ]}
-                onPress={async () => {
-                  setChapterError(null);
-                  if (!chapterTitle.trim() || !chapterDescription.trim()) {
-                    setChapterError("Both title and description are required.");
-                    return;
-                  }
-                  setChapterLoading(true);
-                  try {
-                    if (!selectedQuarterId) {
-                      throw new Error(
-                        "No quarter selected to associate the chapter with."
-                      );
-                    }
-                    await createChapter(
-                      courseId,
-                      chapterTitle.trim(),
-                      chapterDescription.trim(),
-                      selectedQuarterId
-                    );
-                    setShowCreateChapterModal(false);
-                    setChapterTitle("");
-                    setChapterDescription("");
-                    await refreshChaptersForQuarter(selectedQuarterId);
-                    setShowChaptersForQuarterModal(true);
-                  } catch (err: any) {
-                    console.log(err);
-                    setChapterError(err.message || "Failed to create chapter.");
-                  } finally {
-                    setChapterLoading(false);
-                  }
-                }}
-                disabled={chapterLoading}
-              >
-                {chapterLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.createChapterModalButtonTextPrimary}>
-                    Create Chapter
-                  </Text>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.createChapterModalButton,
-                  styles.createChapterModalButtonSecondary,
-                ]}
-                onPress={() => setShowCreateChapterModal(false)}
-                disabled={chapterLoading}
-              >
-                <Text style={styles.createChapterModalButtonTextSecondary}>
-                  Cancel
+              <View style={styles.inputGroup}>
+                <TextInput
+                  style={styles.createChapterInput}
+                  placeholder="Chapter Title"
+                  placeholderTextColor="#999"
+                  value={chapterTitle}
+                  onChangeText={(text) => setChapterTitle(text)}
+                  maxLength={100}
+                />
+                <Text style={styles.charCounter}>
+                  {chapterTitle.length}/100
                 </Text>
-              </TouchableOpacity>
-            </View>
-            {chapterError ? (
-              <Text
-                style={{ color: "red", marginTop: 12, textAlign: "center" }}
-              >
-                {chapterError}
-              </Text>
-            ) : null}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <TextInput
+                  style={[
+                    styles.createChapterInput,
+                    { height: 120, textAlignVertical: "top" },
+                  ]}
+                  placeholder="Chapter Description"
+                  placeholderTextColor="#999"
+                  value={chapterDescription}
+                  onChangeText={(text) => setChapterDescription(text)}
+                  maxLength={500}
+                  multiline
+                />
+                <Text style={styles.charCounter}>
+                  {chapterDescription.length}/500
+                </Text>
+              </View>
+
+              <View style={{ marginTop: 24 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.createChapterModalButton,
+                    styles.createChapterModalButtonPrimary,
+                  ]}
+                  onPress={async () => {
+                    setChapterError(null);
+                    if (!chapterTitle.trim() || !chapterDescription.trim()) {
+                      setChapterError(
+                        "Both title and description are required."
+                      );
+                      return;
+                    }
+                    setChapterLoading(true);
+                    try {
+                      if (!selectedQuarterId) {
+                        throw new Error(
+                          "No quarter selected to associate the chapter with."
+                        );
+                      }
+                      await createChapter(
+                        courseId,
+                        chapterTitle.trim(),
+                        chapterDescription.trim(),
+                        selectedQuarterId
+                      );
+                      setShowCreateChapterModal(false);
+                      setChapterTitle("");
+                      setChapterDescription("");
+                      await refreshChaptersForQuarter(selectedQuarterId);
+                      setShowChaptersForQuarterModal(true);
+                    } catch (err: any) {
+                      console.log(err);
+                      setChapterError(
+                        err.message || "Failed to create chapter."
+                      );
+                    } finally {
+                      setChapterLoading(false);
+                    }
+                  }}
+                  disabled={chapterLoading}
+                >
+                  {chapterLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.createChapterModalButtonTextPrimary}>
+                      Create Chapter
+                    </Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.createChapterModalButton,
+                    styles.createChapterModalButtonSecondary,
+                  ]}
+                  onPress={() => {
+                    setShowCreateChapterModal(false);
+                    setShowChaptersForQuarterModal(true);
+                  }}
+                  disabled={chapterLoading}
+                >
+                  <Text style={styles.createChapterModalButtonTextSecondary}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {chapterError ? (
+                <Text
+                  style={{ color: "red", marginTop: 12, textAlign: "center" }}
+                >
+                  {chapterError}
+                </Text>
+              ) : null}
             </View>
           </View>
         </View>
@@ -1817,7 +1931,6 @@ const CourseDetailsPage = () => {
         </View>
       </Modal>
 
-
       <Modal
         visible={showDeleteLessonModal}
         transparent={true}
@@ -1889,8 +2002,6 @@ const CourseDetailsPage = () => {
           </View>
         </View>
       </Modal>
-
-
 
       <Modal
         visible={showAddNewAssessmentCategoryModal}
@@ -2012,7 +2123,9 @@ const CourseDetailsPage = () => {
                 }}
                 onPress={() => setShowAddNewAssessmentCategoryModal(false)}
               >
-                <Text style={{ color: "#333", fontWeight: "bold", fontSize: 16 }}>
+                <Text
+                  style={{ color: "#333", fontWeight: "bold", fontSize: 16 }}
+                >
                   Cancel
                 </Text>
               </TouchableOpacity>
@@ -2078,7 +2191,7 @@ const CourseDetailsPage = () => {
                     console.error("Error creating category:", error);
                     Toast.show(
                       error.message ||
-                      "Failed to create assessment category. Please try again.",
+                        "Failed to create assessment category. Please try again.",
                       Toast.LONG
                     );
                   } finally {
@@ -2087,7 +2200,9 @@ const CourseDetailsPage = () => {
                 }}
                 disabled={creatingCategory}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+                <Text
+                  style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}
+                >
                   {creatingCategory ? "Creating..." : "Create Category"}
                 </Text>
               </TouchableOpacity>
@@ -2095,7 +2210,6 @@ const CourseDetailsPage = () => {
           </View>
         </View>
       </Modal>
-
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <View style={styles.thumbnailContainer}>
@@ -2154,11 +2268,11 @@ const CourseDetailsPage = () => {
               setGradebookLoading(true);
               try {
                 const gradebookData = await getCourseGradebook(course._id);
-                console.log('Gradebook API Response:', gradebookData);
+                console.log("Gradebook API Response:", gradebookData);
                 setGradebookData(gradebookData);
               } catch (error: any) {
-                console.error('Error fetching gradebook:', error);
-                setGradebookError(error.message || 'Failed to fetch gradebook');
+                console.error("Error fetching gradebook:", error);
+                setGradebookError(error.message || "Failed to fetch gradebook");
               } finally {
                 setGradebookLoading(false);
               }
@@ -2169,15 +2283,15 @@ const CourseDetailsPage = () => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={async () => {
-              setEditCourseTitle(course.courseTitle || '');
-              setEditCourseCategory(course.category?._id || '');
-              setEditCourseSubcategory(course.subcategory?._id || '');
-              setEditCourseLanguage(course.language || '');
-              setEditCourseDescription(course.courseDescription || '');
+              setEditCourseTitle(course.courseTitle || "");
+              setEditCourseCategory(course.category?._id || "");
+              setEditCourseSubcategory(course.subcategory?._id || "");
+              setEditCourseLanguage(course.language || "");
+              setEditCourseDescription(course.courseDescription || "");
               setEditTeachingPoints(course.teachingPoints || []);
               setEditRequirements(course.requirements || []);
               setShowEditCourseModal(true);
-              
+
               // Fetch subcategories for the current category
               if (course.category?._id) {
                 await fetchSubcategories(course.category._id);
@@ -2187,14 +2301,17 @@ const CourseDetailsPage = () => {
           >
             <Text style={styles.topActionButtonText}>Edit Course</Text>
           </TouchableOpacity>
-          
+
           {course?.syllabus?.url && (
             <TouchableOpacity
               onPress={() => {
                 if (course.syllabus.url) {
-                  Linking.openURL(course.syllabus.url).catch(err => {
-                    console.error('Failed to open syllabus:', err);
-                    Alert.alert('Error', 'Could not open syllabus. Please try again.');
+                  Linking.openURL(course.syllabus.url).catch((err) => {
+                    console.error("Failed to open syllabus:", err);
+                    Alert.alert(
+                      "Error",
+                      "Could not open syllabus. Please try again."
+                    );
                   });
                 }
               }}
@@ -2203,7 +2320,7 @@ const CourseDetailsPage = () => {
               <Text style={styles.topActionButtonText}>Syllabus</Text>
             </TouchableOpacity>
           )}
-          
+
           {course?.published === false ? (
             <TouchableOpacity
               onPress={() => setShowUnarchiveModal(true)}
@@ -2266,8 +2383,9 @@ const CourseDetailsPage = () => {
                 style={styles.semesterCard}
                 onPress={() => handleSemesterPress(sem)}
               >
-                <Text style={styles.semesterTitle}>{`Semester ${index + 1}: ${sem.title
-                  }`}</Text>
+                <Text style={styles.semesterTitle}>{`Semester ${index + 1}: ${
+                  sem.title
+                }`}</Text>
                 <Text style={styles.semesterDates}>
                   {formatDateWithOrdinal(sem.startDate)} -{" "}
                   {formatDateWithOrdinal(sem.endDate)}
@@ -2285,20 +2403,24 @@ const CourseDetailsPage = () => {
               {[1, 2, 3, 4, 5].map((i) => (
                 <SimpleIcon
                   key={i}
-                  name={i <= Math.round(averageRating) ? 'star' : 'star-outline'}
+                  name={
+                    i <= Math.round(averageRating) ? "star" : "star-outline"
+                  }
                   size={28}
-                  color={i <= Math.round(averageRating) ? '#FFD700' : '#E0E0E0'}
+                  color={i <= Math.round(averageRating) ? "#FFD700" : "#E0E0E0"}
                   style={{ marginRight: 2 }}
                 />
               ))}
             </View>
             <Text style={styles.ratingCountText}>
-              {ratingCount === 1 ? '(1 Rating)' : `(${ratingCount} Ratings)`}
+              {ratingCount === 1 ? "(1 Rating)" : `(${ratingCount} Ratings)`}
             </Text>
           </View>
         </View>
         <View style={styles.section}>
-          <Text style={styles.commentsSectionTitle}>Comments ({comments.length})</Text>
+          <Text style={styles.commentsSectionTitle}>
+            Comments ({comments.length})
+          </Text>
           <View style={styles.commentInputBox}>
             <TextInput
               style={styles.commentInput}
@@ -2308,13 +2430,22 @@ const CourseDetailsPage = () => {
               onChangeText={setComment}
               multiline
             />
-            <View style={{ alignItems: 'flex-end', marginTop: 8 }}>
+            <View style={{ alignItems: "flex-end", marginTop: 8 }}>
               <TouchableOpacity
-                style={[styles.postCommentButton, (!comment.trim() || isSubmittingComment) && styles.postCommentButtonDisabled]}
+                style={[
+                  styles.postCommentButton,
+                  (!comment.trim() || isSubmittingComment) &&
+                    styles.postCommentButtonDisabled,
+                ]}
                 disabled={!comment.trim() || isSubmittingComment}
                 onPress={handlePostComment}
               >
-                <SimpleIcon name="send" size={18} color="#fff" style={{ marginRight: 6 }} />
+                <SimpleIcon
+                  name="send"
+                  size={18}
+                  color="#fff"
+                  style={{ marginRight: 6 }}
+                />
                 <Text style={styles.postCommentButtonText}>Post Comment</Text>
               </TouchableOpacity>
             </View>
@@ -2324,27 +2455,80 @@ const CourseDetailsPage = () => {
           ) : comments.length > 0 ? (
             comments.map((c: any) => {
               const date = new Date(c.createdAt);
-              const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-              const userName = c.createdby ? `${c.createdby.firstName} ${c.createdby.lastName}` : (c.user?.firstName || 'User');
+              const formattedDate = `${date
+                .getDate()
+                .toString()
+                .padStart(2, "0")}/${(date.getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}/${date.getFullYear()}`;
+              const userName = c.createdby
+                ? `${c.createdby.firstName} ${c.createdby.lastName}`
+                : c.user?.firstName || "User";
               const userRole = c.createdby?.role;
               return (
-                <View key={c._id} style={{ marginTop: 16, backgroundColor: '#f5f5f5', borderRadius: 8, padding: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                    <SimpleIcon name="person-circle-outline" size={28} color="#888" style={{ marginRight: 8 }} />
-                    <Text style={{ fontWeight: 'bold', color: '#222', marginRight: 8 }}>{userName}</Text>
+                <View
+                  key={c._id}
+                  style={{
+                    marginTop: 16,
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <SimpleIcon
+                      name="person-circle-outline"
+                      size={28}
+                      color="#888"
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      style={{
+                        fontWeight: "bold",
+                        color: "#222",
+                        marginRight: 8,
+                      }}
+                    >
+                      {userName}
+                    </Text>
                     {userRole && (
-                      <View style={{ backgroundColor: '#e0e7ff', borderRadius: 6, paddingHorizontal: 6, marginRight: 8 }}>
-                        <Text style={{ color: '#3730a3', fontWeight: 'bold', fontSize: 10 }}>{userRole.toUpperCase()}</Text>
+                      <View
+                        style={{
+                          backgroundColor: "#e0e7ff",
+                          borderRadius: 6,
+                          paddingHorizontal: 6,
+                          marginRight: 8,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#3730a3",
+                            fontWeight: "bold",
+                            fontSize: 10,
+                          }}
+                        >
+                          {userRole.toUpperCase()}
+                        </Text>
                       </View>
                     )}
-                    <Text style={{ color: '#888', fontSize: 12 }}>{formattedDate}</Text>
+                    <Text style={{ color: "#888", fontSize: 12 }}>
+                      {formattedDate}
+                    </Text>
                   </View>
-                  <Text style={{ color: '#333', fontSize: 15 }}>{c.text}</Text>
+                  <Text style={{ color: "#333", fontSize: 15 }}>{c.text}</Text>
                 </View>
               );
             })
           ) : (
-            <Text style={styles.noCommentsText}>No comments yet. Be the first to comment!</Text>
+            <Text style={styles.noCommentsText}>
+              No comments yet. Be the first to comment!
+            </Text>
           )}
         </View>
       </ScrollView>
@@ -2671,13 +2855,19 @@ const CourseDetailsPage = () => {
         visible={showChaptersForQuarterModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setShowChaptersForQuarterModal(false)}
+        onRequestClose={() => {
+          setShowChaptersForQuarterModal(false);
+          setShowQuartersModal(true);
+        }}
       >
         <View style={styles.chaptersModalContainer}>
           <View style={styles.chaptersModalHeader}>
             <Text style={styles.chaptersModalTitle}>Chapters</Text>
             <TouchableOpacity
-              onPress={() => setShowChaptersForQuarterModal(false)}
+              onPress={() => {
+                setShowChaptersForQuarterModal(false);
+                setShowQuartersModal(true);
+              }}
             >
               <SimpleIcon name="close" size={32} color="#333" />
             </TouchableOpacity>
@@ -2732,34 +2922,52 @@ const CourseDetailsPage = () => {
                           }}
                           style={styles.chapterDeleteButton}
                         >
-                          <SimpleIcon name="trash-outline" size={20} color="#666" />
+                          <SimpleIcon
+                            name="trash-outline"
+                            size={20}
+                            color="#666"
+                          />
                         </TouchableOpacity>
                       </View>
-                      
-                      <Text style={styles.chapterCardTitle}>{chapter.title}</Text>
-                      <Text style={styles.chapterCardDescription}>{chapter.description}</Text>
-                      
+
+                      <Text style={styles.chapterCardTitle}>
+                        {chapter.title}
+                      </Text>
+                      <Text style={styles.chapterCardDescription}>
+                        {chapter.description}
+                      </Text>
+
                       <View style={styles.chapterCardStats}>
                         <View style={styles.chapterStatItem}>
-                          <SimpleIcon name="book-outline" size={16} color="#666" />
+                          <SimpleIcon
+                            name="book-outline"
+                            size={16}
+                            color="#666"
+                          />
                           <Text style={styles.chapterStatText}>
-                            {chapter.lessons ? chapter.lessons.length : 0} Lessons
+                            {chapter.lessons ? chapter.lessons.length : 0}{" "}
+                            Lessons
                           </Text>
                         </View>
                         <View style={styles.chapterStatItem}>
                           <SimpleIcon name="star" size={16} color="#666" />
                           <Text style={styles.chapterStatText}>
-                            {chapter.chapter_assessments ? chapter.chapter_assessments.length : 0} Assessments
+                            {chapter.chapter_assessments
+                              ? chapter.chapter_assessments.length
+                              : 0}{" "}
+                            Assessments
                           </Text>
                         </View>
                       </View>
-                      
-                      <TouchableOpacity 
+
+                      <TouchableOpacity
                         style={styles.chapterViewButton}
                         onPress={() => handleViewChapterDetails(chapter._id)}
                       >
                         {/* <SimpleIcon name="visibility" size={20} color="#fff" /> */}
-                        <Text style={styles.chapterViewButtonText}>View Details</Text>
+                        <Text style={styles.chapterViewButtonText}>
+                          View Details
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   );
@@ -2780,21 +2988,27 @@ const CourseDetailsPage = () => {
         visible={showAssessmentDetailsModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setShowAssessmentDetailsModal(false)}
+        onRequestClose={() => {setShowAssessmentDetailsModal(false)
+          setShowChapterDetailsModal(true)
+        }}
       >
-        <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <View style={{ flex: 1, backgroundColor: "#fff" }}>
           {/* Header */}
-          <View style={styles.assessmentDetailsHeader}>
-            <TouchableOpacity 
-              onPress={() => setShowAssessmentDetailsModal(false)} 
+          <View style={[styles.assessmentDetailsHeader,{paddingTop: insets.top}]}>
+            <TouchableOpacity
+              onPress={() => {setShowAssessmentDetailsModal(false)
+                setShowChapterDetailsModal(true)
+              }}
               style={styles.assessmentDetailsBackButton}
             >
               <SimpleIcon name="chevron-back" size={24} color="#fff" />
               <Text style={styles.assessmentDetailsBackText}>Back</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              onPress={() => openEditAssessmentModal(selectedAssessmentForModal)}
+
+            <TouchableOpacity
+              onPress={() =>
+                openEditAssessmentModal(selectedAssessmentForModal)
+              }
               style={styles.assessmentDetailsEditButton}
             >
               <SimpleIcon name="pencil" size={20} color="#fff" />
@@ -2811,7 +3025,8 @@ const CourseDetailsPage = () => {
                   </Text>
                   <View style={styles.assessmentDetailsCategoryBadge}>
                     <Text style={styles.assessmentDetailsCategoryText}>
-                      {selectedAssessmentForModal.category?.name || 'No Category'}
+                      {selectedAssessmentForModal.category?.name ||
+                        "No Category"}
                     </Text>
                   </View>
                 </View>
@@ -2819,18 +3034,23 @@ const CourseDetailsPage = () => {
                 {/* Due Date */}
                 <View style={styles.assessmentDetailsDueDateContainer}>
                   <Text style={styles.assessmentDetailsDueDateLabel}>
-                    due date: {new Date(selectedAssessmentForModal.dueDate?.date).toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      month: 'short', 
-                      day: 'numeric', 
-                      year: 'numeric' 
+                    due date:{" "}
+                    {new Date(
+                      selectedAssessmentForModal.dueDate?.date
+                    ).toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
                     })}
                   </Text>
                 </View>
 
                 {/* Description */}
                 <View style={styles.assessmentDetailsDescriptionContainer}>
-                  <Text style={styles.assessmentDetailsDescriptionTitle}>Description</Text>
+                  <Text style={styles.assessmentDetailsDescriptionTitle}>
+                    Description
+                  </Text>
                   <Text style={styles.assessmentDetailsDescriptionText}>
                     {selectedAssessmentForModal.description}
                   </Text>
@@ -2838,8 +3058,10 @@ const CourseDetailsPage = () => {
 
                 {/* Questions Section */}
                 <View style={styles.assessmentDetailsQuestionsContainer}>
-                  <Text style={styles.assessmentDetailsQuestionsTitle}>Questions</Text>
-                  
+                  <Text style={styles.assessmentDetailsQuestionsTitle}>
+                    Questions
+                  </Text>
+
                   {selectedAssessmentForModal.questions.map(
                     (question: any, index: number) => (
                       <View key={question._id}>
@@ -2848,7 +3070,9 @@ const CourseDetailsPage = () => {
                           onPress={() => setExpandedMcq(!expandedMcq)}
                         >
                           <Text style={styles.assessmentDetailsMcqTitle}>
-                            {question.type.toUpperCase()} ({selectedAssessmentForModal.questions.length} questions)
+                            {question.type.toUpperCase()} (
+                            {selectedAssessmentForModal.questions.length}{" "}
+                            questions)
                           </Text>
                           <SimpleIcon
                             name={expandedMcq ? "chevron-up" : "chevron-down"}
@@ -2859,23 +3083,43 @@ const CourseDetailsPage = () => {
 
                         {expandedMcq && (
                           <View style={styles.assessmentDetailsQuestionCard}>
-                            <Text style={styles.assessmentDetailsQuestionLabel}>Question:</Text>
-                            <Text style={styles.assessmentDetailsQuestionText}>
-                              {question.question.replace(/<[^>]*>/g, '')}
+                            <Text style={styles.assessmentDetailsQuestionLabel}>
+                              Question:
                             </Text>
-                            
+                            <Text style={styles.assessmentDetailsQuestionText}>
+                              {question.question.replace(/<[^>]*>/g, "")}
+                            </Text>
+
                             {question.options.map(
                               (option: string, optionIndex: number) => (
-                                <View key={optionIndex} style={styles.assessmentDetailsOptionContainer}>
-                                  <Text style={styles.assessmentDetailsBulletPoint}>•</Text>
-                                  <Text style={[
-                                    styles.assessmentDetailsOptionText,
-                                    option === question.correctAnswer && styles.assessmentDetailsCorrectOption
-                                  ]}>
+                                <View
+                                  key={optionIndex}
+                                  style={
+                                    styles.assessmentDetailsOptionContainer
+                                  }
+                                >
+                                  <Text
+                                    style={styles.assessmentDetailsBulletPoint}
+                                  >
+                                    •
+                                  </Text>
+                                  <Text
+                                    style={[
+                                      styles.assessmentDetailsOptionText,
+                                      option === question.correctAnswer &&
+                                        styles.assessmentDetailsCorrectOption,
+                                    ]}
+                                  >
                                     {option}
                                   </Text>
                                   {option === question.correctAnswer && (
-                                    <Text style={styles.assessmentDetailsCorrectLabel}>Correct</Text>
+                                    <Text
+                                      style={
+                                        styles.assessmentDetailsCorrectLabel
+                                      }
+                                    >
+                                      Correct
+                                    </Text>
                                   )}
                                 </View>
                               )
@@ -2899,16 +3143,18 @@ const CourseDetailsPage = () => {
         animationType="slide"
         onRequestClose={() => setShowEditAssessmentModal(false)}
       >
-        <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <View style={{ flex: 1, backgroundColor: "#fff" }}>
           <View style={styles.assessmentDetailsHeader}>
-            <TouchableOpacity 
-              onPress={() => setShowEditAssessmentModal(false)} 
+            <TouchableOpacity
+              onPress={() => setShowEditAssessmentModal(false)}
               style={styles.assessmentDetailsBackButton}
             >
               <SimpleIcon name="chevron-back" size={24} color="#fff" />
               <Text style={styles.assessmentDetailsBackText}>Back</Text>
             </TouchableOpacity>
-            <Text style={styles.assessmentDetailsHeaderTitle}>Edit Assessment</Text>
+            <Text style={styles.assessmentDetailsHeaderTitle}>
+              Edit Assessment
+            </Text>
             <View style={{ width: 60 }} />
           </View>
 
@@ -2923,7 +3169,10 @@ const CourseDetailsPage = () => {
 
             <Text style={styles.editAssessmentLabel}>Description</Text>
             <TextInput
-              style={[styles.editAssessmentInput, { minHeight: 100, textAlignVertical: 'top' }]}
+              style={[
+                styles.editAssessmentInput,
+                { minHeight: 100, textAlignVertical: "top" },
+              ]}
               value={editAssessmentDescription}
               onChangeText={setEditAssessmentDescription}
               placeholder="Assessment description"
@@ -2936,14 +3185,16 @@ const CourseDetailsPage = () => {
               onPress={() => {
                 // Show category picker
                 Alert.alert(
-                  'Select Category',
-                  'Category selection will be implemented',
-                  [{ text: 'OK' }]
+                  "Select Category",
+                  "Category selection will be implemented",
+                  [{ text: "OK" }]
                 );
               }}
             >
               <Text style={styles.editAssessmentCategoryButtonText}>
-                {assessmentCategories.find(c => c._id === editAssessmentCategory)?.name || 'Select Category'}
+                {assessmentCategories.find(
+                  (c) => c._id === editAssessmentCategory
+                )?.name || "Select Category"}
               </Text>
               <SimpleIcon name="chevron-down" size={20} color="#666" />
             </TouchableOpacity>
@@ -2954,26 +3205,33 @@ const CourseDetailsPage = () => {
               onPress={() => {
                 // Show date picker
                 Alert.alert(
-                  'Select Due Date',
-                  'Date picker will be implemented',
-                  [{ text: 'OK' }]
+                  "Select Due Date",
+                  "Date picker will be implemented",
+                  [{ text: "OK" }]
                 );
               }}
             >
-              <Text style={{ color: editAssessmentDueDate ? '#000' : '#999' }}>
-                {editAssessmentDueDate ? editAssessmentDueDate.toLocaleDateString() : 'Select due date'}
+              <Text style={{ color: editAssessmentDueDate ? "#000" : "#999" }}>
+                {editAssessmentDueDate
+                  ? editAssessmentDueDate.toLocaleDateString()
+                  : "Select due date"}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.editAssessmentSaveButton, editAssessmentLoading && { opacity: 0.7 }]}
+              style={[
+                styles.editAssessmentSaveButton,
+                editAssessmentLoading && { opacity: 0.7 },
+              ]}
               onPress={handleEditAssessment}
               disabled={editAssessmentLoading}
             >
               {editAssessmentLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.editAssessmentSaveButtonText}>Save Changes</Text>
+                <Text style={styles.editAssessmentSaveButtonText}>
+                  Save Changes
+                </Text>
               )}
             </TouchableOpacity>
           </ScrollView>
@@ -3093,98 +3351,195 @@ const CourseDetailsPage = () => {
           ) : gradebookData ? (
             <ScrollView contentContainerStyle={{ padding: 16 }}>
               {/* Gradebook Card - Matching Image Design */}
-              <View style={{ 
-                width: '100%', 
-                backgroundColor: '#fff', 
-                borderRadius: 16, 
-                borderWidth: 1, 
-                borderColor: '#eee', 
-                marginBottom: 16, 
-                padding: 16,
-                shadowColor: '#000',
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                elevation: 2,
-              }}>
+              <View
+                style={{
+                  width: "100%",
+                  backgroundColor: "#fff",
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: "#eee",
+                  marginBottom: 16,
+                  padding: 16,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.05,
+                  shadowRadius: 8,
+                  elevation: 2,
+                }}
+              >
                 {/* Table Header */}
-                <View style={{ 
-                  flexDirection: 'row', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  borderBottomWidth: 1, 
-                  borderColor: '#eee', 
-                  paddingBottom: 12,
-                  marginBottom: 12
-                }}>
-                  <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 2, textAlign: 'left', color: '#6b7280' }}>Student</Text>
-                  <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 1, textAlign: 'center', color: '#6b7280' }}>Final Grade</Text>
-                  <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 1, textAlign: 'center', color: '#6b7280' }}>Letter Grade</Text>
-                  <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 1, textAlign: 'right', color: '#6b7280' }}>GPA</Text>
-                </View>
-                
-                {/* Student Rows */}
-                {gradebookData.gradebook && gradebookData.gradebook.length > 0 ? (
-                  gradebookData.gradebook.map((student: any, index: number) => (
-                  <View key={student.studentId || index} style={{ 
-                    flexDirection: 'row', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    paddingVertical: 8,
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                     borderBottomWidth: 1,
-                    borderBottomColor: '#f5f5f5'
-                  }}>
-                    <View style={{ flex: 2, flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={{ fontSize: 16, marginRight: 8, color: '#6b7280' }}>▼</Text>
-                      <Text style={{ flex: 1, fontSize: 16, fontWeight: 'bold', color: '#1E293B' }}>
-                        {student.studentName || 'Unknown Student'}
-                      </Text>
-                    </View>
-                    <Text style={{ flex: 1, textAlign: 'center', fontSize: 16, color: '#1E293B' }}>
-                      {student.finalGrade || 0}%
-                    </Text>
-                    <View style={{ flex: 1, alignItems: 'center' }}>
-                      <View style={{
-                        backgroundColor: '#dbeafe',
-                        borderColor: '#93c5fd',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        paddingHorizontal: 8,
-                        paddingVertical: 4,
-                      }}>
-                        <Text style={{ 
-                          color: '#1E293B', 
-                          fontWeight: 'bold', 
-                          fontSize: 14 
-                        }}>
-                          {student.letterGrade || 'N/A'}
+                    borderColor: "#eee",
+                    paddingBottom: 12,
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: 16,
+                      flex: 2,
+                      textAlign: "left",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Student
+                  </Text>
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: 16,
+                      flex: 1,
+                      textAlign: "center",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Final Grade
+                  </Text>
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: 16,
+                      flex: 1,
+                      textAlign: "center",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Letter Grade
+                  </Text>
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: 16,
+                      flex: 1,
+                      textAlign: "right",
+                      color: "#6b7280",
+                    }}
+                  >
+                    GPA
+                  </Text>
+                </View>
+
+                {/* Student Rows */}
+                {gradebookData.gradebook &&
+                gradebookData.gradebook.length > 0 ? (
+                  gradebookData.gradebook.map((student: any, index: number) => (
+                    <View
+                      key={student.studentId || index}
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        paddingVertical: 8,
+                        borderBottomWidth: 1,
+                        borderBottomColor: "#f5f5f5",
+                      }}
+                    >
+                      <View
+                        style={{
+                          flex: 2,
+                          flexDirection: "row",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 16,
+                            marginRight: 8,
+                            color: "#6b7280",
+                          }}
+                        >
+                          ▼
+                        </Text>
+                        <Text
+                          style={{
+                            flex: 1,
+                            fontSize: 16,
+                            fontWeight: "bold",
+                            color: "#1E293B",
+                          }}
+                        >
+                          {student.studentName || "Unknown Student"}
                         </Text>
                       </View>
+                      <Text
+                        style={{
+                          flex: 1,
+                          textAlign: "center",
+                          fontSize: 16,
+                          color: "#1E293B",
+                        }}
+                      >
+                        {student.finalGrade || 0}%
+                      </Text>
+                      <View style={{ flex: 1, alignItems: "center" }}>
+                        <View
+                          style={{
+                            backgroundColor: "#dbeafe",
+                            borderColor: "#93c5fd",
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#1E293B",
+                              fontWeight: "bold",
+                              fontSize: 14,
+                            }}
+                          >
+                            {student.letterGrade || "N/A"}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text
+                        style={{
+                          flex: 1,
+                          textAlign: "right",
+                          fontSize: 16,
+                          color: "#1E293B",
+                        }}
+                      >
+                        {student.gpa || 0}
+                      </Text>
                     </View>
-                    <Text style={{ flex: 1, textAlign: 'right', fontSize: 16, color: '#1E293B' }}>
-                      {student.gpa || 0}
-                    </Text>
-                  </View>
                   ))
                 ) : (
-                  <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-                    <Text style={{ color: '#6b7280', fontSize: 14, textAlign: 'center' }}>
+                  <View style={{ paddingVertical: 20, alignItems: "center" }}>
+                    <Text
+                      style={{
+                        color: "#6b7280",
+                        fontSize: 14,
+                        textAlign: "center",
+                      }}
+                    >
                       No students found in this course.
                     </Text>
                   </View>
                 )}
-                
+
                 {/* Academic Performance Breakdown */}
-                <View style={{ 
-                  marginTop: 12,
-                  paddingTop: 12,
-                  borderTopWidth: 1,
-                  borderTopColor: '#f5f5f5'
-                }}>
-                  <Text style={{ 
-                    color: '#6b7280', 
-                    fontSize: 14, 
-                    textAlign: 'center'
-                  }}>
+                <View
+                  style={{
+                    marginTop: 12,
+                    paddingTop: 12,
+                    borderTopWidth: 1,
+                    borderTopColor: "#f5f5f5",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#6b7280",
+                      fontSize: 14,
+                      textAlign: "center",
+                    }}
+                  >
                     Academic Performance Breakdown
                   </Text>
                 </View>
@@ -3211,333 +3566,520 @@ const CourseDetailsPage = () => {
         animationType="fade"
         onRequestClose={() => setShowEditCourseModal(false)}
       >
-        <TouchableWithoutFeedback onPress={() => {
-          setShowSubcategoryDropdown(false);
-          setShowLanguageDropdown(false);
-        }}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            setShowSubcategoryDropdown(false);
+            setShowLanguageDropdown(false);
+          }}
+        >
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[styles.modalContent, { width: "95%", maxWidth: 420 }]}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={{ fontSize: 22, fontWeight: "bold", flex: 1, textAlign: 'center' }}>Edit Course Info</Text>
-              <TouchableOpacity
-                onPress={() => setShowEditCourseModal(false)}
-                style={{ padding: 4 }}
+              <View
+                style={[styles.modalContent, { width: "95%", maxWidth: 420 }]}
               >
-                <SimpleIcon name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView>
-              <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Course Title</Text>
-              <TextInput
-                style={styles.textInput}
-                value={editCourseTitle}
-                onChangeText={setEditCourseTitle}
-                placeholder="Course Title"
-              />
-              <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Sub Category</Text>
-              {subcategoriesLoading ? (
-                <View style={[styles.textInput, { justifyContent: 'center', alignItems: 'center' }]}>
-                  <ActivityIndicator size="small" color="#10B144" />
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={[styles.textInput, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
-                  onPress={() => {
-                    // Toggle dropdown visibility
-                    setShowSubcategoryDropdown(!showSubcategoryDropdown);
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 16,
                   }}
                 >
-                  <Text style={{ color: editCourseSubcategory ? '#333' : '#999' }}>
-                    {editCourseSubcategory 
-                      ? subcategories.find(s => s._id === editCourseSubcategory)?.title || 'Select sub category'
-                      : 'Select sub category'
-                    }
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: "bold",
+                      flex: 1,
+                      textAlign: "center",
+                    }}
+                  >
+                    Edit Course Info
                   </Text>
-                  <SimpleIcon name="chevron-down" size={16} color="#666" />
-                </TouchableOpacity>
-              )}
-              
-              {showSubcategoryDropdown && (
-                <View style={{
-                  position: 'absolute',
-                  top: 200,
-                  left: 16,
-                  right: 16,
-                  backgroundColor: 'white',
-                  borderWidth: 1,
-                  borderColor: '#ddd',
-                  borderRadius: 8,
-                  maxHeight: 200,
-                  zIndex: 1000,
-                  elevation: 5,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 4,
-                }}>
-                  <ScrollView style={{ maxHeight: 200 }}>
-                    {subcategories.map((subcategory) => (
-                      <TouchableOpacity
-                        key={subcategory._id}
-                        style={{
-                          padding: 12,
-                          borderBottomWidth: 1,
-                          borderBottomColor: '#eee',
-                          backgroundColor: editCourseSubcategory === subcategory._id ? '#e3f2fd' : 'transparent',
-                        }}
-                        onPress={() => {
-                          setEditCourseSubcategory(subcategory._id);
-                          setShowSubcategoryDropdown(false);
-                        }}
-                      >
-                        <Text style={{
-                          color: editCourseSubcategory === subcategory._id ? '#1976d2' : '#333',
-                          fontWeight: editCourseSubcategory === subcategory._id ? 'bold' : 'normal',
-                        }}>
-                          {subcategory.title}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                    {subcategories.length === 0 && (
-                      <Text style={{ padding: 12, color: '#666', textAlign: 'center' }}>
-                        No subcategories found
-                      </Text>
-                    )}
-                  </ScrollView>
+                  <TouchableOpacity
+                    onPress={() => setShowEditCourseModal(false)}
+                    style={{ padding: 4 }}
+                  >
+                    <SimpleIcon name="close" size={24} color="#666" />
+                  </TouchableOpacity>
                 </View>
-              )}
-              <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Language</Text>
-              <TouchableOpacity
-                style={[styles.textInput, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
-                onPress={() => {
-                  setShowLanguageDropdown(!showLanguageDropdown);
-                }}
-              >
-                <Text style={{ color: editCourseLanguage ? '#333' : '#999' }}>
-                  {editCourseLanguage || 'Select language'}
-                </Text>
-                <SimpleIcon name="chevron-down" size={16} color="#666" />
-              </TouchableOpacity>
-              
-              {showLanguageDropdown && (
-                <View style={{
-                  position: 'absolute',
-                  top: 280,
-                  left: 16,
-                  right: 16,
-                  backgroundColor: 'white',
-                  borderWidth: 1,
-                  borderColor: '#ddd',
-                  borderRadius: 8,
-                  maxHeight: 200,
-                  zIndex: 1000,
-                  elevation: 5,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 4,
-                }}>
-                  <ScrollView style={{ maxHeight: 200 }}>
-                    {['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Chinese', 'Japanese', 'Korean', 'Arabic'].map((language) => (
-                      <TouchableOpacity
-                        key={language}
-                        style={{
-                          padding: 12,
-                          borderBottomWidth: 1,
-                          borderBottomColor: '#eee',
-                          backgroundColor: editCourseLanguage === language ? '#e3f2fd' : 'transparent',
-                        }}
-                        onPress={() => {
-                          setEditCourseLanguage(language);
-                          setShowLanguageDropdown(false);
-                        }}
-                      >
-                        <Text style={{
-                          color: editCourseLanguage === language ? '#1976d2' : '#333',
-                          fontWeight: editCourseLanguage === language ? 'bold' : 'normal',
-                        }}>
-                          {language}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-              <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Course Description</Text>
-              <TextInput
-                style={[styles.textInput, { minHeight: 80 }]}
-                value={editCourseDescription}
-                onChangeText={setEditCourseDescription}
-                placeholder="Course Description"
-                multiline
-              />
-              {/* What you will teach in this course */}
-              <Text style={{ fontWeight: 'bold', marginBottom: 8, fontSize: 16 }}>What you will teach in this course (max 6)</Text>
-              {editTeachingPoints.map((point, index) => (
-                <View key={index} style={{ marginBottom: 12 }}>
-                  <Text style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>Entry {String(index + 1).padStart(2, '0')}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                    <View style={{ flex: 1, marginRight: 8 }}>
-                      <TextInput
-                        style={[styles.textInput, { minHeight: 40 }]}
-                        value={point}
-                        onChangeText={(text) => {
-                          const newPoints = [...editTeachingPoints];
-                          newPoints[index] = text;
-                          setEditTeachingPoints(newPoints);
-                        }}
-                        placeholder="What you will teach in this course..."
-                        multiline
-                      />
-                      <Text style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-                        {120 - point.length} characters remaining
-                      </Text>
+                <ScrollView>
+                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                    Course Title
+                  </Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editCourseTitle}
+                    onChangeText={setEditCourseTitle}
+                    placeholder="Course Title"
+                  />
+                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                    Sub Category
+                  </Text>
+                  {subcategoriesLoading ? (
+                    <View
+                      style={[
+                        styles.textInput,
+                        { justifyContent: "center", alignItems: "center" },
+                      ]}
+                    >
+                      <ActivityIndicator size="small" color="#10B144" />
                     </View>
-                    {editTeachingPoints.length > 1 && (
-                      <TouchableOpacity
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.textInput,
+                        {
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        },
+                      ]}
+                      onPress={() => {
+                        // Toggle dropdown visibility
+                        setShowSubcategoryDropdown(!showSubcategoryDropdown);
+                      }}
+                    >
+                      <Text
                         style={{
-                          backgroundColor: '#ff4444',
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderRadius: 6,
-                          marginTop: 2,
-                        }}
-                        onPress={() => {
-                          const newPoints = editTeachingPoints.filter((_, i) => i !== index);
-                          setEditTeachingPoints(newPoints);
+                          color: editCourseSubcategory ? "#333" : "#999",
                         }}
                       >
-                        <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>Remove</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              ))}
-              {editTeachingPoints.length < 6 && (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: '#007AFF',
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    alignSelf: 'flex-start',
-                    marginBottom: 16,
-                  }}
-                  onPress={() => {
-                    if (editTeachingPoints.length < 6) {
-                      setEditTeachingPoints([...editTeachingPoints, '']);
-                    }
-                  }}
-                >
-                  <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add Teaching Point</Text>
-                </TouchableOpacity>
-              )}
-
-              {/* Course Requirements */}
-              <Text style={{ fontWeight: 'bold', marginBottom: 8, fontSize: 16 }}>Course Requirements (max 6)</Text>
-              {editRequirements.map((requirement, index) => (
-                <View key={index} style={{ marginBottom: 12 }}>
-                  <Text style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>Entry {String(index + 1).padStart(2, '0')}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                    <View style={{ flex: 1, marginRight: 8 }}>
-                      <TextInput
-                        style={[styles.textInput, { minHeight: 40 }]}
-                        value={requirement}
-                        onChangeText={(text) => {
-                          const newRequirements = [...editRequirements];
-                          newRequirements[index] = text;
-                          setEditRequirements(newRequirements);
-                        }}
-                        placeholder="Course requirement..."
-                        multiline
-                      />
-                      <Text style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-                        {120 - requirement.length} characters remaining
+                        {editCourseSubcategory
+                          ? subcategories.find(
+                              (s) => s._id === editCourseSubcategory
+                            )?.title || "Select sub category"
+                          : "Select sub category"}
                       </Text>
+                      <SimpleIcon name="chevron-down" size={16} color="#666" />
+                    </TouchableOpacity>
+                  )}
+
+                  {showSubcategoryDropdown && (
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 200,
+                        left: 16,
+                        right: 16,
+                        backgroundColor: "white",
+                        borderWidth: 1,
+                        borderColor: "#ddd",
+                        borderRadius: 8,
+                        maxHeight: 200,
+                        zIndex: 1000,
+                        elevation: 5,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 4,
+                      }}
+                    >
+                      <ScrollView style={{ maxHeight: 200 }}>
+                        {subcategories.map((subcategory) => (
+                          <TouchableOpacity
+                            key={subcategory._id}
+                            style={{
+                              padding: 12,
+                              borderBottomWidth: 1,
+                              borderBottomColor: "#eee",
+                              backgroundColor:
+                                editCourseSubcategory === subcategory._id
+                                  ? "#e3f2fd"
+                                  : "transparent",
+                            }}
+                            onPress={() => {
+                              setEditCourseSubcategory(subcategory._id);
+                              setShowSubcategoryDropdown(false);
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color:
+                                  editCourseSubcategory === subcategory._id
+                                    ? "#1976d2"
+                                    : "#333",
+                                fontWeight:
+                                  editCourseSubcategory === subcategory._id
+                                    ? "bold"
+                                    : "normal",
+                              }}
+                            >
+                              {subcategory.title}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                        {subcategories.length === 0 && (
+                          <Text
+                            style={{
+                              padding: 12,
+                              color: "#666",
+                              textAlign: "center",
+                            }}
+                          >
+                            No subcategories found
+                          </Text>
+                        )}
+                      </ScrollView>
                     </View>
-                    {editRequirements.length > 1 && (
-                      <TouchableOpacity
+                  )}
+                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                    Language
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.textInput,
+                      {
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      },
+                    ]}
+                    onPress={() => {
+                      setShowLanguageDropdown(!showLanguageDropdown);
+                    }}
+                  >
+                    <Text
+                      style={{ color: editCourseLanguage ? "#333" : "#999" }}
+                    >
+                      {editCourseLanguage || "Select language"}
+                    </Text>
+                    <SimpleIcon name="chevron-down" size={16} color="#666" />
+                  </TouchableOpacity>
+
+                  {showLanguageDropdown && (
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 280,
+                        left: 16,
+                        right: 16,
+                        backgroundColor: "white",
+                        borderWidth: 1,
+                        borderColor: "#ddd",
+                        borderRadius: 8,
+                        maxHeight: 200,
+                        zIndex: 1000,
+                        elevation: 5,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 4,
+                      }}
+                    >
+                      <ScrollView style={{ maxHeight: 200 }}>
+                        {[
+                          "English",
+                          "Spanish",
+                          "French",
+                          "German",
+                          "Italian",
+                          "Portuguese",
+                          "Chinese",
+                          "Japanese",
+                          "Korean",
+                          "Arabic",
+                        ].map((language) => (
+                          <TouchableOpacity
+                            key={language}
+                            style={{
+                              padding: 12,
+                              borderBottomWidth: 1,
+                              borderBottomColor: "#eee",
+                              backgroundColor:
+                                editCourseLanguage === language
+                                  ? "#e3f2fd"
+                                  : "transparent",
+                            }}
+                            onPress={() => {
+                              setEditCourseLanguage(language);
+                              setShowLanguageDropdown(false);
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color:
+                                  editCourseLanguage === language
+                                    ? "#1976d2"
+                                    : "#333",
+                                fontWeight:
+                                  editCourseLanguage === language
+                                    ? "bold"
+                                    : "normal",
+                              }}
+                            >
+                              {language}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                    Course Description
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, { minHeight: 80 }]}
+                    value={editCourseDescription}
+                    onChangeText={setEditCourseDescription}
+                    placeholder="Course Description"
+                    multiline
+                  />
+                  {/* What you will teach in this course */}
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      marginBottom: 8,
+                      fontSize: 16,
+                    }}
+                  >
+                    What you will teach in this course (max 6)
+                  </Text>
+                  {editTeachingPoints.map((point, index) => (
+                    <View key={index} style={{ marginBottom: 12 }}>
+                      <Text
+                        style={{ fontSize: 14, color: "#666", marginBottom: 4 }}
+                      >
+                        Entry {String(index + 1).padStart(2, "0")}
+                      </Text>
+                      <View
                         style={{
-                          backgroundColor: '#ff4444',
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderRadius: 6,
-                          marginTop: 2,
-                        }}
-                        onPress={() => {
-                          const newRequirements = editRequirements.filter((_, i) => i !== index);
-                          setEditRequirements(newRequirements);
+                          flexDirection: "row",
+                          alignItems: "flex-start",
                         }}
                       >
-                        <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>Remove</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              ))}
-              {editRequirements.length < 6 && (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: '#007AFF',
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    alignSelf: 'flex-start',
-                    marginBottom: 16,
-                  }}
-                  onPress={() => {
-                    if (editRequirements.length < 6) {
-                      setEditRequirements([...editRequirements, '']);
-                    }
-                  }}
-                >
-                  <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Add Requirement</Text>
-                </TouchableOpacity>
-              )}
-              {editCourseError && <Text style={{ color: 'red', marginVertical: 8 }}>{editCourseError}</Text>}
-              <TouchableOpacity
-                style={[styles.saveChangesButton, editCourseLoading && styles.disabledButton]}
-                onPress={async () => {
-                  setEditCourseLoading(true);
-                  setEditCourseError(null);
-                  try {
-                    await editCourseBasics(course._id, {
-                      courseTitle: editCourseTitle,
-                      category: editCourseCategory,
-                      subcategory: editCourseSubcategory,
-                      language: editCourseLanguage,
-                      courseDescription: editCourseDescription,
-                      teachingPoints: JSON.stringify(editTeachingPoints),
-                      requirements: JSON.stringify(editRequirements),
-                    });
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <TextInput
+                            style={[styles.textInput, { minHeight: 40 }]}
+                            value={point}
+                            onChangeText={(text) => {
+                              const newPoints = [...editTeachingPoints];
+                              newPoints[index] = text;
+                              setEditTeachingPoints(newPoints);
+                            }}
+                            placeholder="What you will teach in this course..."
+                            multiline
+                          />
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: "#999",
+                              marginTop: 4,
+                            }}
+                          >
+                            {120 - point.length} characters remaining
+                          </Text>
+                        </View>
+                        {editTeachingPoints.length > 1 && (
+                          <TouchableOpacity
+                            style={{
+                              backgroundColor: "#ff4444",
+                              paddingHorizontal: 12,
+                              paddingVertical: 8,
+                              borderRadius: 6,
+                              marginTop: 2,
+                            }}
+                            onPress={() => {
+                              const newPoints = editTeachingPoints.filter(
+                                (_, i) => i !== index
+                              );
+                              setEditTeachingPoints(newPoints);
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "white",
+                                fontSize: 12,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              Remove
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                  {editTeachingPoints.length < 6 && (
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#007AFF",
+                        paddingHorizontal: 16,
+                        paddingVertical: 10,
+                        borderRadius: 8,
+                        alignSelf: "flex-start",
+                        marginBottom: 16,
+                      }}
+                      onPress={() => {
+                        if (editTeachingPoints.length < 6) {
+                          setEditTeachingPoints([...editTeachingPoints, ""]);
+                        }
+                      }}
+                    >
+                      <Text style={{ color: "white", fontWeight: "bold" }}>
+                        + Add Teaching Point
+                      </Text>
+                    </TouchableOpacity>
+                  )}
 
-                    getCourseDetails(courseId)
-                      .then((res) => {
-                        setCourse(res.course);
-                        Toast.show('Course updated successfully', Toast.LONG);
-                        setShowEditCourseModal(false);
-                        setLoading(true);
-                      })
-                      .catch(() => setError("Failed to load course details."))
-                      .finally(() => setLoading(false));
-                  } catch (err: any) {
-                    setEditCourseError(err.message || 'Failed to update course');
-                  } finally {
-                    setEditCourseLoading(false);
-                  }
-                }}
-                disabled={editCourseLoading}
-              >
-                {editCourseLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveChangesButtonText}>Update Course Info</Text>}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelProfileButton}
-                onPress={() => setShowEditCourseModal(false)}
-              >
-                <Text style={styles.cancelProfileButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </ScrollView>
+                  {/* Course Requirements */}
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      marginBottom: 8,
+                      fontSize: 16,
+                    }}
+                  >
+                    Course Requirements (max 6)
+                  </Text>
+                  {editRequirements.map((requirement, index) => (
+                    <View key={index} style={{ marginBottom: 12 }}>
+                      <Text
+                        style={{ fontSize: 14, color: "#666", marginBottom: 4 }}
+                      >
+                        Entry {String(index + 1).padStart(2, "0")}
+                      </Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <TextInput
+                            style={[styles.textInput, { minHeight: 40 }]}
+                            value={requirement}
+                            onChangeText={(text) => {
+                              const newRequirements = [...editRequirements];
+                              newRequirements[index] = text;
+                              setEditRequirements(newRequirements);
+                            }}
+                            placeholder="Course requirement..."
+                            multiline
+                          />
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: "#999",
+                              marginTop: 4,
+                            }}
+                          >
+                            {120 - requirement.length} characters remaining
+                          </Text>
+                        </View>
+                        {editRequirements.length > 1 && (
+                          <TouchableOpacity
+                            style={{
+                              backgroundColor: "#ff4444",
+                              paddingHorizontal: 12,
+                              paddingVertical: 8,
+                              borderRadius: 6,
+                              marginTop: 2,
+                            }}
+                            onPress={() => {
+                              const newRequirements = editRequirements.filter(
+                                (_, i) => i !== index
+                              );
+                              setEditRequirements(newRequirements);
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "white",
+                                fontSize: 12,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              Remove
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                  {editRequirements.length < 6 && (
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#007AFF",
+                        paddingHorizontal: 16,
+                        paddingVertical: 10,
+                        borderRadius: 8,
+                        alignSelf: "flex-start",
+                        marginBottom: 16,
+                      }}
+                      onPress={() => {
+                        if (editRequirements.length < 6) {
+                          setEditRequirements([...editRequirements, ""]);
+                        }
+                      }}
+                    >
+                      <Text style={{ color: "white", fontWeight: "bold" }}>
+                        + Add Requirement
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {editCourseError && (
+                    <Text style={{ color: "red", marginVertical: 8 }}>
+                      {editCourseError}
+                    </Text>
+                  )}
+                  <TouchableOpacity
+                    style={[
+                      styles.saveChangesButton,
+                      editCourseLoading && styles.disabledButton,
+                    ]}
+                    onPress={async () => {
+                      setEditCourseLoading(true);
+                      setEditCourseError(null);
+                      try {
+                        await editCourseBasics(course._id, {
+                          courseTitle: editCourseTitle,
+                          category: editCourseCategory,
+                          subcategory: editCourseSubcategory,
+                          language: editCourseLanguage,
+                          courseDescription: editCourseDescription,
+                          teachingPoints: JSON.stringify(editTeachingPoints),
+                          requirements: JSON.stringify(editRequirements),
+                        });
+
+                        getCourseDetails(courseId)
+                          .then((res) => {
+                            setCourse(res.course);
+                            Toast.show(
+                              "Course updated successfully",
+                              Toast.LONG
+                            );
+                            setShowEditCourseModal(false);
+                            setLoading(true);
+                          })
+                          .catch(() =>
+                            setError("Failed to load course details.")
+                          )
+                          .finally(() => setLoading(false));
+                      } catch (err: any) {
+                        setEditCourseError(
+                          err.message || "Failed to update course"
+                        );
+                      } finally {
+                        setEditCourseLoading(false);
+                      }
+                    }}
+                    disabled={editCourseLoading}
+                  >
+                    {editCourseLoading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.saveChangesButtonText}>
+                        Update Course Info
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.cancelProfileButton}
+                    onPress={() => setShowEditCourseModal(false)}
+                  >
+                    <Text style={styles.cancelProfileButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </ScrollView>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -3569,16 +4111,39 @@ const CourseDetailsPage = () => {
               <Text style={styles.fullScreenModalTitle}>Chapter Details</Text>
               <View style={{ width: 40 }} />
             </View>
-            
+
             {chapterDetailsLoading ? (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 40,
+                }}
+              >
                 <ActivityIndicator size="large" color="#10B144" />
-                <Text style={{ marginTop: 16, fontSize: 16, color: '#666' }}>Loading chapter details...</Text>
+                <Text style={{ marginTop: 16, fontSize: 16, color: "#666" }}>
+                  Loading chapter details...
+                </Text>
               </View>
             ) : chapterDetailsError ? (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 40,
+                }}
+              >
                 <SimpleIcon name="alert-circle" size={48} color="#ff6b6b" />
-                <Text style={{ marginTop: 16, fontSize: 16, color: '#ff6b6b', textAlign: 'center' }}>
+                <Text
+                  style={{
+                    marginTop: 16,
+                    fontSize: 16,
+                    color: "#ff6b6b",
+                    textAlign: "center",
+                  }}
+                >
                   {chapterDetailsError}
                 </Text>
                 <TouchableOpacity
@@ -3594,17 +4159,21 @@ const CourseDetailsPage = () => {
                 <View style={styles.chapterDetailsCard}>
                   <View style={styles.chapterDetailsHeader}>
                     <View style={styles.chapterDetailsIcon}>
-                      <SimpleIcon name="book-outline" size={24} color="#10B144" />
+                      <SimpleIcon
+                        name="book-outline"
+                        size={24}
+                        color="#10B144"
+                      />
                     </View>
                     <View style={styles.chapterDetailsActions}>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.chapterDetailsActionButton}
                         onPress={handleEditChapter}
                       >
                         <SimpleIcon name="pencil" size={16} color="#fff" />
                       </TouchableOpacity>
                       <View style={styles.plusButtonContainer}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.chapterDetailsActionButton}
                           onPress={handlePlusButtonPress}
                         >
@@ -3613,42 +4182,70 @@ const CourseDetailsPage = () => {
 
                         {showPlusDropdown && (
                           <View style={styles.dropdownMenu}>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                               style={styles.dropdownItem}
-                              onPress={() => handleDropdownOption('lesson')}
+                              onPress={() => handleDropdownOption("lesson")}
                             >
-                              <SimpleIcon name="book" size={16} color="#3b82f6" />
-                              <Text style={styles.dropdownItemText}>+ Add Lesson</Text>
+                              <SimpleIcon
+                                name="book"
+                                size={16}
+                                color="#3b82f6"
+                              />
+                              <Text style={styles.dropdownItemText}>
+                                + Add Lesson
+                              </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                               style={styles.dropdownItem}
-                              onPress={() => handleDropdownOption('assessment')}
+                              onPress={() => handleDropdownOption("assessment")}
                             >
-                              <SimpleIcon name="clipboard" size={16} color="#10b981" />
-                              <Text style={styles.dropdownItemText}>+ Add Assessment</Text>
+                              <SimpleIcon
+                                name="clipboard"
+                                size={16}
+                                color="#10b981"
+                              />
+                              <Text style={styles.dropdownItemText}>
+                                + Add Assessment
+                              </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                               style={styles.dropdownItem}
-                              onPress={() => handleDropdownOption('page')}
+                              onPress={() => handleDropdownOption("page")}
                             >
-                              <SimpleIcon name="document-text" size={16} color="#6b7280" />
-                              <Text style={styles.dropdownItemText}>+ Add Page</Text>
+                              <SimpleIcon
+                                name="document-text"
+                                size={16}
+                                color="#6b7280"
+                              />
+                              <Text style={styles.dropdownItemText}>
+                                + Add Page
+                              </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                               style={styles.dropdownItem}
-                              onPress={() => handleDropdownOption('discussion')}
+                              onPress={() => handleDropdownOption("discussion")}
                             >
-                              <SimpleIcon name="chat" size={16} color="#6b7280" />
-                              <Text style={styles.dropdownItemText}>+ Discussion</Text>
+                              <SimpleIcon
+                                name="chat"
+                                size={16}
+                                color="#6b7280"
+                              />
+                              <Text style={styles.dropdownItemText}>
+                                + Discussion
+                              </Text>
                             </TouchableOpacity>
                           </View>
                         )}
                       </View>
                     </View>
                   </View>
-                  
-                  <Text style={styles.chapterDetailsTitle}>{chapterDetails.title}</Text>
-                  <Text style={styles.chapterDetailsDescription}>{chapterDetails.description}</Text>
+
+                  <Text style={styles.chapterDetailsTitle}>
+                    {chapterDetails.title}
+                  </Text>
+                  <Text style={styles.chapterDetailsDescription}>
+                    {chapterDetails.description}
+                  </Text>
                 </View>
 
                 {/* Chapter Assessments Card */}
@@ -3660,75 +4257,104 @@ const CourseDetailsPage = () => {
                     <Text style={styles.lessonsTitle}>Chapter Assessments</Text>
                     <View style={styles.lessonsCount}>
                       <Text style={styles.lessonsCountText}>
-                        {chapterDetails.chapter_assessments ? chapterDetails.chapter_assessments.length : 0}
+                        {chapterDetails.chapter_assessments
+                          ? chapterDetails.chapter_assessments.length
+                          : 0}
                       </Text>
                     </View>
                   </View>
 
-                  {chapterDetails.chapter_assessments && chapterDetails.chapter_assessments.length > 0 ? (
+                  {chapterDetails.chapter_assessments &&
+                  chapterDetails.chapter_assessments.length > 0 ? (
                     <View style={styles.chapterLessonsList}>
-                      {chapterDetails.chapter_assessments.map((assessment: any, index: number) => (
-                        <View key={assessment._id || index} style={styles.assessmentItemContainer}>
-                          <View style={styles.assessmentItemHeader}>
-                            {assessment.category ? (
-                              <View style={styles.assessmentCategoryChip}>
-                                <Text style={styles.assessmentCategoryChipText}>{
-                                  typeof assessment.category === 'string'
-                                    ? assessment.category
-                                    : (assessment.category && assessment.category.name)
+                      {chapterDetails.chapter_assessments.map(
+                        (assessment: any, index: number) => (
+                          <View
+                            key={assessment._id || index}
+                            style={styles.assessmentItemContainer}
+                          >
+                            <View style={styles.assessmentItemHeader}>
+                              {assessment.category ? (
+                                <View style={styles.assessmentCategoryChip}>
+                                  <Text
+                                    style={styles.assessmentCategoryChipText}
+                                  >
+                                    {typeof assessment.category === "string"
+                                      ? assessment.category
+                                      : assessment.category &&
+                                        assessment.category.name
                                       ? assessment.category.name
-                                      : 'Uncategorized'
-                                }</Text>
-                              </View>
-                            ) : null}
+                                      : "Uncategorized"}
+                                  </Text>
+                                </View>
+                              ) : null}
+                              <TouchableOpacity
+                                onPress={() => {
+                                  Alert.alert(
+                                    "Delete Assessment",
+                                    `Are you sure you want to delete "${
+                                      assessment.title || "this assessment"
+                                    }"?`,
+                                    [
+                                      {
+                                        text: "Cancel",
+                                        style: "cancel",
+                                      },
+                                      {
+                                        text: "Delete",
+                                        style: "destructive",
+                                        onPress: () =>
+                                          handleDeleteAssessmentDirect(
+                                            assessment._id
+                                          ),
+                                      },
+                                    ]
+                                  );
+                                }}
+                                style={styles.assessmentDeleteButton}
+                              >
+                                <SimpleIcon
+                                  name="trash"
+                                  size={16}
+                                  color="#dc2626"
+                                />
+                              </TouchableOpacity>
+                            </View>
+
                             <TouchableOpacity
+                              style={styles.assessmentContent}
+                              activeOpacity={0.8}
                               onPress={() => {
-                                Alert.alert(
-                                  "Delete Assessment",
-                                  `Are you sure you want to delete "${assessment.title || 'this assessment'}"?`,
-                                  [
-                                    {
-                                      text: "Cancel",
-                                      style: "cancel"
-                                    },
-                                    {
-                                      text: "Delete",
-                                      style: "destructive",
-                                      onPress: () => handleDeleteAssessmentDirect(assessment._id)
-                                    }
-                                  ]
-                                );
+                                setShowChapterDetailsModal(false); // Close chapter details modal first
+                                setSelectedAssessmentForModal(assessment);
+                                setShowAssessmentDetailsModal(true);
                               }}
-                              style={styles.assessmentDeleteButton}
                             >
-                              <SimpleIcon name="trash" size={16} color="#dc2626" />
+                              <View style={styles.assessmentInfo}>
+                                <Text style={styles.assessmentTitle}>
+                                  {assessment.title ||
+                                    `Assessment ${index + 1}`}
+                                </Text>
+                                {assessment.description ? (
+                                  <Text style={styles.assessmentDescription}>
+                                    {assessment.description}
+                                  </Text>
+                                ) : null}
+                              </View>
                             </TouchableOpacity>
                           </View>
-                          
-                          <TouchableOpacity
-                            style={styles.assessmentContent}
-                            activeOpacity={0.8}
-                            onPress={() => {
-                              setShowChapterDetailsModal(false); // Close chapter details modal first
-                              setSelectedAssessmentForModal(assessment);
-                              setShowAssessmentDetailsModal(true);
-                            }}
-                          >
-                            <View style={styles.assessmentInfo}>
-                              <Text style={styles.assessmentTitle}>{assessment.title || `Assessment ${index + 1}`}</Text>
-                              {assessment.description ? (
-                                <Text style={styles.assessmentDescription}>{assessment.description}</Text>
-                              ) : null}
-                            </View>
-                          </TouchableOpacity>
-                        </View>
-                      ))}
+                        )
+                      )}
                     </View>
                   ) : (
                     <View style={styles.noLessonsContainer}>
                       <SimpleIcon name="clipboard" size={48} color="#ccc" />
-                      <Text style={styles.noLessonsTitle}>No assessments yet</Text>
-                      <Text style={styles.noLessonsDescription}>Create your first assessment for this chapter.</Text>
+                      <Text style={styles.noLessonsTitle}>
+                        No assessments yet
+                      </Text>
+                      <Text style={styles.noLessonsDescription}>
+                        Create your first assessment for this chapter.
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -3737,261 +4363,418 @@ const CourseDetailsPage = () => {
                 <View style={styles.lessonsCard}>
                   <View style={styles.lessonsHeader}>
                     <View style={styles.lessonsIcon}>
-                      <SimpleIcon name="book-outline" size={24} color="#10B144" />
+                      <SimpleIcon
+                        name="book-outline"
+                        size={24}
+                        color="#10B144"
+                      />
                     </View>
                     <Text style={styles.lessonsTitle}>Lessons</Text>
                     <View style={styles.lessonsCount}>
-                      <Text style={styles.lessonsCountText}>{chapterDetails.lessons ? chapterDetails.lessons.length : 0}</Text>
+                      <Text style={styles.lessonsCountText}>
+                        {chapterDetails.lessons
+                          ? chapterDetails.lessons.length
+                          : 0}
+                      </Text>
                     </View>
                   </View>
-                  
-                  {chapterDetails.lessons && chapterDetails.lessons.length > 0 ? (
+
+                  {chapterDetails.lessons &&
+                  chapterDetails.lessons.length > 0 ? (
                     <View style={styles.chapterLessonsList}>
-                      {chapterDetails.lessons.map((lesson: any, index: number) => (
-                        <View key={lesson._id || index} style={styles.lessonCard}>
-                          <View style={styles.lessonCardHeader}>
-                            <View style={styles.lessonNumberBadge}>
-                              <Text style={styles.lessonCardNumberText}>Lesson {index + 1}</Text>
-                            </View>
-                            <View style={styles.lessonCardActions}>
-                              <TouchableOpacity 
-                                style={styles.lessonActionIcon}
-                                onPress={() => handleEditLesson(lesson)}
-                              >
-                                <SimpleIcon name="pencil" size={16} color="#10B144" />
-                              </TouchableOpacity>
-                              <TouchableOpacity 
-                                style={styles.lessonActionIcon}
-                                onPress={() => handleDeleteLessonFromChapter(lesson._id)}
-                              >
-                                <SimpleIcon name="trash" size={16} color="#6b7280" />
-                              </TouchableOpacity>
-                              
-                              <View style={styles.lessonsPlusButtonContainer}>
-                                <TouchableOpacity 
-                                  style={styles.lessonAddButton}
-                                  onPress={() => handleLessonsPlusButtonPress(lesson)}
-                                >
-                                  <SimpleIcon name="plus" size={16} color="#fff" />
-                                </TouchableOpacity>
-                                
-                                {showLessonsPlusDropdown && (
-                                  <View style={styles.lessonsDropdownMenu}>
-                                    <TouchableOpacity 
-                                      style={styles.dropdownItem}
-                                      onPress={() => handleLessonsDropdownOption('assessment')}
-                                    >
-                                      <SimpleIcon name="clipboard" size={16} color="#10b981" />
-                                      <Text style={styles.dropdownItemText}>+ Add Assessment</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity 
-                                      style={styles.dropdownItem}
-                                      onPress={() => handleLessonsDropdownOption('page')}
-                                    >
-                                      <SimpleIcon name="document-text" size={16} color="#6b7280" />
-                                      <Text style={styles.dropdownItemText}>+ Add Page</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity 
-                                      style={styles.dropdownItem}
-                                      onPress={() => handleLessonsDropdownOption('discussion')}
-                                    >
-                                      <SimpleIcon name="chat" size={16} color="#6b7280" />
-                                      <Text style={styles.dropdownItemText}>+ Discussion</Text>
-                                    </TouchableOpacity>
-                                  </View>
-                                )}
+                      {chapterDetails.lessons.map(
+                        (lesson: any, index: number) => (
+                          <View
+                            key={lesson._id || index}
+                            style={styles.lessonCard}
+                          >
+                            <View style={styles.lessonCardHeader}>
+                              <View style={styles.lessonNumberBadge}>
+                                <Text style={styles.lessonCardNumberText}>
+                                  Lesson {index + 1}
+                                </Text>
                               </View>
-                            </View>
-                          </View>
-                          <Text style={styles.lessonCardTitle}>{lesson.title}</Text>
-                          <Text style={styles.lessonCardDescription}>{lesson.description?.replace(/<[^>]*>/g, '') || 'No description'}</Text>
-                          
-                          {/* Files Section */}
-                          <View style={styles.filesSection}>
-                            <View style={styles.filesHeader}>
-                              <Text style={styles.filesTitle}>Files</Text>
-                              <TouchableOpacity 
-                                style={styles.lessonAddFileButton}
-                                onPress={() => handleAddFilesToLesson(lesson._id)}
-                              >
-                                <Text style={styles.lessonAddFileButtonText}>+ Add</Text>
-                              </TouchableOpacity>
-                            </View>
-                            {lesson.pdfFiles && lesson.pdfFiles.length > 0 ? (
-                              lesson.pdfFiles.map((file: any, fileIndex: number) => (
-                                <View key={fileIndex} style={styles.fileItem}>
-                                  <TouchableOpacity 
-                                    style={styles.fileItemContent}
-                                    onPress={() => handleOpenLink(file.url)}
-                                  >
-                                    <SimpleIcon name="document" size={16} color="#10B144" />
-                                    <Text style={styles.fileName}>{file.filename}</Text>
-                                    <Text style={styles.fileDate}>
-                                      {new Date(file.uploadedAt).toLocaleDateString('en-US', {
-                                        month: '2-digit',
-                                        day: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: true
-                                      })}
-                                    </Text>
-                                  </TouchableOpacity>
+                              <View style={styles.lessonCardActions}>
+                                <TouchableOpacity
+                                  style={styles.lessonActionIcon}
+                                  onPress={() => handleEditLesson(lesson)}
+                                >
+                                  <SimpleIcon
+                                    name="pencil"
+                                    size={16}
+                                    color="#10B144"
+                                  />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={styles.lessonActionIcon}
+                                  onPress={() =>
+                                    handleDeleteLessonFromChapter(lesson._id)
+                                  }
+                                >
+                                  <SimpleIcon
+                                    name="trash"
+                                    size={16}
+                                    color="#6b7280"
+                                  />
+                                </TouchableOpacity>
+
+                                <View style={styles.lessonsPlusButtonContainer}>
                                   <TouchableOpacity
-                                    onPress={() => handleDeleteFile(lesson._id, file._id)}
+                                    style={styles.lessonAddButton}
+                                    onPress={() =>
+                                      handleLessonsPlusButtonPress(lesson)
+                                    }
                                   >
-                                    <SimpleIcon name="trash" size={16} color="#6b7280" />
+                                    <SimpleIcon
+                                      name="plus"
+                                      size={16}
+                                      color="#fff"
+                                    />
                                   </TouchableOpacity>
-                                </View>
-                              ))
-                            ) : (
-                              <Text style={styles.noFilesText}>no files</Text>
-                            )}
-                          </View>
 
-                          {/* Resources Section */}
-                          {(lesson.youtubeLinks || lesson.otherLink) && (
-                            <View style={styles.resourcesSection}>
-                              <Text style={styles.lessonResourcesTitle}>Resources</Text>
-                              <View style={styles.resourcesList}>
-                                {lesson.youtubeLinks && (
-                                  <TouchableOpacity 
-                                    style={styles.youtubeResource}
-                                    onPress={() => handleOpenLink(lesson.youtubeLinks)}
-                                  >
-                                    <SimpleIcon name="play" size={16} color="#fff" />
-                                    <Text style={styles.resourceText}>YouTube Video</Text>
-                                  </TouchableOpacity>
-                                )}
-                                {lesson.otherLink && (
-                                  <TouchableOpacity 
-                                    style={styles.linkResource}
-                                    onPress={() => handleOpenLink(lesson.otherLink)}
-                                  >
-                                    <SimpleIcon name="link" size={16} color="#fff" />
-                                    <Text style={styles.resourceText}>External Link</Text>
-                                  </TouchableOpacity>
-                                )}
+                                  {showLessonsPlusDropdown && (
+                                    <View style={styles.lessonsDropdownMenu}>
+                                      <TouchableOpacity
+                                        style={styles.dropdownItem}
+                                        onPress={() =>
+                                          handleLessonsDropdownOption(
+                                            "assessment"
+                                          )
+                                        }
+                                      >
+                                        <SimpleIcon
+                                          name="clipboard"
+                                          size={16}
+                                          color="#10b981"
+                                        />
+                                        <Text style={styles.dropdownItemText}>
+                                          + Add Assessment
+                                        </Text>
+                                      </TouchableOpacity>
+                                      <TouchableOpacity
+                                        style={styles.dropdownItem}
+                                        onPress={() =>
+                                          handleLessonsDropdownOption("page")
+                                        }
+                                      >
+                                        <SimpleIcon
+                                          name="document-text"
+                                          size={16}
+                                          color="#6b7280"
+                                        />
+                                        <Text style={styles.dropdownItemText}>
+                                          + Add Page
+                                        </Text>
+                                      </TouchableOpacity>
+                                      <TouchableOpacity
+                                        style={styles.dropdownItem}
+                                        onPress={() =>
+                                          handleLessonsDropdownOption(
+                                            "discussion"
+                                          )
+                                        }
+                                      >
+                                        <SimpleIcon
+                                          name="chat"
+                                          size={16}
+                                          color="#6b7280"
+                                        />
+                                        <Text style={styles.dropdownItemText}>
+                                          + Discussion
+                                        </Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  )}
+                                </View>
                               </View>
                             </View>
-                          )}
-
-                          {/* Lesson Pages Section - Always visible in lesson card */}
-                          <View style={styles.lessonPagesSection}>
-                            <Text style={styles.lessonPagesTitle}>
-                              Lesson Pages ({lesson.lesson_pages?.length || 0})
+                            <Text style={styles.lessonCardTitle}>
+                              {lesson.title}
                             </Text>
-                            {lesson.lesson_pages && lesson.lesson_pages.length > 0 ? (
-                              lesson.lesson_pages.map((page: any, pageIndex: number) => (
-                                <View key={page._id || pageIndex} style={styles.pageCard}>
-                                  <View style={styles.pageHeader}>
-                                    <View style={styles.pageBadge}>
-                                      <Text style={styles.pageBadgeText}>Page</Text>
-                                    </View>
-                                    <TouchableOpacity
-                                      onPress={() => {
-                                        Alert.alert(
-                                          "Delete Page",
-                                          "Are you sure you want to delete this page?",
-                                          [
-                                            {
-                                              text: "Cancel",
-                                              style: "cancel"
-                                            },
-                                            {
-                                              text: "Delete",
-                                              style: "destructive",
-                                              onPress: () => handleDeletePage(page._id)
-                                            }
-                                          ]
-                                        );
-                                      }}
-                                      style={styles.pageDeleteButton}
-                                    >
-                                      <SimpleIcon name="trash" size={16} color="#6b7280" />
-                                    </TouchableOpacity>
-                                  </View>
-                                  <Text style={styles.pageTitle}>{page.title}</Text>
-                                  <Text style={styles.pageDescription}>{page.description}</Text>
-                                </View>
-                              ))
-                            ) : (
-                              <Text style={styles.noPagesText}>No pages yet</Text>
-                            )}
-                          </View>
-
-                          {/* Lesson Assessments Section - Always visible in lesson card */}
-                          <View style={styles.lessonAssessmentsSection}>
-                            <Text style={styles.lessonAssessmentsTitle}>
-                              Lesson Assessments ({lesson.lesson_assessments?.length || 0})
+                            <Text style={styles.lessonCardDescription}>
+                              {lesson.description?.replace(/<[^>]*>/g, "") ||
+                                "No description"}
                             </Text>
-                            {lesson.lesson_assessments && lesson.lesson_assessments.length > 0 ? (
-                              lesson.lesson_assessments.map((assessment: any, assessmentIndex: number) => (
-                                <TouchableOpacity 
-                                  key={assessment._id || assessmentIndex} 
-                                  style={styles.assessmentCard}
-                                  activeOpacity={0.8}
-                                  onPress={() => {
-                                    setShowChapterDetailsModal(false); // Close chapter details modal first
-                                    setSelectedAssessmentForModal(assessment);
-                                    setShowAssessmentDetailsModal(true);
-                                  }}
+
+                            {/* Files Section */}
+                            <View style={styles.filesSection}>
+                              <View style={styles.filesHeader}>
+                                <Text style={styles.filesTitle}>Files</Text>
+                                <TouchableOpacity
+                                  style={styles.lessonAddFileButton}
+                                  onPress={() =>
+                                    handleAddFilesToLesson(lesson._id)
+                                  }
                                 >
-                                  <View style={styles.assessmentHeader}>
-                                    <View style={styles.assessmentBadge}>
-                                      <Text style={styles.assessmentBadgeText}>{assessment.category?.name || 'testing'}</Text>
-                                    </View>
-                                    <TouchableOpacity
-                                      onPress={() => {
-                                        Alert.alert(
-                                          "Delete Assessment",
-                                          "Are you sure you want to delete this assessment?",
-                                          [
-                                            {
-                                              text: "Cancel",
-                                              style: "cancel"
-                                            },
-                                            {
-                                              text: "Delete",
-                                              style: "destructive",
-                                              onPress: () => handleDeleteAssessmentDirect(assessment._id)
-                                            }
-                                          ]
-                                        );
-                                      }}
-                                      style={styles.assessmentDeleteButton}
-                                    >
-                                      <SimpleIcon name="trash" size={16} color="#6b7280" />
-                                    </TouchableOpacity>
-                                  </View>
-                                  <Text style={styles.assessmentTitle}>{assessment.title}</Text>
-                                  <Text style={styles.assessmentDescription}>{assessment.description}</Text>
+                                  <Text style={styles.lessonAddFileButtonText}>
+                                    + Add
+                                  </Text>
                                 </TouchableOpacity>
-                              ))
-                            ) : (
-                              <Text style={styles.noAssessmentsText}>No assessments yet</Text>
+                              </View>
+                              {lesson.pdfFiles && lesson.pdfFiles.length > 0 ? (
+                                lesson.pdfFiles.map(
+                                  (file: any, fileIndex: number) => (
+                                    <View
+                                      key={fileIndex}
+                                      style={styles.fileItem}
+                                    >
+                                      <TouchableOpacity
+                                        style={styles.fileItemContent}
+                                        onPress={() => handleOpenLink(file.url)}
+                                      >
+                                        <SimpleIcon
+                                          name="document"
+                                          size={16}
+                                          color="#10B144"
+                                        />
+                                        <Text style={styles.fileName}>
+                                          {file.filename}
+                                        </Text>
+                                        <Text style={styles.fileDate}>
+                                          {new Date(
+                                            file.uploadedAt
+                                          ).toLocaleDateString("en-US", {
+                                            month: "2-digit",
+                                            day: "2-digit",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: true,
+                                          })}
+                                        </Text>
+                                      </TouchableOpacity>
+                                      <TouchableOpacity
+                                        onPress={() =>
+                                          handleDeleteFile(lesson._id, file._id)
+                                        }
+                                      >
+                                        <SimpleIcon
+                                          name="trash"
+                                          size={16}
+                                          color="#6b7280"
+                                        />
+                                      </TouchableOpacity>
+                                    </View>
+                                  )
+                                )
+                              ) : (
+                                <Text style={styles.noFilesText}>no files</Text>
+                              )}
+                            </View>
+
+                            {/* Resources Section */}
+                            {(lesson.youtubeLinks || lesson.otherLink) && (
+                              <View style={styles.resourcesSection}>
+                                <Text style={styles.lessonResourcesTitle}>
+                                  Resources
+                                </Text>
+                                <View style={styles.resourcesList}>
+                                  {lesson.youtubeLinks && (
+                                    <TouchableOpacity
+                                      style={styles.youtubeResource}
+                                      onPress={() =>
+                                        handleOpenLink(lesson.youtubeLinks)
+                                      }
+                                    >
+                                      <SimpleIcon
+                                        name="play"
+                                        size={16}
+                                        color="#fff"
+                                      />
+                                      <Text style={styles.resourceText}>
+                                        YouTube Video
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
+                                  {lesson.otherLink && (
+                                    <TouchableOpacity
+                                      style={styles.linkResource}
+                                      onPress={() =>
+                                        handleOpenLink(lesson.otherLink)
+                                      }
+                                    >
+                                      <SimpleIcon
+                                        name="link"
+                                        size={16}
+                                        color="#fff"
+                                      />
+                                      <Text style={styles.resourceText}>
+                                        External Link
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                              </View>
                             )}
+
+                            {/* Lesson Pages Section - Always visible in lesson card */}
+                            <View style={styles.lessonPagesSection}>
+                              <Text style={styles.lessonPagesTitle}>
+                                Lesson Pages ({lesson.lesson_pages?.length || 0}
+                                )
+                              </Text>
+                              {lesson.lesson_pages &&
+                              lesson.lesson_pages.length > 0 ? (
+                                lesson.lesson_pages.map(
+                                  (page: any, pageIndex: number) => (
+                                    <View
+                                      key={page._id || pageIndex}
+                                      style={styles.pageCard}
+                                    >
+                                      <View style={styles.pageHeader}>
+                                        <View style={styles.pageBadge}>
+                                          <Text style={styles.pageBadgeText}>
+                                            Page
+                                          </Text>
+                                        </View>
+                                        <TouchableOpacity
+                                          onPress={() => {
+                                            Alert.alert(
+                                              "Delete Page",
+                                              "Are you sure you want to delete this page?",
+                                              [
+                                                {
+                                                  text: "Cancel",
+                                                  style: "cancel",
+                                                },
+                                                {
+                                                  text: "Delete",
+                                                  style: "destructive",
+                                                  onPress: () =>
+                                                    handleDeletePage(page._id),
+                                                },
+                                              ]
+                                            );
+                                          }}
+                                          style={styles.pageDeleteButton}
+                                        >
+                                          <SimpleIcon
+                                            name="trash"
+                                            size={16}
+                                            color="#6b7280"
+                                          />
+                                        </TouchableOpacity>
+                                      </View>
+                                      <Text style={styles.pageTitle}>
+                                        {page.title}
+                                      </Text>
+                                      <Text style={styles.pageDescription}>
+                                        {page.description}
+                                      </Text>
+                                    </View>
+                                  )
+                                )
+                              ) : (
+                                <Text style={styles.noPagesText}>
+                                  No pages yet
+                                </Text>
+                              )}
+                            </View>
+
+                            {/* Lesson Assessments Section - Always visible in lesson card */}
+                            <View style={styles.lessonAssessmentsSection}>
+                              <Text style={styles.lessonAssessmentsTitle}>
+                                Lesson Assessments (
+                                {lesson.lesson_assessments?.length || 0})
+                              </Text>
+                              {lesson.lesson_assessments &&
+                              lesson.lesson_assessments.length > 0 ? (
+                                lesson.lesson_assessments.map(
+                                  (
+                                    assessment: any,
+                                    assessmentIndex: number
+                                  ) => (
+                                    <TouchableOpacity
+                                      key={assessment._id || assessmentIndex}
+                                      style={styles.assessmentCard}
+                                      activeOpacity={0.8}
+                                      onPress={() => {
+                                        setShowChapterDetailsModal(false); // Close chapter details modal first
+                                        setSelectedAssessmentForModal(
+                                          assessment
+                                        );
+                                        setShowAssessmentDetailsModal(true);
+                                      }}
+                                    >
+                                      <View style={styles.assessmentHeader}>
+                                        <View style={styles.assessmentBadge}>
+                                          <Text
+                                            style={styles.assessmentBadgeText}
+                                          >
+                                            {assessment.category?.name ||
+                                              "testing"}
+                                          </Text>
+                                        </View>
+                                        <TouchableOpacity
+                                          onPress={() => {
+                                            Alert.alert(
+                                              "Delete Assessment",
+                                              "Are you sure you want to delete this assessment?",
+                                              [
+                                                {
+                                                  text: "Cancel",
+                                                  style: "cancel",
+                                                },
+                                                {
+                                                  text: "Delete",
+                                                  style: "destructive",
+                                                  onPress: () =>
+                                                    handleDeleteAssessmentDirect(
+                                                      assessment._id
+                                                    ),
+                                                },
+                                              ]
+                                            );
+                                          }}
+                                          style={styles.assessmentDeleteButton}
+                                        >
+                                          <SimpleIcon
+                                            name="trash"
+                                            size={16}
+                                            color="#6b7280"
+                                          />
+                                        </TouchableOpacity>
+                                      </View>
+                                      <Text style={styles.assessmentTitle}>
+                                        {assessment.title}
+                                      </Text>
+                                      <Text
+                                        style={styles.assessmentDescription}
+                                      >
+                                        {assessment.description}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )
+                                )
+                              ) : (
+                                <Text style={styles.noAssessmentsText}>
+                                  No assessments yet
+                                </Text>
+                              )}
+                            </View>
                           </View>
-                        </View>
-                      ))}
+                        )
+                      )}
                     </View>
                   ) : (
                     <View style={styles.noLessonsContainer}>
                       <SimpleIcon name="book-outline" size={48} color="#ccc" />
                       <Text style={styles.noLessonsTitle}>No lessons yet</Text>
-                      <Text style={styles.noLessonsDescription}>Create your first lesson to start building your chapter content.</Text>
-                      <TouchableOpacity 
+                      <Text style={styles.noLessonsDescription}>
+                        Create your first lesson to start building your chapter
+                        content.
+                      </Text>
+                      <TouchableOpacity
                         style={styles.addLessonButton}
                         onPress={handleAddLesson}
                       >
-                        <Text style={styles.addLessonButtonText}>+ Add Lesson</Text>
+                        <Text style={styles.addLessonButtonText}>
+                          + Add Lesson
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   )}
                 </View>
-
-            
-            
               </ScrollView>
             ) : null}
           </View>
@@ -4009,7 +4792,10 @@ const CourseDetailsPage = () => {
           <View style={styles.fullScreenModalContent}>
             <View style={styles.fullScreenModalHeader}>
               <TouchableOpacity
-                onPress={() => setShowLessonCreationModal(false)}
+                onPress={() => {
+                  setShowLessonCreationModal(false);
+                  setShowChapterDetailsModal(true);
+                }}
                 style={styles.backButton}
               >
                 <SimpleIcon name="arrow-left" size={24} color="#10B144" />
@@ -4017,10 +4803,11 @@ const CourseDetailsPage = () => {
               <Text style={styles.fullScreenModalTitle}>Add Lesson</Text>
               <View style={{ width: 40 }} />
             </View>
-            
+
             <ScrollView style={{ flex: 1 }}>
               <Text style={styles.lessonFormInstruction}>
-                Fill in the lesson details. Upload only PDF files, max 5MB total.
+                Fill in the lesson details. Upload only PDF files, max 5MB
+                total.
               </Text>
 
               {/* Lesson Title */}
@@ -4034,7 +4821,9 @@ const CourseDetailsPage = () => {
                     placeholder="Enter lesson title"
                     maxLength={100}
                   />
-                  <Text style={styles.characterCount}>{lessonCreationTitle.length}/100</Text>
+                  <Text style={styles.characterCount}>
+                    {lessonCreationTitle.length}/100
+                  </Text>
                 </View>
               </View>
 
@@ -4078,13 +4867,17 @@ const CourseDetailsPage = () => {
 
               {/* PDF Files */}
               <View style={styles.lessonFormField}>
-                <Text style={styles.lessonFormLabel}>Lesson PDF Files (optional)</Text>
-                
+                <Text style={styles.lessonFormLabel}>
+                  Lesson PDF Files (optional)
+                </Text>
+
                 <TouchableOpacity
                   style={styles.filePickerButton}
                   onPress={handleFilePickForLessonCreation}
                 >
-                  <Text style={styles.filePickerButtonText}>Choose file No file chosen</Text>
+                  <Text style={styles.filePickerButtonText}>
+                    Choose file No file chosen
+                  </Text>
                 </TouchableOpacity>
 
                 {lessonCreationFiles.length > 0 && (
@@ -4093,7 +4886,9 @@ const CourseDetailsPage = () => {
                       <View key={index} style={styles.fileItem}>
                         <SimpleIcon name="document" size={20} color="#10B144" />
                         <Text style={styles.fileName}>{file.name}</Text>
-                        <TouchableOpacity onPress={() => handleRemoveFile(index)}>
+                        <TouchableOpacity
+                          onPress={() => handleRemoveFile(index)}
+                        >
                           <SimpleIcon name="trash" size={16} color="#ff6b6b" />
                         </TouchableOpacity>
                       </View>
@@ -4106,16 +4901,28 @@ const CourseDetailsPage = () => {
                   onPress={handleFilePickForLessonCreation}
                 >
                   <SimpleIcon name="plus" size={16} color="#10B144" />
-                  <Text style={styles.addAnotherFileText}>Add Another File</Text>
+                  <Text style={styles.addAnotherFileText}>
+                    Add Another File
+                  </Text>
                 </TouchableOpacity>
 
                 <Text style={styles.lessonFileSizeText}>
-                  Total size: {(lessonCreationFiles.reduce((total, file) => total + (file.size || 0), 0) / (1024 * 1024)).toFixed(2)} MB / 5 MB
+                  Total size:{" "}
+                  {(
+                    lessonCreationFiles.reduce(
+                      (total, file) => total + (file.size || 0),
+                      0
+                    ) /
+                    (1024 * 1024)
+                  ).toFixed(2)}{" "}
+                  MB / 5 MB
                 </Text>
               </View>
 
               {lessonCreationError && (
-                <Text style={styles.lessonErrorText}>{lessonCreationError}</Text>
+                <Text style={styles.lessonErrorText}>
+                  {lessonCreationError}
+                </Text>
               )}
             </ScrollView>
 
@@ -4123,13 +4930,19 @@ const CourseDetailsPage = () => {
             <View style={styles.lessonCreationActionButtons}>
               <TouchableOpacity
                 style={styles.lessonCancelButton}
-                onPress={() => setShowLessonCreationModal(false)}
+                onPress={() => {
+                  setShowLessonCreationModal(false);
+                  setShowChapterDetailsModal(true);
+                }}
               >
                 <Text style={styles.lessonCancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
-                style={[styles.lessonSaveButton, lessonCreationLoading && styles.lessonDisabledButton]}
+                style={[
+                  styles.lessonSaveButton,
+                  lessonCreationLoading && styles.lessonDisabledButton,
+                ]}
                 onPress={handleCreateLesson}
                 disabled={lessonCreationLoading}
               >
@@ -4149,12 +4962,17 @@ const CourseDetailsPage = () => {
         visible={showEditChapterModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setShowEditChapterModal(false)}
+        onRequestClose={() => {setShowEditChapterModal(false)
+          setShowChapterDetailsModal(true)
+        }}
       >
         <View style={styles.fullScreenModalContainer}>
-          <View style={styles.fullScreenModalHeader}>
+          <View style={[styles.fullScreenModalHeader,{paddingTop: insets.top}]}>
             <TouchableOpacity
-              onPress={() => setShowEditChapterModal(false)}
+              onPress={() => {setShowEditChapterModal(false)
+          setShowChapterDetailsModal(true)
+
+              }}
               style={styles.backButton}
             >
               <SimpleIcon name="arrow-back" size={24} color="#333" />
@@ -4162,66 +4980,80 @@ const CourseDetailsPage = () => {
             <Text style={styles.fullScreenModalTitle}>Edit Chapter</Text>
             <View style={{ width: 24 }} />
           </View>
-            
+
           <ScrollView style={styles.editChapterForm}>
-              {/* Chapter Title */}
-              <View style={styles.editChapterField}>
-                <Text style={styles.editChapterLabel}>Chapter Title</Text>
-                <View style={styles.editChapterTitleContainer}>
-                  <TextInput
-                    style={styles.editChapterTitleInput}
-                    value={editChapterTitle}
-                    onChangeText={setEditChapterTitle}
-                    placeholder="Enter chapter title"
-                    maxLength={100}
-                  />
-                  <Text style={styles.editChapterCharacterCount}>{editChapterTitle.length}/100</Text>
-                </View>
+            {/* Chapter Title */}
+            <View style={styles.editChapterField}>
+              <Text style={styles.editChapterLabel}>Chapter Title</Text>
+              <View style={styles.editChapterTitleContainer}>
+                <TextInput
+                  style={styles.editChapterTitleInput}
+                  value={editChapterTitle}
+                  onChangeText={setEditChapterTitle}
+                  placeholder="Enter chapter title"
+                  maxLength={100}
+                />
+                <Text style={styles.editChapterCharacterCount}>
+                  {editChapterTitle.length}/100
+                </Text>
               </View>
+            </View>
 
-              {/* Chapter Description */}
-              <View style={styles.editChapterField}>
-                <Text style={styles.editChapterLabel}>Chapter Description</Text>
-                <View style={styles.editChapterDescriptionContainer}>
-                  <TextInput
-                    style={styles.editChapterDescriptionInput}
-                    value={editChapterDescription}
-                    onChangeText={setEditChapterDescription}
-                    placeholder="Enter chapter description"
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                    maxLength={500}
-                  />
-                  <Text style={styles.editChapterCharacterCount}>{editChapterDescription.length}/500</Text>
-                </View>
+            {/* Chapter Description */}
+            <View style={styles.editChapterField}>
+              <Text style={styles.editChapterLabel}>Chapter Description</Text>
+              <View style={styles.editChapterDescriptionContainer}>
+                <TextInput
+                  style={styles.editChapterDescriptionInput}
+                  value={editChapterDescription}
+                  onChangeText={setEditChapterDescription}
+                  placeholder="Enter chapter description"
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  maxLength={500}
+                />
+                <Text style={styles.editChapterCharacterCount}>
+                  {editChapterDescription.length}/500
+                </Text>
               </View>
+            </View>
 
-              {editChapterError && (
-                <Text style={styles.editChapterErrorText}>{editChapterError}</Text>
-              )}
+            {editChapterError && (
+              <Text style={styles.editChapterErrorText}>
+                {editChapterError}
+              </Text>
+            )}
           </ScrollView>
 
           {/* Action Buttons */}
           <View style={styles.editChapterActionButtons}>
-              <TouchableOpacity
-                style={styles.editChapterCancelButton}
-                onPress={() => setShowEditChapterModal(false)}
-              >
-                <Text style={styles.editChapterCancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.editChapterSaveButton, editChapterLoading && styles.editChapterDisabledButton]}
-                onPress={handleUpdateChapter}
-                disabled={editChapterLoading}
-              >
-                {editChapterLoading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={styles.editChapterSaveButtonText}>Edit Chapter</Text>
-                )}
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.editChapterCancelButton}
+              onPress={() => {setShowEditChapterModal(false)
+          setShowChapterDetailsModal(true)
+
+              }}
+            >
+              <Text style={styles.editChapterCancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.editChapterSaveButton,
+                editChapterLoading && styles.editChapterDisabledButton,
+              ]}
+              onPress={handleUpdateChapter}
+              disabled={editChapterLoading}
+            >
+              {editChapterLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.editChapterSaveButtonText}>
+                  Edit Chapter
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -4231,12 +5063,16 @@ const CourseDetailsPage = () => {
         visible={showLessonEditModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setShowLessonEditModal(false)}
+        onRequestClose={() => {setShowLessonEditModal(false)
+          setShowChapterDetailsModal(true)
+        }}
       >
         <View style={styles.fullScreenModalContainer}>
-          <View style={styles.fullScreenModalHeader}>
+          <View style={[styles.fullScreenModalHeader,{paddingTop: insets.top}]}>
             <TouchableOpacity
-              onPress={() => setShowLessonEditModal(false)}
+              onPress={() => {setShowLessonEditModal(false)
+                setShowChapterDetailsModal(true)
+              }}
               style={styles.backButton}
             >
               <SimpleIcon name="arrow-back" size={24} color="#333" />
@@ -4244,7 +5080,7 @@ const CourseDetailsPage = () => {
             <Text style={styles.fullScreenModalTitle}>Edit Lesson</Text>
             <View style={{ width: 24 }} />
           </View>
-            
+
           <ScrollView style={styles.lessonEditForm}>
             {/* Lesson Title */}
             <View style={styles.lessonEditField}>
@@ -4257,7 +5093,9 @@ const CourseDetailsPage = () => {
                   placeholder="Enter lesson title"
                   maxLength={100}
                 />
-                <Text style={styles.lessonEditCharacterCount}>{lessonEditTitle.length}/100</Text>
+                <Text style={styles.lessonEditCharacterCount}>
+                  {lessonEditTitle.length}/100
+                </Text>
               </View>
             </View>
 
@@ -4275,7 +5113,9 @@ const CourseDetailsPage = () => {
                   textAlignVertical="top"
                   maxLength={500}
                 />
-                <Text style={styles.lessonEditCharacterCount}>{lessonEditDescription.length}/500</Text>
+                <Text style={styles.lessonEditCharacterCount}>
+                  {lessonEditDescription.length}/500
+                </Text>
               </View>
             </View>
 
@@ -4314,13 +5154,18 @@ const CourseDetailsPage = () => {
           <View style={styles.lessonEditActionButtons}>
             <TouchableOpacity
               style={styles.lessonEditCancelButton}
-              onPress={() => setShowLessonEditModal(false)}
+              onPress={() => {setShowLessonEditModal(false)
+                setShowChapterDetailsModal(true)
+              }}
             >
               <Text style={styles.lessonEditCancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[styles.lessonEditSaveButton, lessonEditLoading && styles.lessonEditDisabledButton]}
+              style={[
+                styles.lessonEditSaveButton,
+                lessonEditLoading && styles.lessonEditDisabledButton,
+              ]}
               onPress={handleUpdateLesson}
               disabled={lessonEditLoading}
             >
@@ -4339,13 +5184,17 @@ const CourseDetailsPage = () => {
         visible={showAddFilesModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setShowAddFilesModal(false)}
+        onRequestClose={() => {setShowAddFilesModal(false)
+          setShowChapterDetailsModal(true)
+        }}
       >
         <View style={styles.fullScreenModalContainer}>
           <View style={styles.fullScreenModalContent}>
             <View style={styles.fullScreenModalHeader}>
               <TouchableOpacity
-                onPress={() => setShowAddFilesModal(false)}
+                onPress={() => {setShowAddFilesModal(false)
+                  setShowChapterDetailsModal(true)
+                }}
                 style={styles.backButton}
               >
                 <SimpleIcon name="arrow-left" size={24} color="#10B144" />
@@ -4353,27 +5202,39 @@ const CourseDetailsPage = () => {
               <Text style={styles.fullScreenModalTitle}>Add Files</Text>
               <View style={{ width: 40 }} />
             </View>
-            
+
             <ScrollView style={{ flex: 1 }}>
               <Text style={styles.lessonFormInstruction}>
                 Upload only PDF files, max 5MB total.
               </Text>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.filePickerButton}
                 onPress={handleFilePickForAddFiles}
               >
-                <Text style={styles.filePickerButtonText}>Choose file No file chosen</Text>
+                <Text style={styles.filePickerButtonText}>
+                  Choose file No file chosen
+                </Text>
               </TouchableOpacity>
 
               {selectedFiles.length > 0 && (
                 <View style={styles.fileList}>
                   {selectedFiles.map((file, index) => (
                     <View key={index} style={styles.fileItem}>
-                      <SimpleIcon name="document-text" size={20} color="#10B144" />
+                      <SimpleIcon
+                        name="document-text"
+                        size={20}
+                        color="#10B144"
+                      />
                       <Text style={styles.fileName}>{file.fileName}</Text>
-                      <TouchableOpacity onPress={() => handleRemoveSelectedFile(index)}>
-                        <SimpleIcon name="trash-outline" size={20} color="#ef4444" />
+                      <TouchableOpacity
+                        onPress={() => handleRemoveSelectedFile(index)}
+                      >
+                        <SimpleIcon
+                          name="trash-outline"
+                          size={20}
+                          color="#ef4444"
+                        />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -4381,15 +5242,19 @@ const CourseDetailsPage = () => {
               )}
 
               <Text style={styles.fileSizeText}>
-                Total size: {(totalFileSize / (1024 * 1024)).toFixed(2)} MB / 5 MB
+                Total size: {(totalFileSize / (1024 * 1024)).toFixed(2)} MB / 5
+                MB
               </Text>
-              
+
               {addFilesError && (
                 <Text style={styles.addFilesErrorText}>{addFilesError}</Text>
               )}
 
               <TouchableOpacity
-                style={[styles.addFilesAddButton, addFilesLoading && styles.addFilesDisabledButton]}
+                style={[
+                  styles.addFilesAddButton,
+                  addFilesLoading && styles.addFilesDisabledButton,
+                ]}
                 onPress={handleAddFiles}
                 disabled={addFilesLoading}
               >
@@ -4415,7 +5280,10 @@ const CourseDetailsPage = () => {
           <View style={styles.fullScreenModalContent}>
             <View style={styles.fullScreenModalHeader}>
               <TouchableOpacity
-                onPress={() => setShowAddAssessmentModal(false)}
+                onPress={() => {
+                  setShowAddAssessmentModal(false);
+                  setShowChapterDetailsModal(true);
+                }}
                 style={styles.backButton}
               >
                 <SimpleIcon name="arrow-left" size={24} color="#10B144" />
@@ -4423,12 +5291,12 @@ const CourseDetailsPage = () => {
               <Text style={styles.fullScreenModalTitle}>Add Assessment</Text>
               <View style={{ width: 40 }} />
             </View>
-            
+
             <ScrollView style={{ flex: 1 }}>
               <Text style={styles.lessonFormInstruction}>
                 Create a new assessment for this chapter.
               </Text>
-              
+
               <View style={styles.lessonFormField}>
                 <Text style={styles.lessonFormLabel}>Assessment Title</Text>
                 <TextInput
@@ -4436,7 +5304,7 @@ const CourseDetailsPage = () => {
                   placeholder="Enter assessment title"
                 />
               </View>
-              
+
               <View style={styles.lessonFormField}>
                 <Text style={styles.lessonFormLabel}>Description</Text>
                 <TextInput
@@ -4447,15 +5315,17 @@ const CourseDetailsPage = () => {
                   textAlignVertical="top"
                 />
               </View>
-              
+
               <TouchableOpacity
                 style={styles.addFilesAddButton}
                 onPress={() => {
-                  Toast.show('Assessment creation coming soon!', Toast.LONG);
+                  Toast.show("Assessment creation coming soon!", Toast.LONG);
                   setShowAddAssessmentModal(false);
                 }}
               >
-                <Text style={styles.addFilesAddButtonText}>Create Assessment</Text>
+                <Text style={styles.addFilesAddButtonText}>
+                  Create Assessment
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -4473,7 +5343,10 @@ const CourseDetailsPage = () => {
           <View style={styles.fullScreenModalContent}>
             <View style={styles.fullScreenModalHeader}>
               <TouchableOpacity
-                onPress={() => setShowAddPageModal(false)}
+                onPress={() => {
+                  setShowAddPageModal(false);
+                  setShowChapterDetailsModal(true);
+                }}
                 style={styles.backButton}
               >
                 <SimpleIcon name="arrow-left" size={24} color="#10B144" />
@@ -4481,12 +5354,12 @@ const CourseDetailsPage = () => {
               <Text style={styles.fullScreenModalTitle}>Add Page</Text>
               <View style={{ width: 40 }} />
             </View>
-            
+
             <ScrollView style={{ flex: 1 }}>
               <Text style={styles.lessonFormInstruction}>
                 Create a new page for this chapter.
               </Text>
-              
+
               <View style={styles.lessonFormField}>
                 <Text style={styles.lessonFormLabel}>Page Title</Text>
                 <TextInput
@@ -4494,7 +5367,7 @@ const CourseDetailsPage = () => {
                   placeholder="Enter page title"
                 />
               </View>
-              
+
               <View style={styles.lessonFormField}>
                 <Text style={styles.lessonFormLabel}>Content</Text>
                 <TextInput
@@ -4505,11 +5378,11 @@ const CourseDetailsPage = () => {
                   textAlignVertical="top"
                 />
               </View>
-              
+
               <TouchableOpacity
                 style={styles.addFilesAddButton}
                 onPress={() => {
-                  Toast.show('Page creation coming soon!', Toast.LONG);
+                  Toast.show("Page creation coming soon!", Toast.LONG);
                   setShowAddPageModal(false);
                 }}
               >
@@ -4531,7 +5404,10 @@ const CourseDetailsPage = () => {
           <View style={styles.fullScreenModalContent}>
             <View style={styles.fullScreenModalHeader}>
               <TouchableOpacity
-                onPress={() => setShowDiscussionModal(false)}
+                onPress={() => {
+                  setShowDiscussionModal(false);
+                  setShowChapterDetailsModal(true);
+                }}
                 style={styles.backButton}
               >
                 <SimpleIcon name="arrow-left" size={24} color="#10B144" />
@@ -4539,12 +5415,12 @@ const CourseDetailsPage = () => {
               <Text style={styles.fullScreenModalTitle}>Discussion</Text>
               <View style={{ width: 40 }} />
             </View>
-            
+
             <ScrollView style={{ flex: 1 }}>
               <Text style={styles.lessonFormInstruction}>
                 Start a discussion for this chapter.
               </Text>
-              
+
               <View style={styles.lessonFormField}>
                 <Text style={styles.lessonFormLabel}>Discussion Topic</Text>
                 <TextInput
@@ -4552,7 +5428,7 @@ const CourseDetailsPage = () => {
                   placeholder="Enter discussion topic"
                 />
               </View>
-              
+
               <View style={styles.lessonFormField}>
                 <Text style={styles.lessonFormLabel}>Description</Text>
                 <TextInput
@@ -4563,21 +5439,23 @@ const CourseDetailsPage = () => {
                   textAlignVertical="top"
                 />
               </View>
-              
+
               <TouchableOpacity
                 style={styles.addFilesAddButton}
                 onPress={() => {
-                  Toast.show('Discussion creation coming soon!', Toast.LONG);
+                  Toast.show("Discussion creation coming soon!", Toast.LONG);
                   setShowDiscussionModal(false);
                 }}
               >
-                <Text style={styles.addFilesAddButtonText}>Start Discussion</Text>
+                <Text style={styles.addFilesAddButtonText}>
+                  Start Discussion
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
         </View>
       </Modal>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -4586,33 +5464,33 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   image: { width: "100%", height: 180, borderRadius: 8, marginBottom: 16 },
   thumbnailContainer: {
-    position: 'relative',
+    position: "relative",
     marginBottom: 16,
   },
   thumbnailUploadButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 8,
     right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     borderRadius: 20,
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
   cameraIconText: {
     fontSize: 20,
-    color: '#fff',
+    color: "#fff",
   },
   backIconText: {
     fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
   headerRow: {
     flexDirection: "row",
@@ -5077,7 +5955,7 @@ const styles = StyleSheet.create({
   chaptersHeaderButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    paddingLeft : 20
+    paddingLeft: 20,
   },
   createChapterButton: {
     backgroundColor: "#00C853",
@@ -5383,9 +6261,9 @@ const styles = StyleSheet.create({
     borderColor: "#e9ecef",
   },
   assessmentItemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   assessmentContent: {
@@ -5410,19 +6288,19 @@ const styles = StyleSheet.create({
   },
   // Assessment Details Modal Styles
   assessmentDetailsHeader: {
-    height: 56,
-    backgroundColor: '#10B144',
-    flexDirection: 'row',
-    alignItems: 'center',
+    // height: 56,
+    backgroundColor: "#10B144",
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   assessmentDetailsBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   assessmentDetailsBackText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
     marginLeft: 8,
   },
@@ -5430,35 +6308,35 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   assessmentDetailsHeaderTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
   assessmentDetailsTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
   },
   assessmentDetailsTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     flex: 1,
   },
   assessmentDetailsCategoryBadge: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: "#f3f4f6",
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   assessmentDetailsCategoryText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
   },
   assessmentDetailsDueDateContainer: {
     paddingHorizontal: 16,
@@ -5466,10 +6344,10 @@ const styles = StyleSheet.create({
   },
   assessmentDetailsDueDateLabel: {
     fontSize: 16,
-    color: '#374151',
+    color: "#374151",
   },
   assessmentDetailsDescriptionContainer: {
-    backgroundColor: '#e0f2fe',
+    backgroundColor: "#e0f2fe",
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 16,
@@ -5477,13 +6355,13 @@ const styles = StyleSheet.create({
   },
   assessmentDetailsDescriptionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0369a1',
+    fontWeight: "bold",
+    color: "#0369a1",
     marginBottom: 8,
   },
   assessmentDetailsDescriptionText: {
     fontSize: 16,
-    color: '#0369a1',
+    color: "#0369a1",
   },
   assessmentDetailsQuestionsContainer: {
     paddingHorizontal: 16,
@@ -5491,26 +6369,26 @@ const styles = StyleSheet.create({
   },
   assessmentDetailsQuestionsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 8,
   },
   assessmentDetailsMcqHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
   },
   assessmentDetailsMcqTitle: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   assessmentDetailsQuestionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -5518,86 +6396,86 @@ const styles = StyleSheet.create({
   },
   assessmentDetailsQuestionLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 8,
   },
   assessmentDetailsQuestionText: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
     marginBottom: 16,
   },
   assessmentDetailsOptionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   assessmentDetailsBulletPoint: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
     marginRight: 8,
   },
   assessmentDetailsOptionText: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
     flex: 1,
   },
   assessmentDetailsCorrectOption: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: "#dcfce7",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
   },
   assessmentDetailsCorrectLabel: {
     fontSize: 12,
-    color: '#16a34a',
-    fontWeight: 'bold',
+    color: "#16a34a",
+    fontWeight: "bold",
     marginLeft: 8,
   },
   // Edit Assessment Modal Styles
   editAssessmentLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 8,
     marginTop: 16,
   },
   editAssessmentInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   editAssessmentCategoryButton: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   editAssessmentCategoryButtonText: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   editAssessmentSaveButton: {
-    backgroundColor: '#10B144',
+    backgroundColor: "#10B144",
     borderRadius: 8,
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 24,
   },
   editAssessmentSaveButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   mcqHeader: {
     flexDirection: "row",
@@ -5635,79 +6513,79 @@ const styles = StyleSheet.create({
   },
   ratingSectionTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 12,
   },
   ratingCard: {
-    backgroundColor: '#EAFBF2',
+    backgroundColor: "#EAFBF2",
     borderRadius: 16,
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   ratingNumber: {
     fontSize: 48,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 8,
   },
   ratingStarsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginBottom: 4,
   },
   ratingCountText: {
-    color: '#A0AEC0',
+    color: "#A0AEC0",
     fontSize: 16,
     marginTop: 4,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   commentsSectionTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 12,
   },
   commentInputBox: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: "#E2E8F0",
     padding: 16,
     marginBottom: 16,
   },
   commentInput: {
     minHeight: 60,
     fontSize: 16,
-    color: '#222',
+    color: "#222",
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 0,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   postCommentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#10B144',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#10B144",
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 20,
   },
   postCommentButtonDisabled: {
-    backgroundColor: '#A0E7B2',
+    backgroundColor: "#A0E7B2",
   },
   postCommentButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
   },
   noCommentsText: {
-    color: '#A0AEC0',
+    color: "#A0AEC0",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 32,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   // Chapter Card Styles
   chapterCard: {
@@ -5884,7 +6762,6 @@ const styles = StyleSheet.create({
     elevation: 3,
     zIndex: 9999,
     marginBottom: 16,
-    
   },
   lessonsHeader: {
     flexDirection: "row",
@@ -5971,24 +6848,24 @@ const styles = StyleSheet.create({
     paddingTop: 60, // Add padding for status bar
   },
   fullScreenModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: "#e5e7eb",
   },
   backButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#f0f9ff',
+    backgroundColor: "#f0f9ff",
   },
   fullScreenModalTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#1f2937",
-    textAlign: 'center',
+    textAlign: "center",
     flex: 1,
   },
   // Lesson Creation Modal Styles
@@ -6015,6 +6892,7 @@ const styles = StyleSheet.create({
   lessonTitleInput: {
     flex: 1,
     borderWidth: 1,
+    color: "#000",
     borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -6032,6 +6910,7 @@ const styles = StyleSheet.create({
     borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
+    color: "#000",
     paddingVertical: 12,
     fontSize: 16,
     backgroundColor: "#fff",
@@ -6041,6 +6920,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d1d5db",
     borderRadius: 8,
+    color: "#000",
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
@@ -6564,22 +7444,22 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: "#e5e7eb",
   },
   lessonAssessmentsTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 12,
   },
   assessmentCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
+    borderColor: "#e5e7eb",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -6589,46 +7469,46 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   assessmentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   assessmentBadge: {
-    backgroundColor: '#374151',
+    backgroundColor: "#374151",
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   assessmentBadgeText: {
     fontSize: 12,
-    color: '#fff',
-    fontWeight: '500',
+    color: "#fff",
+    fontWeight: "500",
   },
   assessmentDeleteButton: {
     padding: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: "#f3f4f6",
     borderRadius: 6,
     width: 32,
     height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   assessmentTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 4,
   },
   assessmentDescription: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
   },
   noAssessmentsText: {
-    color: '#9ca3af',
+    color: "#9ca3af",
     fontSize: 14,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontStyle: "italic",
+    textAlign: "center",
     paddingVertical: 20,
   },
   // Lesson Pages Styles
@@ -6636,22 +7516,22 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: "#e5e7eb",
   },
   lessonPagesTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 12,
   },
   pageCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
+    borderColor: "#e5e7eb",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -6661,46 +7541,46 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   pageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   pageBadge: {
-    backgroundColor: '#374151',
+    backgroundColor: "#374151",
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   pageBadgeText: {
     fontSize: 12,
-    color: '#fff',
-    fontWeight: '500',
+    color: "#fff",
+    fontWeight: "500",
   },
   pageDeleteButton: {
     padding: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: "#f3f4f6",
     borderRadius: 6,
     width: 32,
     height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   pageTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 4,
   },
   pageDescription: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
   },
   noPagesText: {
-    color: '#9ca3af',
+    color: "#9ca3af",
     fontSize: 14,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontStyle: "italic",
+    textAlign: "center",
     paddingVertical: 20,
   },
 });
