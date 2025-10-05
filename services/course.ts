@@ -1191,17 +1191,16 @@ export const addMoreFilesToLesson = async (lessonId: string, pdfFiles: any[]) =>
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-
     const formData = new FormData();
     pdfFiles.forEach((file) => {
       formData.append('pdfFiles', {
         uri: file.uri,
         type: file.type || 'application/pdf',
-        name: file.name || file.uri.split('/').pop() || 'file.pdf',
+        name: file.fileName || file.uri.split('/').pop() || 'file.pdf',
       } as any);
     });
-
-    const response = await api.post(`/api/lesson/addMoreFiles/${lessonId}`, formData, {
+    console.log(formData)
+    const response = await api.put(`/api/lesson/addMoreFiles/${lessonId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

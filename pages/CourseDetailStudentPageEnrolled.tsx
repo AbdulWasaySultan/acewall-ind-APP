@@ -2,20 +2,43 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Modal, DevSettings, Linking, Alert } from 'react-native';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import SimpleIcon from '../components/SimpleIcon';
-import { getStudentEnrolledCourseDetails, unenrollFromCourse } from '../services/course';
+import { getChaptersByQuarter, getQuartersForSemester, getStudentEnrolledCourseDetails, unenrollFromCourse } from '../services/course';
 import { isCourseRated, getCourseRating, createRating } from '../services/rating';
 import { getComments, sendComment } from '../services/comment';
 import { createConversation } from '../services/conversation';
 import ConversationsModal from '../components/ConversationsModal';
-
+import Toast from "react-native-simple-toast";
 // Type for navigation param
 interface Params {
     enrollmentId: string;
+    courseId: string;
 }
-
+const formatDateWithOrdinal = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getUTCDate();
+    const month = date.toLocaleDateString("en-US", {
+      month: "long",
+      timeZone: "UTC",
+    });
+    const year = date.getUTCFullYear();
+    const getOrdinal = (d: number) => {
+      if (d > 3 && d < 21) return "th";
+      switch (d % 10) {
+        case 1:
+          return "st";
+        case 2:
+          return "nd";
+        case 3:
+          return "rd";
+        default:
+          return "th";
+      }
+    };
+    return `${month} ${day}${getOrdinal(day)}, ${year}`;
+  };
 const CourseDetailStudentPageEnrolled = () => {
     const route = useRoute<RouteProp<Record<string, Params>, string>>();
-    const enrollmentId = route.params?.enrollmentId;
+    const {enrollmentId,courseId} = route.params;
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [enrolledCourse, setEnrolledCourse] = useState<any>(null);
@@ -33,15 +56,53 @@ const CourseDetailStudentPageEnrolled = () => {
     const [isUnenrollModalVisible, setIsUnenrollModalVisible] = useState(false);
     const [unenrollConfirmationText, setUnenrollConfirmationText] = useState('');
     const [isUnenrolling, setIsUnenrolling] = useState(false);
+
+    const [semesterQuarters, setSemesterQuarters] = useState<any[]>([]);
+    const [showQuartersModal, setShowQuartersModal] = useState(false);
+    const [loadingSemesterQuarters, setLoadingSemesterQuarters] = useState(false);
+    const [chaptersForQuarter, setChaptersForQuarter] = useState<any[]>([]);
+    const [loadingChaptersForQuarter, setLoadingChaptersForQuarter] =
+      useState(false);
+    const [chaptersMessage, setChaptersMessage] = useState("");
+    const [selectedQuarterId, setSelectedQuarterId] = useState<string | null>(
+        null
+      );
+      const [showChaptersForQuarterModal, setShowChaptersForQuarterModal] =
+      useState(false);
     const navigation = useNavigation();
 
+    const refreshChaptersForQuarter = async (quarterId: string) => {
+      console.log(courseId)
+        setLoadingChaptersForQuarter(true);
+        setChaptersForQuarter([]);
+        setChaptersMessage("");
+        try {
+          const res = await getChaptersByQuarter(courseId, quarterId);
+          if (res.chapters && res.chapters.length > 0) {
+            setChaptersForQuarter(res.chapters);
+          } else {
+            setChaptersMessage(res.message || "No chapters found.");
+          }
+        } catch (error: any) {
+          console.error("Failed to fetch chapters:", error);
+          Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);
+          setChaptersMessage("Failed to fetch chapters.");
+        } finally {
+          setLoadingChaptersForQuarter(false);
+        }
+      };
+    const handleQuarterCardPress = async (quarter: any) => {
+        setSelectedQuarterId(quarter._id);
+        setShowQuartersModal(false);
+        setShowChaptersForQuarterModal(true);
+        await refreshChaptersForQuarter(quarter._id);
+      };
     useEffect(() => {
         const fetchDetails = async () => {
             setLoading(true);
             setError(null);
             try {
                 const data = await getStudentEnrolledCourseDetails(enrollmentId);
-                console.log(data);
                 setEnrolledCourse(data || null);
             } catch (err) {
                 setError('Failed to load course details.');
@@ -53,37 +114,50 @@ const CourseDetailStudentPageEnrolled = () => {
     }, [enrollmentId]);
 
     useEffect(() => {
-        const fetchReviews = async () => {
-            if (segment === 'reviews' && enrolledCourse?.course) {
-                setReviewsLoading(true);
-                try {
-                    const ratedRes = await isCourseRated(enrolledCourse.course);
-                    console.log("this is my rating", ratedRes);
-                    if (ratedRes.rating) {
-                        setUserRating(ratedRes.star);
-                        setRating(ratedRes.star);
-                    }
-
-                    const ratingRes = await getCourseRating(enrolledCourse.course);
-                    console.log("Overall course rating:", ratingRes);
-                    if (ratingRes) {
-                        setAverageRating(ratingRes.averageStar);
-                        setRatingCount(ratingRes.count);
-                    }
-
-                    const commentsRes = await getComments(enrolledCourse.course);
-                    console.log("Comments response:", commentsRes);
-                    if (commentsRes && commentsRes.comments) {
-                        setComments(commentsRes.comments);
-                    }
-
-                } catch (err) {
-                    console.error("Failed to load reviews data. Error:", err);
-                } finally {
-                    setReviewsLoading(false);
-                }
+      const fetchReviews = async () => {
+        if (segment === 'reviews' && enrolledCourse?.course) {
+          setReviewsLoading(true);
+          try {
+            const courseId = enrolledCourse.course;
+      
+            const [ratedRes, ratingRes, commentsRes] = await Promise.allSettled([
+              isCourseRated(courseId),
+              getCourseRating(courseId),
+              getComments(courseId),
+            ]);
+      
+            // Handle individual results safely
+            if (ratedRes.status === "fulfilled" && ratedRes.value?.rating) {
+              console.log("User rating:", ratedRes.value);
+              setUserRating(ratedRes.value.star);
+              setRating(ratedRes.value.star);
+            } else if (ratedRes.status === "rejected") {
+              console.warn("Failed to get course rating info:", ratedRes.reason);
             }
-        };
+      
+            if (ratingRes.status === "fulfilled" && ratingRes.value) {
+              console.log("Overall course rating:", ratingRes.value);
+              setAverageRating(ratingRes.value.averageStar);
+              setRatingCount(ratingRes.value.count);
+            } else if (ratingRes.status === "rejected") {
+              console.warn("Failed to get overall rating:", ratingRes.reason);
+            }
+      
+            if (commentsRes.status === "fulfilled" && commentsRes.value?.comments) {
+              console.log("Comments response:", commentsRes.value);
+              setComments(commentsRes.value.comments);
+            } else if (commentsRes.status === "rejected") {
+              console.warn("Failed to get comments:", commentsRes.reason);
+            }
+      
+          } catch (err) {
+            console.error("Unexpected error while loading reviews:", err);
+          } finally {
+            setReviewsLoading(false);
+          }
+        }
+      };
+      
         fetchReviews();
     }, [segment, enrolledCourse]);
 
@@ -95,6 +169,7 @@ const CourseDetailStudentPageEnrolled = () => {
 
         try {
             const response = await createRating(enrolledCourse.course, newRating);
+            console.log(response)
             if (response.newRating) {
                 setUserRating(response.newRating.star);
                 // Refetch average rating to show updated average
@@ -104,8 +179,8 @@ const CourseDetailStudentPageEnrolled = () => {
                     setRatingCount(ratingRes.count);
                 }
             }
-        } catch (error) {
-            console.error("Failed to submit rating:", error);
+        } catch (error:any) {
+            Toast.show(error?.response?.data?.message || "Failed to submit rating.", Toast.LONG);
             setRating(userRating > 0 ? userRating : 0); // Revert optimistic update on failure
             // Optionally show error to user
         } finally {
@@ -202,7 +277,18 @@ const CourseDetailStudentPageEnrolled = () => {
     const { courseDetails } = enrolledCourse;
     const teacher = courseDetails?.createdby ? `${courseDetails.createdby.firstName} ${courseDetails.createdby.middleName} ${courseDetails.createdby.lastName}`.trim() : 'Unknown';
     const teacherId = courseDetails?.createdby?._id;
-
+    const handleSemesterPress = async (semester: any) => {
+        setShowQuartersModal(true);
+        try {
+          setLoadingSemesterQuarters(true);
+          const res = await getQuartersForSemester(semester._id);
+          setSemesterQuarters(res.quarters || []);
+        } catch (error: any) {
+          Toast.show(error.message || "Failed to fetch quarters.", Toast.LONG);
+        } finally {
+          setLoadingSemesterQuarters(false);
+        }
+      };
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
@@ -249,22 +335,26 @@ const CourseDetailStudentPageEnrolled = () => {
                 </View>
 
                 {/* Semester Information */}
-                {courseDetails.semester && courseDetails.semester.length > 0 && (
-                    <View style={styles.semesterCard}>
-                        <Text style={styles.semesterTitle}>Semester: {courseDetails.semester[0].title}</Text>
-                        <Text style={styles.semesterDate}>
-                            {new Date(courseDetails.semester[0].startDate).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                            })} - {new Date(courseDetails.semester[0].endDate).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                            })}
-                        </Text>
-                    </View>
-                )}
+                {courseDetails.semester && courseDetails.semester.length > 0 && courseDetails.semester.map((sem:any)=>(
+   <TouchableOpacity
+   key={sem._id}
+   style={styles.semesterCard}
+   onPress={() => handleSemesterPress(sem)}
+ >
+   <Text style={styles.semesterTitle}>Semester: {sem.title}</Text>
+   <Text style={styles.semesterDate}>
+       {new Date(sem.startDate).toLocaleDateString('en-US', { 
+           year: 'numeric', 
+           month: 'long', 
+           day: 'numeric' 
+       })} - {new Date(sem.endDate).toLocaleDateString('en-US', { 
+           year: 'numeric', 
+           month: 'long', 
+           day: 'numeric' 
+       })}
+   </Text>
+</TouchableOpacity>
+                )) }
 
                 {/* Segments */}
                 <View style={styles.segmentRow}>
@@ -492,6 +582,116 @@ const CourseDetailStudentPageEnrolled = () => {
                     </View>
                 </View>
             </Modal>
+            <Modal
+        visible={showQuartersModal}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setShowQuartersModal(false)}
+      >
+        <View style={styles.quartersModalContainer}>
+          <View style={styles.quartersModalHeader}>
+            <Text style={styles.quartersModalTitle}>Quarters</Text>
+            <TouchableOpacity onPress={() => setShowQuartersModal(false)}>
+              <SimpleIcon name="close" size={32} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView>
+            {loadingSemesterQuarters ? (
+              <ActivityIndicator
+                size="large"
+                color="#10B144"
+                style={{ marginTop: 20 }}
+              />
+            ) : semesterQuarters.length > 0 ? (
+              semesterQuarters.map((quarter: any) => (
+                <TouchableOpacity
+                  key={quarter._id}
+                  style={styles.quarterCard}
+                  onPress={() => handleQuarterCardPress(quarter)}
+                >
+                  <Text
+                    style={styles.quarterTitle}
+                  >{`Quarter: ${quarter.title}`}</Text>
+                  <Text style={styles.quarterDates}>
+                    {formatDateWithOrdinal(quarter.startDate)} -{" "}
+                    {formatDateWithOrdinal(quarter.endDate)}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={{ textAlign: "center", marginTop: 20 }}>
+                No quarters found for this semester.
+              </Text>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
+      <Modal
+        visible={showChaptersForQuarterModal}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowChaptersForQuarterModal(false);
+          setShowQuartersModal(true);
+        }}
+      >
+        <View style={styles.chaptersModalContainer}>
+          <View style={styles.chaptersModalHeader}>
+            <Text style={styles.chaptersModalTitle}>Chapters</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setShowChaptersForQuarterModal(false);
+                setShowQuartersModal(true);
+              }}
+            >
+              <SimpleIcon name="close" size={32} color="#333" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.chaptersContent}>
+
+
+
+
+            {loadingChaptersForQuarter ? (
+              <ActivityIndicator
+                style={{ marginTop: 20 }}
+                size="large"
+                color="#10B144"
+              />
+            ) : chaptersForQuarter.length > 0 ? (
+              <ScrollView>
+                {chaptersForQuarter.map((chapter, index) => {
+                  console.log(chapter)
+                  return (
+
+                    <TouchableOpacity
+                    key={chapter._id}
+                    style={styles.quarterCard}
+                    onPress={() => handleQuarterCardPress(chapter)}
+                  >
+                    <Text
+                      style={styles.quarterTitle}
+                    >{`Quarter: ${chapter.title}`}</Text>
+                    <Text style={styles.quarterDates}>
+                   {chapter?.description}
+                    </Text>
+                  </TouchableOpacity>
+
+                 
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <Text
+                style={{ textAlign: "center", marginTop: 20, fontSize: 16 }}
+              >
+                {chaptersMessage}
+              </Text>
+            )}
+          </View>
+        </View>
+      </Modal>
         </KeyboardAvoidingView>
     );
 };
@@ -767,6 +967,114 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 32,
     },
+    quartersModalContainer: {
+    flex: 1,
+    backgroundColor: "white",
+    padding: 16,
+  },
+  quartersModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+    paddingTop: Platform.OS === "ios" ? 40 : 10,
+  },
+  quartersModalTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+  },
+  quarterCard: {
+    backgroundColor: "#eef2f9",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  quarterTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  quarterDates: {
+    fontSize: 14,
+    color: "#6c757d",
+    marginTop: 4,
+  },
+  chaptersModalContainer: {
+    flex: 1,
+    backgroundColor: "white",
+    padding: 16,
+  },
+  chaptersModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+    paddingTop: Platform.OS === "ios" ? 40 : 10,
+  },
+  chaptersModalTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+  },
+  chaptersContent: {
+    paddingHorizontal: 8,
+    flex: 1,
+  },
+  chaptersHeaderButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingVertical: 14,
+    marginBottom: 16,
+  },
+  chaptersHeaderButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
+    paddingLeft: 20,
+  },
+  createChapterButton: {
+    backgroundColor: "#00C853",
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  createChapterButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  chapterItem: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+  },
+  // chapterItemTitle: {
+  //     fontSize: 16,
+  //     fontWeight: 'bold',
+  //     marginBottom: 4,
+  // },
+  createChapterModalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  createChapterInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: "#f8f9fa",
+  },
 });
 
 export default CourseDetailStudentPageEnrolled; 

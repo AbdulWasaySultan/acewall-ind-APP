@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Linking, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Linking, Modal, TextInput, Alert, Platform } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getDiscussionsForChapter, getDiscussionsForLesson, createDiscussionForChapter, createDiscussionForLesson, getDiscussionDetails, getDiscussionComments } from '../services/discussion';
@@ -27,14 +27,34 @@ const ChapterDiscussionsPage = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [categoryId, setCategoryId] = useState<string>('');
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+
+
   const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+const [tempDate, setTempDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+
   const [file, setFile] = useState<any | null>(null);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [selectedDiscussion, setSelectedDiscussion] = useState<any | null>(null);
   const [discussionDetails, setDiscussionDetails] = useState<any | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingDiscussion, setLoadingDiscussion] = useState(false);
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -198,20 +218,13 @@ const ChapterDiscussionsPage = () => {
             <Text style={styles.inputLabel}>Due Date</Text>
             <TouchableOpacity
               style={styles.textInput}
-              onPress={() => setDueDate(new Date())}
+              onPress={() => setShowDatePicker(true)}
             >
-              <Text style={{ color: dueDate ? '#111' : '#9ca3af' }}>{dueDate ? dueDate.toDateString() : 'Select due date'}</Text>
+              <Text style={{ color: dueDate ? '#111' : '#9ca3af' }}>{dueDate
+      ? `${formatDate(dueDate)} at ${formatTime(dueDate)}`
+      : 'Select Due Date'}</Text>
             </TouchableOpacity>
-            {dueDate && (
-              <DateTimePicker
-                value={dueDate}
-                mode="datetime"
-                display="default"
-                onChange={(e: any, d?: Date) => {
-                  if (d) setDueDate(d);
-                }}
-              />
-            )}
+
 
             <Text style={styles.inputLabel}>Attach Image (PNG, JPEG, JPG)</Text>
             <TouchableOpacity
@@ -297,7 +310,50 @@ const ChapterDiscussionsPage = () => {
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           </ScrollView>
+          {showDatePicker && (
+  <DateTimePicker
+    value={dueDate || new Date()}
+    mode="date"
+    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+    minimumDate={new Date()}
+    onChange={(event, selectedDate) => {
+      setShowDatePicker(false);
+      if (event.type === 'set' && selectedDate) {
+        // User picked a date -> store temporarily
+        setTempDate(selectedDate);
+        // Now open time picker
+        setTimeout(() => setShowTimePicker(true), 200);
+      } else {
+        // User cancelled date picker
+        setTempDate(null);
+      }
+    }}
+  />
+)}
+
+{showTimePicker && (
+  <DateTimePicker
+    value={tempDate || new Date()}
+    mode="time"
+    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+    onChange={(event, selectedTime) => {
+      setShowTimePicker(false);
+      if (event.type === 'set' && selectedTime && tempDate) {
+        // Combine the selected date and time
+        const combined = new Date(tempDate);
+        combined.setHours(selectedTime.getHours());
+        combined.setMinutes(selectedTime.getMinutes());
+        setDueDate(combined);
+      } else {
+        // User cancelled time picker → discard date as well
+        setTempDate(null);
+        setDueDate(null);
+      }
+    }}
+  />
+)}
         </View>
+
       </Modal>
 
       {/* Discussion Details Modal */}

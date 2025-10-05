@@ -356,13 +356,13 @@ const CourseDetailsPage = () => {
   }, [course?._id]);
 
   // Refresh chapter details when returning to the page (e.g., after creating an assessment)
-  useFocusEffect(
-    React.useCallback(() => {
-      if (chapterDetails?._id) {
-        handleViewChapterDetails(chapterDetails._id);
-      }
-    }, [])
-  );
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     if (chapterDetails?._id) {
+  //       handleViewChapterDetails(chapterDetails._id);
+  //     }
+  //   }, [])
+  // );
 
   const fetchRatingAndComments = async () => {
     setCommentsLoading(true);
@@ -729,7 +729,7 @@ const CourseDetailsPage = () => {
 
       // Close modals and refresh data
       setShowEditAssessmentModal(false);
-      setShowAssessmentDetailsModal(false);
+      // setShowAssessmentDetailsModal(false);
 
       // Refresh chapter details if we're in the chapter details modal
       if (chapterDetails && chapterDetails._id) {
@@ -888,7 +888,7 @@ const CourseDetailsPage = () => {
       case "assessment":
         // Close any open modals and navigate to CreateAssessmentPage
         setShowAddAssessmentModal(false);
-        setShowChapterDetailsModal(false);
+        // setShowChapterDetailsModal(false);
         if (chapterDetails && selectedQuarterId) {
           // Find semester ID from the quarter data
           const semesterId =
@@ -898,6 +898,7 @@ const CourseDetailsPage = () => {
             chapterId: chapterDetails._id,
             semesterId: semesterId || "",
             quarterId: selectedQuarterId,
+            refreshAssessments: ()=>{handleViewChapterDetails(chapterDetails._id)},
           });
         } else {
           Toast.show("Please select a chapter and quarter first", Toast.LONG);
@@ -906,7 +907,7 @@ const CourseDetailsPage = () => {
       case "page":
         // Navigate to Chapter Pages view
         if (chapterDetails && course?._id) {
-          setShowChapterDetailsModal(false);
+          // setShowChapterDetailsModal(false);
           (navigation as any).navigate("ChapterPages", {
             courseId: course._id,
             chapterId: chapterDetails._id,
@@ -917,7 +918,7 @@ const CourseDetailsPage = () => {
         break;
       case "discussion":
         if (chapterDetails) {
-          setShowChapterDetailsModal(false);
+          // setShowChapterDetailsModal(false);
           (navigation as any).navigate("ChapterDiscussions", {
             chapterId: chapterDetails._id,
             courseId: course._id,
@@ -938,7 +939,7 @@ const CourseDetailsPage = () => {
       case "assessment":
         // Close any open modals and navigate to CreateAssessmentPage
         setShowAddAssessmentModal(false);
-        setShowChapterDetailsModal(false);
+        // setShowChapterDetailsModal(false);
         if (currentLessonForAssessment && selectedQuarterId) {
           // Find semester ID from the quarter data
           const semesterId =
@@ -949,6 +950,7 @@ const CourseDetailsPage = () => {
             lessonId: currentLessonForAssessment._id, // Pass lesson ID instead of chapter ID
             semesterId: semesterId || "",
             quarterId: selectedQuarterId,
+            refreshAssessments: ()=>{handleViewChapterDetails(chapterDetails._id)},
           });
         } else {
           Toast.show("Please select a lesson and quarter first", Toast.LONG);
@@ -956,7 +958,7 @@ const CourseDetailsPage = () => {
         break;
       case "page":
         if (currentLessonForAssessment && course?._id) {
-          setShowChapterDetailsModal(false);
+          // setShowChapterDetailsModal(false);
           (navigation as any).navigate("ChapterPages", {
             courseId: course._id,
             chapterId: chapterDetails._id,
@@ -968,7 +970,7 @@ const CourseDetailsPage = () => {
         break;
       case "discussion":
         if (chapterDetails && currentLessonForAssessment) {
-          setShowChapterDetailsModal(false);
+          // setShowChapterDetailsModal(false);
           (navigation as any).navigate("ChapterDiscussions", {
             chapterId: chapterDetails._id,
             courseId: course._id,
@@ -4608,8 +4610,9 @@ const CourseDetailsPage = () => {
                             )}
 
                             {/* Lesson Pages Section - Always visible in lesson card */}
-                            <View style={styles.lessonPagesSection}>
+                            {/* <View style={styles.lessonPagesSection}>
                               <Text style={styles.lessonPagesTitle}>
+                                {console.log(lesson)}
                                 Lesson Pages ({lesson.lesson_pages?.length || 0}
                                 )
                               </Text>
@@ -4669,10 +4672,10 @@ const CourseDetailsPage = () => {
                                   No pages yet
                                 </Text>
                               )}
-                            </View>
+                            </View> */}
 
                             {/* Lesson Assessments Section - Always visible in lesson card */}
-                            <View style={styles.lessonAssessmentsSection}>
+                            {/* <View style={styles.lessonAssessmentsSection}>
                               <Text style={styles.lessonAssessmentsTitle}>
                                 Lesson Assessments (
                                 {lesson.lesson_assessments?.length || 0})
@@ -4751,7 +4754,7 @@ const CourseDetailsPage = () => {
                                   No assessments yet
                                 </Text>
                               )}
-                            </View>
+                            </View> */}
                           </View>
                         )
                       )}

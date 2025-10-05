@@ -18,6 +18,7 @@ import { launchImageLibrary, launchCamera, MediaType } from 'react-native-image-
 import Toast from 'react-native-simple-toast';
 import SimpleIcon from '../components/SimpleIcon';
 import { createApiInstance, addAuthInterceptor } from '../services/course';
+import { pick } from '@react-native-documents/picker';
 
 interface Question {
   id: string;
@@ -32,12 +33,34 @@ interface AssessmentCategory {
   _id: string;
   name: string;
 }
+interface QuestionType {
+  _id: string;
+  name: string;
+  type:string
+}
 
 const CreateAssessmentPage = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { courseId, chapterId, lessonId, semesterId, quarterId } = route.params as any;
-
+  const { courseId, chapterId, lessonId, semesterId, quarterId ,refreshAssessments} = route.params as any;
+  const QuestionType: QuestionType[] = [{
+    _id: '646f1f4f4f4f4f4f4f4f4f4f5',
+    name: 'Multiple Choice',
+    type:'mcq'
+  }, 
+  {
+    _id: '646f1f4f4f4f4f4f4f4f4f4f6',
+    name: 'True/False',
+    type:'truefalse'
+  }, 
+  {
+    _id: '646f1f4f4f4f4f4f4f4f4f4f7',
+    name: 'Question & Answer',
+    type:'qa'
+  }, 
+]
+const MAX_PDF_SIZE_MB = 5;
+const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
   // Assessment type state
   const [assessmentType, setAssessmentType] = useState<'question' | 'file'>('question');
   
@@ -45,12 +68,16 @@ const CreateAssessmentPage = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<AssessmentCategory | null>(null);
-  const [dueDate, setDueDate] = useState(new Date());
+
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+const [tempDate, setTempDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   
   // Categories
   const [categories, setCategories] = useState<AssessmentCategory[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showQuestionTypeModal, setShowQuestionTypeModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryWeight, setNewCategoryWeight] = useState<string>('0');
@@ -218,37 +245,69 @@ const CreateAssessmentPage = () => {
     }
   };
 
-  const handleFilePick = () => {
-    const options: any = {
-      mediaType: 'mixed' as MediaType,
-      includeBase64: false,
-      maxHeight: 2000,
-      maxWidth: 2000,
-    };
+  const handleFilePick = async () => {
+  
+    const result = await pick({
+      type: ["application/pdf"],
+      copyTo: "cachesDirectory",
+      allowMultiSelection:true,
+    });
+    if (result && result.length > 0) {
+      const file = result[0];
+      const fileSizeMB = file.size ? file.size / (1024 * 1024) : 0;
 
-    launchImageLibrary(options, (response) => {
-      if (response.didCancel || response.errorMessage) {
+      if (fileSizeMB > 5) {
+        Toast.show("File size must be less than 5MB", Toast.LONG);
         return;
       }
 
-      if (response.assets && response.assets.length > 0) {
-        const newFiles = response.assets.map(asset => ({
-          uri: asset.uri,
-          type: asset.type,
-          fileName: asset.fileName || asset.uri?.split('/').pop() || 'file',
-          fileSize: asset.fileSize || 0,
-        }));
+      const newFile = {
+        uri: file.uri,
+        fileName: file.name || file.uri.split("/").pop(),
+        fileSize: file.size,
+        type: "application/pdf",
+      };
 
-        // Check file size limit (5MB total)
-        const totalSize = [...selectedFiles, ...newFiles].reduce((sum, file) => sum + (file.fileSize || 0), 0);
-        if (totalSize > 5 * 1024 * 1024) {
-          Toast.show('Total file size cannot exceed 5MB', Toast.LONG);
-          return;
-        }
+      const updatedFiles = [...selectedFiles, newFile];
+      const totalSize = updatedFiles.reduce(
+        (sum, f) => sum + (f.fileSize || 0),
+        0
+      );
 
-        setSelectedFiles([...selectedFiles, ...newFiles]);
+      if (totalSize > MAX_PDF_SIZE_BYTES) {
+        Toast.show(
+          `Total file size cannot exceed ${MAX_PDF_SIZE_MB}MB`,
+          Toast.LONG
+        );
+        return;
       }
-    });
+
+      setSelectedFiles(updatedFiles);
+      // setTotalFileSize(totalSize);
+    }
+    // launchImageLibrary(options, (response) => {
+    //   if (response.didCancel || response.errorMessage) {
+    //     return;
+    //   }
+
+    //   if (response.assets && response.assets.length > 0) {
+    //     const newFiles = response.assets.map(asset => ({
+    //       uri: asset.uri,
+    //       type: asset.type,
+    //       fileName: asset.fileName || asset.uri?.split('/').pop() || 'file',
+    //       fileSize: asset.fileSize || 0,
+    //     }));
+
+    //     // Check file size limit (5MB total)
+    //     const totalSize = [...selectedFiles, ...newFiles].reduce((sum, file) => sum + (file.fileSize || 0), 0);
+    //     if (totalSize > 5 * 1024 * 1024) {
+    //       Toast.show('Total file size cannot exceed 5MB', Toast.LONG);
+    //       return;
+    //     }
+
+    //     setSelectedFiles([...selectedFiles, ...newFiles]);
+    //   }
+    // });
   };
 
   const handleRemoveFile = (index: number) => {
@@ -304,13 +363,33 @@ const CreateAssessmentPage = () => {
       formData.append('dueDate', dueDate.toISOString());
       formData.append('semester', semesterId);
       formData.append('quarter', quarterId);
-      formData.append('questions', JSON.stringify(normalizedQuestions));
+      // formData.append('questions', JSON.stringify(normalizedQuestions));
       
       // Add lesson field if lessonId is provided (for lesson-based assessments)
       if (lessonId) {
         formData.append('lesson', lessonId);
       }
-
+      if (assessmentType === 'file') {
+        const fileQuestion = [
+          {
+            type: 'file',
+            question: 'File Upload Question 1',
+            points: 1,
+            fileCount: selectedFiles.length,
+          },
+        ];
+        formData.append('questions', JSON.stringify(fileQuestion));
+        selectedFiles.forEach((file, fileIndex) => {
+          formData.append(`question_0_file_${fileIndex}`, {
+            uri: file.uri,
+            name: file.fileName,
+            type: file.type,
+          });
+        });
+      } else {
+        // Existing question-based logic
+        formData.append('questions', JSON.stringify(normalizedQuestions));
+      }
       console.log('Creating assessment with form data:', {
         title: title.trim(),
         description: description.trim(),
@@ -333,6 +412,7 @@ const CreateAssessmentPage = () => {
       console.log('Assessment creation response:', response.data);
       
       Toast.show('Assessment created successfully!', Toast.LONG);
+      refreshAssessments()
       navigation.goBack();
     } catch (error: any) {
       console.error('Error creating assessment:', error?.response?.status, error?.response?.data || error);
@@ -487,7 +567,7 @@ const CreateAssessmentPage = () => {
                 styles.dropdownText,
                 !selectedCategory && styles.dropdownPlaceholder
               ]}>
-                {selectedCategory ? selectedCategory.name : 'Select a Topics'}
+                {selectedCategory ? selectedCategory.name : 'Select a Topic'}
               </Text>
               <SimpleIcon name="chevron-down" size={20} color="#7b8794" />
             </TouchableOpacity>
@@ -501,7 +581,9 @@ const CreateAssessmentPage = () => {
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={styles.dateText}>
-                {formatDate(dueDate)} at {formatTime(dueDate)}
+              {dueDate
+      ? `${formatDate(dueDate)} at ${formatTime(dueDate)}`
+      : 'Select Due Date'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -698,6 +780,53 @@ const CreateAssessmentPage = () => {
           </View>
         </View>
       </Modal>
+      <Modal
+        visible={showQuestionTypeModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowQuestionTypeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Category</Text>
+            <ScrollView style={styles.categoryList}>
+              { QuestionType.length > 0 ? (
+                QuestionType.map((category) => (
+                  <TouchableOpacity
+                    key={category._id}
+                    style={[
+                      styles.categoryItem,
+                      currentQuestion?.type === category.type && styles.categoryItemSelected
+                    ]}
+                    onPress={() => {
+                      setCurrentQuestion({...currentQuestion, type: category.type as any});
+                      setShowQuestionTypeModal(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.categoryItemText,
+                      currentQuestion?.type  === category.type && styles.categoryItemTextSelected
+                    ]}>
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noCategoriesText}>No question type available</Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowQuestionTypeModal(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+
+            {/* Add New Topic CTA */}
+       
+          </View>
+        </View>
+      </Modal>
 
       {/* Add New Topic Modal */}
       <Modal
@@ -778,10 +907,11 @@ const CreateAssessmentPage = () => {
                   onPress={() => {
                     // This would open a question type picker
                     // For now, we'll cycle through types
-                    const types = ['mcq', 'truefalse', 'qa'];
-                    const currentIndex = types.indexOf(currentQuestion.type || 'mcq');
-                    const nextType = types[(currentIndex + 1) % types.length];
-                    setCurrentQuestion({...currentQuestion, type: nextType as any});
+                    // const types = ['mcq', 'truefalse', 'qa'];
+                    // const currentIndex = types.indexOf(currentQuestion.type || 'mcq');
+                    // const nextType = types[(currentIndex + 1) % types.length];
+                    // setCurrentQuestion({...currentQuestion, type: nextType as any});
+                    setShowQuestionTypeModal(true);
                   }}
                 >
                   <Text style={styles.dropdownText}>
@@ -885,13 +1015,13 @@ const CreateAssessmentPage = () => {
                     <TouchableOpacity
                       style={[
                         styles.trueFalseOption,
-                        currentQuestion.correctAnswer === 'True' && styles.trueFalseOptionSelected
+                        currentQuestion.correctAnswer === 'true' && styles.trueFalseOptionSelected
                       ]}
-                      onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: 'True'})}
+                      onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: 'true'})}
                     >
                       <Text style={[
                         styles.trueFalseText,
-                        currentQuestion.correctAnswer === 'True' && styles.trueFalseTextSelected
+                        currentQuestion.correctAnswer === 'true' && styles.trueFalseTextSelected
                       ]}>
                         True
                       </Text>
@@ -899,13 +1029,13 @@ const CreateAssessmentPage = () => {
                     <TouchableOpacity
                       style={[
                         styles.trueFalseOption,
-                        currentQuestion.correctAnswer === 'False' && styles.trueFalseOptionSelected
+                        currentQuestion.correctAnswer === 'false' && styles.trueFalseOptionSelected
                       ]}
-                      onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: 'False'})}
+                      onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: 'false'})}
                     >
                       <Text style={[
                         styles.trueFalseText,
-                        currentQuestion.correctAnswer === 'False' && styles.trueFalseTextSelected
+                        currentQuestion.correctAnswer === 'false' && styles.trueFalseTextSelected
                       ]}>
                         False
                       </Text>
@@ -934,10 +1064,10 @@ const CreateAssessmentPage = () => {
       </Modal>
 
       {/* Date Picker */}
-      {showDatePicker && (
+      {/* {showDatePicker && (
         <DateTimePicker
           value={dueDate}
-          mode="datetime"
+          mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={(event, selectedDate) => {
             setShowDatePicker(false);
@@ -947,7 +1077,50 @@ const CreateAssessmentPage = () => {
           }}
           minimumDate={new Date()}
         />
-      )}
+      )} */}
+
+{showDatePicker && (
+  <DateTimePicker
+    value={dueDate || new Date()}
+    mode="date"
+    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+    minimumDate={new Date()}
+    onChange={(event, selectedDate) => {
+      setShowDatePicker(false);
+      if (event.type === 'set' && selectedDate) {
+        // User picked a date -> store temporarily
+        setTempDate(selectedDate);
+        // Now open time picker
+        setTimeout(() => setShowTimePicker(true), 200);
+      } else {
+        // User cancelled date picker
+        setTempDate(null);
+      }
+    }}
+  />
+)}
+
+{showTimePicker && (
+  <DateTimePicker
+    value={tempDate || new Date()}
+    mode="time"
+    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+    onChange={(event, selectedTime) => {
+      setShowTimePicker(false);
+      if (event.type === 'set' && selectedTime && tempDate) {
+        // Combine the selected date and time
+        const combined = new Date(tempDate);
+        combined.setHours(selectedTime.getHours());
+        combined.setMinutes(selectedTime.getMinutes());
+        setDueDate(combined);
+      } else {
+        // User cancelled time picker → discard date as well
+        setTempDate(null);
+        setDueDate(null);
+      }
+    }}
+  />
+)}
     </View>
   );
 };

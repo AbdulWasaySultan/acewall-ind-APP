@@ -129,7 +129,7 @@ const MyCoursesPage = () => {
       
       return () => {
         // This cleanup runs when the page is unfocused
-        setSearchQuery('');
+        // setSearchQuery('');
         setSelectedCategory(null);
         setSelectedSubcategory(null);
         setSubcategoryItems([]);
@@ -396,7 +396,7 @@ const MyCoursesPage = () => {
                     style={styles.courseCard}
                     onPress={() => {
                       if (enrolledCoursesMap.has(course._id)) {
-                        navigation.navigate('CourseDetailStudentPageEnrolled', { enrollmentId: enrolledCoursesMap.get(course._id)! });
+                        navigation.navigate('CourseDetailStudentPageEnrolled', { enrollmentId: enrolledCoursesMap.get(course._id)! ,courseId: course._id});
                       } else {
                         navigation.navigate('CourseDetailStudentPage', { courseId: course._id });
                       }

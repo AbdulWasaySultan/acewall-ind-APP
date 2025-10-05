@@ -66,10 +66,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await AsyncStorage.setItem('isAuthenticated', 'false');
       await AsyncStorage.removeItem('userData');
-      await AsyncStorage.removeItem('selectedBaseUrl');
-      await AsyncStorage.removeItem('hasSeenLanding');
+      // await AsyncStorage.removeItem('selectedBaseUrl');
+      // await AsyncStorage.removeItem('hasSeenLanding');
       setIsAuthenticated(false);
-      setHasSeenLanding(false);
+      // setHasSeenLanding(false);
       setUserRole("");
       setUser(null);
     } catch (error) {
