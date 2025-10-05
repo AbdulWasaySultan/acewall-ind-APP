@@ -668,11 +668,16 @@ const CourseDetailStudentPageEnrolled = () => {
                     <TouchableOpacity
                     key={chapter._id}
                     style={styles.quarterCard}
-                    onPress={() => handleQuarterCardPress(chapter)}
+                    onPress={() => {
+                      setShowChaptersForQuarterModal(false)
+                      ;(navigation as any).navigate("ChapterDetailsStudent", {
+                        chapterId: chapter._id
+                      })
+                    }}
                   >
                     <Text
                       style={styles.quarterTitle}
-                    >{`Quarter: ${chapter.title}`}</Text>
+                    >{`Chapter: ${chapter.title}`}</Text>
                     <Text style={styles.quarterDates}>
                    {chapter?.description}
                     </Text>

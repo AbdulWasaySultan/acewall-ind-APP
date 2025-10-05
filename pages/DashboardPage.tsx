@@ -144,7 +144,7 @@ const DashboardPage = () => {
                 <TouchableOpacity
                   key={enrollment._id}
                   style={styles.horizontalCourseCard}
-                  onPress={() => navigation.navigate('CourseDetailStudentPageEnrolled', { enrollmentId: enrollment._id })}
+                  onPress={() => navigation.navigate('CourseDetailStudentPageEnrolled', { enrollmentId: enrollment._id ,courseId: enrollment.course?._id })}
                 >
                   <Image
                     source={{ uri: enrollment.course?.thumbnail?.url || 'https://via.placeholder.com/150' }}

@@ -826,15 +826,39 @@ export const getChaptersForQuarter = async (courseId: string, quarterId: string)
 /**
  * Fetch chapter details for student preview
  */
+
 export const getChapterDetailsForStudent = async (chapterId: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.get(`/api/enrollment/getChapterstdpre/${chapterId}`);
+    const response = await api.get(`/api/enrollment/getChapter/${chapterId}`);
     return response.data;
   } catch (error: any) {
     console.error('Error fetching chapter details:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch chapter details');
+  }
+};
+export const getChapterDiscussionsForStudent = async (chapterId: string) => {
+  try {
+    console.log(chapterId)
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/discussion/chapter/${chapterId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching chapter discussions:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch chapter discussions');
+  }
+};
+export const getChapterPagesForStudent = async (chapterId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/pages/getChapterPages/${chapterId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching chapter pages:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch chapter pages');
   }
 };
 

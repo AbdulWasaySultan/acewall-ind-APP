@@ -34,6 +34,7 @@ import SupportPage from '../pages/SupportPage';
 import CreateAssessmentPage from '../pages/CreateAssessmentPage';
 import ChapterPagesPage from '../pages/ChapterPagesPage';
 import ChapterDiscussionsPage from '../pages/ChapterDiscussionsPage';
+import ChapterDetailsStudent from '../pages/ChapterDetailsStudent';
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -50,6 +51,7 @@ export type RootStackParamList = {
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;
   CourseDetailStudentPageEnrolled: { enrollmentId: string };
+  ChapterDetailsStudent: { chapterId: string };
   Chat: undefined;
   ResetPassword: { email: string };
   CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string };
@@ -260,6 +262,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="CourseDetailStudentPageEnrolled"
           component={CourseDetailStudentPageEnrolled}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ChapterDetailsStudent"
+          component={ChapterDetailsStudent}
           options={{ headerShown: false }}
         />
         <Stack.Screen name="Chat" component={ChatPage} options={{ headerShown: false }} />
