@@ -36,6 +36,7 @@ import ChapterPagesPage from '../pages/ChapterPagesPage';
 import ChapterDiscussionsPage from '../pages/ChapterDiscussionsPage';
 import ChapterDetailsStudent from '../pages/ChapterDetailsStudent';
 import AssessmentScreenStudent from '../pages/AssessmentScreenStudent';
+import DiscussionStudent from '../pages/DiscussionStudent';
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -59,6 +60,7 @@ export type RootStackParamList = {
   ChapterPages: { courseId: string; chapterId: string };
   ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string };
   AssessmentScreenStudent: { assessmentId: string };
+  DiscussionStudent:{discussionId:string}
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -295,6 +297,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="ChapterDiscussions"
           component={ChapterDiscussionsPage}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="DiscussionStudent"
+        component={DiscussionStudent}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

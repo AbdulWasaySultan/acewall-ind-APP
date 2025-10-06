@@ -844,7 +844,87 @@ export const getCourseById = async (courseId: string) => {
     throw new Error(error.response?.data?.message || 'Failed to fetch course');
   }
 };
+export const getStudentDiscussion = async (discussionId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/discussion/${discussionId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching discussion of student by ID:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch discussion of student');
+  }
+};
+export const getCommentForDiscussionStudent = async (discussionId: string, page = 1, limit = 5) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const response = await api.get(`/api/discussionComment/get/${discussionId}?page=${page}&limit=${limit}`)
+    return response.data
+  } catch (error: any) {
+    console.error("Error fetching comments for discussion:", error)
+    throw new Error(error.response?.data?.message || "Failed to fetch comments")
+  }
+}
+export const sendComment = async (discussionId: string, comment: string) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const response = await api.post(`/api/discussionComment/sendComment/${discussionId}`, { text:comment })
+    return response.data
+  } catch (error: any) {
+    console.error("Error sending comment:", error)
+    throw new Error(error.response?.data?.message || "Failed to send comment")
+  }
+}
 
+export const isCommentedInDiscussion = async (discussionId: string) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const response = await api.get(`/api/discussionComment/isCommentedInDiscussion/${discussionId}`)
+    return response.data
+  } catch (error: any) {
+    console.error("Error checking if commented:", error)
+    throw new Error(error.response?.data?.message || "Failed to check comment status")
+  }
+}
+
+export const getReplyCount = async (commentId: string) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const response = await api.get(`/api/replyDiscussion/replycount/${commentId}`)
+    return response.data
+  } catch (error: any) {
+    console.error("Error fetching reply count:", error)
+    throw new Error(error.response?.data?.message || "Failed to fetch reply count")
+  }
+}
+
+export const sendReply = async (commentId: string, reply: string) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const response = await api.post(`/api/replyDiscussion/send/${commentId}`, { text:reply })
+    return response.data
+  } catch (error: any) {
+    console.error("Error sending reply:", error)
+    throw new Error(error.response?.data?.message || "Failed to send reply")
+  }
+}
+
+export const getReplies = async (commentId: string, page = 1, limit = 5) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const response = await api.get(`/api/replyDiscussion/get/${commentId}?page=${page}&limit=${limit}`)
+    return response.data
+  } catch (error: any) {
+    console.error("Error fetching replies:", error)
+    throw new Error(error.response?.data?.message || "Failed to fetch replies")
+  }
+}
 /**
  * Fetch course for student preview
  */

@@ -118,7 +118,6 @@ const AssessmentScreenStudent = () => {
         assessment?.dueDate?.date || "",
         questionsArray,
       )
-console.log(res)
    
 
       Toast.show(res.message ||"Assessment submitted successfully!",Toast.LONG)

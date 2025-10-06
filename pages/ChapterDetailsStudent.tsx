@@ -6,14 +6,12 @@ import SimpleIcon from "../components/SimpleIcon"
 import { getChapterDetailsForStudent, getChapterDiscussionsForStudent, getChapterPagesForStudent, getLessonDiscussionsForStudent, getLessonPagesForStudent } from "../services/course"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import YoutubePlayer from "react-native-youtube-iframe";
+import { RootStackParamList } from "../navigation/AppNavigator"
 interface ChapterDetailParams {
   chapterId: string
 }
-export type RootStackParamList = {
-  AssessmentScreenStudent: { assessmentId: string };
-  // add other screens here...
-};
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AssessmentScreenStudent'>;
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export interface ChapterDetails {
   _id: string;
@@ -281,7 +279,7 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
       {discussions && discussions.length > 0 ? (
         <View style={styles.discussionsGrid}>
           {discussions.map((discussion: Discussion, index: number) => (
-            <View key={index} style={styles.discussionCard}>
+            <TouchableOpacity key={index} style={styles.discussionCard} onPress={()=>navigation.navigate('DiscussionStudent',{discussionId:discussion?._id})}>
            
 
               <Image source={{uri:discussion.course.thumbnail.url}} style={{width:'100%',height:150}}/>
@@ -295,7 +293,7 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
               <Text style={styles.discussionTitle}>{discussion.topic}</Text>
               <Text style={styles.discussionSubtitle}>{discussion.course.courseTitle || "test"}</Text>
               <Text style={styles.discussionDescription}>{discussion.description}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       ) : (
@@ -335,9 +333,7 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
           <View key={index} style={styles.pageCard}>
             <View style={styles.pageHeader}>
               <Text style={styles.pageTitle}>{page.title}</Text>
-              <TouchableOpacity>
-                <SimpleIcon name="trash-can" size={20} color="#FF6347" />
-              </TouchableOpacity>
+              
             </View>
             <Text style={styles.pageDescription}>{page.description}</Text>
             {page.image && <Image source={{ uri: page.image.url }} style={styles.pageImage} />}
@@ -357,7 +353,6 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
             <View key={`lesson-page-${index}`} style={styles.pageCard}>
               <View style={styles.pageHeader}>
                 <Text style={styles.pageTitle}>{page.title}</Text>
-                <TouchableOpacity><SimpleIcon name="trash-can" size={20} color="#FF6347" /></TouchableOpacity>
               </View>
               <Text style={styles.pageDescription}>{page.description}</Text>
               {page.image && <Image source={{ uri: page.image.url }} style={styles.pageImage} />}

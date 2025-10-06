@@ -1571,8 +1571,7 @@ const CourseDetailsPage = () => {
     >
       <View
         style={{
-          // height: 56,
-
+          minHeight: 56,
           backgroundColor: "#10B144",
           flexDirection: "row",
           alignItems: "center",
@@ -1589,7 +1588,7 @@ const CourseDetailsPage = () => {
           onPress={() => navigation.goBack()}
           style={{ padding: 4, marginRight: 12 }}
         >
-          <SimpleIcon name="chevron-back" size={32} color="#fff" />
+          <SimpleIcon name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <Text
           style={{ color: "#fff", fontSize: 20, fontWeight: "bold", flex: 1 }}
@@ -2942,7 +2941,7 @@ const CourseDetailsPage = () => {
                       <View style={styles.chapterCardStats}>
                         <View style={styles.chapterStatItem}>
                           <SimpleIcon
-                            name="book-outline"
+                            name="menu-book"
                             size={16}
                             color="#666"
                           />
@@ -4108,7 +4107,7 @@ const CourseDetailsPage = () => {
                 }}
                 style={styles.backButton}
               >
-                <SimpleIcon name="arrow-left" size={24} color="#10B144" />
+                <SimpleIcon name="arrow-back" size={24} color="#10B144" />
               </TouchableOpacity>
               <Text style={styles.fullScreenModalTitle}>Chapter Details</Text>
               <View style={{ width: 40 }} />
@@ -4162,7 +4161,7 @@ const CourseDetailsPage = () => {
                   <View style={styles.chapterDetailsHeader}>
                     <View style={styles.chapterDetailsIcon}>
                       <SimpleIcon
-                        name="book-outline"
+                        name="menu-book"
                         size={24}
                         color="#10B144"
                       />
@@ -4172,14 +4171,14 @@ const CourseDetailsPage = () => {
                         style={styles.chapterDetailsActionButton}
                         onPress={handleEditChapter}
                       >
-                        <SimpleIcon name="pencil" size={16} color="#fff" />
+                        <SimpleIcon name="pencil" size={25} color="#fff" />
                       </TouchableOpacity>
                       <View style={styles.plusButtonContainer}>
                         <TouchableOpacity
                           style={styles.chapterDetailsActionButton}
                           onPress={handlePlusButtonPress}
                         >
-                          <SimpleIcon name="plus" size={16} color="#fff" />
+                          <SimpleIcon name="plus" size={25} color="#fff" />
                         </TouchableOpacity>
 
                         {showPlusDropdown && (
@@ -4190,7 +4189,7 @@ const CourseDetailsPage = () => {
                             >
                               <SimpleIcon
                                 name="menu-book"
-                                size={16}
+                                size={20}
                                 color="#3b82f6"
                               />
                               <Text style={styles.dropdownItemText}>
@@ -4203,7 +4202,7 @@ const CourseDetailsPage = () => {
                             >
                               <SimpleIcon
                                 name="clipboard"
-                                size={16}
+                                size={20}
                                 color="#10b981"
                               />
                               <Text style={styles.dropdownItemText}>
@@ -4216,7 +4215,7 @@ const CourseDetailsPage = () => {
                             >
                               <SimpleIcon
                                 name="description"
-                                size={16}
+                                size={20}
                                 color="#6b7280"
                               />
                               <Text style={styles.dropdownItemText}>
@@ -4229,7 +4228,7 @@ const CourseDetailsPage = () => {
                             >
                               <SimpleIcon
                                 name="chat"
-                                size={16}
+                                size={20}
                                 color="#6b7280"
                               />
                               <Text style={styles.dropdownItemText}>
@@ -4317,7 +4316,7 @@ const CourseDetailsPage = () => {
                               >
                                 <SimpleIcon
                                   name="trash"
-                                  size={16}
+                                  size={25}
                                   color="#dc2626"
                                 />
                               </TouchableOpacity>
@@ -4403,7 +4402,7 @@ const CourseDetailsPage = () => {
                                 >
                                   <SimpleIcon
                                     name="pencil"
-                                    size={16}
+                                    size={22}
                                     color="#10B144"
                                   />
                                 </TouchableOpacity>
@@ -4415,7 +4414,7 @@ const CourseDetailsPage = () => {
                                 >
                                   <SimpleIcon
                                     name="trash"
-                                    size={16}
+                                    size={22}
                                     color="#6b7280"
                                   />
                                 </TouchableOpacity>
@@ -4429,7 +4428,7 @@ const CourseDetailsPage = () => {
                                   >
                                     <SimpleIcon
                                       name="plus"
-                                      size={16}
+                                      size={22}
                                       color="#fff"
                                     />
                                   </TouchableOpacity>
@@ -5200,7 +5199,7 @@ const CourseDetailsPage = () => {
                 }}
                 style={styles.backButton}
               >
-                <SimpleIcon name="arrow-left" size={24} color="#10B144" />
+                <SimpleIcon name="arrow-back" size={24} color="#10B144" />
               </TouchableOpacity>
               <Text style={styles.fullScreenModalTitle}>Add Files</Text>
               <View style={{ width: 40 }} />
@@ -5289,7 +5288,7 @@ const CourseDetailsPage = () => {
                 }}
                 style={styles.backButton}
               >
-                <SimpleIcon name="arrow-left" size={24} color="#10B144" />
+                <SimpleIcon name="arrow-back" size={24} color="#10B144" />
               </TouchableOpacity>
               <Text style={styles.fullScreenModalTitle}>Add Assessment</Text>
               <View style={{ width: 40 }} />
@@ -7492,8 +7491,6 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#f3f4f6",
     borderRadius: 6,
-    width: 32,
-    height: 32,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "prefabPath": "/Users/marianoor/.gradle/caches/modules-2/files-2.1/com.google.prefab/cli/2.1.0/aa32fec809c44fa531f01dcfb739b5b3304d3050/cli-2.1.0-all.jar",
+  "packages": [
+    "/Users/marianoor/.gradle/caches/8.13/transforms/e702d807405e02934ddf4aeab8285ec0/transformed/react-android-0.79.1-release/prefab",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-reanimated/android/build/intermediates/prefab_package/release/prefab",
+    "/Users/marianoor/.gradle/caches/8.13/transforms/e561a215717d620392217fceaffb1ff8/transformed/hermes-android-0.79.1-release/prefab",
+    "/Users/marianoor/.gradle/caches/8.13/transforms/72cde7dc85b5006383f56c98fcfedfa5/transformed/fbjni-0.7.0/prefab"
+  ]
+}
