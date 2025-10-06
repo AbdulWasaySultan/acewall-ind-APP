@@ -1,15 +1,19 @@
-"use client"
 
 import { useEffect, useState } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Platform } from "react-native"
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native"
 import SimpleIcon from "../components/SimpleIcon"
 import { getChapterDetailsForStudent, getChapterDiscussionsForStudent, getChapterPagesForStudent } from "../services/course"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 interface ChapterDetailParams {
   chapterId: string
 }
-
+export type RootStackParamList = {
+  AssessmentScreenStudent: { assessmentId: string };
+  // add other screens here...
+};
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AssessmentScreenStudent'>;
 
 export interface ChapterDetails {
   _id: string;
@@ -118,7 +122,7 @@ type TabType = "description" | "files" | "assessments" | "discussions" | "pages"
 
 const ChapterDetailsStudent = () => {
   const route = useRoute<RouteProp<Record<string, ChapterDetailParams>, string>>()
-  const navigation = useNavigation()
+  const navigation = useNavigation<NavigationProp>()
   const { chapterId } = route.params
   const [chapter, setChapter] = useState<null|ChapterDetails>(null)
   const [discussions, setDiscussions] = useState<null|Discussion[]>(null)
@@ -191,13 +195,13 @@ const ChapterDetailsStudent = () => {
       <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Chapter Assessment</Text>
       {chapter?.chapterAssessments && chapter?.chapterAssessments.length > 0 ? (
         chapter?.chapterAssessments.map((assessment: any, index: number) => (
-          <View key={index} style={styles.assessmentCard}>
+          <TouchableOpacity key={index} style={styles.assessmentCard} onPress={()=>navigation.navigate("AssessmentScreenStudent",{assessmentId:assessment._id})}>
             <View style={styles.assessmentHeader}>
               <SimpleIcon name="book" size={24} color="#10B144" />
               <Text style={styles.assessmentTitle}>{assessment.title}</Text>
             </View>
             <Text style={styles.assessmentDescription}>{assessment.description}</Text>
-          </View>
+          </TouchableOpacity>
         ))
       ) : (
         <View style={styles.emptyState}>

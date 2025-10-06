@@ -87,6 +87,56 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/arm64-v8a/CMakeFiles/cmake.verify_globs")
 endif()
 
+# react_codegen_SRCS at /Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/*.cpp")
+set(OLD_GLOB
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/VectorIconsEvilIcons-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/arm64-v8a/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at /Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsEvilIcons/*.cpp")
+set(OLD_GLOB
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsEvilIcons/ComponentDescriptors.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsEvilIcons/EventEmitters.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsEvilIcons/Props.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsEvilIcons/ShadowNodes.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsEvilIcons/States.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsEvilIcons/VectorIconsEvilIconsJSI-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/arm64-v8a/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at /Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/*.cpp")
+set(OLD_GLOB
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/VectorIconsFontAwesome6-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/arm64-v8a/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at /Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsFontAwesome6/*.cpp")
+set(OLD_GLOB
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsFontAwesome6/ComponentDescriptors.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsFontAwesome6/EventEmitters.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsFontAwesome6/Props.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsFontAwesome6/ShadowNodes.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsFontAwesome6/States.cpp"
+  "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/react/renderer/components/VectorIconsFontAwesome6/VectorIconsFontAwesome6JSI-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/arm64-v8a/CMakeFiles/cmake.verify_globs")
+endif()
+
 # react_codegen_SRCS at /Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/material-icons/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/material-icons/android/build/generated/source/codegen/jni/*.cpp")
 set(OLD_GLOB

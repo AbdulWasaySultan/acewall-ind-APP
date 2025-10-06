@@ -117,6 +117,7 @@ const DashboardPage = () => {
   if (userRole === 'student') {
     return (
       <View style={styles.mainContainer}>
+
         <ScrollView style={styles.container}>
           <Text style={styles.sectionTitle}>Announcements</Text>
           {studentLoading ? (

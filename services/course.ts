@@ -24,6 +24,7 @@ export const addAuthInterceptor = (api: any) => {
       try {
         // Get token from AsyncStorage
         const token = await AsyncStorage.getItem('token');
+        console.log(token)
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -871,6 +872,20 @@ export const getStudentEnrolledCourses = async () => {
   } catch (error: any) {
     console.error('Error fetching enrolled courses:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch enrolled courses');
+  }
+};
+export const  getStudentAssessmentDetails = async (assessmentId: string) => {
+  try {
+    const api = await createApiInstance();
+    console.log(api)
+    console.log(assessmentId)
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/assessment/${assessmentId}`);
+    console.log(response.data)
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching assessment details:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch assessment details');
   }
 };
 

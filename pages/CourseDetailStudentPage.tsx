@@ -538,7 +538,7 @@ const CourseDetailStudentPage = () => {
                       style={styles.downloadButton}
                       onPress={() => handleOpenSyllabus(course.syllabus.url)}
                     >
-                      <SimpleIcon name="open-outline" size={20} color="#fff" />
+                      <SimpleIcon name="open-in-new" size={20} color="#fff" />
                     </TouchableOpacity>
                   </View>
                 </View>

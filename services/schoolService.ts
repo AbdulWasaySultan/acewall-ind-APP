@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { getStoredBaseUrl, setStoredUserData } from '../utils/storage';
+import { getStoredBaseUrl, setStoredUserData, setUserToken } from '../utils/storage';
 
 // Default API URL for school search
 // Use hosted API to avoid localhost/ATS issues on iOS
@@ -100,8 +100,9 @@ export const login = async (email: string, password: string) => {
     });
     console.log('Login API URL:', authApi.defaults.baseURL+'/api/auth/login');
     const response = await authApi.post('/api/auth/login', { email, password });
-    if (response.data && response.data.user) {
-      await setStoredUserData(response.data.user);
+    console.log(response.data)
+    if (response.data && response.data.token) {
+      await setUserToken(response.data.token);
     }
     return response.data;
   } catch (error) {
@@ -200,6 +201,7 @@ export const checkAuth = async () => {
       }
     });
     const response = await authApi.get('/api/auth/checkAuth');
+    console.log(response.data)
     if (response.data && response.data.user) {
       await setStoredUserData(response.data.user);
     }

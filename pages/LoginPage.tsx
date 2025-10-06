@@ -36,7 +36,7 @@ const LoginPage = () => {
       const response = await login(email, password);
 
       console.log("Login response", response);
-      if (response.message === "Login Successfull") {
+      if (response.message === "Login Successful") {
         const userData = await checkAuth();
 
         await AsyncStorage.setItem("userData", JSON.stringify(userData));

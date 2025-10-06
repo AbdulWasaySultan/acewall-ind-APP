@@ -326,7 +326,7 @@ const CourseDetailStudentPageEnrolled = () => {
                 {/* Teacher */}
                 <View style={styles.teacherRow}>
                     <View style={styles.teacherAvatar}>
-                        <SimpleIcon name="person-circle-outline" size={48} color="#888" />
+                        <SimpleIcon name="account-circle" size={48} color="#888" />
                     </View>
                     <Text style={styles.teacherName}>{teacher}</Text>
                     <TouchableOpacity style={styles.messageBtn} onPress={handleMessageTeacher}>
@@ -468,7 +468,7 @@ const CourseDetailStudentPageEnrolled = () => {
                                             <View key={c._id} style={styles.commentItem}>
                                                 <View style={styles.commentHeader}>
                                                     <View style={styles.commentAvatar}>
-                                                        <SimpleIcon name="person-circle-outline" size={32} color="#888" />
+                                                        <SimpleIcon name="account-circle" size={32} color="#888" />
                                                     </View>
                                                     <Text style={styles.commentUser}>{userName}</Text>
                                                     {userRole && (
@@ -511,7 +511,7 @@ const CourseDetailStudentPageEnrolled = () => {
                                         style={styles.downloadButton}
                                         onPress={() => handleOpenSyllabus(courseDetails.syllabus.url)}
                                     >
-                                        <SimpleIcon name="open-outline" size={20} color="#fff" />
+                                        <SimpleIcon name="open-in-new" size={20} color="#fff" />
                                     </TouchableOpacity>
                                 </View>
                             </View>

@@ -10,6 +10,12 @@
 /Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/rndocumentpickerCGen_autolinked_build/CMakeFiles/react_codegen_rndocumentpickerCGen.dir
 /Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/rndocumentpickerCGen_autolinked_build/CMakeFiles/edit_cache.dir
 /Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/rndocumentpickerCGen_autolinked_build/CMakeFiles/rebuild_cache.dir
+/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsEvilIcons_autolinked_build/CMakeFiles/react_codegen_VectorIconsEvilIcons.dir
+/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsEvilIcons_autolinked_build/CMakeFiles/edit_cache.dir
+/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsEvilIcons_autolinked_build/CMakeFiles/rebuild_cache.dir
+/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsFontAwesome6_autolinked_build/CMakeFiles/react_codegen_VectorIconsFontAwesome6.dir
+/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsFontAwesome6_autolinked_build/CMakeFiles/edit_cache.dir
+/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsFontAwesome6_autolinked_build/CMakeFiles/rebuild_cache.dir
 /Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsMaterialIcons_autolinked_build/CMakeFiles/react_codegen_VectorIconsMaterialIcons.dir
 /Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsMaterialIcons_autolinked_build/CMakeFiles/edit_cache.dir
 /Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/Debug/311bm342/armeabi-v7a/VectorIconsMaterialIcons_autolinked_build/CMakeFiles/rebuild_cache.dir

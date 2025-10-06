@@ -75,7 +75,6 @@ export const dashboardService = {
       console.log('Fetching teacher stats...');
       const api = await createDashboardApiInstance();
       const userId = await getStoredUserId();
-      
       if (!userId) {
         console.error('No user ID found. User might not be logged in.');
         return { courses: 0, students: 0 };

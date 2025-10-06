@@ -2485,7 +2485,7 @@ const CourseDetailsPage = () => {
                     }}
                   >
                     <SimpleIcon
-                      name="person-circle-outline"
+                      name="account-circle"
                       size={28}
                       color="#888"
                       style={{ marginRight: 8 }}

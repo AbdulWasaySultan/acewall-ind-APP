@@ -78,6 +78,7 @@ export const setStoredUserData = async (userData: any): Promise<boolean> => {
   }
 };
 
+
 export const getStoredUserData = async (): Promise<any | null> => {
   try {
     const userDataString = await AsyncStorage.getItem('userData');
@@ -89,3 +90,16 @@ export const getStoredUserData = async (): Promise<any | null> => {
     return null;
   }
 }; 
+
+
+// Set USER TOKEN
+
+export const setUserToken = async (token: any): Promise<boolean> => {
+  try {
+    await AsyncStorage.setItem('token', JSON.stringify(token));
+    return true;
+  } catch (error) {
+    console.error('Error saving token:', error);
+    return false;
+  }
+};
