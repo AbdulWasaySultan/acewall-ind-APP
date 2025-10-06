@@ -2603,7 +2603,7 @@ const CourseDetailsPage = () => {
                           onPress={() => handleDeleteCategory(cat)}
                         >
                           <SimpleIcon
-                            name="trash-outline"
+                            name="trash-can"
                             size={24}
                             color="#ef4444"
                           />
@@ -2925,7 +2925,7 @@ const CourseDetailsPage = () => {
                           style={styles.chapterDeleteButton}
                         >
                           <SimpleIcon
-                            name="trash-outline"
+                            name="trash-can"
                             size={20}
                             color="#666"
                           />
@@ -4189,7 +4189,7 @@ const CourseDetailsPage = () => {
                               onPress={() => handleDropdownOption("lesson")}
                             >
                               <SimpleIcon
-                                name="book"
+                                name="menu-book"
                                 size={16}
                                 color="#3b82f6"
                               />
@@ -4215,7 +4215,7 @@ const CourseDetailsPage = () => {
                               onPress={() => handleDropdownOption("page")}
                             >
                               <SimpleIcon
-                                name="document-text"
+                                name="description"
                                 size={16}
                                 color="#6b7280"
                               />
@@ -4460,7 +4460,7 @@ const CourseDetailsPage = () => {
                                         }
                                       >
                                         <SimpleIcon
-                                          name="document-text"
+                                          name="description"
                                           size={16}
                                           color="#6b7280"
                                         />
@@ -5225,7 +5225,7 @@ const CourseDetailsPage = () => {
                   {selectedFiles.map((file, index) => (
                     <View key={index} style={styles.fileItem}>
                       <SimpleIcon
-                        name="document-text"
+                        name="description"
                         size={20}
                         color="#10B144"
                       />
@@ -5234,7 +5234,7 @@ const CourseDetailsPage = () => {
                         onPress={() => handleRemoveSelectedFile(index)}
                       >
                         <SimpleIcon
-                          name="trash-outline"
+                          name="trash-can"
                           size={20}
                           color="#ef4444"
                         />

@@ -155,7 +155,7 @@ const SimpleIcon: React.FC<SimpleIconProps> = ({
   style,
 }) => {
   let IconComponent: any = null;
-  console.log(name,materialMap,evilMap,fontawesomeMap)
+  console.log(name)
   if (materialMap[name]) IconComponent = MaterialIcons;
   else if (evilMap[name]) IconComponent = EvilIcons;
   else if (fontawesomeMap[name]) IconComponent = FontAwesome;

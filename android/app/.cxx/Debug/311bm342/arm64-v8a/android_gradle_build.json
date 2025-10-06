@@ -3,6 +3,8 @@
     "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-community/datetimepicker/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-documents/picker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/material-icons/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt",
     "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-image-picker/android/build/generated/source/codegen/jni/CMakeLists.txt",
@@ -60,6 +62,16 @@
       "toolchain": "toolchain",
       "abi": "arm64-v8a",
       "artifactName": "react_codegen_RNVectorIconsSpec"
+    },
+    "react_codegen_VectorIconsEvilIcons::@cd02e201fea1713bb7cb": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "react_codegen_VectorIconsEvilIcons"
+    },
+    "react_codegen_VectorIconsFontAwesome6::@593c2d0dc8ab80edeb45": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "react_codegen_VectorIconsFontAwesome6"
     },
     "react_codegen_VectorIconsMaterialIcons::@31616434fa1e3b43792c": {
       "toolchain": "toolchain",

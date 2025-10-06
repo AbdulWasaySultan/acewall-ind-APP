@@ -4,14 +4,15 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platfo
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native"
 import SimpleIcon from "../components/SimpleIcon"
 import { pick } from "@react-native-documents/picker";
-import { getStudentAssessmentDetails } from "../services/course";
+import { getStudentAssessmentDetails, submitAssessment } from "../services/course";
+import Toast from 'react-native-simple-toast'
 interface AssessmentParams {
   assessmentId: string
 }
 
 interface Question {
   _id: string
-  type: "mcq" | "true/false" | "qa" | "file"
+  type: "mcq" | "truefalse" | "qa" | "file"
   question: string
   options?: string[]
   correctAnswer?: string
@@ -47,7 +48,7 @@ const AssessmentScreenStudent = () => {
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [answers, setAnswers] = useState<Record<string, string | File | null>>({})
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, any>>({})
-
+  const [submitAssessmentLoading,setSubmitAssessmentLoading] = useState(false)
   useEffect(() => {
   
     const fetchAssessment = async () => {
@@ -70,45 +71,65 @@ const AssessmentScreenStudent = () => {
     }))
   }
 
-//   const handleFileUpload = async (questionId: string) => {
-//     try {
-//         const result = await pick({
-//             type: ["application/pdf"],
-//             copyTo: "cachesDirectory",
-//           });
+  const handleFileUpload = async (questionId: string) => {
+    try {
+        const result = await pick({
+            type: ["application/pdf"],
+            copyTo: "cachesDirectory",
+          });
 
-//       if (result.type === "success") {
-//         setUploadedFiles((prev) => ({
-//           ...prev,
-//           [questionId]: result,
-//         }))
-//         setAnswers((prev) => ({
-//           ...prev,
-//           [questionId]: result.uri,
-//         }))
-//       }
-//     } catch (error) {
-//       console.error("Error picking document:", error)
-//       Alert.alert("Error", "Failed to pick document")
-//     }
-//   }
+      if (result.type === "success") {
+        setUploadedFiles((prev) => ({
+          ...prev,
+          [questionId]: result,
+        }))
+        setAnswers((prev) => ({
+          ...prev,
+          [questionId]: result.uri,
+        }))
+      }
+    } catch (error) {
+      console.error("Error picking document:", error)
+      Alert.alert("Error", "Failed to pick document")
+    }
+  }
 
-  const handleSubmit = () => {
-    // Validate all questions are answered
+  const handleSubmit = async () => {
+    try {
+      // Validate all questions are answered
+      setSubmitAssessmentLoading(true)
     const unansweredQuestions = assessment?.questions.filter((q) => !answers[q._id])
 
     if (unansweredQuestions && unansweredQuestions.length > 0) {
-      Alert.alert("Incomplete Assessment", "Please answer all questions before submitting.")
+      Toast.show("Incomplete Assessment, Please answer all questions before submitting.",Toast.LONG)
       return
     }
 
     // Submit assessment
-    Alert.alert("Success", "Assessment submitted successfully!", [
-      {
-        text: "OK",
-        onPress: () => navigation.goBack(),
-      },
-    ])
+      const questionsArray = Object.entries(answers).map(([questionId, answer]) => ({
+        questionId,
+        selectedAnswer: typeof answer === "string" ? answer : "",
+      }))
+
+      const res = await submitAssessment(
+        assessmentId,
+        assessment?.title || "",
+        assessment?.description || "",
+        assessment?.dueDate?.date || "",
+        questionsArray,
+      )
+console.log(res)
+   
+
+      Toast.show(res.message ||"Assessment submitted successfully!",Toast.LONG)
+      navigation.goBack()
+    } catch (error: any) {
+      console.error("Error submitting assessment:", error)
+      Toast.show(error.message || "Failed to submit assessment. Please try again.",Toast.LONG)
+    }
+    finally{
+      setSubmitAssessmentLoading(false)
+    }
   }
 
   const renderQuestion = (question: Question, index: number) => {
@@ -122,9 +143,8 @@ const AssessmentScreenStudent = () => {
         </View>
 
         <Text style={styles.questionText}>{question.question.replace(/<[^>]*>/g, "")}</Text>
-
         {question.type === "mcq" && renderMCQ(question)}
-        {question.type === "true/false" && renderTrueFalse(question)}
+        {question.type === "truefalse" && renderTrueFalse(question)}
         {question.type === "qa" && renderQA(question)}
         {question.type === "file" && renderFileUpload(question)}
       </View>
@@ -184,7 +204,7 @@ const AssessmentScreenStudent = () => {
         <View style={styles.attachedFilesContainer}>
           {question.files.map((file, index) => (
             <TouchableOpacity key={index} style={styles.attachedFileCard}>
-              <SimpleIcon name="document-text" size={24} color="#4285F4" />
+              <SimpleIcon name="description" size={24} color="#4285F4" />
               <Text style={styles.attachedFileName}>{file.filename}</Text>
             </TouchableOpacity>
           ))}
@@ -229,8 +249,12 @@ const AssessmentScreenStudent = () => {
           {assessment.questions.map((question, index) => renderQuestion(question, index))}
 
           {/* Submit Button */}
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={submitAssessmentLoading}>
+            {submitAssessmentLoading?
+            
+          <ActivityIndicator size={'small'} color={'#fff'}/>:
             <Text style={styles.submitButtonText}>Submit Assessment</Text>
+          }
           </TouchableOpacity>
         </View>
       </ScrollView>

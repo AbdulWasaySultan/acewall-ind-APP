@@ -569,6 +569,72 @@ export const createAssessment = async (
     }
   }
 };
+export const submitAssessment = async (
+  assessmentId: string,
+  title: string,
+  description: string,
+  dueDate: string,
+  questions: any[],
+  file?: any, // Optional file object from react-native-image-picker
+  lessonId?: string,
+  chapterId?: string
+) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    
+    if (lessonId) {
+      formData.append('lesson', lessonId);
+    } else if (chapterId) {
+      formData.append('chapter', chapterId);
+      formData.append('course', assessmentId);
+    } else {
+      formData.append('course', assessmentId);
+    }
+
+    formData.append('questions', JSON.stringify(questions));   questions.forEach((question, index) => {
+      formData.append(`answers[${index}][questionId]`, question.questionId)
+      formData.append(`answers[${index}][selectedAnswer]`, question.selectedAnswer)
+    })
+    if (file) {
+      formData.append('files', {
+        uri: file.uri,
+        type: file.type || 'application/octet-stream',
+        name: file.fileName || file.uri.split('/').pop() || 'file',
+      } as any);
+    }
+
+    console.log('submitting assessment creation request:', formData);
+
+    const response = await api.post(`/api/assessmentSubmission/submission/${assessmentId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    console.log('Assessment submitted response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error submitting assessment:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data,
+      request: error.request,
+      config: error.config,
+    });
+
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to submit assessment');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error(`Error setting up the request: ${error.message}`);
+    }
+  }
+};
 
 export const deleteAssessment = async (assessmentId: string) => {
   try {
@@ -851,6 +917,17 @@ export const getChapterDiscussionsForStudent = async (chapterId: string) => {
     throw new Error(error.response?.data?.message || 'Failed to fetch chapter discussions');
   }
 };
+export const getLessonDiscussionsForStudent = async (lessonId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/discussion/lesson/${lessonId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching lesson discussions:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch lesson discussions');
+  }
+};
 export const getChapterPagesForStudent = async (chapterId: string) => {
   try {
     const api = await createApiInstance();
@@ -860,6 +937,17 @@ export const getChapterPagesForStudent = async (chapterId: string) => {
   } catch (error: any) {
     console.error('Error fetching chapter pages:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch chapter pages');
+  }
+};
+export const getLessonPagesForStudent = async (lessonId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/pages/getLessonPages/${lessonId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching lesson pages:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch lesson pages');
   }
 };
 

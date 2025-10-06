@@ -495,7 +495,7 @@ const CourseDetailStudentPageEnrolled = () => {
                         {courseDetails.syllabus && courseDetails.syllabus.url ? (
                             <View style={styles.syllabusContainer}>
                                 <View style={styles.syllabusCard}>
-                                    <SimpleIcon name="document-text" size={32} color="#10B144" />
+                                    <SimpleIcon name="description" size={32} color="#10B144" />
                                     <View style={styles.syllabusInfo}>
                                         <Text style={styles.syllabusTitle}>{courseDetails.syllabus.filename || 'Course Syllabus'}</Text>
                                         <Text style={styles.syllabusSubtitle}>PDF Document</Text>
@@ -517,7 +517,7 @@ const CourseDetailStudentPageEnrolled = () => {
                             </View>
                         ) : (
                             <View style={styles.tabContentCentered}>
-                                <SimpleIcon name="document-text-outline" size={48} color="#ccc" />
+                                <SimpleIcon name="file" size={48} color="#ccc" />
                                 <Text style={styles.sectionSubtitle}>No syllabus available</Text>
                             </View>
                         )}
