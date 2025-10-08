@@ -127,46 +127,48 @@ const ChapterDetailsStudent = () => {
   const route = useRoute<RouteProp<Record<string, ChapterDetailParams>, string>>()
   const navigation = useNavigation<NavigationProp>()
   const { chapterId } = route.params
-  const [chapter, setChapter] = useState<null|ChapterDetails>(null)
-  const [chapterDetailsLoading,setChapterDetailsLoading] = useState(false)
-  const [discussions, setDiscussions] = useState<null|Discussion[]>(null)
-  const [pages, setPages] = useState<null|Page[]>(null)
+  const [chapter, setChapter] = useState<null | ChapterDetails>(null)
+  const [chapterDetailsLoading, setChapterDetailsLoading] = useState(false)
+  const [discussions, setDiscussions] = useState<null | Discussion[]>(null)
+  const [pages, setPages] = useState<null | Page[]>(null)
   const [expanded, setExpanded] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [lessonDiscussions, setLessonDiscussions] = useState<Discussion[]>([])
-const [lessonPages, setLessonPages] = useState<Page[]>([])
+  const [lessonPages, setLessonPages] = useState<Page[]>([])
+  const [selectedPage, setSelectedPage] = useState<Page | null>(null);
 
-  useEffect(()=>{
+
+  useEffect(() => {
     const fetchChapterData = async () => {
       setChapterDetailsLoading(true)
-      try{
+      try {
 
-      const results = await Promise.allSettled([
-        getChapterDetailsForStudent(chapterId),
-        getChapterDiscussionsForStudent(chapterId),
-        getChapterPagesForStudent(chapterId),
-      ]);
-    
-      const [details, discussions, pages] = results.map(r =>
-        r.status === "fulfilled" ? r.value : null
-      );
-      console.log(details,discussions,pages)
-      if (details) setChapter(details.chapterDetails);
-      if (discussions) setDiscussions(discussions.discussion);
-      if (pages) setPages(pages.pages);
-    }catch(err){
-      console.log('error',err)
-    }finally{
-      setChapterDetailsLoading(false)
+        const results = await Promise.allSettled([
+          getChapterDetailsForStudent(chapterId),
+          getChapterDiscussionsForStudent(chapterId),
+          getChapterPagesForStudent(chapterId),
+        ]);
+
+        const [details, discussions, pages] = results.map(r =>
+          r.status === "fulfilled" ? r.value : null
+        );
+        console.log(details, discussions, pages)
+        if (details) setChapter(details.chapterDetails);
+        if (discussions) setDiscussions(discussions.discussion);
+        if (pages) setPages(pages.pages);
+      } catch (err) {
+        console.log('error', err)
+      } finally {
+        setChapterDetailsLoading(false)
+      }
     }
-  }
 
-    
+
     fetchChapterData()
-  },[chapterId])
-  
+  }, [chapterId])
+
   const [activeTab, setActiveTab] = useState<TabType>("description")
-  const handleLessonSelect = async (lesson:Lesson) => {
+  const handleLessonSelect = async (lesson: Lesson) => {
     setSelectedLesson(lesson)
     try {
       const [lessonDiscussionsRes, lessonPagesRes] = await Promise.allSettled([
@@ -176,13 +178,14 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
       if (lessonDiscussionsRes.status === "fulfilled")
         setLessonDiscussions(lessonDiscussionsRes.value.discussion || [])
       else setLessonDiscussions([])
-  
+
       if (lessonPagesRes.status === "fulfilled")
         setLessonPages(lessonPagesRes.value.pages || [])
       else setLessonPages([])
     } catch (err) {
       console.log("Error fetching lesson data:", err)
-    }}
+    }
+  }
   const renderTabButton = (tab: TabType, label: string) => (
     <TouchableOpacity
       style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
@@ -196,16 +199,18 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
     <View style={styles.tabContent}>
       <Text style={styles.sectionTitle}>{chapter?.title}</Text>
       <Text style={styles.descriptionText}>{chapter?.description || "This is the chapter description"}</Text>
-    {
-      selectedLesson && 
-      <View style={{ borderTopWidth: 1,
-        marginTop:20,
-        borderTopColor: "#e0e0e0",}}>
-      <Text style={styles.sectionTitle}>Current Lesson: {selectedLesson?.title}</Text>
-      <Text style={styles.descriptionText}>{selectedLesson?.description }</Text>
-   
-      </View>
-    }
+      {
+        selectedLesson &&
+        <View style={{
+          borderTopWidth: 1,
+          marginTop: 20,
+          borderTopColor: "#e0e0e0",
+        }}>
+          <Text style={styles.sectionTitle}>Current Lesson: {selectedLesson?.title}</Text>
+          <Text style={styles.descriptionText}>{selectedLesson?.description}</Text>
+
+        </View>
+      }
 
     </View>
   )
@@ -214,7 +219,7 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
     <View style={styles.tabContent}>
       {selectedLesson && selectedLesson?.pdfFiles.length > 0 ? (
         selectedLesson?.pdfFiles.map((file: PdfFile, index: number) => (
-          <TouchableOpacity key={index} style={styles.fileCard} onPress={()=>Linking.openURL(file.url)}>
+          <TouchableOpacity key={index} style={styles.fileCard} onPress={() => Linking.openURL(file.url)}>
             <SimpleIcon name="description" size={24} color="#10B144" />
             <View style={styles.fileInfo}>
               <Text style={styles.fileName}>{file.filename || `File ${index + 1}`}</Text>
@@ -233,30 +238,30 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
 
   const renderAssessments = () => (
     <View style={styles.tabContent}>
-        <Text style={styles.sectionTitle}>Lesson Assessments</Text>
+      <Text style={styles.sectionTitle}>Lesson Assessments</Text>
 
       {
-        selectedLesson && 
-        selectedLesson?.lessonAssessments.length>0? 
-        selectedLesson?.lessonAssessments.map((assessment: any, index: number) => (
-          <TouchableOpacity key={index} style={styles.assessmentCard} onPress={()=>navigation.navigate("AssessmentScreenStudent",{assessmentId:assessment._id})}>
-            <View style={styles.assessmentHeader}>
-              <SimpleIcon name="menu-book" size={24} color="#10B144" />
-              <Text style={styles.assessmentTitle}>{assessment.title}</Text>
-            </View>
-            <Text style={styles.assessmentDescription}>{assessment.description}</Text>
-          </TouchableOpacity>
-        ))
-      :
-        <Text style={styles.emptyMessage}>No lesson assessments available</Text>
+        selectedLesson &&
+          selectedLesson?.lessonAssessments.length > 0 ?
+          selectedLesson?.lessonAssessments.map((assessment: any, index: number) => (
+            <TouchableOpacity key={index} style={styles.assessmentCard} onPress={() => navigation.navigate("AssessmentScreenStudent", { assessmentId: assessment._id })}>
+              <View style={styles.assessmentHeader}>
+                <SimpleIcon name="menu-book" size={24} color="#10B144" />
+                <Text style={styles.assessmentTitle}>{assessment.title}</Text>
+              </View>
+              <Text style={styles.assessmentDescription}>{assessment.description}</Text>
+            </TouchableOpacity>
+          ))
+          :
+          <Text style={styles.emptyMessage}>No lesson assessments available</Text>
 
       }
-    
+
 
       <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Chapter Assessment</Text>
       {chapter?.chapterAssessments && chapter?.chapterAssessments.length > 0 ? (
         chapter?.chapterAssessments.map((assessment: any, index: number) => (
-          <TouchableOpacity key={index} style={styles.assessmentCard} onPress={()=>navigation.navigate("AssessmentScreenStudent",{assessmentId:assessment._id})}>
+          <TouchableOpacity key={index} style={styles.assessmentCard} onPress={() => navigation.navigate("AssessmentScreenStudent", { assessmentId: assessment._id })}>
             <View style={styles.assessmentHeader}>
               <SimpleIcon name="menu-book" size={24} color="#10B144" />
               <Text style={styles.assessmentTitle}>{assessment.title}</Text>
@@ -266,7 +271,7 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
         ))
       ) : (
         <View style={styles.emptyState}>
-          <SimpleIcon name="clipboard-outline" size={48} color="#ccc" />
+          <SimpleIcon name="clipboard" size={48} color="#ccc" />
           <Text style={styles.emptyStateText}>No assessments available</Text>
         </View>
       )}
@@ -279,12 +284,12 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
       {discussions && discussions.length > 0 ? (
         <View style={styles.discussionsGrid}>
           {discussions.map((discussion: Discussion, index: number) => (
-            <TouchableOpacity key={index} style={styles.discussionCard} onPress={()=>navigation.navigate('DiscussionStudent',{discussionId:discussion?._id})}>
-           
+            <TouchableOpacity key={index} style={styles.discussionCard} onPress={() => navigation.navigate('DiscussionStudent', { discussionId: discussion?._id })}>
 
-              <Image source={{uri:discussion.course.thumbnail.url}} style={{width:'100%',height:150}}/>
 
-              <Text style={styles.dueDate}>Due Date: { new Date(discussion.dueDate.date).toDateString()}</Text>
+              <Image source={{ uri: discussion.course.thumbnail.url }} style={{ width: '100%', height: 150 }} />
+
+              <Text style={styles.dueDate}>Due Date: {new Date(discussion.dueDate.date).toDateString()}</Text>
 
               <View style={styles.chapterBadge}>
                 <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
@@ -298,30 +303,30 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
         </View>
       ) : (
         <View style={styles.emptyState}>
-          <SimpleIcon name="chatbubbles-outline" size={48} color="#ccc" />
+          <SimpleIcon name="chat-bubble-outline" size={48} color="#ccc" />
           <Text style={styles.emptyStateText}>No discussions available</Text>
         </View>
       )}
 
-{selectedLesson && (
-      <>
-        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Lesson Discussion</Text>
-        {lessonDiscussions && lessonDiscussions.length > 0 ? (
-          lessonDiscussions.map((discussion, index) => (
-            <View key={`lesson-discussion-${index}`} style={styles.discussionCard}>
-              <Image source={{ uri: discussion.course.thumbnail.url }} style={{ width: "100%", height: 150 }} />
-              <Text style={styles.dueDate}>Due Date: {new Date(discussion.dueDate.date).toDateString()}</Text>
-              <View style={styles.chapterBadge}><Text style={styles.chapterBadgeText}>{discussion.type}</Text></View>
-              <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-              <Text style={styles.discussionSubtitle}>{discussion.course.courseTitle || "test"}</Text>
-              <Text style={styles.discussionDescription}>{discussion.description}</Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyMessage}>No discussions found for this lesson</Text>
-        )}
-      </>
-    )}
+      {selectedLesson && (
+        <>
+          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Lesson Discussion</Text>
+          {lessonDiscussions && lessonDiscussions.length > 0 ? (
+            lessonDiscussions.map((discussion, index) => (
+              <View key={`lesson-discussion-${index}`} style={styles.discussionCard}>
+                <Image source={{ uri: discussion.course.thumbnail.url }} style={{ width: "100%", height: 150 }} />
+                <Text style={styles.dueDate}>Due Date: {new Date(discussion.dueDate.date).toDateString()}</Text>
+                <View style={styles.chapterBadge}><Text style={styles.chapterBadgeText}>{discussion.type}</Text></View>
+                <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+                <Text style={styles.discussionSubtitle}>{discussion.course.courseTitle || "test"}</Text>
+                <Text style={styles.discussionDescription}>{discussion.description}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyMessage}>No discussions found for this lesson</Text>
+          )}
+        </>
+      )}
     </View>
   )
 
@@ -330,41 +335,41 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
       <Text style={styles.sectionTitle}>Chapter Pages</Text>
       {pages && pages.length > 0 ? (
         pages.map((page: Page, index: number) => (
-          <View key={index} style={styles.pageCard}>
+          <TouchableOpacity key={index} style={styles.pageCard} onPress={() => setSelectedPage(page)}>
             <View style={styles.pageHeader}>
               <Text style={styles.pageTitle}>{page.title}</Text>
-              
+
             </View>
             <Text style={styles.pageDescription}>{page.description}</Text>
             {page.image && <Image source={{ uri: page.image.url }} style={styles.pageImage} />}
-          </View>
+          </TouchableOpacity>
         ))
       ) : (
         <View style={styles.emptyState}>
-          <SimpleIcon name="document-outline" size={48} color="#ccc" />
+          <SimpleIcon name="description" size={48} color="#ccc" />
           <Text style={styles.emptyStateText}>No pages available</Text>
         </View>
       )}
-        {selectedLesson && (
-      <>
-        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Lesson Pages</Text>
-        {lessonPages && lessonPages.length > 0 ? (
-          lessonPages.map((page, index) => (
-            <View key={`lesson-page-${index}`} style={styles.pageCard}>
-              <View style={styles.pageHeader}>
-                <Text style={styles.pageTitle}>{page.title}</Text>
-              </View>
-              <Text style={styles.pageDescription}>{page.description}</Text>
-              {page.image && <Image source={{ uri: page.image.url }} style={styles.pageImage} />}
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyMessage}>No pages found for this lesson</Text>
-        )}
-      </>
-    )}
+      {selectedLesson && (
+        <>
+          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Lesson Pages</Text>
+          {lessonPages && lessonPages.length > 0 ? (
+            lessonPages.map((page, index) => (
+              <TouchableOpacity key={`lesson-page-${index}`} style={styles.pageCard} onPress={() => setSelectedPage(page)}>
+                <View style={styles.pageHeader}>
+                  <Text style={styles.pageTitle}>{page.title}</Text>
+                </View>
+                <Text style={styles.pageDescription}>{page.description}</Text>
+                {page.image && <Image source={{ uri: page.image.url }} style={styles.pageImage} />}
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.emptyMessage}>No pages found for this lesson</Text>
+          )}
+        </>
+      )}
 
- 
+
     </View>
   )
 
@@ -403,14 +408,14 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
         <View style={styles.leftContent}>
           {/* Tabs */}
           {selectedLesson?.youtubeLinks && (
-          <View style={{ margin: 16, borderRadius: 8, overflow: "hidden" }}>
-            <YoutubePlayer
-              height={220}
-              play={false}
-              videoId={extractVideoId(selectedLesson.youtubeLinks)}
-            />
-          </View>
-        ) }
+            <View style={{ margin: 16, borderRadius: 8, overflow: "hidden" }}>
+              <YoutubePlayer
+                height={220}
+                play={false}
+                videoId={extractVideoId(selectedLesson.youtubeLinks)}
+              />
+            </View>
+          )}
           <View style={styles.tabsContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {renderTabButton("description", "Description")}
@@ -422,56 +427,80 @@ const [lessonPages, setLessonPages] = useState<Page[]>([])
           </View>
 
           {/* Tab Content */}
-          {chapterDetailsLoading?
-          <ActivityIndicator size={'large'} color={'#10B144'} style={{alignSelf:'center',height:'30%'}}/>:
-          <ScrollView style={styles.contentScrollView}>{renderTabContent()}</ScrollView>
-        }
+          {chapterDetailsLoading ?
+            <ActivityIndicator size={'large'} color={'#10B144'} style={{ alignSelf: 'center', height: '30%' }} /> :
+            <ScrollView style={styles.contentScrollView}>{renderTabContent()}</ScrollView>
+          }
         </View>
 
         {/* Right Sidebar - Chapter Content */}
         {!chapterDetailsLoading &&
-        <View style={styles.bottomBar}>
-  <Text style={styles.sidebarTitle}>Chapter Content</Text>
+          <View style={styles.bottomBar}>
+            <Text style={styles.sidebarTitle}>Chapter Content</Text>
 
-  <View style={styles.chapterContentCard}>
-    <TouchableOpacity
-      style={styles.chapterContentHeader}
-      onPress={() => setExpanded((prev) => !prev)}
-      activeOpacity={0.8}
-    >
-      <SimpleIcon
-        name={expanded ? "chevron-down" : "chevron-right"}
-        size={20}
-        color="#333"
-      />
-      <Text style={styles.chapterContentTitle}>{chapter?.title}</Text>
-      <Text style={styles.lessonsCount}>
-        {chapter?.lessons?.length || 0} lessons
-      </Text>
-    </TouchableOpacity>
+            <View style={styles.chapterContentCard}>
+              <TouchableOpacity
+                style={styles.chapterContentHeader}
+                onPress={() => setExpanded((prev) => !prev)}
+                activeOpacity={0.8}
+              >
+                <SimpleIcon
+                  name={expanded ? "chevron-down" : "chevron-right"}
+                  size={20}
+                  color="#333"
+                />
+                <Text style={styles.chapterContentTitle}>{chapter?.title}</Text>
+                <Text style={styles.lessonsCount}>
+                  {chapter?.lessons?.length || 0} lessons
+                </Text>
+              </TouchableOpacity>
 
-    {expanded && chapter?.lessons && chapter?.lessons.length > 0 && (
-      <ScrollView
-        style={styles.lessonsList}
-        contentContainerStyle={{ flexGrow: 1 }}
-      >
-        {chapter.lessons.map((lesson: Lesson, index: number) => (
-          <TouchableOpacity key={index} style={[styles.lessonItem,{backgroundColor:selectedLesson?._id === lesson._id? '#C7F3DD':'#fff'}]}
-          onPress={()=>handleLessonSelect(lesson)}>
-            <SimpleIcon name="play-circle-outline" size={20} color="#666" />
-            <Text style={styles.lessonItemText}>
-              Lesson {index + 1}: {lesson.title || `Lesson ${index + 1}`}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    )}
-  </View>
-</View>
+              {expanded && chapter?.lessons && chapter?.lessons.length > 0 && (
+                <ScrollView
+                  style={styles.lessonsList}
+                  contentContainerStyle={{ flexGrow: 1 }}
+                >
+                  {chapter.lessons.map((lesson: Lesson, index: number) => (
+                    <TouchableOpacity key={index} style={[styles.lessonItem, { backgroundColor: selectedLesson?._id === lesson._id ? '#C7F3DD' : '#fff' }]}
+                      onPress={() => handleLessonSelect(lesson)}>
+                      <SimpleIcon name="play-circle-outline" size={20} color="#666" />
+                      <Text style={styles.lessonItemText}>
+                        Lesson {index + 1}: {lesson.title || `Lesson ${index + 1}`}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          </View>
         }
 
 
       </View>
+      {selectedPage && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>{selectedPage.title}</Text>
+
+            {selectedPage.image?.url && (
+              <Image
+                source={{ uri: selectedPage.image.url }}
+                style={styles.modalImage}
+              />
+            )}
+
+            <Text style={styles.modalDescription}>{selectedPage.description}</Text>
+
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setSelectedPage(null)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
     </View>
   )
 }
@@ -502,7 +531,7 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-  
+
   },
   leftContent: {
     flex: 1,
@@ -510,10 +539,10 @@ const styles = StyleSheet.create({
   bottomBar: {
     width: '100%',
     borderTopWidth: 1,
-    maxHeight:'30%',
+    maxHeight: '30%',
     borderTopColor: "#e0e0e0",
     padding: 16,
-    marginBottom:10,
+    marginBottom: 10,
   },
   sidebarTitle: {
     fontSize: 20,
@@ -525,8 +554,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingTop:10,
-    flexShrink:1,
+    paddingTop: 10,
+    flexShrink: 1,
     borderWidth: 1,
     borderColor: "#e0e0e0",
   },
@@ -553,7 +582,7 @@ const styles = StyleSheet.create({
   lessonItem: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius:5,
+    borderRadius: 5,
     paddingVertical: 8,
     paddingLeft: 28,
   },
@@ -594,7 +623,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    
+
     color: "#111",
     marginVertical: 12,
   },
@@ -663,7 +692,7 @@ const styles = StyleSheet.create({
   },
   discussionsGrid: {
     // flexDirection: "row",
-    justifyContent:'center',
+    justifyContent: 'center',
     flexWrap: "wrap",
   },
   discussionCard: {
@@ -757,7 +786,7 @@ const styles = StyleSheet.create({
   },
   dueDate: {
     fontSize: 12,
-    fontWeight:'bold',
+    fontWeight: 'bold',
     color: "#666",
     marginBottom: 8,
   },
@@ -821,6 +850,66 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     resizeMode: "cover",
   },
+  // --- MODAL STYLES ---
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+
+  modalContainer: {
+    width: "90%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+
+  modalImage: {
+    width: "100%",
+    height: 250,
+    borderRadius: 8,
+    resizeMode: "cover",
+    marginBottom: 12,
+  },
+
+  modalDescription: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+
+  closeButton: {
+    backgroundColor: "#10B144",
+    borderRadius: 6,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
 })
 
 export default ChapterDetailsStudent

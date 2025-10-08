@@ -127,14 +127,14 @@ export const createCourse = async (courseData: CourseData): Promise<CourseRespon
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    
+
     const formData = new FormData();
-    
+
     // Append the thumbnail
     if (courseData.thumbnail.url) {
       const imageUri = courseData.thumbnail.url;
       const filename = courseData.thumbnail.filename || 'thumbnail.jpg';
-      
+
       // Get the file extension from the filename or default to jpg
       const extension = filename.split('.').pop() || 'jpg';
       const type = `image/${extension}`;
@@ -156,16 +156,16 @@ export const createCourse = async (courseData: CourseData): Promise<CourseRespon
     formData.append('courseDescription', courseData.courseDescription);
     formData.append('teachingPoints', JSON.stringify(courseData.teachingPoints));
     formData.append('requirements', JSON.stringify(courseData.requirements));
-    
+
     // Add semester and quarter if provided
     if (courseData.semester && courseData.semester.length > 0) {
       formData.append('semester', JSON.stringify(courseData.semester));
     }
-    
+
     if (courseData.quarter && courseData.quarter.length > 0) {
       formData.append('quarter', JSON.stringify(courseData.quarter));
     }
-    
+
     // Add syllabus if provided
     if (courseData.syllabus) {
       formData.append('syllabus', {
@@ -216,9 +216,9 @@ export const archiveCourse = async (courseId: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    
+
     const response = await api.put(`/api/course/archive/${courseId}`);
-    
+
     return response.data;
   } catch (error: any) {
     console.error('Archive course error:', error);
@@ -236,9 +236,9 @@ export const unarchiveCourse = async (courseId: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    
+
     const response = await api.put(`/api/course/archive/${courseId}`);
-    
+
     return response.data;
   } catch (error: any) {
     console.error('Unarchive course error:', error);
@@ -256,7 +256,7 @@ export const getCategories = async () => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    
+
     console.log('Fetching categories from:', '/api/category/get');
     const response = await api.get<{ categories: Category[]; message: string }>('/api/category/get');
     console.log('Categories response:', response.data);
@@ -283,7 +283,7 @@ export const getSubcategories = async (categoryId: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    
+
     console.log('Fetching subcategories for category:', categoryId);
     const response = await api.get<{ subcategories: Subcategory[]; message: string }>(`/api/category/subcategories/${categoryId}`);
     console.log('Subcategories response:', response.data);
@@ -311,10 +311,10 @@ export const getAllCourses = async (search?: string): Promise<CourseResponse> =>
     const api = await createApiInstance();
     addAuthInterceptor(api);
     console.log('Fetching courses from:', search);
-    const url = search 
+    const url = search
       ? `/api/course/getindividualcourse?search=${encodeURIComponent(search)}`
       : '/api/course/getindividualcourse';
-      
+
     const response = await api.get<CourseResponse>(url);
     return response.data;
   } catch (error: any) {
@@ -334,10 +334,10 @@ export const getTeacherCourses = async (published: boolean, search?: string): Pr
     const api = await createApiInstance();
     addAuthInterceptor(api);
     console.log('Fetching teacher courses with published:', published, 'search:', search);
-    
+
     const searchParam = search ? encodeURIComponent(search) : '';
     const url = `/api/course/getTeacherCourses?published=${published}&search=${searchParam}`;
-    
+
     const response = await api.get<CourseResponse>(url);
     return response.data;
   } catch (error: any) {
@@ -436,27 +436,27 @@ export const createAssessmentCategory = async (courseId: string, name: string, w
   if (weight <= 0) {
     throw new Error('Weight must be greater than 0');
   }
-  
+
   try {
     console.log('Creating API instance...');
     const api = await createApiInstance();
     console.log('API instance created successfully');
-    
+
     console.log('Adding auth interceptor...');
     addAuthInterceptor(api);
     console.log('Auth interceptor added successfully');
-    
+
     const requestData = {
       name,
       weight,
       course: courseId
     };
     console.log('Request data:', JSON.stringify(requestData, null, 2));
-    
+
     console.log('Making POST request to:', `/api/assessmentCategory/${courseId}`);
     const response = await api.post(`/api/assessmentCategory/${courseId}`, requestData);
     console.log('Response received:', JSON.stringify(response.data, null, 2));
-    
+
     // Check if response has data
     if (!response.data) {
       throw new Error('No data received from server');
@@ -472,7 +472,7 @@ export const createAssessmentCategory = async (courseId: string, name: string, w
       request: error.request,
       config: error.config
     });
-    
+
     if (error.response) {
       console.error('Server error response:', error.response.data);
       throw new Error(error.response.data.message || 'Failed to create assessment category');
@@ -522,7 +522,7 @@ export const createAssessment = async (
     formData.append('title', title);
     formData.append('description', description);
     formData.append('category', categoryId);
-    
+
     if (lessonId) {
       formData.append('lesson', lessonId);
     } else if (chapterId) {
@@ -586,7 +586,7 @@ export const submitAssessment = async (
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
-    
+
     if (lessonId) {
       formData.append('lesson', lessonId);
     } else if (chapterId) {
@@ -596,7 +596,7 @@ export const submitAssessment = async (
       formData.append('course', assessmentId);
     }
 
-    formData.append('questions', JSON.stringify(questions));   questions.forEach((question, index) => {
+    formData.append('questions', JSON.stringify(questions)); questions.forEach((question, index) => {
       formData.append(`answers[${index}][questionId]`, question.questionId)
       formData.append(`answers[${index}][selectedAnswer]`, question.selectedAnswer)
     })
@@ -870,7 +870,7 @@ export const sendComment = async (discussionId: string, comment: string) => {
   try {
     const api = await createApiInstance()
     addAuthInterceptor(api)
-    const response = await api.post(`/api/discussionComment/sendComment/${discussionId}`, { text:comment })
+    const response = await api.post(`/api/discussionComment/sendComment/${discussionId}`, { text: comment })
     return response.data
   } catch (error: any) {
     console.error("Error sending comment:", error)
@@ -906,7 +906,7 @@ export const sendReply = async (commentId: string, reply: string) => {
   try {
     const api = await createApiInstance()
     addAuthInterceptor(api)
-    const response = await api.post(`/api/replyDiscussion/send/${commentId}`, { text:reply })
+    const response = await api.post(`/api/replyDiscussion/send/${commentId}`, { text: reply })
     return response.data
   } catch (error: any) {
     console.error("Error sending reply:", error)
@@ -1042,7 +1042,7 @@ export const getStudentEnrolledCourses = async () => {
     throw new Error(error.response?.data?.message || 'Failed to fetch enrolled courses');
   }
 };
-export const  getStudentAssessmentDetails = async (assessmentId: string) => {
+export const getStudentAssessmentDetails = async (assessmentId: string) => {
   try {
     const api = await createApiInstance();
     console.log(api)
@@ -1155,8 +1155,8 @@ export const getChaptersByQuarter = async (courseId: string, quarterId: string) 
   } catch (error: any) {
     if (error.response) {
       // Handle 404 or "No chapters found" case gracefully
-      if (error.response.status === 404 || 
-          error.response.data?.message === "No chapters found for this quarter") {
+      if (error.response.status === 404 ||
+        error.response.data?.message === "No chapters found for this quarter") {
         return {
           chapters: [],
           message: "No chapters found for this quarter"
@@ -1185,6 +1185,22 @@ export const getAssessmentsByLesson = async (lessonId: string) => {
       throw new Error('No response from server when fetching assessments. Please check your internet connection.');
     } else {
       throw new Error('Error setting up the request for fetching assessments');
+    }
+  }
+};
+export const getAllAssessmentForStudent = async () => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/assessment/getAllassessmentforStudent`);
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch all assessments');
+    } else if (error.request) {
+      throw new Error('No response from server when fetching all assessments. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request for fetching all assessments');
     }
   }
 };
@@ -1217,7 +1233,7 @@ export const unenrollFromCourse = async (enrollmentId: string, courseId: string)
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    console.log('/api/enrollment/unenroll/',enrollmentId)
+    console.log('/api/enrollment/unenroll/', enrollmentId)
     const response = await api.delete(`/api/enrollment/unenroll/${courseId}`);
     console.log(response)
     return response.data;
@@ -1253,7 +1269,7 @@ export const editCourseBasics = async (
       `/api/course/editCourseBasics/${courseId}`,
       data
     );
-    console.log("this is my response",response);
+    console.log("this is my response", response);
     return response.data;
   } catch (error: any) {
     if (error.response) {
@@ -1270,7 +1286,7 @@ export const updateCourseThumbnail = async (courseId: string, thumbnail: any) =>
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    
+
     const formData = new FormData();
     formData.append('thumbnail', {
       uri: thumbnail.uri,
@@ -1283,7 +1299,7 @@ export const updateCourseThumbnail = async (courseId: string, thumbnail: any) =>
         'Content-Type': 'multipart/form-data',
       },
     });
-    
+
     return response.data;
   } catch (error: any) {
     console.error('Update thumbnail error:', error);
