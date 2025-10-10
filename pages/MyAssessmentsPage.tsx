@@ -120,6 +120,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { getAllAssessmentForStudent } from "../services/course";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
 
 // ---------- INTERFACE ----------
 export interface AssessmentItem {
@@ -155,11 +158,12 @@ export interface AssessmentItem {
 }
 
 type AnyObj = Record<string, any>;
-
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 // ---------- COMPONENT ----------
 const MyAssessmentsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation<NavigationProp>()
   const [error, setError] = useState<string | null>(null);
   const [assessments, setAssessments] = useState<AssessmentItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -273,7 +277,7 @@ const MyAssessmentsPage = () => {
         </Text>
 
         {!item.isSubmitted && (
-          <TouchableOpacity style={styles.submitBtn}>
+          <TouchableOpacity style={styles.submitBtn} onPress={() => navigation.navigate("AssessmentScreenStudent", { assessmentId: item._id })}>
             <Text style={styles.submitBtnText}>Submit Assessment</Text>
           </TouchableOpacity>
         )}
@@ -306,7 +310,7 @@ const MyAssessmentsPage = () => {
           <Text style={[styles.td, styles.colCourse]} >
             {course}
           </Text>
-          <Text style={[styles.td, styles.colDue]}>
+          <Text style={[styles.td, styles.colDue, { fontSize: 13 }]}>
             {formatDate(due.date)} {formatTime(due.time)}
           </Text>
           <View style={[styles.colStatus, styles.centered]}>
