@@ -176,7 +176,8 @@ const CourseDetailsPage = () => {
     useState(false);
   const [selectedAssessmentForModal, setSelectedAssessmentForModal] =
     useState<any>(null);
-  const [expandedMcq, setExpandedMcq] = useState(true);
+  const [expandedMcq, setExpandedMcq] = useState<{ [key: number]: boolean }>({ 0: true, });
+
 
   // Edit assessment modal states
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
@@ -2989,8 +2990,8 @@ const CourseDetailsPage = () => {
         transparent={false}
         animationType="slide"
         onRequestClose={() => {
-          setShowAssessmentDetailsModal(false)
-          setShowChapterDetailsModal(true)
+          setShowAssessmentDetailsModal(false);
+          setShowChapterDetailsModal(true);
         }}
       >
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -2998,19 +2999,17 @@ const CourseDetailsPage = () => {
           <View style={[styles.assessmentDetailsHeader, { paddingTop: insets.top }]}>
             <TouchableOpacity
               onPress={() => {
-                setShowAssessmentDetailsModal(false)
-                setShowChapterDetailsModal(true)
+                setShowAssessmentDetailsModal(false);
+                setShowChapterDetailsModal(true);
               }}
               style={styles.assessmentDetailsBackButton}
             >
-              <SimpleIcon name="chevron-back" size={24} color="#fff" />
+              <SimpleIcon name="arrow-back" size={24} color="#fff" />
               <Text style={styles.assessmentDetailsBackText}>Back</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() =>
-                openEditAssessmentModal(selectedAssessmentForModal)
-              }
+              onPress={() => openEditAssessmentModal(selectedAssessmentForModal)}
               style={styles.assessmentDetailsEditButton}
             >
               <SimpleIcon name="pencil" size={20} color="#fff" />
@@ -3027,8 +3026,7 @@ const CourseDetailsPage = () => {
                   </Text>
                   <View style={styles.assessmentDetailsCategoryBadge}>
                     <Text style={styles.assessmentDetailsCategoryText}>
-                      {selectedAssessmentForModal.category?.name ||
-                        "No Category"}
+                      {selectedAssessmentForModal.category?.name || "No Category"}
                     </Text>
                   </View>
                 </View>
@@ -3036,10 +3034,8 @@ const CourseDetailsPage = () => {
                 {/* Due Date */}
                 <View style={styles.assessmentDetailsDueDateContainer}>
                   <Text style={styles.assessmentDetailsDueDateLabel}>
-                    due date:{" "}
-                    {new Date(
-                      selectedAssessmentForModal.dueDate?.date
-                    ).toLocaleDateString("en-US", {
+                    Due date:{" "}
+                    {new Date(selectedAssessmentForModal.dueDate?.date).toLocaleDateString("en-US", {
                       weekday: "short",
                       month: "short",
                       day: "numeric",
@@ -3058,53 +3054,47 @@ const CourseDetailsPage = () => {
                   </Text>
                 </View>
 
-                {/* Questions Section */}
+                {/* Questions */}
                 <View style={styles.assessmentDetailsQuestionsContainer}>
                   <Text style={styles.assessmentDetailsQuestionsTitle}>
                     Questions
                   </Text>
 
-                  {selectedAssessmentForModal.questions.map(
-                    (question: any, index: number) => (
-                      <View key={question._id}>
-                        <TouchableOpacity
-                          style={styles.assessmentDetailsMcqHeader}
-                          onPress={() => setExpandedMcq(!expandedMcq)}
-                        >
-                          <Text style={styles.assessmentDetailsMcqTitle}>
-                            {question.type.toUpperCase()} (
-                            {selectedAssessmentForModal.questions.length}{" "}
-                            questions)
+                  {selectedAssessmentForModal.questions.map((question: any, index: number) => (
+                    <View key={question._id} style={{ marginBottom: 16 }}>
+                      <TouchableOpacity
+                        style={styles.assessmentDetailsMcqHeader}
+                        onPress={() =>
+                          setExpandedMcq((prev: any) => ({
+                            ...prev,
+                            [index]: !prev[index],
+                          }))
+                        }
+                      >
+                        <Text style={styles.assessmentDetailsMcqTitle}>
+                          {question.type.toUpperCase()}
+                        </Text>
+                        <SimpleIcon
+                          name={expandedMcq?.[index] ? "chevron-up" : "chevron-down"}
+                          size={20}
+                          color="#000"
+                        />
+                      </TouchableOpacity>
+
+                      {expandedMcq?.[index] && (
+                        <View style={styles.assessmentDetailsQuestionCard}>
+                          {/* Common Question Text */}
+                          <Text style={styles.assessmentDetailsQuestionLabel}>Question:</Text>
+                          <Text style={styles.assessmentDetailsQuestionText}>
+                            {question.question.replace(/<[^>]*>/g, "")}
                           </Text>
-                          <SimpleIcon
-                            name={expandedMcq ? "chevron-up" : "chevron-down"}
-                            size={20}
-                            color="#000"
-                          />
-                        </TouchableOpacity>
 
-                        {expandedMcq && (
-                          <View style={styles.assessmentDetailsQuestionCard}>
-                            <Text style={styles.assessmentDetailsQuestionLabel}>
-                              Question:
-                            </Text>
-                            <Text style={styles.assessmentDetailsQuestionText}>
-                              {question.question.replace(/<[^>]*>/g, "")}
-                            </Text>
-
-                            {question.options.map(
-                              (option: string, optionIndex: number) => (
-                                <View
-                                  key={optionIndex}
-                                  style={
-                                    styles.assessmentDetailsOptionContainer
-                                  }
-                                >
-                                  <Text
-                                    style={styles.assessmentDetailsBulletPoint}
-                                  >
-                                    •
-                                  </Text>
+                          {/* Render Based on Type */}
+                          {question.type === "mcq" && (
+                            <>
+                              {question.options.map((option: string, optionIndex: number) => (
+                                <View key={optionIndex} style={styles.assessmentDetailsOptionContainer}>
+                                  <Text style={styles.assessmentDetailsBulletPoint}>•</Text>
                                   <Text
                                     style={[
                                       styles.assessmentDetailsOptionText,
@@ -3115,28 +3105,76 @@ const CourseDetailsPage = () => {
                                     {option}
                                   </Text>
                                   {option === question.correctAnswer && (
-                                    <Text
-                                      style={
-                                        styles.assessmentDetailsCorrectLabel
-                                      }
-                                    >
-                                      Correct
-                                    </Text>
+                                    <Text style={styles.assessmentDetailsCorrectLabel}>Correct</Text>
                                   )}
                                 </View>
-                              )
-                            )}
-                          </View>
-                        )}
-                      </View>
-                    )
-                  )}
+                              ))}
+                            </>
+                          )}
+
+                          {question.type === "truefalse" && (
+                            <View style={{ marginTop: 8 }}>
+                              <Text style={styles.assessmentDetailsQuestionLabel}>Answer:</Text>
+                              <Text
+                                style={[
+                                  styles.assessmentDetailsOptionText,
+                                  question.correctAnswer === "true"
+                                    ? styles.assessmentDetailsCorrectOption
+                                    : styles.assessmentDetailsWrongOption,
+                                ]}
+                              >
+                                {question.correctAnswer === "true" ? "True" : "False"}
+                              </Text>
+                            </View>
+                          )}
+
+                          {question.type === "qa" && (
+                            <View style={{ marginTop: 8 }}>
+                              <Text style={styles.assessmentDetailsQuestionLabel}>Answer:</Text>
+                              <Text style={styles.assessmentDetailsOptionText}>
+                                {question.correctAnswer || "—"}
+                              </Text>
+                            </View>
+                          )}
+
+                          {question.type === "file" && question.files.length > 0 && (
+                            <View style={{ marginTop: 10 }}>
+                              <Text style={styles.assessmentDetailsQuestionLabel}>File:</Text>
+                              {question.files.map((file: any, fIndex: number) => (
+                                <TouchableOpacity
+                                  key={fIndex}
+                                  onPress={() => Linking.openURL(file.url)}
+                                  style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    marginTop: 6,
+                                  }}
+                                >
+                                  <SimpleIcon name="description" size={18} color="#007BFF" />
+                                  <Text
+                                    style={{
+                                      color: "#007BFF",
+                                      textDecorationLine: "underline",
+                                      marginLeft: 6,
+                                    }}
+                                  >
+                                    {file.filename}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  ))}
                 </View>
               </>
             )}
           </ScrollView>
         </View>
       </Modal>
+
 
       {/* Edit Assessment Modal */}
       <Modal
@@ -3151,7 +3189,7 @@ const CourseDetailsPage = () => {
               onPress={() => setShowEditAssessmentModal(false)}
               style={styles.assessmentDetailsBackButton}
             >
-              <SimpleIcon name="chevron-back" size={24} color="#fff" />
+              <SimpleIcon name="arrow-back" size={24} color="#fff" />
               <Text style={styles.assessmentDetailsBackText}>Back</Text>
             </TouchableOpacity>
             <Text style={styles.assessmentDetailsHeaderTitle}>
@@ -4524,7 +4562,7 @@ const CourseDetailsPage = () => {
                                         onPress={() => handleOpenLink(file.url)}
                                       >
                                         <SimpleIcon
-                                          name="document"
+                                          name="description"
                                           size={16}
                                           color="#10B144"
                                         />
@@ -4886,7 +4924,7 @@ const CourseDetailsPage = () => {
                   <View style={styles.fileList}>
                     {lessonCreationFiles.map((file, index) => (
                       <View key={index} style={styles.fileItem}>
-                        <SimpleIcon name="document" size={20} color="#10B144" />
+                        <SimpleIcon name="description" size={20} color="#10B144" />
                         <Text style={styles.fileName}>{file.name}</Text>
                         <TouchableOpacity
                           onPress={() => handleRemoveFile(index)}
@@ -6432,6 +6470,12 @@ const styles = StyleSheet.create({
   },
   assessmentDetailsCorrectOption: {
     backgroundColor: "#dcfce7",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  assessmentDetailsWrongOption: {
+    backgroundColor: "red",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,

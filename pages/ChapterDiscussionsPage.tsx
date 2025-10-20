@@ -31,7 +31,7 @@ const ChapterDiscussionsPage = () => {
 
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
-const [tempDate, setTempDate] = useState<Date | null>(null);
+  const [tempDate, setTempDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
 
@@ -76,13 +76,13 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
       setLoadingDiscussion(true);
       setSelectedDiscussion(discussion);
       setShowDiscussionModal(true);
-      
+
       // Fetch discussion details and comments
       const [detailsRes, commentsRes] = await Promise.all([
         getDiscussionDetails(discussion._id),
         getDiscussionComments(discussion._id, 1, 5)
       ]);
-      
+
       setDiscussionDetails(detailsRes.discussion);
       setComments(commentsRes.discussionComments || []);
     } catch (err: any) {
@@ -96,9 +96,9 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => (navigation as any).goBack()} style={{ padding: 4, marginRight: 12 }}>
-          <SimpleIcon name="chevron-back" size={28} color="#fff" />
+          <SimpleIcon name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
-            <Text style={styles.headerTitle}>{lessonId ? 'Lesson Discussions' : 'Chapter Discussions'}</Text>
+        <Text style={styles.headerTitle}>{lessonId ? 'Lesson Discussions' : 'Chapter Discussions'}</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -125,25 +125,26 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
           {items.map((d) => {
             const bannerUrl = d.course?.thumbnail?.url;
             return (
-            <TouchableOpacity key={d._id} style={styles.card} onPress={() => openDiscussionModal(d)}>
-              {!!bannerUrl && (
-                <Image source={{ uri: bannerUrl }} style={styles.banner} />
-              )}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                <View style={styles.badge}><Text style={styles.badgeText}>{lessonId ? 'lesson' : 'chapter'}</Text></View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={styles.dueDateLabel}>Due Date:</Text>
-                  <Text style={styles.dueDateValue}>
-                    {new Date(d.dueDate?.date).toLocaleDateString('en-GB')}  {d.dueDate?.time}
-                  </Text>
+              <TouchableOpacity key={d._id} style={styles.card} onPress={() => openDiscussionModal(d)}>
+                {!!bannerUrl && (
+                  <Image source={{ uri: bannerUrl }} style={styles.banner} />
+                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                  <View style={styles.badge}><Text style={styles.badgeText}>{lessonId ? 'lesson' : 'chapter'}</Text></View>
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={styles.dueDateLabel}>Due Date:</Text>
+                    <Text style={styles.dueDateValue}>
+                      {new Date(d.dueDate?.date).toLocaleDateString('en-GB')}  {d.dueDate?.time}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={styles.title}>{d.topic}</Text>
-              <Text style={styles.courseTitle}>{d?.course?.courseTitle}</Text>
-              <Text style={styles.description}>{d.description}</Text>
-              <Text style={styles.dateRight}>{new Date(d.createdAt).toLocaleDateString('en-GB')}</Text>
-            </TouchableOpacity>
-          )})}
+                <Text style={styles.title}>{d.topic}</Text>
+                <Text style={styles.courseTitle}>{d?.course?.courseTitle}</Text>
+                <Text style={styles.description}>{d.description}</Text>
+                <Text style={styles.dateRight}>{new Date(d.createdAt).toLocaleDateString('en-GB')}</Text>
+              </TouchableOpacity>
+            )
+          })}
           {items.length === 0 && (
             <Text style={{ textAlign: 'center', color: '#6b7280' }}>No discussions found.</Text>
           )}
@@ -159,7 +160,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => setShowCreate(false)} style={{ padding: 4, marginRight: 12 }}>
-              <SimpleIcon name="chevron-back" size={28} color="#fff" />
+              <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Create New Discussion</Text>
             <View style={{ width: 28 }} />
@@ -221,8 +222,8 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={{ color: dueDate ? '#111' : '#9ca3af' }}>{dueDate
-      ? `${formatDate(dueDate)} at ${formatTime(dueDate)}`
-      : 'Select Due Date'}</Text>
+                ? `${formatDate(dueDate)} at ${formatTime(dueDate)}`
+                : 'Select Due Date'}</Text>
             </TouchableOpacity>
 
 
@@ -258,36 +259,36 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                   setCreating(true);
                   const due = {
                     date: new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()).toISOString(),
-                    time: `${String(dueDate.getHours()).padStart(2,'0')}:${String(dueDate.getMinutes()).padStart(2,'0')}`,
+                    time: `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`,
                     dateTime: dueDate.toISOString(),
                   };
                   const res = lessonId
                     ? await createDiscussionForLesson({
-                        course: courseId,
-                        topic: topic.trim(),
-                        description: description.trim(),
-                        category: categoryId,
-                        type: 'lesson',
-                        dueDate: due,
-                        totalMarks: Number(totalMarks),
-                        semester: semesterId,
-                        quarter: quarterId,
-                        lesson: lessonId,
-                        file,
-                      })
+                      course: courseId,
+                      topic: topic.trim(),
+                      description: description.trim(),
+                      category: categoryId,
+                      type: 'lesson',
+                      dueDate: due,
+                      totalMarks: Number(totalMarks),
+                      semester: semesterId,
+                      quarter: quarterId,
+                      lesson: lessonId,
+                      file,
+                    })
                     : await createDiscussionForChapter({
-                        course: courseId,
-                        topic: topic.trim(),
-                        description: description.trim(),
-                        category: categoryId,
-                        type: 'chapter',
-                        dueDate: due,
-                        totalMarks: Number(totalMarks),
-                        semester: semesterId,
-                        quarter: quarterId,
-                        chapter: chapterId,
-                        file,
-                      });
+                      course: courseId,
+                      topic: topic.trim(),
+                      description: description.trim(),
+                      category: categoryId,
+                      type: 'chapter',
+                      dueDate: due,
+                      totalMarks: Number(totalMarks),
+                      semester: semesterId,
+                      quarter: quarterId,
+                      chapter: chapterId,
+                      file,
+                    });
                   Toast.show(res.message || 'Discussion created successfully', Toast.LONG);
                   setShowCreate(false);
                   setTopic(''); setDescription(''); setTotalMarks(''); setCategoryId(''); setDueDate(null); setFile(null);
@@ -311,47 +312,47 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
             </TouchableOpacity>
           </ScrollView>
           {showDatePicker && (
-  <DateTimePicker
-    value={dueDate || new Date()}
-    mode="date"
-    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-    minimumDate={new Date()}
-    onChange={(event, selectedDate) => {
-      setShowDatePicker(false);
-      if (event.type === 'set' && selectedDate) {
-        // User picked a date -> store temporarily
-        setTempDate(selectedDate);
-        // Now open time picker
-        setTimeout(() => setShowTimePicker(true), 200);
-      } else {
-        // User cancelled date picker
-        setTempDate(null);
-      }
-    }}
-  />
-)}
+            <DateTimePicker
+              value={dueDate || new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              minimumDate={new Date()}
+              onChange={(event, selectedDate) => {
+                setShowDatePicker(false);
+                if (event.type === 'set' && selectedDate) {
+                  // User picked a date -> store temporarily
+                  setTempDate(selectedDate);
+                  // Now open time picker
+                  setTimeout(() => setShowTimePicker(true), 200);
+                } else {
+                  // User cancelled date picker
+                  setTempDate(null);
+                }
+              }}
+            />
+          )}
 
-{showTimePicker && (
-  <DateTimePicker
-    value={tempDate || new Date()}
-    mode="time"
-    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-    onChange={(event, selectedTime) => {
-      setShowTimePicker(false);
-      if (event.type === 'set' && selectedTime && tempDate) {
-        // Combine the selected date and time
-        const combined = new Date(tempDate);
-        combined.setHours(selectedTime.getHours());
-        combined.setMinutes(selectedTime.getMinutes());
-        setDueDate(combined);
-      } else {
-        // User cancelled time picker → discard date as well
-        setTempDate(null);
-        setDueDate(null);
-      }
-    }}
-  />
-)}
+          {showTimePicker && (
+            <DateTimePicker
+              value={tempDate || new Date()}
+              mode="time"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, selectedTime) => {
+                setShowTimePicker(false);
+                if (event.type === 'set' && selectedTime && tempDate) {
+                  // Combine the selected date and time
+                  const combined = new Date(tempDate);
+                  combined.setHours(selectedTime.getHours());
+                  combined.setMinutes(selectedTime.getMinutes());
+                  setDueDate(combined);
+                } else {
+                  // User cancelled time picker → discard date as well
+                  setTempDate(null);
+                  setDueDate(null);
+                }
+              }}
+            />
+          )}
         </View>
 
       </Modal>
@@ -366,7 +367,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
         <View style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => setShowDiscussionModal(false)} style={{ padding: 4, marginRight: 12 }}>
-              <SimpleIcon name="chevron-back" size={28} color="#fff" />
+              <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Back</Text>
             <View style={{ width: 28 }} />
@@ -423,7 +424,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                 <View style={styles.commentsSection}>
                   <Text style={styles.commentsTitle}>Comments</Text>
                   <View style={styles.commentsDivider} />
-                  
+
                   {comments.length > 0 ? (
                     comments.map((comment, index) => (
                       <View key={index} style={styles.commentItem}>

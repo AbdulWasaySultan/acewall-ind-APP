@@ -4,15 +4,57 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { getAllDiscussions, createDiscussion, getDiscussionDetails, getDiscussionComments, sendDiscussionComment } from '../services/discussion';
 import { getAllCourses } from '../services/course';
 import { getStoredUserId } from '../utils/storage';
+import SimpleIcon from '../components/SimpleIcon';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { useNavigation } from '@react-navigation/native';
 // You will need to install react-native-document-picker: npm install react-native-document-picker or yarn add react-native-document-picker
 // import DocumentPicker from 'react-native-document-picker'; // Commenting out the import
+export interface Discussion {
+  _id: string;
+  dueDate: {
+    date: string;
+    time: string;
+  };
+  course: {
+    _id: string;
+    courseTitle: string;
+    thumbnail: Thumbnail;
+  };
+  totalMarks: number;
+  topic: string;
+  description: string;
+  files: DiscussionFile[];
+  category: string;
+  semester: string;
+  quarter: string;
+  chapter: string;
+  type: string;
+  createdby: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+export interface DiscussionFile {
+  _id: string;
+  url: string;
+  type: string;
+  filename: string;
+  publicId: string;
+}
 
+export interface Thumbnail {
+  url: string;
+  publicId: string;
+  filename: string;
+}
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const DiscussionsPage = () => {
-  const [discussions, setDiscussions] = useState([]);
+  const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-
+  const navigation = useNavigation<NavigationProp>()
   // Modal form states
   const [discussionTypeOpen, setDiscussionTypeOpen] = useState(false);
   const [discussionTypeValue, setDiscussionTypeValue] = useState<string | null>(null);
@@ -27,7 +69,6 @@ const DiscussionsPage = () => {
 
   const [topic, setTopic] = useState('');
   const [description, setDescription] = useState('');
-  // const [selectedFile, setSelectedFile] = useState<any>(null); // Commenting out the state
   const [createLoading, setCreateLoading] = useState(false);
 
   // Discussion details modal states
@@ -48,7 +89,7 @@ const DiscussionsPage = () => {
       setLoading(true);
       setError(null);
       const data = await getAllDiscussions();
-      setDiscussions(data.discussion || []);
+      setDiscussions(data.discussions || []);
     } catch (err: any) {
       console.error('Failed to fetch discussions:', err);
       setError(err.message || 'Failed to load discussions.');
@@ -220,26 +261,53 @@ const DiscussionsPage = () => {
       ) : discussions.length === 0 ? (
         <Text style={styles.noDiscussionsText}>No discussions available.</Text>
       ) : (
-        discussions.map((discussion: any) => (
-          <TouchableOpacity key={discussion._id} onPress={() => openDetailsModal(discussion._id)}>
-            <View style={styles.discussionCard}>
-              {discussion.type === 'course' && discussion.course && discussion.course.thumbnail && discussion.course.thumbnail.url && (
-                <Image
-                  source={{ uri: discussion.course.thumbnail.url }}
-                  style={styles.courseThumbnail}
-                  resizeMode="cover"
-                />
-              )}
-              <Text style={styles.discussionTypeTag}>{discussion.type}</Text>
-              <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-              {discussion.type === 'course' && discussion.course && (
-                <Text style={styles.discussionCourse}>Course: {discussion.course.courseTitle}</Text>
-              )}
-              <Text style={styles.discussionDescription}>{discussion.description}</Text>
-              <Text style={styles.discussionDate}>Created: {formatDate(discussion.createdAt)}</Text>
-            </View>
-          </TouchableOpacity>
-        ))
+
+        discussions && discussions.length > 0 ? (
+          <View style={styles.discussionsGrid}>
+            {discussions.map((discussion: Discussion, index: number) => (
+              <TouchableOpacity key={index} style={styles.discussionCard} onPress={() => navigation.navigate('DiscussionStudent', { discussionId: discussion?._id })}>
+
+
+                <Image source={{ uri: discussion.course.thumbnail.url }} style={{ width: '100%', height: 150 }} />
+
+                <Text style={styles.dueDate}>Due Date: {new Date(discussion.dueDate.date).toDateString()}</Text>
+
+                <View style={styles.chapterBadge}>
+                  <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
+                </View>
+
+                <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+                <Text style={styles.discussionSubtitle}>{discussion.course.courseTitle || "test"}</Text>
+                <Text style={styles.discussionDescription}>{discussion.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <SimpleIcon name="chat-bubble-outline" size={48} color="#ccc" />
+            <Text style={styles.emptyStateText}>No discussions available</Text>
+          </View>
+        )
+        // discussions.map((discussion: any) => (
+        //   <TouchableOpacity key={discussion._id} onPress={() => openDetailsModal(discussion._id)}>
+        //     <View style={styles.discussionCard}>
+        //       {discussion.type === 'course' && discussion.course && discussion.course.thumbnail && discussion.course.thumbnail.url && (
+        //         <Image
+        //           source={{ uri: discussion.course.thumbnail.url }}
+        //           style={styles.courseThumbnail}
+        //           resizeMode="cover"
+        //         />
+        //       )}
+        //       <Text style={styles.discussionTypeTag}>{discussion.type}</Text>
+        //       <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+        //       {discussion.type === 'course' && discussion.course && (
+        //         <Text style={styles.discussionCourse}>Course: {discussion.course.courseTitle}</Text>
+        //       )}
+        //       <Text style={styles.discussionDescription}>{discussion.description}</Text>
+        //       <Text style={styles.discussionDate}>Created: {formatDate(discussion.createdAt)}</Text>
+        //     </View>
+        //   </TouchableOpacity>
+        // ))
       )}
 
       {/* Details Modal */}
@@ -465,18 +533,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 50,
   },
-  discussionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    
-  },
+
   discussionTypeTag: {
     backgroundColor: '#a7d9ff',
     color: '#007bff',
@@ -488,22 +545,13 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 10,
   },
-  discussionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333',
-  },
+
   discussionCourse: {
     fontSize: 16,
     color: '#555',
     marginBottom: 5,
   },
-  discussionDescription: {
-    fontSize: 16,
-    color: '#444',
-    marginBottom: 10,
-  },
+
   discussionDate: {
     fontSize: 13,
     color: '#777',
@@ -825,6 +873,100 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#333',
     fontWeight: 'bold',
+  },
+  discussionsGrid: {
+    // flexDirection: "row",
+    justifyContent: 'center',
+    flexWrap: "wrap",
+  },
+  discussionCard: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  discussionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  discussionLessonsLabel: {
+    fontSize: 14,
+    color: "#666",
+    marginLeft: 6,
+    flex: 1,
+  },
+  discussionBadge: {
+    backgroundColor: "#e0e0e0",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  discussionBadgeText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  discussionContent: {
+    borderLeftWidth: 3,
+    borderLeftColor: "#10B144",
+    paddingLeft: 12,
+    marginBottom: 12,
+  },
+  dueDate: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: "#666",
+    marginBottom: 8,
+  },
+  chapterBadge: {
+    backgroundColor: "#6366f1",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    alignSelf: "flex-start",
+    marginBottom: 8,
+  },
+  chapterBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  discussionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 4,
+  },
+  discussionSubtitle: {
+    fontSize: 14,
+    color: "#6366f1",
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  discussionDescription: {
+    fontSize: 14,
+    color: "#666",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#888",
+    marginTop: 12,
   },
 });
 

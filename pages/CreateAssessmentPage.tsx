@@ -36,34 +36,34 @@ interface AssessmentCategory {
 interface QuestionType {
   _id: string;
   name: string;
-  type:string
+  type: string
 }
 
 const CreateAssessmentPage = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { courseId, chapterId, lessonId, semesterId, quarterId ,refreshAssessments} = route.params as any;
+  const { courseId, chapterId, lessonId, semesterId, quarterId, refreshAssessments } = route.params as any;
   const QuestionType: QuestionType[] = [{
     _id: '646f1f4f4f4f4f4f4f4f4f4f5',
     name: 'Multiple Choice',
-    type:'mcq'
-  }, 
+    type: 'mcq'
+  },
   {
     _id: '646f1f4f4f4f4f4f4f4f4f4f6',
     name: 'True/False',
-    type:'truefalse'
-  }, 
+    type: 'truefalse'
+  },
   {
     _id: '646f1f4f4f4f4f4f4f4f4f4f7',
     name: 'Question & Answer',
-    type:'qa'
-  }, 
-]
-const MAX_PDF_SIZE_MB = 5;
-const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
+    type: 'qa'
+  },
+  ]
+  const MAX_PDF_SIZE_MB = 5;
+  const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
   // Assessment type state
   const [assessmentType, setAssessmentType] = useState<'question' | 'file'>('question');
-  
+
   // Basic assessment details
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -71,9 +71,9 @@ const MAX_PDF_SIZE_BYTES = MAX_PDF_SIZE_MB * 1024 * 1024;
 
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
-const [tempDate, setTempDate] = useState<Date | null>(null);
+  const [tempDate, setTempDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  
+
   // Categories
   const [categories, setCategories] = useState<AssessmentCategory[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -82,14 +82,14 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryWeight, setNewCategoryWeight] = useState<string>('0');
   const [creatingCategory, setCreatingCategory] = useState(false);
-  
+
   // Quarter dates
-  const [quarterDates, setQuarterDates] = useState<{startDate: string, endDate: string} | null>(null);
-  
+  const [quarterDates, setQuarterDates] = useState<{ startDate: string, endDate: string } | null>(null);
+
   // Questions for question-based assessment
   const [questions, setQuestions] = useState<Question[]>([]);
   const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
-  
+
   // Current question being added
   const [currentQuestion, setCurrentQuestion] = useState<Partial<Question>>({
     type: 'mcq',
@@ -98,10 +98,10 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
     correctAnswer: '',
     points: 1,
   });
-  
+
   // File upload for file-based assessment
   const [selectedFiles, setSelectedFiles] = useState<any[]>([]);
-  
+
   // Loading states
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -116,7 +116,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
       setLoadingCategories(true);
       const api = await createApiInstance();
       addAuthInterceptor(api);
-      
+
       const response = await api.get(`/api/assessmentCategory/${courseId}`);
       setCategories(response.data.categories || []);
     } catch (error) {
@@ -144,7 +144,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
       const api = await createApiInstance();
       addAuthInterceptor(api);
       const payload = { name, weight, course: courseId } as any;
-      const response = await api.post(`/api/assessmentCategory/${courseId}` , payload);
+      const response = await api.post(`/api/assessmentCategory/${courseId}`, payload);
       Toast.show('Assessment category created successfully', Toast.LONG);
       const created = response.data?.category || response.data?.data || null;
       if (created) {
@@ -166,7 +166,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
     try {
       const api = await createApiInstance();
       addAuthInterceptor(api);
-      
+
       const response = await api.get(`/api/quarter/getDatesofQuarter/${quarterId}`);
       setQuarterDates({
         startDate: response.data.startDate,
@@ -192,17 +192,17 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
       Toast.show('Please enter a question', Toast.SHORT);
       return;
     }
-    
+
     if (currentQuestion.type === 'mcq' && (!currentQuestion.options || currentQuestion.options.length < 2)) {
       Toast.show('Please add at least 2 options for multiple choice', Toast.SHORT);
       return;
     }
-    
+
     if (currentQuestion.type === 'mcq' && !currentQuestion.correctAnswer) {
       Toast.show('Please select a correct answer', Toast.SHORT);
       return;
     }
-    
+
     if (!currentQuestion.points || currentQuestion.points <= 0) {
       Toast.show('Please enter valid points', Toast.SHORT);
       return;
@@ -246,11 +246,11 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
   };
 
   const handleFilePick = async () => {
-  
+
     const result = await pick({
       type: ["application/pdf"],
       copyTo: "cachesDirectory",
-      allowMultiSelection:true,
+      allowMultiSelection: true,
     });
     if (result && result.length > 0) {
       const file = result[0];
@@ -364,7 +364,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
       formData.append('semester', semesterId);
       formData.append('quarter', quarterId);
       // formData.append('questions', JSON.stringify(normalizedQuestions));
-      
+
       // Add lesson field if lessonId is provided (for lesson-based assessments)
       if (lessonId) {
         formData.append('lesson', lessonId);
@@ -403,14 +403,14 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
         quarter: quarterId,
         questions: JSON.stringify(normalizedQuestions),
       });
-      
+
       const response = await api.post('/api/assessment/createAssessment/updated', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       console.log('Assessment creation response:', response.data);
-      
+
       Toast.show('Assessment created successfully!', Toast.LONG);
       refreshAssessments()
       navigation.goBack();
@@ -468,10 +468,10 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                   styles.typeIcon,
                   assessmentType === 'question' && styles.typeIconSelected
                 ]}>
-                  <SimpleIcon 
-                    name="help-circle" 
-                    size={24} 
-                    color={assessmentType === 'question' ? '#fff' : '#10B144'} 
+                  <SimpleIcon
+                    name="help-circle"
+                    size={24}
+                    color={assessmentType === 'question' ? '#fff' : '#10B144'}
                   />
                 </View>
                 <Text style={[
@@ -498,16 +498,16 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                   styles.typeIcon,
                   assessmentType === 'file' && styles.typeIconSelected
                 ]}>
-                  <SimpleIcon 
-                    name="document" 
-                    size={20} 
-                    color={assessmentType === 'file' ? '#fff' : '#10B144'} 
-                    style={{ marginRight: 4 }}
+                  <SimpleIcon
+                    name="description"
+                    size={20}
+                    color={assessmentType === 'file' ? '#fff' : '#10B144'}
+                    style={{ marginRight: 2 }}
                   />
-                  <SimpleIcon 
-                    name="percent" 
-                    size={16} 
-                    color={assessmentType === 'file' ? '#fff' : '#10B144'} 
+                  <SimpleIcon
+                    name="images"
+                    size={20}
+                    color={assessmentType === 'file' ? '#fff' : '#10B144'}
                   />
                 </View>
                 <Text style={[
@@ -527,7 +527,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
         {/* Assessment Details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Assessment Details</Text>
-          
+
           {/* Title */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Assessment Title</Text>
@@ -581,9 +581,9 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={styles.dateText}>
-              {dueDate
-      ? `${formatDate(dueDate)} at ${formatTime(dueDate)}`
-      : 'Select Due Date'}
+                {dueDate
+                  ? `${formatDate(dueDate)} at ${formatTime(dueDate)}`
+                  : 'Select Due Date'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -612,20 +612,20 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                       onPress={() => handleMoveQuestion(question.id, 'up')}
                       disabled={index === 0}
                     >
-                      <SimpleIcon 
-                        name="arrow-up" 
-                        size={20} 
-                        color={index === 0 ? '#ccc' : '#666'} 
+                      <SimpleIcon
+                        name="arrow-up"
+                        size={20}
+                        color={index === 0 ? '#ccc' : '#666'}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleMoveQuestion(question.id, 'down')}
                       disabled={index === questions.length - 1}
                     >
-                      <SimpleIcon 
-                        name="arrow-down" 
-                        size={20} 
-                        color={index === questions.length - 1 ? '#ccc' : '#666'} 
+                      <SimpleIcon
+                        name="arrow-down"
+                        size={20}
+                        color={index === questions.length - 1 ? '#ccc' : '#666'}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDeleteQuestion(question.id)}>
@@ -638,8 +638,8 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                   <View style={styles.questionTypeRow}>
                     <Text style={styles.questionTypeLabel}>Question Type:</Text>
                     <Text style={styles.questionTypeValue}>
-                      {question.type === 'mcq' ? 'Multiple Choice' : 
-                       question.type === 'truefalse' ? 'True/False' : 'Question & Answer'}
+                      {question.type === 'mcq' ? 'Multiple Choice' :
+                        question.type === 'truefalse' ? 'True/False' : 'Question & Answer'}
                     </Text>
                   </View>
                   <View style={styles.questionPointsRow}>
@@ -677,7 +677,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
             <Text style={styles.fileUploadDescription}>
               Upload PDF files or images (1-5 files, max 5MB total)
             </Text>
-            
+
             <TouchableOpacity style={styles.fileUploadButton} onPress={handleFilePick}>
               <SimpleIcon name="cloud-upload" size={24} color="#10B144" />
               <Text style={styles.fileUploadButtonText}>Choose Files</Text>
@@ -687,7 +687,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
               <View style={styles.fileList}>
                 {selectedFiles.map((file, index) => (
                   <View key={index} style={styles.fileItem}>
-                    <SimpleIcon name="document" size={20} color="#10B144" />
+                    <SimpleIcon name="description" size={30} color="#10B144" />
                     <Text style={styles.fileName} numberOfLines={1}>
                       {file.fileName}
                     </Text>
@@ -705,14 +705,14 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
         <TouchableOpacity
           style={[
             styles.submitButton,
-            (!title.trim() || !description.trim() || !selectedCategory || 
-             (assessmentType === 'question' && questions.length === 0) ||
-             (assessmentType === 'file' && selectedFiles.length === 0)) && styles.submitButtonDisabled
+            (!title.trim() || !description.trim() || !selectedCategory ||
+              (assessmentType === 'question' && questions.length === 0) ||
+              (assessmentType === 'file' && selectedFiles.length === 0)) && styles.submitButtonDisabled
           ]}
           onPress={handleSubmitAssessment}
-          disabled={loading || !title.trim() || !description.trim() || !selectedCategory || 
-                   (assessmentType === 'question' && questions.length === 0) ||
-                   (assessmentType === 'file' && selectedFiles.length === 0)}
+          disabled={loading || !title.trim() || !description.trim() || !selectedCategory ||
+            (assessmentType === 'question' && questions.length === 0) ||
+            (assessmentType === 'file' && selectedFiles.length === 0)}
         >
           {loading ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -790,7 +790,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Category</Text>
             <ScrollView style={styles.categoryList}>
-              { QuestionType.length > 0 ? (
+              {QuestionType.length > 0 ? (
                 QuestionType.map((category) => (
                   <TouchableOpacity
                     key={category._id}
@@ -799,13 +799,13 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                       currentQuestion?.type === category.type && styles.categoryItemSelected
                     ]}
                     onPress={() => {
-                      setCurrentQuestion({...currentQuestion, type: category.type as any});
+                      setCurrentQuestion({ ...currentQuestion, type: category.type as any });
                       setShowQuestionTypeModal(false);
                     }}
                   >
                     <Text style={[
                       styles.categoryItemText,
-                      currentQuestion?.type  === category.type && styles.categoryItemTextSelected
+                      currentQuestion?.type === category.type && styles.categoryItemTextSelected
                     ]}>
                       {category.name}
                     </Text>
@@ -823,7 +823,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
             </TouchableOpacity>
 
             {/* Add New Topic CTA */}
-       
+
           </View>
         </View>
       </Modal>
@@ -897,7 +897,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, styles.questionModalContent]}>
             <Text style={styles.modalTitle}>Add Question</Text>
-            
+
             <ScrollView style={styles.questionForm}>
               {/* Question Type */}
               <View style={styles.inputGroup}>
@@ -915,8 +915,8 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                   }}
                 >
                   <Text style={styles.dropdownText}>
-                    {currentQuestion.type === 'mcq' ? 'Multiple Choice' : 
-                     currentQuestion.type === 'truefalse' ? 'True/False' : 'Question & Answer'}
+                    {currentQuestion.type === 'mcq' ? 'Multiple Choice' :
+                      currentQuestion.type === 'truefalse' ? 'True/False' : 'Question & Answer'}
                   </Text>
                   <SimpleIcon name="chevron-down" size={20} color="#7b8794" />
                 </TouchableOpacity>
@@ -929,7 +929,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                   style={styles.textInput}
                   placeholder="Enter points"
                   value={currentQuestion.points?.toString() || ''}
-                  onChangeText={(text) => setCurrentQuestion({...currentQuestion, points: parseInt(text) || 0})}
+                  onChangeText={(text) => setCurrentQuestion({ ...currentQuestion, points: parseInt(text) || 0 })}
                   keyboardType="numeric"
                 />
               </View>
@@ -942,7 +942,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                     style={styles.richTextInput}
                     placeholder="Start writing..."
                     value={currentQuestion.question}
-                    onChangeText={(text) => setCurrentQuestion({...currentQuestion, question: text})}
+                    onChangeText={(text) => setCurrentQuestion({ ...currentQuestion, question: text })}
                     multiline
                     numberOfLines={4}
                   />
@@ -966,7 +966,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                           styles.optionRadio,
                           currentQuestion.correctAnswer === option && styles.optionRadioSelected
                         ]}
-                        onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: option})}
+                        onPress={() => setCurrentQuestion({ ...currentQuestion, correctAnswer: option })}
                       >
                         {currentQuestion.correctAnswer === option && (
                           <View style={styles.optionRadioInner} />
@@ -979,13 +979,13 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                         onChangeText={(text) => {
                           const newOptions = [...(currentQuestion.options || [])];
                           newOptions[index] = text;
-                          setCurrentQuestion({...currentQuestion, options: newOptions});
+                          setCurrentQuestion({ ...currentQuestion, options: newOptions });
                         }}
                       />
                       <TouchableOpacity
                         onPress={() => {
                           const newOptions = currentQuestion.options?.filter((_, i) => i !== index) || [];
-                          setCurrentQuestion({...currentQuestion, options: newOptions});
+                          setCurrentQuestion({ ...currentQuestion, options: newOptions });
                         }}
                       >
                         <SimpleIcon name="trash" size={20} color="#dc2626" />
@@ -997,7 +997,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                       style={styles.addOptionButton}
                       onPress={() => {
                         const newOptions = [...(currentQuestion.options || []), ''];
-                        setCurrentQuestion({...currentQuestion, options: newOptions});
+                        setCurrentQuestion({ ...currentQuestion, options: newOptions });
                       }}
                     >
                       <SimpleIcon name="add-circle-outline" size={20} color="#10B144" />
@@ -1017,7 +1017,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                         styles.trueFalseOption,
                         currentQuestion.correctAnswer === 'true' && styles.trueFalseOptionSelected
                       ]}
-                      onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: 'true'})}
+                      onPress={() => setCurrentQuestion({ ...currentQuestion, correctAnswer: 'true' })}
                     >
                       <Text style={[
                         styles.trueFalseText,
@@ -1031,7 +1031,7 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
                         styles.trueFalseOption,
                         currentQuestion.correctAnswer === 'false' && styles.trueFalseOptionSelected
                       ]}
-                      onPress={() => setCurrentQuestion({...currentQuestion, correctAnswer: 'false'})}
+                      onPress={() => setCurrentQuestion({ ...currentQuestion, correctAnswer: 'false' })}
                     >
                       <Text style={[
                         styles.trueFalseText,
@@ -1079,48 +1079,48 @@ const [tempDate, setTempDate] = useState<Date | null>(null);
         />
       )} */}
 
-{showDatePicker && (
-  <DateTimePicker
-    value={dueDate || new Date()}
-    mode="date"
-    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-    minimumDate={new Date()}
-    onChange={(event, selectedDate) => {
-      setShowDatePicker(false);
-      if (event.type === 'set' && selectedDate) {
-        // User picked a date -> store temporarily
-        setTempDate(selectedDate);
-        // Now open time picker
-        setTimeout(() => setShowTimePicker(true), 200);
-      } else {
-        // User cancelled date picker
-        setTempDate(null);
-      }
-    }}
-  />
-)}
+      {showDatePicker && (
+        <DateTimePicker
+          value={dueDate || new Date()}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          minimumDate={new Date()}
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (event.type === 'set' && selectedDate) {
+              // User picked a date -> store temporarily
+              setTempDate(selectedDate);
+              // Now open time picker
+              setTimeout(() => setShowTimePicker(true), 200);
+            } else {
+              // User cancelled date picker
+              setTempDate(null);
+            }
+          }}
+        />
+      )}
 
-{showTimePicker && (
-  <DateTimePicker
-    value={tempDate || new Date()}
-    mode="time"
-    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-    onChange={(event, selectedTime) => {
-      setShowTimePicker(false);
-      if (event.type === 'set' && selectedTime && tempDate) {
-        // Combine the selected date and time
-        const combined = new Date(tempDate);
-        combined.setHours(selectedTime.getHours());
-        combined.setMinutes(selectedTime.getMinutes());
-        setDueDate(combined);
-      } else {
-        // User cancelled time picker → discard date as well
-        setTempDate(null);
-        setDueDate(null);
-      }
-    }}
-  />
-)}
+      {showTimePicker && (
+        <DateTimePicker
+          value={tempDate || new Date()}
+          mode="time"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={(event, selectedTime) => {
+            setShowTimePicker(false);
+            if (event.type === 'set' && selectedTime && tempDate) {
+              // Combine the selected date and time
+              const combined = new Date(tempDate);
+              combined.setHours(selectedTime.getHours());
+              combined.setMinutes(selectedTime.getMinutes());
+              setDueDate(combined);
+            } else {
+              // User cancelled time picker → discard date as well
+              setTempDate(null);
+              setDueDate(null);
+            }
+          }}
+        />
+      )}
     </View>
   );
 };
@@ -1188,9 +1188,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   typeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 60,
     borderWidth: 2,
     borderColor: '#10B144',
     alignItems: 'center',

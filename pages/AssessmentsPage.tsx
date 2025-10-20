@@ -91,17 +91,21 @@ const AssessmentsPage = () => {
         setRawAssessments(assessmentsData); // Store raw data
 
         // Extract unique categories from assessments
+        console.log(assessmentsData)
         const uniqueCategories = Array.from(
           new Map(
             assessmentsData.map((a: any) => [a.category._id, { label: a.category.name, value: a.category._id }])
           ).values()
         ) as { label: string; value: string }[];
-        
         // Add "no data available" if no categories
         if (uniqueCategories.length === 0) {
-          setCategoryItems([{ label: 'No data available', value: 'no_data' }]);
+          setCategoryItems([{ label: 'All Topics', value: 'all' }]);
         } else {
-          setCategoryItems(uniqueCategories);
+          setCategoryItems(
+
+            [
+              { label: 'All Topics', value: 'all' },
+              ...uniqueCategories]);
         }
 
         // Extract unique courses from assessments
@@ -110,12 +114,16 @@ const AssessmentsPage = () => {
             assessmentsData.map((a: any) => [a.course._id, { label: a.course.courseTitle, value: a.course._id }])
           ).values()
         ) as { label: string; value: string }[];
-        
+
         // Add "no data available" if no courses
         if (uniqueCourses.length === 0) {
-          setCourseItems([{ label: 'No data available', value: 'no_data' }]);
+          setCourseItems([{ label: 'All Courses', value: 'all' }]);
+
         } else {
-          setCourseItems(uniqueCourses);
+          setCourseItems([
+            { label: 'All Courses', value: 'all' },
+            ...uniqueCourses]
+          );
         }
 
         // Extract unique created dates from assessments (createdAt)
@@ -124,7 +132,7 @@ const AssessmentsPage = () => {
             assessmentsData.map((a: any) => a.createdAt)
           )
         ).filter(Boolean) as string[];
-        
+
         // Format dates and remove duplicates based on formatted date string
         const formattedCreatedDates = Array.from(
           new Map(
@@ -134,7 +142,7 @@ const AssessmentsPage = () => {
             })
           ).values()
         ).sort((a, b) => new Date(b.value).getTime() - new Date(a.value).getTime());
-        
+
         // Add "no data available" if no dates
         if (formattedCreatedDates.length === 0) {
           setDatesItems([
@@ -165,10 +173,10 @@ const AssessmentsPage = () => {
       const matchesSearch = assessment.title.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Filter by category
-      const matchesCategory = categoryValue && categoryValue !== 'no_data' ? assessment.category._id === categoryValue : true;
+      const matchesCategory = categoryValue && categoryValue !== 'no_data' && categoryValue !== 'all' ? assessment.category._id === categoryValue : true;
 
       // Filter by course
-      const matchesCourse = courseValue && courseValue !== 'no_data' ? assessment.course._id === courseValue : true;
+      const matchesCourse = courseValue && courseValue !== 'no_data' && courseValue !== 'all' ? assessment.course._id === courseValue : true;
 
       // Filter by date (using createdAt now)
       const assessmentDate = new Date(assessment.createdAt);
@@ -190,9 +198,9 @@ const AssessmentsPage = () => {
   };
 
   const formatDateTime = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: '2-digit', 
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
@@ -247,7 +255,7 @@ const AssessmentsPage = () => {
   const handleSubmissionPress = async (submission: any) => {
     // Close the first modal
     setModalVisible(false);
-    
+
     // Open detailed modal
     setSelectedSubmission(submission);
     setDetailedModalVisible(true);
@@ -255,7 +263,7 @@ const AssessmentsPage = () => {
     setSubmissionDetailsLoading(true);
     setSubmissionDetailsError(null);
     setActiveTab('all');
-    
+
     try {
       const details = await getSubmissionDetails(submission._id);
       setSubmissionDetails(details.submission);
@@ -270,7 +278,7 @@ const AssessmentsPage = () => {
   // Filter questions based on active tab
   const getFilteredQuestions = () => {
     if (!submissionDetails?.answers) return [];
-    
+
     switch (activeTab) {
       case 'needs_grading':
         return submissionDetails.answers.filter((answer: any) => answer.requiresManualCheck);
@@ -392,7 +400,7 @@ const AssessmentsPage = () => {
                 items={statusItems}
                 setOpen={setModalStatusOpen}
                 setValue={setStatusValue}
-                setItems={() => {}}
+                setItems={() => { }}
                 placeholder="All Statuses"
                 style={styles.dropdownPicker}
                 containerStyle={styles.dropdownContainerStyle}
@@ -408,7 +416,7 @@ const AssessmentsPage = () => {
                 items={gradingItems}
                 setOpen={setModalGradingOpen}
                 setValue={setGradingValue}
-                setItems={() => {}}
+                setItems={() => { }}
                 placeholder="All Grading"
                 style={styles.dropdownPicker}
                 containerStyle={styles.dropdownContainerStyle}
@@ -432,7 +440,7 @@ const AssessmentsPage = () => {
                 data={filteredSubmissions}
                 keyExtractor={(item) => item._id}
                 renderItem={({ item }) => (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.submissionCard}
                     onPress={() => handleSubmissionPress(item)}
                   >
@@ -505,15 +513,22 @@ const AssessmentsPage = () => {
         visible={detailedModalVisible}
         animationType="slide"
         transparent={false}
-        onRequestClose={() => setDetailedModalVisible(false)}
+        onRequestClose={() => {
+          setDetailedModalVisible(false)
+          setModalVisible(true)
+        }
+        }
       >
         <View style={styles.detailedModalContainer}>
           {/* Header */}
           <View style={styles.detailedModalHeader}>
             <Text style={styles.detailedModalTitle}>Submission Details</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.detailedModalCloseButton}
-              onPress={() => setDetailedModalVisible(false)}
+              onPress={() => {
+                setDetailedModalVisible(false)
+                setModalVisible(true)
+              }}
             >
               <SimpleIcon name="close" size={24} color="#333" />
             </TouchableOpacity>
@@ -610,7 +625,7 @@ const AssessmentsPage = () => {
                   <View key={answer._id} style={styles.questionCard}>
                     <View style={styles.questionHeader}>
                       <Text style={styles.questionNumber}>Question {index + 1}</Text>
-                      <Text style={styles.questionType}>{answer.questionDetails?.type == "truefalse" ? "True/False":answer.questionDetails?.type}</Text>
+                      <Text style={styles.questionType}>{answer.questionDetails?.type == "truefalse" ? "True/False" : answer.questionDetails?.type}</Text>
                       <View style={styles.questionTags}>
                         <View style={[styles.questionTag, { backgroundColor: answer.isCorrect ? '#D1FAE5' : '#FEE2E2' }]}>
                           <Text style={[styles.questionTagText, { color: answer.isCorrect ? '#065F46' : '#991B1B' }]}>
@@ -624,7 +639,7 @@ const AssessmentsPage = () => {
                         </View>
                       </View>
                     </View>
-                    
+
                     <View style={styles.questionContent}>
                       <Text style={styles.questionLabel}>Question:</Text>
                       <View style={styles.questionTextContainer}>
@@ -808,10 +823,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 50,
+    paddingBottom: 50,
   },
-  maincardwidth:{
-    width:"100%"
+  maincardwidth: {
+    width: "100%"
   },
   modalContainer: {
     flex: 1,

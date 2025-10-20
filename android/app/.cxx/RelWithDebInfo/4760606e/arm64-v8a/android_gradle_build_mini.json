@@ -1,0 +1,121 @@
+{
+  "buildFiles": [
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-community/datetimepicker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-documents/picker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/evil-icons/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/fontawesome6/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/@react-native-vector-icons/material-icons/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-image-picker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-reanimated/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native-webview/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/marianoor/Downloads/SchoolInstance/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/marianoor/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/RelWithDebInfo/4760606e/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/marianoor/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/marianoor/Downloads/SchoolInstance/android/app/.cxx/RelWithDebInfo/4760606e/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "react_codegen_RNVectorIconsSpec::@479809fae146501fd34d": {
+      "artifactName": "react_codegen_RNVectorIconsSpec",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_safeareacontext::@7984cd80db47aa7b952a": {
+      "artifactName": "react_codegen_safeareacontext",
+      "abi": "arm64-v8a",
+      "output": "/Users/marianoor/Downloads/SchoolInstance/android/app/build/intermediates/cxx/RelWithDebInfo/4760606e/obj/arm64-v8a/libreact_codegen_safeareacontext.so",
+      "runtimeFiles": [
+        "/Users/marianoor/.gradle/caches/8.13/transforms/72cde7dc85b5006383f56c98fcfedfa5/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.arm64-v8a/libfbjni.so",
+        "/Users/marianoor/.gradle/caches/8.13/transforms/e702d807405e02934ddf4aeab8285ec0/transformed/react-android-0.79.1-release/prefab/modules/jsi/libs/android.arm64-v8a/libjsi.so",
+        "/Users/marianoor/.gradle/caches/8.13/transforms/e702d807405e02934ddf4aeab8285ec0/transformed/react-android-0.79.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so"
+      ]
+    },
+    "react_codegen_rngesturehandler_codegen::@39f233abcd2c728bc6ec": {
+      "artifactName": "react_codegen_rngesturehandler_codegen",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNCWebViewSpec::@eb48929f9f7453740a6c": {
+      "artifactName": "react_codegen_RNCWebViewSpec",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_rndocumentpickerCGen::@aac1846a245ca418eb66": {
+      "artifactName": "react_codegen_rndocumentpickerCGen",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNDateTimePickerCGen::@59b70ddc31ba2f8ef1d2": {
+      "artifactName": "react_codegen_RNDateTimePickerCGen",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "artifactName": "appmodules",
+      "abi": "arm64-v8a",
+      "output": "/Users/marianoor/Downloads/SchoolInstance/android/app/build/intermediates/cxx/RelWithDebInfo/4760606e/obj/arm64-v8a/libappmodules.so",
+      "runtimeFiles": [
+        "/Users/marianoor/Downloads/SchoolInstance/android/app/build/intermediates/cxx/RelWithDebInfo/4760606e/obj/arm64-v8a/libreact_codegen_safeareacontext.so",
+        "/Users/marianoor/Downloads/SchoolInstance/android/app/build/intermediates/cxx/RelWithDebInfo/4760606e/obj/arm64-v8a/libreact_codegen_rnscreens.so",
+        "/Users/marianoor/.gradle/caches/8.13/transforms/72cde7dc85b5006383f56c98fcfedfa5/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.arm64-v8a/libfbjni.so",
+        "/Users/marianoor/.gradle/caches/8.13/transforms/e702d807405e02934ddf4aeab8285ec0/transformed/react-android-0.79.1-release/prefab/modules/jsi/libs/android.arm64-v8a/libjsi.so",
+        "/Users/marianoor/.gradle/caches/8.13/transforms/e702d807405e02934ddf4aeab8285ec0/transformed/react-android-0.79.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so"
+      ]
+    },
+    "react_codegen_rnasyncstorage::@1596841e19ec5b9eeffe": {
+      "artifactName": "react_codegen_rnasyncstorage",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_VectorIconsFontAwesome6::@593c2d0dc8ab80edeb45": {
+      "artifactName": "react_codegen_VectorIconsFontAwesome6",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnreanimated::@8afabad14bfffa3f8b9a": {
+      "artifactName": "react_codegen_rnreanimated",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_VectorIconsMaterialIcons::@31616434fa1e3b43792c": {
+      "artifactName": "react_codegen_VectorIconsMaterialIcons",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_VectorIconsEvilIcons::@cd02e201fea1713bb7cb": {
+      "artifactName": "react_codegen_VectorIconsEvilIcons",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNImagePickerSpec::@f66ee9a2efecfb28bee4": {
+      "artifactName": "react_codegen_RNImagePickerSpec",
+      "abi": "arm64-v8a",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnscreens::@25bcbd507e98d3a854ad": {
+      "artifactName": "react_codegen_rnscreens",
+      "abi": "arm64-v8a",
+      "output": "/Users/marianoor/Downloads/SchoolInstance/android/app/build/intermediates/cxx/RelWithDebInfo/4760606e/obj/arm64-v8a/libreact_codegen_rnscreens.so",
+      "runtimeFiles": [
+        "/Users/marianoor/.gradle/caches/8.13/transforms/e702d807405e02934ddf4aeab8285ec0/transformed/react-android-0.79.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so",
+        "/Users/marianoor/.gradle/caches/8.13/transforms/e702d807405e02934ddf4aeab8285ec0/transformed/react-android-0.79.1-release/prefab/modules/jsi/libs/android.arm64-v8a/libjsi.so",
+        "/Users/marianoor/.gradle/caches/8.13/transforms/72cde7dc85b5006383f56c98fcfedfa5/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.arm64-v8a/libfbjni.so"
+      ]
+    }
+  }
+}

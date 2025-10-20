@@ -26,10 +26,10 @@ interface UserData {
 interface SidebarProps {
   active: string;
   onSelect: (label: string) => void;
-  user?: { 
-    firstName?: string; 
-    middleName?: string; 
-    lastName?: string; 
+  user?: {
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email?: string;
     role?: string;
     pronoun?: string;
@@ -63,6 +63,7 @@ const studentMenuItems = [
   { label: 'Messages', icon: require('../assets/jpg.jpg') },
   { label: 'Gradebook', icon: require('../assets/jpg.jpg') },
   { label: 'Discussions', icon: require('../assets/jpg.jpg') },
+  { label: 'Pages', icon: require('../assets/jpg.jpg') },
   { label: 'Account Information', icon: require('../assets/jpg.jpg') },
 ];
 
@@ -117,7 +118,7 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
 
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}

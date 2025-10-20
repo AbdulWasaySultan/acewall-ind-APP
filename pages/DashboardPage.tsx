@@ -54,15 +54,15 @@ const DashboardPage = () => {
       setLoading(true);
       const coursesData = await dashboardService.getRecentCourses();
       console.log("coursesData *********", coursesData);
-      
+
       // Count published and unpublished courses
       const publishedCount = coursesData.filter(course => course.published === true).length;
       const unpublishedCount = coursesData.filter(course => course.published === false).length;
-      
+
       setPublishedCoursesCount(publishedCount);
       setUnpublishedCoursesCount(unpublishedCount);
       setRecentCourseslength(coursesData.length);
-      
+
       // Filter only published courses and take the first 3
       const publishedCourses = coursesData.filter(course => course.published === true);
       const limitedCourses = publishedCourses.slice(0, 3).reverse();
@@ -145,7 +145,7 @@ const DashboardPage = () => {
                 <TouchableOpacity
                   key={enrollment._id}
                   style={styles.horizontalCourseCard}
-                  onPress={() => navigation.navigate('CourseDetailStudentPageEnrolled', { enrollmentId: enrollment._id ,courseId: enrollment.course?._id })}
+                  onPress={() => navigation.navigate('CourseDetailStudentPageEnrolled', { enrollmentId: enrollment._id, courseId: enrollment.course?._id })}
                 >
                   <Image
                     source={{ uri: enrollment.course?.thumbnail?.url || 'https://via.placeholder.com/150' }}
@@ -179,7 +179,7 @@ const DashboardPage = () => {
       <ScrollView style={styles.container}>
         {/* Cards */}
         <View style={styles.cardsContainer}>
-          <View style={styles.card}>
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('MyCourses')}>
             <Text style={styles.cardTitle}>Total Courses</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardNumber}>{recentCourseslength}</Text>
@@ -187,8 +187,8 @@ const DashboardPage = () => {
                 <Text style={styles.iconText}>📖</Text>
               </View>
             </View>
-          </View>
-          <View style={styles.card}>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Students')}>
             <Text style={styles.cardTitle}>Students</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardNumber}>{studentCount}</Text>
@@ -196,8 +196,8 @@ const DashboardPage = () => {
                 <Text style={styles.iconText}>👥</Text>
               </View>
             </View>
-          </View>
-          <View style={styles.card}>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('MyCourses')}>
             <Text style={styles.cardTitle}>Published Courses</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardNumber}>{publishedCoursesCount}</Text>
@@ -205,8 +205,8 @@ const DashboardPage = () => {
                 <Text style={styles.iconText}>📄</Text>
               </View>
             </View>
-          </View>
-          <View style={styles.card}>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('MyCourses')}>
             <Text style={styles.cardTitle}>Unpublished Courses</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardNumber}>{unpublishedCoursesCount}</Text>
@@ -214,7 +214,7 @@ const DashboardPage = () => {
                 <Text style={styles.iconText}>📝</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Recent Activity */}
@@ -235,13 +235,13 @@ const DashboardPage = () => {
         <View style={styles.recentCoursesContainer}>
           {recentCourses.length > 0 ? (
             recentCourses.map((course) => (
-              <TouchableOpacity 
-                key={course.id} 
+              <TouchableOpacity
+                key={course.id}
                 style={styles.horizontalCourseCard}
                 onPress={() => navigation.navigate('CourseDetails', { courseId: course.id })}
               >
-                <Image 
-                  source={{ uri: course.imageUrl }} 
+                <Image
+                  source={{ uri: course.imageUrl }}
                   style={styles.horizontalCourseImage}
                   defaultSource={require('../assets/jpg.jpg')}
                 />

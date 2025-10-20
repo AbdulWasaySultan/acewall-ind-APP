@@ -54,7 +54,7 @@ const ChapterPagesPage = () => {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => (navigation as any).goBack()} style={{ padding: 4, marginRight: 12 }}>
-          <SimpleIcon name="chevron-back" size={28} color="#fff" />
+          <SimpleIcon name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pages for chapter</Text>
         <View style={{ width: 28 }} />
@@ -125,7 +125,7 @@ const ChapterPagesPage = () => {
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => setShowCreateModal(false)} style={{ padding: 4, marginRight: 12 }}>
-              <SimpleIcon name="chevron-back" size={28} color="#fff" />
+              <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Create New Page</Text>
             <View style={{ width: 28 }} />
@@ -267,7 +267,7 @@ const ChapterPagesPage = () => {
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => setShowDetails(false)} style={{ padding: 4, marginRight: 12 }}>
-              <SimpleIcon name="chevron-back" size={28} color="#fff" />
+              <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{selectedPage?.title || 'Details'}</Text>
             <View style={{ width: 28 }} />

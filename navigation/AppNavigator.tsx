@@ -37,6 +37,7 @@ import ChapterDiscussionsPage from '../pages/ChapterDiscussionsPage';
 import ChapterDetailsStudent from '../pages/ChapterDetailsStudent';
 import AssessmentScreenStudent from '../pages/AssessmentScreenStudent';
 import DiscussionStudent from '../pages/DiscussionStudent';
+import CoursePagesStudent from '../pages/CoursePagesStudent';
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -56,11 +57,11 @@ export type RootStackParamList = {
   ChapterDetailsStudent: { chapterId: string };
   Chat: undefined;
   ResetPassword: { email: string };
-  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string };
+  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string, refreshAssessments: () => void };
   ChapterPages: { courseId: string; chapterId: string };
   ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string };
   AssessmentScreenStudent: { assessmentId: string };
-  DiscussionStudent:{discussionId:string}
+  DiscussionStudent: { discussionId: string }
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -120,7 +121,7 @@ const DrawerNavigator = () => {
           // Get the current route name
           const currentRoute = e.data.state.routes[e.data.state.index];
           const routeName = currentRoute.name;
-          
+
           // Map route names to menu labels
           const routeToLabel: { [key: string]: string } = {
             'Dashboard': 'Dashboard',
@@ -152,20 +153,20 @@ const DrawerNavigator = () => {
         </>
       )}
       {userRole === 'student' ? (
-        <Drawer.Screen 
-          name="Assessments" 
-          component={MyAssessmentsPage} 
-          options={{ 
+        <Drawer.Screen
+          name="Assessments"
+          component={MyAssessmentsPage}
+          options={{
             title: 'My Assessments'
-          }} 
+          }}
         />
       ) : (
-        <Drawer.Screen 
-          name="Assessments" 
-          component={AssessmentsPage} 
-          options={{ 
+        <Drawer.Screen
+          name="Assessments"
+          component={AssessmentsPage}
+          options={{
             title: 'Assessments'
-          }} 
+          }}
         />
       )}
       <Drawer.Screen name="Announcements" component={AnnouncementsPage} />
@@ -174,23 +175,28 @@ const DrawerNavigator = () => {
         <Drawer.Screen name="Gradebook" component={GradebookPage} />
       )}
       <Drawer.Screen name="Discussions" component={DiscussionsPage} />
+      {userRole === 'student' && (
+        <Drawer.Screen name="Pages" component={CoursePagesStudent} />
+
+      )}
+
       {userRole !== 'student' && (
         <Drawer.Screen name="Support" component={SupportPage} options={{ title: 'Support' }} />
       )}
-      <Drawer.Screen 
-        name="StudentProfile" 
-        component={StudentProfilePage} 
-        options={{ 
+      <Drawer.Screen
+        name="StudentProfile"
+        component={StudentProfilePage}
+        options={{
           title: 'Student Profile',
           drawerItemStyle: { display: 'none' } // Hide from drawer menu
-        }} 
+        }}
       />
-      <Drawer.Screen 
-        name="AccountInformation" 
-        component={AccountInformationPage} 
-        options={{ 
+      <Drawer.Screen
+        name="AccountInformation"
+        component={AccountInformationPage}
+        options={{
           title: 'Account Information',
-        }} 
+        }}
       />
     </Drawer.Navigator>
   );
@@ -213,42 +219,42 @@ const AppNavigator = () => {
         }}
       >
         {!hasSeenLanding ? (
-          <Stack.Screen 
-            name="Landing" 
+          <Stack.Screen
+            name="Landing"
             component={LandingPage}
             options={{ headerShown: false }}
           />
         ) : !isAuthenticated ? (
           <>
-            <Stack.Screen 
-              name="Login" 
+            <Stack.Screen
+              name="Login"
               component={LoginPage}
               options={{ headerShown: false }}
             />
-            <Stack.Screen 
-              name="ForgotPassword" 
+            <Stack.Screen
+              name="ForgotPassword"
               component={ForgotPasswordPage}
               options={{ headerShown: false }}
             />
-            <Stack.Screen 
-              name="Signup" 
+            <Stack.Screen
+              name="Signup"
               component={SignupPage}
               options={{ headerShown: false }}
             />
-            <Stack.Screen 
-              name="OTPVerification" 
+            <Stack.Screen
+              name="OTPVerification"
               component={OTPVerificationPage}
               options={{ headerShown: false }}
             />
-            <Stack.Screen 
-              name="ResetPassword" 
+            <Stack.Screen
+              name="ResetPassword"
               component={ResetPasswordPage}
               options={{ headerShown: false }}
             />
           </>
         ) : (
-          <Stack.Screen 
-            name="Main" 
+          <Stack.Screen
+            name="Main"
             component={DrawerNavigator}
             options={{ headerShown: false }}
           />
@@ -279,10 +285,10 @@ const AppNavigator = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen name="Chat" component={ChatPage} options={{ headerShown: false }} />
-        <Stack.Screen 
-          name="EditCredentials" 
-          component={EditCredentialsPage} 
-          options={{ headerShown: false }} 
+        <Stack.Screen
+          name="EditCredentials"
+          component={EditCredentialsPage}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="CreateAssessment"
@@ -301,7 +307,7 @@ const AppNavigator = () => {
         />
         <Stack.Screen
           name="DiscussionStudent"
-        component={DiscussionStudent}
+          component={DiscussionStudent}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

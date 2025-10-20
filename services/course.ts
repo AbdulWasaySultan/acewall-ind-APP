@@ -1458,4 +1458,28 @@ export const deleteLessonFile = async (lessonId: string, fileId: string) => {
     }
   }
 };
+export const getStudentPages = async (studentId: string) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const res = await api.get(`/api/pages/studentpages`, { params: { studentId } })
+    // API returns { pages: [...] }
+    return (res.data?.pages) || []
+  } catch (error: any) {
+    console.error("[v0] getStudentPages error:", error?.response?.data || error?.message)
+    throw new Error(error.response?.data?.message || "Failed to fetch student pages")
+  }
+}
 
+export const getStudentCourses = async () => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const res = await api.get(`/api/enrollment/studentCourses`)
+    // API returns { enrolledCourses: [{ _id, course: { _id, courseTitle }}, ...] }
+    return (res.data?.enrolledCourses) || []
+  } catch (error: any) {
+    console.error("[v0] getStudentCourses error:", error?.response?.data || error?.message)
+    throw new Error(error.response?.data?.message || "Failed to fetch student courses")
+  }
+}

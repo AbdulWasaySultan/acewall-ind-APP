@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createApiInstance, addAuthInterceptor } from './course';
 
 export const getDiscussionsForChapter = async (chapterId: string) => {
@@ -208,8 +209,11 @@ export const getAllDiscussions = async () => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
+    const user = await AsyncStorage.getItem('userData')
+    const role = JSON.parse(user).role
+    console.log(role)
     console.log("Fetching all discussions from: /api/discussion/all");
-    const response = await api.get("/api/discussion/all");
+    const response = await api.get("/api/discussion/studentDiscussion");
     console.log("All discussions response:", response.data);
     return response.data;
   } catch (error: any) {

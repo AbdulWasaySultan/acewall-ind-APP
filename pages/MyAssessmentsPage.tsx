@@ -157,7 +157,6 @@ export interface AssessmentItem {
   source: string;
 }
 
-type AnyObj = Record<string, any>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 // ---------- COMPONENT ----------
 const MyAssessmentsPage = () => {
