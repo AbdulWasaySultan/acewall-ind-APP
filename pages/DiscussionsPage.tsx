@@ -89,7 +89,8 @@ const DiscussionsPage = () => {
       setLoading(true);
       setError(null);
       const data = await getAllDiscussions();
-      setDiscussions(data.discussions || []);
+      console.log(data)
+      setDiscussions(data.discussions || data.discussion || []);
     } catch (err: any) {
       console.error('Failed to fetch discussions:', err);
       setError(err.message || 'Failed to load discussions.');

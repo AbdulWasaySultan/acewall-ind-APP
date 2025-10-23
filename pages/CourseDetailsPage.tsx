@@ -68,6 +68,46 @@ import { pick } from "@react-native-documents/picker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const fallbackImage = require("../assets/jpg.jpg");
+interface Assessment {
+  assessmentId: string
+  assessmentTitle: string
+  category: string
+  maxPoints: number
+  studentPoints: number
+  isDiscussion: boolean
+}
+
+interface Quarter {
+  quarterId: string
+  quarterTitle: string
+  grade: number
+  gpa: number
+  letterGrade: string
+  assessments: Assessment[]
+}
+
+interface Semester {
+  semesterId: string
+  semesterTitle: string
+  quarters: Quarter[]
+}
+
+interface Student {
+  studentId: string
+  studentName: string
+  gpa: number
+  finalGrade: number
+  letterGrade: string
+  semesters: Semester[]
+}
+
+interface GradebookData {
+  courseId: string
+  total: number
+  page: number
+  limit: number
+  gradebook: Student[]
+}
 
 const CourseDetailsPage = () => {
   const insets = useSafeAreaInsets();
@@ -281,7 +321,9 @@ const CourseDetailsPage = () => {
   const [showAddAssessmentModal, setShowAddAssessmentModal] = useState(false);
   const [showAddPageModal, setShowAddPageModal] = useState(false);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
-
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set())
+  const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set())
+  const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(new Set())
   const formatDateWithOrdinal = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getUTCDate();
@@ -1544,7 +1586,35 @@ const CourseDetailsPage = () => {
       setThumbnailUploading(false);
     }
   };
+  const toggleStudent = (studentId: string) => {
+    const newSet = new Set(expandedStudents)
+    if (newSet.has(studentId)) {
+      newSet.delete(studentId)
+    } else {
+      newSet.add(studentId)
+    }
+    setExpandedStudents(newSet)
+  }
 
+  const toggleSemester = (semesterId: string) => {
+    const newSet = new Set(expandedSemesters)
+    if (newSet.has(semesterId)) {
+      newSet.delete(semesterId)
+    } else {
+      newSet.add(semesterId)
+    }
+    setExpandedSemesters(newSet)
+  }
+
+  const toggleQuarter = (quarterId: string) => {
+    const newSet = new Set(expandedQuarters)
+    if (newSet.has(quarterId)) {
+      newSet.delete(quarterId)
+    } else {
+      newSet.add(quarterId)
+    }
+    setExpandedQuarters(newSet)
+  }
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -2593,7 +2663,7 @@ const CourseDetailsPage = () => {
                           onPress={() => handleUpdateCategory(cat)}
                         >
                           <SimpleIcon
-                            name="save-outline"
+                            name="save-as"
                             size={24}
                             color="#3b82f6"
                           />
@@ -3377,20 +3447,11 @@ const CourseDetailsPage = () => {
             </TouchableOpacity>
           </View>
           {gradebookLoading ? (
-            <ActivityIndicator
-              size="large"
-              color="#10B144"
-              style={{ marginVertical: 40 }}
-            />
+            <ActivityIndicator size="large" color="#10B144" style={{ marginVertical: 40 }} />
           ) : gradebookError ? (
-            <Text
-              style={{ color: "red", textAlign: "center", marginVertical: 20 }}
-            >
-              {gradebookError}
-            </Text>
+            <Text style={{ color: "red", textAlign: "center", marginVertical: 20 }}>{gradebookError}</Text>
           ) : gradebookData ? (
             <ScrollView contentContainerStyle={{ padding: 16 }}>
-              {/* Gradebook Card - Matching Image Design */}
               <View
                 style={{
                   width: "100%",
@@ -3465,89 +3526,410 @@ const CourseDetailsPage = () => {
                 </View>
 
                 {/* Student Rows */}
-                {gradebookData.gradebook &&
-                  gradebookData.gradebook.length > 0 ? (
-                  gradebookData.gradebook.map((student: any, index: number) => (
-                    <View
-                      key={student.studentId || index}
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        paddingVertical: 8,
-                        borderBottomWidth: 1,
-                        borderBottomColor: "#f5f5f5",
-                      }}
-                    >
-                      <View
+                {gradebookData.gradebook && gradebookData.gradebook.length > 0 ? (
+                  gradebookData.gradebook.map((student: Student) => (
+                    <View key={student.studentId}>
+                      <TouchableOpacity
+                        onPress={() => toggleStudent(student.studentId)}
                         style={{
-                          flex: 2,
                           flexDirection: "row",
+                          justifyContent: "space-between",
                           alignItems: "center",
+                          paddingVertical: 12,
+                          borderBottomWidth: 1,
+                          borderBottomColor: "#f5f5f5",
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: 16,
-                            marginRight: 8,
-                            color: "#6b7280",
-                          }}
-                        >
-                          ▼
-                        </Text>
-                        <Text
-                          style={{
-                            flex: 1,
-                            fontSize: 16,
-                            fontWeight: "bold",
-                            color: "#1E293B",
-                          }}
-                        >
-                          {student.studentName || "Unknown Student"}
-                        </Text>
-                      </View>
-                      <Text
-                        style={{
-                          flex: 1,
-                          textAlign: "center",
-                          fontSize: 16,
-                          color: "#1E293B",
-                        }}
-                      >
-                        {student.finalGrade || 0}%
-                      </Text>
-                      <View style={{ flex: 1, alignItems: "center" }}>
                         <View
                           style={{
-                            backgroundColor: "#dbeafe",
-                            borderColor: "#93c5fd",
-                            borderWidth: 1,
-                            borderRadius: 6,
-                            paddingHorizontal: 8,
-                            paddingVertical: 4,
+                            flex: 2,
+                            flexDirection: "row",
+                            alignItems: "center",
                           }}
                         >
                           <Text
                             style={{
-                              color: "#1E293B",
+                              fontSize: 16,
+                              marginRight: 8,
+                              color: "#6b7280",
                               fontWeight: "bold",
-                              fontSize: 14,
                             }}
                           >
-                            {student.letterGrade || "N/A"}
+                            {expandedStudents.has(student.studentId) ? "▼" : "▶"}
+                          </Text>
+                          <Text
+                            style={{
+                              flex: 1,
+                              fontSize: 16,
+                              fontWeight: "bold",
+                              color: "#1E293B",
+                            }}
+                          >
+                            {student.studentName || "Unknown Student"}
                           </Text>
                         </View>
-                      </View>
-                      <Text
-                        style={{
-                          flex: 1,
-                          textAlign: "right",
-                          fontSize: 16,
-                          color: "#1E293B",
-                        }}
-                      >
-                        {student.gpa || 0}
-                      </Text>
+                        <Text
+                          style={{
+                            flex: 1,
+                            textAlign: "center",
+                            fontSize: 16,
+                            color: "#1E293B",
+                          }}
+                        >
+                          {student.finalGrade || 0}%
+                        </Text>
+                        <View style={{ flex: 1, alignItems: "center" }}>
+                          <View
+                            style={{
+                              backgroundColor: "#dbeafe",
+                              borderColor: "#93c5fd",
+                              borderWidth: 1,
+                              borderRadius: 6,
+                              paddingHorizontal: 8,
+                              paddingVertical: 4,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "#1E293B",
+                                fontWeight: "bold",
+                                fontSize: 14,
+                              }}
+                            >
+                              {student.letterGrade || "N/A"}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text
+                          style={{
+                            flex: 1,
+                            textAlign: "right",
+                            fontSize: 16,
+                            color: "#1E293B",
+                          }}
+                        >
+                          {student.gpa || 0}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {expandedStudents.has(student.studentId) && (
+                        <View
+                          style={{
+                            backgroundColor: "#f9fafb",
+                            paddingLeft: 24,
+                            paddingVertical: 12,
+                            borderLeftWidth: 2,
+                            borderLeftColor: "#e5e7eb",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#6b7280",
+                              fontSize: 14,
+                              fontWeight: "600",
+                              marginBottom: 12,
+                            }}
+                          >
+                            Academic Performance Breakdown
+                          </Text>
+
+                          {/* Semesters */}
+                          {student.semesters && student.semesters.length > 0 ? (
+                            student.semesters.map((semester: Semester) => (
+                              <View key={semester.semesterId} style={{ marginBottom: 8 }}>
+                                <TouchableOpacity
+                                  onPress={() => toggleSemester(semester.semesterId)}
+                                  style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    paddingVertical: 8,
+                                    paddingHorizontal: 12,
+                                    backgroundColor: "#fff",
+                                    borderRadius: 6,
+                                    borderWidth: 1,
+                                    borderColor: "#e5e7eb",
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      fontSize: 14,
+                                      marginRight: 8,
+                                      color: "#6b7280",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    {expandedSemesters.has(semester.semesterId) ? "▼" : "▶"}
+                                  </Text>
+                                  <Text
+                                    style={{
+                                      flex: 1,
+                                      fontSize: 14,
+                                      fontWeight: "600",
+                                      color: "#374151",
+                                    }}
+                                  >
+                                    {semester.semesterTitle}
+                                  </Text>
+                                </TouchableOpacity>
+
+                                {expandedSemesters.has(semester.semesterId) && (
+                                  <View
+                                    style={{
+                                      marginTop: 8,
+                                      marginLeft: 12,
+                                      paddingLeft: 12,
+                                      borderLeftWidth: 2,
+                                      borderLeftColor: "#d1d5db",
+                                    }}
+                                  >
+                                    {semester.quarters && semester.quarters.length > 0 ? (
+                                      semester.quarters.map((quarter: Quarter) => (
+                                        <View key={quarter.quarterId} style={{ marginBottom: 8 }}>
+                                          <TouchableOpacity
+                                            onPress={() => toggleQuarter(quarter.quarterId)}
+                                            style={{
+                                              flexDirection: "row",
+                                              alignItems: "center",
+                                              paddingVertical: 8,
+                                              paddingHorizontal: 12,
+                                              backgroundColor: "#f3f4f6",
+                                              borderRadius: 6,
+                                              borderWidth: 1,
+                                              borderColor: "#d1d5db",
+                                            }}
+                                          >
+                                            <Text
+                                              style={{
+                                                fontSize: 13,
+                                                marginRight: 8,
+                                                color: "#6b7280",
+                                                fontWeight: "bold",
+                                              }}
+                                            >
+                                              {expandedQuarters.has(quarter.quarterId) ? "▼" : "▶"}
+                                            </Text>
+                                            <Text
+                                              style={{
+                                                flex: 1,
+                                                fontSize: 13,
+                                                fontWeight: "600",
+                                                color: "#374151",
+                                              }}
+                                            >
+                                              {quarter.quarterTitle}
+                                            </Text>
+                                            <Text
+                                              style={{
+                                                fontSize: 12,
+                                                color: "#6b7280",
+                                                marginRight: 8,
+                                              }}
+                                            >
+                                              {quarter.grade}%
+                                            </Text>
+                                            <View
+                                              style={{
+                                                backgroundColor: "#dbeafe",
+                                                borderColor: "#93c5fd",
+                                                borderWidth: 1,
+                                                borderRadius: 4,
+                                                paddingHorizontal: 6,
+                                                paddingVertical: 2,
+                                                marginRight: 8,
+                                              }}
+                                            >
+                                              <Text
+                                                style={{
+                                                  color: "#1E293B",
+                                                  fontWeight: "bold",
+                                                  fontSize: 11,
+                                                }}
+                                              >
+                                                {quarter.letterGrade}
+                                              </Text>
+                                            </View>
+                                            <Text
+                                              style={{
+                                                fontSize: 12,
+                                                color: "#6b7280",
+                                              }}
+                                            >
+                                              GPA: {quarter.gpa}
+                                            </Text>
+                                          </TouchableOpacity>
+
+                                          {expandedQuarters.has(quarter.quarterId) && (
+                                            <View
+                                              style={{
+                                                marginTop: 8,
+                                                marginLeft: 12,
+                                                paddingLeft: 12,
+                                                paddingVertical: 8,
+                                                backgroundColor: "#fff",
+                                                borderRadius: 6,
+                                                borderWidth: 1,
+                                                borderColor: "#e5e7eb",
+                                              }}
+                                            >
+                                              {/* Assessment Headers */}
+                                              <View
+                                                style={{
+                                                  flexDirection: "row",
+                                                  paddingBottom: 8,
+                                                  marginBottom: 8,
+                                                  borderBottomWidth: 1,
+                                                  borderBottomColor: "#e5e7eb",
+                                                }}
+                                              >
+                                                <Text
+                                                  style={{
+                                                    flex: 2,
+                                                    fontSize: 12,
+                                                    fontWeight: "600",
+                                                    color: "#6b7280",
+                                                  }}
+                                                >
+                                                  Assessment
+                                                </Text>
+                                                <Text
+                                                  style={{
+                                                    flex: 1.5,
+                                                    fontSize: 12,
+                                                    fontWeight: "600",
+                                                    color: "#6b7280",
+                                                  }}
+                                                >
+                                                  Category
+                                                </Text>
+                                                <Text
+                                                  style={{
+                                                    flex: 1,
+                                                    fontSize: 12,
+                                                    fontWeight: "600",
+                                                    color: "#6b7280",
+                                                    textAlign: "center",
+                                                  }}
+                                                >
+                                                  Score
+                                                </Text>
+                                                <Text
+                                                  style={{
+                                                    flex: 1,
+                                                    fontSize: 12,
+                                                    fontWeight: "600",
+                                                    color: "#6b7280",
+                                                    textAlign: "center",
+                                                  }}
+                                                >
+                                                  %
+                                                </Text>
+                                              </View>
+
+                                              {/* Assessment Rows */}
+                                              {quarter.assessments && quarter.assessments.length > 0 ? (
+                                                quarter.assessments.map((assessment: Assessment) => (
+                                                  <View
+                                                    key={assessment.assessmentId}
+                                                    style={{
+                                                      flexDirection: "row",
+                                                      paddingVertical: 6,
+                                                      borderBottomWidth: 1,
+                                                      borderBottomColor: "#f3f4f6",
+                                                    }}
+                                                  >
+                                                    <Text
+                                                      style={{
+                                                        flex: 2,
+                                                        fontSize: 12,
+                                                        color: "#374151",
+                                                      }}
+                                                      numberOfLines={1}
+                                                    >
+                                                      {assessment.assessmentTitle}
+                                                    </Text>
+                                                    <Text
+                                                      style={{
+                                                        flex: 1.5,
+                                                        fontSize: 12,
+                                                        color: "#6b7280",
+                                                      }}
+                                                      numberOfLines={1}
+                                                    >
+                                                      {assessment.category}
+                                                    </Text>
+                                                    <Text
+                                                      style={{
+                                                        flex: 1,
+                                                        fontSize: 12,
+                                                        color: "#374151",
+                                                        textAlign: "center",
+                                                      }}
+                                                    >
+                                                      {assessment.studentPoints}/{assessment.maxPoints}
+                                                    </Text>
+                                                    <Text
+                                                      style={{
+                                                        flex: 1,
+                                                        fontSize: 12,
+                                                        color: "#374151",
+                                                        textAlign: "right",
+                                                        fontWeight: "600",
+                                                      }}
+                                                    >
+                                                      {assessment.maxPoints > 0
+                                                        ? (
+                                                          (assessment.studentPoints / assessment.maxPoints) *
+                                                          100
+                                                        ).toFixed(1)
+                                                        : 0}
+                                                      %
+                                                    </Text>
+                                                  </View>
+                                                ))
+                                              ) : (
+                                                <Text
+                                                  style={{
+                                                    fontSize: 12,
+                                                    color: "#9ca3af",
+                                                    textAlign: "center",
+                                                    paddingVertical: 8,
+                                                  }}
+                                                >
+                                                  No assessments found.
+                                                </Text>
+                                              )}
+                                            </View>
+                                          )}
+                                        </View>
+                                      ))
+                                    ) : (
+                                      <Text
+                                        style={{
+                                          fontSize: 12,
+                                          color: "#9ca3af",
+                                          paddingVertical: 8,
+                                        }}
+                                      >
+                                        No quarters found.
+                                      </Text>
+                                    )}
+                                  </View>
+                                )}
+                              </View>
+                            ))
+                          ) : (
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                color: "#9ca3af",
+                                paddingVertical: 8,
+                              }}
+                            >
+                              No semesters found.
+                            </Text>
+                          )}
+                        </View>
+                      )}
                     </View>
                   ))
                 ) : (
@@ -3563,26 +3945,6 @@ const CourseDetailsPage = () => {
                     </Text>
                   </View>
                 )}
-
-                {/* Academic Performance Breakdown */}
-                <View
-                  style={{
-                    marginTop: 12,
-                    paddingTop: 12,
-                    borderTopWidth: 1,
-                    borderTopColor: "#f5f5f5",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#6b7280",
-                      fontSize: 14,
-                      textAlign: "center",
-                    }}
-                  >
-                    Academic Performance Breakdown
-                  </Text>
-                </View>
               </View>
             </ScrollView>
           ) : (

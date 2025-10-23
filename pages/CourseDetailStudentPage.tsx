@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, Linking, Alert, Platform } from 'react-native';
 import SimpleIcon from '../components/SimpleIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { getCourseById, getStudentEnrolledCourseDetails, getCourseForStudentPreview, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent } from '../services/course';
+import { getCourseById, getStudentEnrolledCourseDetails, getCourseForStudentPreview, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse } from '../services/course';
 import axios from 'axios';
 
 const fallbackImage = require('../assets/jpg.jpg');
@@ -22,7 +22,7 @@ const CourseDetailStudentPage = () => {
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<{ [key: number]: boolean }>({});
   const [expandedLessons, setExpandedLessons] = useState<{ [key: string]: boolean }>({});
-  
+
   // Modal states
   const [showQuartersModal, setShowQuartersModal] = useState(false);
   const [showChaptersModal, setShowChaptersModal] = useState(false);
@@ -38,7 +38,7 @@ const CourseDetailStudentPage = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    
+
     const fetchCourseData = async () => {
       try {
         if (enrollmentId) {
@@ -58,7 +58,7 @@ const CourseDetailStudentPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchCourseData();
   }, [courseId, enrollmentId]);
 
@@ -80,7 +80,7 @@ const CourseDetailStudentPage = () => {
     setEnrollLoading(true);
     setEnrollError(null);
     try {
-      await axios.post(`https://acewall-backend-school-instance-production.up.railway.app/api/enrollment/create/${courseId}`);
+      const result = await enrollInCourse(courseId)
       setShowEnrollModal(false);
       (navigation as any).navigate('Main', { screen: 'MyCourses' });
     } catch (err: any) {
@@ -215,7 +215,7 @@ const CourseDetailStudentPage = () => {
               <SimpleIcon name="close" size={32} color="#333" />
             </TouchableOpacity>
           </View>
-          
+
           <ScrollView contentContainerStyle={{ padding: 16 }}>
             {loadingQuarters ? (
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 }}>
@@ -231,14 +231,14 @@ const CourseDetailStudentPage = () => {
                 >
                   <Text style={styles.quarterTitle}>Quarter: {quarter.title}</Text>
                   <Text style={styles.quarterDate}>
-                    {new Date(quarter.startDate).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })} - {new Date(quarter.endDate).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                    {new Date(quarter.startDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })} - {new Date(quarter.endDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </Text>
                 </TouchableOpacity>
@@ -282,7 +282,7 @@ const CourseDetailStudentPage = () => {
               Chapters
             </Text>
           </View>
-          
+
           <ScrollView contentContainerStyle={{ padding: 16 }}>
             {loadingChapters ? (
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 }}>
@@ -347,7 +347,7 @@ const CourseDetailStudentPage = () => {
               Chapter: {selectedChapter?.title || 'Loading...'}
             </Text>
           </View>
-          
+
           {/* Chapter Tabs */}
           <View style={styles.chapterTabsRow}>
             {['Description', 'Files', 'Assessments', 'Pages'].map(tab => (
@@ -434,28 +434,28 @@ const CourseDetailStudentPage = () => {
             <Text style={styles.instructorName}>{course.createdby ? `${course.createdby.firstName} ${course.createdby.middleName || ''} ${course.createdby.lastName}`.trim() : 'Unknown Instructor'}</Text>
           </View>
           <Image source={course.thumbnail?.url ? { uri: course.thumbnail.url } : fallbackImage} style={styles.courseImage} />
-          
+
           {/* Semester Information */}
           {course.semester && course.semester.length > 0 && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.semesterCard}
               onPress={() => handleSemesterClick(course.semester[0]._id)}
             >
               <Text style={styles.semesterTitle}>Semester: {course.semester[0].title}</Text>
               <Text style={styles.semesterDate}>
-                {new Date(course.semester[0].startDate).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })} - {new Date(course.semester[0].endDate).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                {new Date(course.semester[0].startDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })} - {new Date(course.semester[0].endDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}
               </Text>
             </TouchableOpacity>
           )}
-          
+
           {/* Tabs */}
           <View style={styles.tabsRow}>
             {TABS.map(tab => (
@@ -527,14 +527,14 @@ const CourseDetailStudentPage = () => {
                       <Text style={styles.syllabusTitle}>{course.syllabus.filename || 'Course Syllabus'}</Text>
                       <Text style={styles.syllabusSubtitle}>PDF Document</Text>
                       <Text style={styles.syllabusDate}>
-                        Uploaded: {new Date(course.syllabus.uploadedAt).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
+                        Uploaded: {new Date(course.syllabus.uploadedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
                         })}
                       </Text>
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.downloadButton}
                       onPress={() => handleOpenSyllabus(course.syllabus.url)}
                     >
@@ -577,14 +577,14 @@ const styles = StyleSheet.create({
   instructorName: { fontWeight: 'bold', fontSize: 16, color: '#222' },
   courseImage: { width: '100%', height: 200, borderRadius: 12, marginBottom: 16 },
   tabsRow: { flexDirection: 'row', marginBottom: 20 },
-  tabButton: { 
-    marginRight: 12, 
-    paddingHorizontal: 16, 
-    paddingVertical: 8, 
+  tabButton: {
+    marginRight: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: 'transparent',
   },
-  activeTabButton: { 
+  activeTabButton: {
     backgroundColor: '#e8f5e8',
   },
   tabText: { fontSize: 14, color: '#333' },

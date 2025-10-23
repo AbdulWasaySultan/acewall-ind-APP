@@ -210,10 +210,10 @@ export const getAllDiscussions = async () => {
     const api = await createApiInstance();
     addAuthInterceptor(api);
     const user = await AsyncStorage.getItem('userData')
-    const role = JSON.parse(user).role
-    console.log(role)
+
+    const path = JSON.parse(user).user.role === "student" ? '/studentDiscussion' : '/all'
     console.log("Fetching all discussions from: /api/discussion/all");
-    const response = await api.get("/api/discussion/studentDiscussion");
+    const response = await api.get(`/api/discussion/${path}`);
     console.log("All discussions response:", response.data);
     return response.data;
   } catch (error: any) {

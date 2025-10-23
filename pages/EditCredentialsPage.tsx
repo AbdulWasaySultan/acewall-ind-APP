@@ -45,7 +45,7 @@ const EditCredentialsPage: React.FC = () => {
 
   // Password validation
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
-  
+
   // Country dropdown
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
 
@@ -80,8 +80,7 @@ const EditCredentialsPage: React.FC = () => {
       setOtpTimer(600);
       Toast.show('OTP sent successfully to previous email', Toast.LONG);
     } catch (error) {
-      console.error('Error sending email OTP:', error);
-      Toast.show('Failed to send OTP', Toast.LONG);
+      Toast.show(error?.response?.data.message || 'Failed to update email', Toast.LONG);
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +121,7 @@ const EditCredentialsPage: React.FC = () => {
       Toast.show('OTP sent successfully', Toast.LONG);
     } catch (error) {
       console.error('Error sending password OTP:', error);
-      Toast.show('Failed to send OTP', Toast.LONG);
+      Toast.show(error?.response?.data?.message || 'Failed to update password', Toast.LONG);
     } finally {
       setIsLoading(false);
     }
@@ -175,7 +174,7 @@ const EditCredentialsPage: React.FC = () => {
           response = await updatePhone(otpData.phone, otp);
           break;
       }
-      
+
       Toast.show('Credentials updated successfully!', Toast.LONG);
       setShowOTPModal(false);
       navigation.goBack();
@@ -235,7 +234,7 @@ const EditCredentialsPage: React.FC = () => {
             <Text style={styles.description}>
               Choose a password that you can remember, and make sure its strong.
             </Text>
-            
+
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Current password</Text>
               <TextInput
@@ -318,33 +317,9 @@ const EditCredentialsPage: React.FC = () => {
                   </Text>
                   <Text style={styles.dropdownArrow}>▼</Text>
                 </TouchableOpacity>
-                
-                {showCountryDropdown && (
-                  <View style={styles.countryDropdown}>
-                    <ScrollView 
-                      style={styles.countryScrollView} 
-                      showsVerticalScrollIndicator={true}
-                      nestedScrollEnabled={true}
-                      bounces={false}
-                    >
-                      {countryCodes.map((country, index) => (
-                        <TouchableOpacity
-                          key={`${country.code}-${country.country}-${index}`}
-                          style={styles.countryOption}
-                          onPress={() => {
-                            setPhoneForm({ ...phoneForm, countryCode: country.code });
-                            setShowCountryDropdown(false);
-                          }}
-                        >
-                          <Text style={styles.countryOptionText}>
-                            {country.flag} {country.country} ({country.code})
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                )}
-                
+
+
+
                 <TextInput
                   style={styles.phoneInput}
                   value={phoneForm.newPhone}
@@ -354,6 +329,31 @@ const EditCredentialsPage: React.FC = () => {
                   placeholderTextColor="#000"
                 />
               </View>
+              {showCountryDropdown && (
+                <View style={styles.countryDropdown}>
+                  <ScrollView
+                    style={styles.countryScrollView}
+                    showsVerticalScrollIndicator={true}
+                    nestedScrollEnabled={true}
+                    bounces={false}
+                  >
+                    {countryCodes.map((country, index) => (
+                      <TouchableOpacity
+                        key={`${country.code}-${country.country}-${index}`}
+                        style={styles.countryOption}
+                        onPress={() => {
+                          setPhoneForm({ ...phoneForm, countryCode: country.code });
+                          setShowCountryDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.countryOptionText}>
+                          {country.flag} {country.country} ({country.code})
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
             </View>
             <TouchableOpacity
               style={styles.saveButton}
@@ -375,8 +375,8 @@ const EditCredentialsPage: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Tabs at the very top */}
@@ -408,7 +408,7 @@ const EditCredentialsPage: React.FC = () => {
       </View>
 
       {/* Tab Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -594,8 +594,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   countryDropdown: {
-    position: 'absolute',
-    top: 60,
+    marginTop: 8,
     left: 0,
     right: 0,
     backgroundColor: '#fff',

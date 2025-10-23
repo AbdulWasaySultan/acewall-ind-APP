@@ -231,7 +231,7 @@ const AccountInformationPage = () => {
         mailingZip: userData.mailingZip,
         profileImage: userData.profileImage,
       };
-      
+
       await updateUserProfile(updateData);
       setIsEditMode(false);
       Toast.show('Profile updated successfully!', Toast.LONG);
@@ -295,34 +295,34 @@ const AccountInformationPage = () => {
         <>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>First Name</Text>
-            <TextInput 
-              style={styles.input} 
-              value={userData.firstName} 
-              onChangeText={(text) => setUserData({...userData, firstName: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.firstName}
+              onChangeText={(text) => setUserData({ ...userData, firstName: text })}
             />
           </View>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Middle Name</Text>
-            <TextInput 
-              style={styles.input} 
-              value={userData.middleName} 
-              onChangeText={(text) => setUserData({...userData, middleName: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.middleName}
+              onChangeText={(text) => setUserData({ ...userData, middleName: text })}
             />
           </View>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Last Name</Text>
-            <TextInput 
-              style={styles.input} 
-              value={userData.lastName} 
-              onChangeText={(text) => setUserData({...userData, lastName: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.lastName}
+              onChangeText={(text) => setUserData({ ...userData, lastName: text })}
             />
           </View>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Bio</Text>
-            <TextInput 
-              style={styles.textArea} 
-              value={userData.Bio} 
-              onChangeText={(text) => setUserData({...userData, Bio: text})} 
+            <TextInput
+              style={styles.textArea}
+              value={userData.Bio}
+              onChangeText={(text) => setUserData({ ...userData, Bio: text })}
               multiline
               numberOfLines={4}
               placeholder="Write your bio here..."
@@ -356,37 +356,37 @@ const AccountInformationPage = () => {
         <>
           <View style={styles.radioGroup}>
             <Text style={styles.radioLabel}>Preferred Pronouns</Text>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, pronoun: 'he/him'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, pronoun: 'he/him' })}
             >
               <Text style={styles.radioIcon}>{userData.pronoun === 'he/him' ? '◉' : '○'}</Text>
               <Text>He/Him</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, pronoun: 'she/her'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, pronoun: 'she/her' })}
             >
               <Text style={styles.radioIcon}>{userData.pronoun === 'she/her' ? '◉' : '○'}</Text>
               <Text>She/Her</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, pronoun: 'they/them'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, pronoun: 'they/them' })}
             >
               <Text style={styles.radioIcon}>{userData.pronoun === 'they/them' ? '◉' : '○'}</Text>
               <Text>They/Them</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, pronoun: 'others'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, pronoun: 'others' })}
             >
               <Text style={styles.radioIcon}>{userData.pronoun === 'others' ? '◉' : '○'}</Text>
               <Text>Others</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, pronoun: 'prefer not to say'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, pronoun: 'prefer not to say' })}
             >
               <Text style={styles.radioIcon}>{userData.pronoun === 'prefer not to say' ? '◉' : '○'}</Text>
               <Text>Prefer not to say</Text>
@@ -395,37 +395,37 @@ const AccountInformationPage = () => {
 
           <View style={styles.radioGroup}>
             <Text style={styles.radioLabel}>Gender Identity</Text>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, gender: 'male'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, gender: 'male' })}
             >
               <Text style={styles.radioIcon}>{userData.gender === 'male' ? '◉' : '○'}</Text>
               <Text>Male</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, gender: 'female'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, gender: 'female' })}
             >
               <Text style={styles.radioIcon}>{userData.gender === 'female' ? '◉' : '○'}</Text>
               <Text>Female</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, gender: 'non-binary'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, gender: 'non-binary' })}
             >
               <Text style={styles.radioIcon}>{userData.gender === 'non-binary' ? '◉' : '○'}</Text>
               <Text>Non-binary</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, gender: 'other'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, gender: 'other' })}
             >
               <Text style={styles.radioIcon}>{userData.gender === 'other' ? '◉' : '○'}</Text>
               <Text>Other</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.radioButton} 
-              onPress={() => setUserData({...userData, gender: 'prefer not to say'})}
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => setUserData({ ...userData, gender: 'prefer not to say' })}
             >
               <Text style={styles.radioIcon}>{userData.gender === 'prefer not to say' ? '◉' : '○'}</Text>
               <Text>Prefer not to say</Text>
@@ -446,30 +446,31 @@ const AccountInformationPage = () => {
       )}
 
       {/* Contact Information Section */}
-      <Text style={styles.sectionTitle}>Contact Information</Text>
       {isEditMode ? (
         <>
-          <View style={styles.inputContainer}>
+          {/* <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email Address</Text>
-            <TextInput 
-              style={styles.input} 
-              value={userData.email} 
-              onChangeText={(text) => setUserData({...userData, email: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.email}
+              onChangeText={(text) => setUserData({ ...userData, email: text })}
               keyboardType="email-address"
             />
           </View>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Phone Number *</Text>
-            <TextInput 
-              style={styles.input} 
-              value={userData.phone} 
-              onChangeText={(text) => setUserData({...userData, phone: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.phone}
+              onChangeText={(text) => setUserData({ ...userData, phone: text })}
               keyboardType="phone-pad"
             />
-          </View>
+          </View> */}
         </>
       ) : (
         <>
+          <Text style={styles.sectionTitle}>Contact Information</Text>
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Email Address:</Text>
             <Text style={styles.infoValue}>{formatDisplayValue(userData.email)}</Text>
@@ -488,47 +489,47 @@ const AccountInformationPage = () => {
           {/* Home Address */}
           <Text style={styles.subSectionTitle}>Home Address</Text>
           <View style={styles.inputContainer}>
-            <TextInput 
-              style={styles.input} 
-              value={userData.homeAddressLine1} 
-              onChangeText={(text) => setUserData({...userData, homeAddressLine1: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.homeAddressLine1}
+              onChangeText={(text) => setUserData({ ...userData, homeAddressLine1: text })}
               placeholder="Address Line 1"
               placeholderTextColor="#000"
             />
           </View>
           <View style={styles.inputContainer}>
-            <TextInput 
-              style={styles.input} 
-              value={userData.homeAddressLine2} 
-              onChangeText={(text) => setUserData({...userData, homeAddressLine2: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.homeAddressLine2}
+              onChangeText={(text) => setUserData({ ...userData, homeAddressLine2: text })}
               placeholder="Address Line 2 (Optional)"
               placeholderTextColor="#000"
             />
           </View>
           <View style={styles.addressRow}>
             <View style={styles.addressField}>
-              <TextInput 
-                style={styles.input} 
-                value={userData.homeCity} 
-                onChangeText={(text) => setUserData({...userData, homeCity: text})} 
+              <TextInput
+                style={styles.input}
+                value={userData.homeCity}
+                onChangeText={(text) => setUserData({ ...userData, homeCity: text })}
                 placeholder="City / Town"
                 placeholderTextColor="#000"
               />
             </View>
             <View style={styles.addressField}>
-              <TextInput 
-                style={styles.input} 
-                value={userData.homeState} 
-                onChangeText={(text) => setUserData({...userData, homeState: text})} 
+              <TextInput
+                style={styles.input}
+                value={userData.homeState}
+                onChangeText={(text) => setUserData({ ...userData, homeState: text })}
                 placeholder="State / Province"
                 placeholderTextColor="#000"
               />
             </View>
             <View style={styles.addressField}>
-              <TextInput 
-                style={styles.input} 
-                value={userData.homeZip} 
-                onChangeText={(text) => setUserData({...userData, homeZip: text})} 
+              <TextInput
+                style={styles.input}
+                value={userData.homeZip}
+                onChangeText={(text) => setUserData({ ...userData, homeZip: text })}
                 placeholder="ZIP / Postal"
                 placeholderTextColor="#000"
               />
@@ -538,47 +539,47 @@ const AccountInformationPage = () => {
           {/* Mailing Address */}
           <Text style={styles.subSectionTitle}>Mailing Address (if different)</Text>
           <View style={styles.inputContainer}>
-            <TextInput 
-              style={styles.input} 
-              value={userData.mailingAddressLine1} 
-              onChangeText={(text) => setUserData({...userData, mailingAddressLine1: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.mailingAddressLine1}
+              onChangeText={(text) => setUserData({ ...userData, mailingAddressLine1: text })}
               placeholder="Address Line 1"
               placeholderTextColor="#000"
             />
           </View>
           <View style={styles.inputContainer}>
-            <TextInput 
-              style={styles.input} 
-              value={userData.mailingAddressLine2} 
-              onChangeText={(text) => setUserData({...userData, mailingAddressLine2: text})} 
+            <TextInput
+              style={styles.input}
+              value={userData.mailingAddressLine2}
+              onChangeText={(text) => setUserData({ ...userData, mailingAddressLine2: text })}
               placeholder="Address Line 2 (Optional)"
               placeholderTextColor="#000"
             />
           </View>
           <View style={styles.addressRow}>
             <View style={styles.addressField}>
-              <TextInput 
-                style={styles.input} 
-                value={userData.mailingCity} 
-                onChangeText={(text) => setUserData({...userData, mailingCity: text})} 
+              <TextInput
+                style={styles.input}
+                value={userData.mailingCity}
+                onChangeText={(text) => setUserData({ ...userData, mailingCity: text })}
                 placeholder="City / Town"
                 placeholderTextColor="#000"
               />
             </View>
             <View style={styles.addressField}>
-              <TextInput 
-                style={styles.input} 
-                value={userData.mailingState} 
-                onChangeText={(text) => setUserData({...userData, mailingState: text})} 
+              <TextInput
+                style={styles.input}
+                value={userData.mailingState}
+                onChangeText={(text) => setUserData({ ...userData, mailingState: text })}
                 placeholder="State / Province"
                 placeholderTextColor="#000"
               />
             </View>
             <View style={styles.addressField}>
-              <TextInput 
-                style={styles.input} 
-                value={userData.mailingZip} 
-                onChangeText={(text) => setUserData({...userData, mailingZip: text})} 
+              <TextInput
+                style={styles.input}
+                value={userData.mailingZip}
+                onChangeText={(text) => setUserData({ ...userData, mailingZip: text })}
                 placeholder="ZIP / Postal"
                 placeholderTextColor="#000"
               />
@@ -679,7 +680,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  infoRoww: { 
+  infoRoww: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

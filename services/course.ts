@@ -1073,6 +1073,22 @@ export const updateAssessmentCategory = async (courseId: string, categoryId: str
     }
   }
 };
+export const enrollInCourse = async (courseId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.post(`/api/enrollment/create/${courseId}`);
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to update assessment category');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
 
 export const deleteAssessmentCategory = async (categoryId: string) => {
   try {
