@@ -38,6 +38,7 @@ import ChapterDetailsStudent from '../pages/ChapterDetailsStudent';
 import AssessmentScreenStudent from '../pages/AssessmentScreenStudent';
 import DiscussionStudent from '../pages/DiscussionStudent';
 import CoursePagesStudent from '../pages/CoursePagesStudent';
+import MoreCoursesPage from '../pages/MoreCourses';
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -146,6 +147,8 @@ const DrawerNavigator = () => {
     >
       <Drawer.Screen name="Dashboard" component={DashboardPage} />
       <Drawer.Screen name="MyCourses" component={MyCoursesPage} options={{ title: 'My Courses' }} />
+      {userRole === 'student' && (
+      <Drawer.Screen name="MoreCourses" component={MoreCoursesPage} options={{ title: 'More Courses' }} />)}
       {userRole !== 'student' && (
         <>
           <Drawer.Screen name="CreateCourse" component={CreateCoursePage} options={{ title: 'Create Course' }} />

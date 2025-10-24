@@ -58,6 +58,7 @@ const teacherMenuItems = [
 const studentMenuItems = [
   { label: 'Dashboard', icon: require('../assets/jpg.jpg') },
   { label: 'My Courses', icon: require('../assets/jpg.jpg') },
+  { label: 'More Courses', icon: require('../assets/jpg.jpg') },
   { label: 'My Assessments', icon: require('../assets/jpg.jpg') },
   { label: 'Announcements', icon: require('../assets/jpg.jpg') },
   { label: 'Messages', icon: require('../assets/jpg.jpg') },
@@ -99,6 +100,9 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
       screenName = 'Assessments';
     } else if (label === 'My Courses') {
       screenName = 'MyCourses';
+    }
+    else if (label === 'More Courses') {
+      screenName = 'MoreCourses';
     }
     if (label === 'Discussions') {
       screenName = 'Discussions';

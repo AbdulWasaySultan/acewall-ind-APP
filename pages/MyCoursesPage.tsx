@@ -314,7 +314,7 @@ const MyCoursesPage = () => {
       {/* STUDENT UI: Category Dropdowns, Search, and Courses */}
       {userRole === 'student' && (
         <>
-          <View style={styles.dropdownContainer}>
+          {/* <View style={styles.dropdownContainer}>
             <DropDownPicker
               open={categoryOpen}
               value={selectedCategory}
@@ -344,7 +344,7 @@ const MyCoursesPage = () => {
                 zIndexInverse={2000}
               />
             )}
-          </View>
+          </View> */}
           <View style={styles.searchContainer}>
             <SimpleIcon name="search" size={20} color="#666" style={styles.searchSimpleIcon} />
             <TextInput
