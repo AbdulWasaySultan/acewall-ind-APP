@@ -120,7 +120,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { getAllAssessmentForStudent } from "../services/course";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 
@@ -193,9 +193,19 @@ const MyAssessmentsPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAssessments();
-  }, []);
+  // useEffect(() => {
+  //   fetchAssessments();
+  // }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAssessments();
+  
+      return () => {
+        console.log('Screen unfocused');
+      };
+    }, [])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

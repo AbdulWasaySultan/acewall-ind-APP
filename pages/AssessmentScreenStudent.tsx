@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform, Alert, ActivityIndicator } from "react-native"
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform, Alert, ActivityIndicator, Linking } from "react-native"
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native"
 import SimpleIcon from "../components/SimpleIcon"
 import { pick } from "@react-native-documents/picker";
@@ -47,7 +47,7 @@ const AssessmentScreenStudent = () => {
 
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [answers, setAnswers] = useState<Record<string, string | File | null>>({})
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, any>>({})
+  const [uploadedFiles, setUploadedFiles] = useState<any>(null)
   const [submitAssessmentLoading,setSubmitAssessmentLoading] = useState(false)
   useEffect(() => {
   
@@ -76,18 +76,13 @@ const AssessmentScreenStudent = () => {
         const result = await pick({
             type: ["application/pdf"],
             copyTo: "cachesDirectory",
+            allowMultiSelection:false
           });
-
-      if (result.type === "success") {
-        setUploadedFiles((prev) => ({
-          ...prev,
-          [questionId]: result,
-        }))
+        setUploadedFiles(result[0])
         setAnswers((prev) => ({
           ...prev,
-          [questionId]: result.uri,
+          [questionId]: result[0].uri,
         }))
-      }
     } catch (error) {
       console.error("Error picking document:", error)
       Alert.alert("Error", "Failed to pick document")
@@ -99,24 +94,47 @@ const AssessmentScreenStudent = () => {
       // Validate all questions are answered
       setSubmitAssessmentLoading(true)
     const unansweredQuestions = assessment?.questions.filter((q) => !answers[q._id])
-
     if (unansweredQuestions && unansweredQuestions.length > 0) {
       Toast.show("Incomplete Assessment, Please answer all questions before submitting.",Toast.LONG)
       return
     }
+    if (assessment?.questions[0].type === "file") {
+      const question = assessment.questions[0];
+      console.log(question)
+      const file = uploadedFiles;
+
+     
+
+      const res = await submitAssessment(
+        assessmentId,
+        assessment.title,
+        assessment.description,
+        assessment.dueDate.date,
+        [], // no answers for file-based
+        file, // single file
+        question._id // pass questionId separately
+      );
+
+      Toast.show(res.message || "Assessment submitted successfully!", Toast.LONG);
+      navigation.goBack();
+      return;
+    }
+
+   
 
     // Submit assessment
       const questionsArray = Object.entries(answers).map(([questionId, answer]) => ({
         questionId,
         selectedAnswer: typeof answer === "string" ? answer : "",
       }))
-
+      
       const res = await submitAssessment(
         assessmentId,
         assessment?.title || "",
         assessment?.description || "",
         assessment?.dueDate?.date || "",
         questionsArray,
+        uploadedFiles
       )
    
 
@@ -196,13 +214,13 @@ const AssessmentScreenStudent = () => {
       textAlignVertical="top"
     />
   )
-
+  console.log(uploadedFiles)
   const renderFileUpload = (question: Question) => (
     <View style={styles.fileUploadContainer}>
       {question.files && question.files.length > 0 && (
         <View style={styles.attachedFilesContainer}>
           {question.files.map((file, index) => (
-            <TouchableOpacity key={index} style={styles.attachedFileCard}>
+            <TouchableOpacity key={index} style={styles.attachedFileCard} onPress={()=>Linking.openURL(file.url)}>
               <SimpleIcon name="description" size={24} color="#4285F4" />
               <Text style={styles.attachedFileName}>{file.filename}</Text>
             </TouchableOpacity>
@@ -210,9 +228,13 @@ const AssessmentScreenStudent = () => {
         </View>
       )}
 
-      <TouchableOpacity style={styles.filePickerButton} onPress={() =>{}}>
+      <TouchableOpacity style={styles.filePickerButton} onPress={()=>
+
+      
+          handleFileUpload(question._id)
+      }>
         <Text style={styles.filePickerText}>
-          Choose files {uploadedFiles[question._id] ? uploadedFiles[question._id].name : "No file chosen"}
+       Choose file: {uploadedFiles ? uploadedFiles.name : "No file chosen"}
         </Text>
       </TouchableOpacity>
     </View>

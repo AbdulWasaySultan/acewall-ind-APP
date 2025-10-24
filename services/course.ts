@@ -576,8 +576,7 @@ export const submitAssessment = async (
   dueDate: string,
   questions: any[],
   file?: any, // Optional file object from react-native-image-picker
-  lessonId?: string,
-  chapterId?: string
+  questionId?: string 
 ) => {
   try {
     const api = await createApiInstance();
@@ -586,26 +585,20 @@ export const submitAssessment = async (
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
-
-    if (lessonId) {
-      formData.append('lesson', lessonId);
-    } else if (chapterId) {
-      formData.append('chapter', chapterId);
       formData.append('course', assessmentId);
-    } else {
-      formData.append('course', assessmentId);
-    }
-
-    formData.append('questions', JSON.stringify(questions)); questions.forEach((question, index) => {
-      formData.append(`answers[${index}][questionId]`, question.questionId)
-      formData.append(`answers[${index}][selectedAnswer]`, question.selectedAnswer)
-    })
-    if (file) {
+ 
+      if (file && questionId) {
       formData.append('files', {
         uri: file.uri,
         type: file.type || 'application/octet-stream',
         name: file.fileName || file.uri.split('/').pop() || 'file',
       } as any);
+      formData.append("questionId", questionId);
+    }else{
+      formData.append('questions', JSON.stringify(questions)); questions.forEach((question, index) => {
+        formData.append(`answers[${index}][questionId]`, question.questionId)
+        formData.append(`answers[${index}][selectedAnswer]`, question.selectedAnswer)
+      })
     }
 
     console.log('submitting assessment creation request:', formData);

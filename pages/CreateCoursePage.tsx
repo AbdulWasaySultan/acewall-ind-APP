@@ -459,7 +459,7 @@ const CreateCoursePage = () => {
       {/* Category Selection - Only show if categories exist */}
       {categories.length > 0 && (
         <>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Category</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Topic</Text>
           <Pressable
             style={[
               { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16, justifyContent: 'center' },
@@ -467,7 +467,7 @@ const CreateCoursePage = () => {
             ]}
             onPress={() => setShowCategoryModal(true)}
           >
-            <Text>{selectedCategoryTitle || 'Select Category'}</Text>
+            <Text>{selectedCategoryTitle || 'Select Topic'}</Text>
           </Pressable>
           {errors.category && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.category}</Text>}
 
@@ -512,7 +512,7 @@ const CreateCoursePage = () => {
           {/* Subcategory Selection - Only show if subcategories exist and category is selected */}
           {category && subcategories.length > 0 && (
             <>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Subcategory</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>SubTopic</Text>
               <Pressable
                 style={[
                   { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16, justifyContent: 'center' },
@@ -520,7 +520,7 @@ const CreateCoursePage = () => {
                 ]}
                 onPress={() => setShowSubcategoryModal(true)}
               >
-                <Text>{selectedSubcategoryTitle || 'Select Subcategory'}</Text>
+                <Text>{selectedSubcategoryTitle || 'Select Subtopic'}</Text>
               </Pressable>
               {errors.subcategory && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.subcategory}</Text>}
 
