@@ -63,14 +63,12 @@ const CreateCoursePage = () => {
   const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
   const [selectedCategoryTitle, setSelectedCategoryTitle] = useState('');
   const [selectedSubcategoryTitle, setSelectedSubcategoryTitle] = useState('');
-  
+
   // New state for semester and quarter
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [quarters, setQuarters] = useState<Quarter[]>([]);
-  const [selectedSemester, setSelectedSemester] = useState<string>('');
-  const [selectedQuarter, setSelectedQuarter] = useState<string>('');
-  const [selectedSemesterTitle, setSelectedSemesterTitle] = useState('');
-  const [selectedQuarterTitle, setSelectedQuarterTitle] = useState('');
+  const [selectedSemesters, setSelectedSemesters] = useState<string[]>([]);
+  const [selectedQuarters, setSelectedQuarters] = useState<string[]>([]);
   const [showSemesterModal, setShowSemesterModal] = useState(false);
   const [showQuarterModal, setShowQuarterModal] = useState(false);
   const [isLoadingSemesters, setIsLoadingSemesters] = useState(false);
@@ -90,14 +88,13 @@ const CreateCoursePage = () => {
   }, [category]);
 
   useEffect(() => {
-    if (selectedSemester) {
-      fetchQuarters([selectedSemester]);
+    if (selectedSemesters.length > 0) {
+      fetchQuarters(selectedSemesters);
     } else {
       setQuarters([]);
-      setSelectedQuarter('');
-      setSelectedQuarterTitle('');
+      setSelectedQuarters([]);
     }
-  }, [selectedSemester]);
+  }, [selectedSemesters]);
 
   const fetchCategories = async () => {
     try {
@@ -168,12 +165,12 @@ const CreateCoursePage = () => {
 
     // Validate semester and quarter
     if (semesters.length > 0) {
-      if (!selectedSemester) {
-        newErrors.semester = 'Semester is required';
+      if (selectedSemesters.length === 0) {
+        newErrors.semester = 'At least one semester is required';
       }
-      
-      if (!selectedQuarter) {
-        newErrors.quarter = 'Quarter is required';
+
+      if (selectedQuarters.length === 0) {
+        newErrors.quarter = 'At least one quarter is required';
       }
     }
 
@@ -257,12 +254,12 @@ const CreateCoursePage = () => {
         mode: 'open',
         type: ['application/pdf'],
       });
-      
+
       if (result.error) {
         Toast.show(result.error || 'Error picking PDF file', Toast.LONG);
         return;
       }
-      
+
       const file = result;
       setSelectedSyllabusFile(file);
       Toast.show('Syllabus PDF selected successfully', Toast.SHORT);
@@ -315,10 +312,8 @@ const CreateCoursePage = () => {
     setSelectedCategoryTitle('');
     setSelectedSubcategoryTitle('');
     setErrors({});
-    setSelectedSemester('');
-    setSelectedQuarter('');
-    setSelectedSemesterTitle('');
-    setSelectedQuarterTitle('');
+    setSelectedSemesters([]);
+    setSelectedQuarters([]);
   };
 
   const handleCreateCourse = async () => {
@@ -328,7 +323,7 @@ const CreateCoursePage = () => {
 
     try {
       setIsLoading(true);
-      
+
       const filteredTeachingPoints = teachingPoints.filter(point => point.trim() !== '');
       const filteredRequirements = courseRequirements.filter(req => req.trim() !== '');
 
@@ -345,19 +340,19 @@ const CreateCoursePage = () => {
         teachingPoints: filteredTeachingPoints,
         requirements: filteredRequirements,
         published: false,
-        semester: selectedSemester ? [selectedSemester] : [],
-        quarter: selectedQuarter ? [selectedQuarter] : [],
+        semester: selectedSemesters,
+        quarter: selectedQuarters,
         syllabus: selectedSyllabusFile
       };
 
       console.log('Sending course data:', courseData);
       const response = await createCourse(courseData);
       console.log('Course creation response:', response);
-      
+
       Toast.show('Course created successfully!', Toast.LONG);
-      
+
       resetForm(); // Reset all form fields
-      
+
       // Navigate to MyCourses page to show the newly created course
       navigation.navigate('MyCourses');
     } catch (error: any) {
@@ -371,7 +366,7 @@ const CreateCoursePage = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleCategorySelect = (cat: Category) => {
     setCategory(cat._id);
     setSelectedCategoryTitle(cat.title);
@@ -390,22 +385,30 @@ const CreateCoursePage = () => {
     setShowSubcategoryModal(false);
   };
 
-  const handleSemesterSelect = (semester: Semester) => {
-    setSelectedSemester(semester._id);
-    setSelectedSemesterTitle(semester.title);
-    setShowSemesterModal(false);
-    // Reset quarter when semester changes
-    setSelectedQuarter('');
-    setSelectedQuarterTitle('');
-    setQuarters([]);
-    // Fetch quarters for selected semester
-    fetchQuarters([semester._id]);
+  const handleSemesterToggle = (semester: Semester) => {
+    setSelectedSemesters(prev => {
+      if (prev.includes(semester._id)) {
+        // Remove semester
+        const newSelected = prev.filter(id => id !== semester._id);
+        // Also remove quarters that belong to this semester
+        const quartersToRemove = quarters.filter(q => q.semester === semester._id).map(q => q._id);
+        setSelectedQuarters(prevQuarters => prevQuarters.filter(id => !quartersToRemove.includes(id)));
+        return newSelected;
+      } else {
+        // Add semester
+        return [...prev, semester._id];
+      }
+    });
   };
 
-  const handleQuarterSelect = (quarter: Quarter) => {
-    setSelectedQuarter(quarter._id);
-    setSelectedQuarterTitle(quarter.title);
-    setShowQuarterModal(false);
+  const handleQuarterToggle = (quarter: Quarter) => {
+    setSelectedQuarters(prev => {
+      if (prev.includes(quarter._id)) {
+        return prev.filter(id => id !== quarter._id);
+      } else {
+        return [...prev, quarter._id];
+      }
+    });
   };
 
 
@@ -419,15 +422,15 @@ const CreateCoursePage = () => {
         {selectedImageUri ? (
           <View style={{ width: '100%', height: '100%' }}>
             <Image source={{ uri: selectedImageUri }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
-            <Pressable 
-              style={{ 
-                position: 'absolute', 
-                bottom: 8, 
-                right: 8, 
-                backgroundColor: 'rgba(0,0,0,0.7)', 
-                padding: 8, 
-                borderRadius: 4 
-              }} 
+            <Pressable
+              style={{
+                position: 'absolute',
+                bottom: 8,
+                right: 8,
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                padding: 8,
+                borderRadius: 4
+              }}
               onPress={handleImageUpload}
             >
               <Text style={{ color: 'white' }}>Change</Text>
@@ -443,11 +446,11 @@ const CreateCoursePage = () => {
 
       {/* Course Title */}
       <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Course Title</Text>
-      <TextInput 
+      <TextInput
         style={[
           { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16 },
           errors.courseTitle && { borderColor: 'red' }
-        ]} 
+        ]}
         placeholder='Course Title (5-100 characters)'
         placeholderTextColor="#999999"
         value={courseTitle}
@@ -568,8 +571,8 @@ const CreateCoursePage = () => {
 
       {/* Language */}
       <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Language</Text>
-      <TextInput 
-        style={{ height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16 }} 
+      <TextInput
+        style={{ height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16 }}
         placeholder='English'
         placeholderTextColor="#999999"
         value={language}
@@ -579,15 +582,28 @@ const CreateCoursePage = () => {
       {/* Semester Selection - Only show if semesters exist */}
       {semesters.length > 0 && (
         <>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Semester</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Semesters</Text>
           <Pressable
             style={[
-              { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16, justifyContent: 'center' },
+              { minHeight: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, paddingVertical: 8, marginBottom: 16, justifyContent: 'center' },
               errors.semester && { borderColor: 'red' }
             ]}
             onPress={() => setShowSemesterModal(true)}
           >
-            <Text>{selectedSemesterTitle || 'Select Semester'}</Text>
+            {selectedSemesters.length === 0 ? (
+              <Text style={{ color: '#999' }}>Select Semesters</Text>
+            ) : (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+                {selectedSemesters.map(semesterId => {
+                  const semester = semesters.find(s => s._id === semesterId);
+                  return semester ? (
+                    <View key={semesterId} style={{ backgroundColor: '#e6ffe6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, marginRight: 4, marginBottom: 4 }}>
+                      <Text style={{ fontSize: 12 }}>{semester.title}</Text>
+                    </View>
+                  ) : null;
+                })}
+              </View>
+            )}
           </Pressable>
           {errors.semester && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.semester}</Text>}
 
@@ -600,7 +616,7 @@ const CreateCoursePage = () => {
           >
             <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
               <View style={{ backgroundColor: 'white', borderRadius: 8, padding: 16, maxHeight: '80%' }}>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>Select Semester</Text>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>Select Semesters</Text>
                 <ScrollView>
                   {isLoadingSemesters ? (
                     <ActivityIndicator style={{ marginVertical: 20 }} />
@@ -609,38 +625,66 @@ const CreateCoursePage = () => {
                       <Pressable
                         key={semester._id}
                         style={[
-                          { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-                          selectedSemester === semester._id && { backgroundColor: '#e6ffe6' }
+                          { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee', flexDirection: 'row', alignItems: 'center' },
+                          selectedSemesters.includes(semester._id) && { backgroundColor: '#e6ffe6' }
                         ]}
-                        onPress={() => handleSemesterSelect(semester)}
+                        onPress={() => handleSemesterToggle(semester)}
                       >
-                        <Text style={{ fontSize: 16 }}>{semester.title}</Text>
+                        <View style={{
+                          width: 20,
+                          height: 20,
+                          borderWidth: 2,
+                          borderColor: selectedSemesters.includes(semester._id) ? '#4CAF50' : '#ccc',
+                          borderRadius: 3,
+                          marginRight: 12,
+                          backgroundColor: selectedSemesters.includes(semester._id) ? '#4CAF50' : 'transparent',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}>
+                          {selectedSemesters.includes(semester._id) && (
+                            <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>✓</Text>
+                          )}
+                        </View>
+                        <Text style={{ fontSize: 16, flex: 1 }}>{semester.title}</Text>
                       </Pressable>
                     ))
                   )}
                 </ScrollView>
                 <Pressable
-                  style={{ marginTop: 16, padding: 12, backgroundColor: '#f0f0f0', borderRadius: 4 }}
+                  style={{ marginTop: 16, padding: 12, backgroundColor: '#4CAF50', borderRadius: 4 }}
                   onPress={() => setShowSemesterModal(false)}
                 >
-                  <Text style={{ textAlign: 'center' }}>Cancel</Text>
+                  <Text style={{ textAlign: 'center', color: 'white', fontWeight: 'bold' }}>Done</Text>
                 </Pressable>
               </View>
             </View>
           </Modal>
 
-          {/* Quarter Selection - Always show if semester is selected */}
-          {selectedSemester && (
+          {/* Quarter Selection - Show if semesters are selected */}
+          {selectedSemesters.length > 0 && (
             <>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Quarter</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Quarters</Text>
               <Pressable
                 style={[
-                  { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16, justifyContent: 'center' },
+                  { minHeight: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, paddingVertical: 8, marginBottom: 16, justifyContent: 'center' },
                   errors.quarter && { borderColor: 'red' }
                 ]}
                 onPress={() => setShowQuarterModal(true)}
               >
-                <Text>{selectedQuarterTitle || 'Select Quarter'}</Text>
+                {selectedQuarters.length === 0 ? (
+                  <Text style={{ color: '#999' }}>Select Quarters</Text>
+                ) : (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+                    {selectedQuarters.map(quarterId => {
+                      const quarter = quarters.find(q => q._id === quarterId);
+                      return quarter ? (
+                        <View key={quarterId} style={{ backgroundColor: '#e6f3ff', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, marginRight: 4, marginBottom: 4 }}>
+                          <Text style={{ fontSize: 12 }}>{quarter.title}</Text>
+                        </View>
+                      ) : null;
+                    })}
+                  </View>
+                )}
               </Pressable>
               {errors.quarter && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.quarter}</Text>}
 
@@ -653,7 +697,7 @@ const CreateCoursePage = () => {
               >
                 <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
                   <View style={{ backgroundColor: 'white', borderRadius: 8, padding: 16, maxHeight: '80%' }}>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>Select Quarter</Text>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>Select Quarters</Text>
                     <ScrollView>
                       {isLoadingQuarters ? (
                         <ActivityIndicator style={{ marginVertical: 20 }} />
@@ -662,12 +706,27 @@ const CreateCoursePage = () => {
                           <Pressable
                             key={quarter._id}
                             style={[
-                              { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-                              selectedQuarter === quarter._id && { backgroundColor: '#e6ffe6' }
+                              { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee', flexDirection: 'row', alignItems: 'center' },
+                              selectedQuarters.includes(quarter._id) && { backgroundColor: '#e6f3ff' }
                             ]}
-                            onPress={() => handleQuarterSelect(quarter)}
+                            onPress={() => handleQuarterToggle(quarter)}
                           >
-                            <Text style={{ fontSize: 16 }}>{quarter.title}</Text>
+                            <View style={{
+                              width: 20,
+                              height: 20,
+                              borderWidth: 2,
+                              borderColor: selectedQuarters.includes(quarter._id) ? '#2196F3' : '#ccc',
+                              borderRadius: 3,
+                              marginRight: 12,
+                              backgroundColor: selectedQuarters.includes(quarter._id) ? '#2196F3' : 'transparent',
+                              justifyContent: 'center',
+                              alignItems: 'center'
+                            }}>
+                              {selectedQuarters.includes(quarter._id) && (
+                                <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>✓</Text>
+                              )}
+                            </View>
+                            <Text style={{ fontSize: 16, flex: 1 }}>{quarter.title}</Text>
                           </Pressable>
                         ))
                       ) : (
@@ -675,10 +734,10 @@ const CreateCoursePage = () => {
                       )}
                     </ScrollView>
                     <Pressable
-                      style={{ marginTop: 16, padding: 12, backgroundColor: '#f0f0f0', borderRadius: 4 }}
+                      style={{ marginTop: 16, padding: 12, backgroundColor: '#2196F3', borderRadius: 4 }}
                       onPress={() => setShowQuarterModal(false)}
                     >
-                      <Text style={{ textAlign: 'center' }}>Cancel</Text>
+                      <Text style={{ textAlign: 'center', color: 'white', fontWeight: 'bold' }}>Done</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -690,12 +749,12 @@ const CreateCoursePage = () => {
 
       {/* Course Description */}
       <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Course Description</Text>
-      <TextInput 
+      <TextInput
         style={[
           { height: 100, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, textAlignVertical: 'top', marginBottom: 16 },
           errors.courseDescription && { borderColor: 'red' }
-        ]} 
-        multiline 
+        ]}
+        multiline
         placeholder='Course Description (5-500 characters)'
         placeholderTextColor="#999999"
         value={courseDescription}
@@ -764,13 +823,13 @@ const CreateCoursePage = () => {
         {selectedSyllabusFile ? (
           <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ color: 'green', fontWeight: 'bold' }}>✓ {selectedSyllabusFile.name}</Text>
-            <Pressable 
-              style={{ 
+            <Pressable
+              style={{
                 marginTop: 4,
-                backgroundColor: 'rgba(0,0,0,0.7)', 
-                padding: 4, 
-                borderRadius: 4 
-              }} 
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                padding: 4,
+                borderRadius: 4
+              }}
               onPress={handleSyllabusUpload}
             >
               <Text style={{ color: 'white', fontSize: 12 }}>Change</Text>
@@ -785,14 +844,14 @@ const CreateCoursePage = () => {
       {errors.syllabus && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.syllabus}</Text>}
 
       {/* Create Button */}
-      <Pressable 
-        style={{ 
-          backgroundColor: isLoading ? '#ccc' : 'green', 
-          padding: 16, 
-          borderRadius: 8, 
-          alignItems: 'center', 
-          marginTop: 24, 
-          marginBottom: 36 
+      <Pressable
+        style={{
+          backgroundColor: isLoading ? '#ccc' : 'green',
+          padding: 16,
+          borderRadius: 8,
+          alignItems: 'center',
+          marginTop: 24,
+          marginBottom: 36
         }}
         onPress={handleCreateCourse}
         disabled={isLoading}
