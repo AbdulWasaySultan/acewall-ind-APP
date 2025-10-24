@@ -576,7 +576,7 @@ export const submitAssessment = async (
   dueDate: string,
   questions: any[],
   file?: any, // Optional file object from react-native-image-picker
-  questionId?: string 
+  questionId?: string
 ) => {
   try {
     const api = await createApiInstance();
@@ -585,16 +585,16 @@ export const submitAssessment = async (
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
-      formData.append('course', assessmentId);
- 
-      if (file && questionId) {
+    formData.append('course', assessmentId);
+
+    if (file && questionId) {
       formData.append('files', {
         uri: file.uri,
         type: file.type || 'application/octet-stream',
         name: file.fileName || file.uri.split('/').pop() || 'file',
       } as any);
       formData.append("questionId", questionId);
-    }else{
+    } else {
       formData.append('questions', JSON.stringify(questions)); questions.forEach((question, index) => {
         formData.append(`answers[${index}][questionId]`, question.questionId)
         formData.append(`answers[${index}][selectedAnswer]`, question.selectedAnswer)
@@ -1347,6 +1347,26 @@ export const getSubmissionDetails = async (submissionId: string) => {
       throw new Error('No response from server. Please check your internet connection.');
     } else {
       throw new Error('Error setting up the request');
+    }
+  }
+};
+
+export const submitGrades = async (submissionId: string, grades: { [answerId: string]: { awardedPoints: number; maxPoints: number } }) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    console.log("Submitting grades for submission:", submissionId);
+    const response = await api.put(`/api/assessmentSubmission/teacherGrading/${submissionId}`, grades);
+    console.log("Grades submitted response:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("Submit grades error:", error);
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to submit grades");
+    } else if (error.request) {
+      throw new Error("No response from server. Please check your internet connection.");
+    } else {
+      throw new Error("Error setting up the request");
     }
   }
 };

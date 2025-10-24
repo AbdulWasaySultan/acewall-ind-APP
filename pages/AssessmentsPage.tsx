@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Modal, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Modal, TouchableOpacity, FlatList, Alert } from 'react-native';
 // You will need to install react-native-dropdown-picker: npm install react-native-dropdown-picker or yarn add react-native-dropdown-picker
 import DropDownPicker from 'react-native-dropdown-picker';
-import { getAllAssessmentsByTeacher, getCategories, getAllCourses, getAssessmentSubmissionsForTeacher, getSubmissionDetails } from '../services/course';
+import { getAllAssessmentsByTeacher, getCategories, getAllCourses, getAssessmentSubmissionsForTeacher, getSubmissionDetails, submitGrades } from '../services/course';
 import SimpleIcon from '../components/SimpleIcon';
 
 const AssessmentsPage = () => {
@@ -57,6 +57,11 @@ const AssessmentsPage = () => {
   const [submissionDetailsLoading, setSubmissionDetailsLoading] = useState(false);
   const [submissionDetailsError, setSubmissionDetailsError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'needs_grading' | 'graded'>('all');
+
+  // Grading state
+  const [answerGrades, setAnswerGrades] = useState<{ [answerId: string]: string }>({});
+  const [gradesSubmitted, setGradesSubmitted] = useState(false);
+  const [submittingGrades, setSubmittingGrades] = useState(false);
 
   // Effect to ensure only one dropdown is open at a time
   useEffect(() => {
@@ -263,10 +268,17 @@ const AssessmentsPage = () => {
     setSubmissionDetailsLoading(true);
     setSubmissionDetailsError(null);
     setActiveTab('all');
+    setAnswerGrades({});
+    setGradesSubmitted(false);
 
     try {
       const details = await getSubmissionDetails(submission._id);
       setSubmissionDetails(details.submission);
+      // Check if already graded
+      console.log(details)
+      if (details.submission.graded) {
+        setGradesSubmitted(true);
+      }
     } catch (err: any) {
       setSubmissionDetailsError('Failed to load submission details');
       console.error('Error fetching submission details:', err);
@@ -286,6 +298,73 @@ const AssessmentsPage = () => {
         return submissionDetails.answers.filter((answer: any) => !answer.requiresManualCheck);
       default:
         return submissionDetails.answers;
+    }
+  };
+
+  // Handle grade input change
+  const handleGradeChange = (answerId: string, value: string, maxPoints: number) => {
+    // Validate that the value is between 0 and maxPoints
+    const numValue = parseFloat(value);
+    if (value === '' || isNaN(numValue) || numValue < 0) {
+      setAnswerGrades({
+        ...answerGrades,
+        [answerId]: ''
+      });
+      return;
+    }
+
+    // Cap the value at maxPoints
+    const cappedValue = Math.min(numValue, maxPoints);
+    setAnswerGrades({
+      ...answerGrades,
+      [answerId]: cappedValue.toString()
+    });
+  };
+
+  // Handle submit grades
+  const handleSubmitGrades = async () => {
+    if (!submissionDetails || !selectedSubmission) return;
+
+    try {
+      setSubmittingGrades(true);
+
+      // Prepare grades object in the correct format
+      const grades: { [answerId: string]: { awardedPoints: number; maxPoints: number } } = {};
+
+      Object.entries(answerGrades).forEach(([answerId, points]) => {
+        const answer = submissionDetails.answers?.find((a: any) => a._id === answerId);
+        if (answer) {
+          const awardedPoints = parseFloat(points) || 0;
+          const maxPoints = answer.questionDetails?.points || 0;
+
+          // Validate that points are within range
+          if (awardedPoints >= 0 && awardedPoints <= maxPoints) {
+            grades[answerId] = {
+              awardedPoints,
+              maxPoints
+            };
+          }
+        }
+      });
+
+      // Check if any valid grades were entered
+      if (Object.keys(grades).length === 0) {
+        Alert.alert('Validation Error', 'Please enter at least one grade before submitting.');
+        setSubmittingGrades(false);
+        return;
+      }
+      console.log(selectedSubmission._id, grades);
+      await submitGrades(selectedSubmission._id, grades);
+
+      // Update submission details
+      const updatedDetails = await getSubmissionDetails(selectedSubmission._id);
+      setSubmissionDetails(updatedDetails.submission);
+      setGradesSubmitted(true);
+    } catch (err: any) {
+      console.error('Error submitting grades:', err);
+      Alert.alert('Error', 'Failed to submit grades. Please try again.');
+    } finally {
+      setSubmittingGrades(false);
     }
   };
 
@@ -624,14 +703,24 @@ const AssessmentsPage = () => {
                 {getFilteredQuestions().map((answer: any, index: number) => (
                   <View key={answer._id} style={styles.questionCard}>
                     <View style={styles.questionHeader}>
-                      <Text style={styles.questionNumber}>Question {index + 1}</Text>
-                      <Text style={styles.questionType}>{answer.questionDetails?.type == "truefalse" ? "True/False" : answer.questionDetails?.type}</Text>
+                      <View style={styles.questionHeaderLeft}>
+                        <Text style={styles.questionNumber}>Question {index + 1}</Text>
+                        <Text style={styles.questionType}>{answer.questionDetails?.type == "truefalse" ? "True/False" : answer.questionDetails?.type}</Text>
+                      </View>
                       <View style={styles.questionTags}>
-                        <View style={[styles.questionTag, { backgroundColor: answer.isCorrect ? '#D1FAE5' : '#FEE2E2' }]}>
-                          <Text style={[styles.questionTagText, { color: answer.isCorrect ? '#065F46' : '#991B1B' }]}>
-                            {answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                          </Text>
-                        </View>
+                        {answer.requiresManualCheck ? (
+                          <View style={[styles.questionTag, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B', borderWidth: 1 }]}>
+                            <Text style={[styles.questionTagText, { color: '#92400E' }]}>
+                              Needs Manual Grading
+                            </Text>
+                          </View>
+                        ) : (
+                          <View style={[styles.questionTag, { backgroundColor: answer.isCorrect ? '#D1FAE5' : '#FEE2E2' }]}>
+                            <Text style={[styles.questionTagText, { color: answer.isCorrect ? '#065F46' : '#991B1B' }]}>
+                              {answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                            </Text>
+                          </View>
+                        )}
                         <View style={[styles.questionTag, { backgroundColor: '#F3F4F6' }]}>
                           <Text style={[styles.questionTagText, { color: '#374151' }]}>
                             {answer.pointsAwarded}/{answer.questionDetails?.points} pts
@@ -653,17 +742,45 @@ const AssessmentsPage = () => {
                       <Text style={styles.answerLabel}>Student's Answer:</Text>
                       <View style={styles.answerTextContainer}>
                         <Text style={styles.answerText}>
-                          {answer.selectedAnswer || 'No answer provided'}
+                          {answer.selectedAnswer || answer.fileUrl || 'No answer provided'}
                         </Text>
                       </View>
                     </View>
+
+                    {/* Manual Grading Input */}
+                    {answer.requiresManualCheck && !gradesSubmitted && (
+                      <View style={styles.gradingInputContainer}>
+                        <Text style={styles.manualGradingLabel}>Assign Points:</Text>
+                        <View style={styles.gradingInputRow}>
+                          <TextInput
+                            style={styles.gradingInput}
+                            placeholder="0"
+                            value={answerGrades[answer._id] || ''}
+                            onChangeText={(value) => handleGradeChange(answer._id, value, answer.questionDetails?.points || 0)}
+                            keyboardType="numeric"
+                            editable={!gradesSubmitted && !submittingGrades}
+                          />
+                          <Text style={styles.gradingPointsText}>/{answer.questionDetails?.points} pts</Text>
+                        </View>
+                      </View>
+                    )}
                   </View>
                 ))}
               </View>
 
               {/* Submit Grades Button */}
-              <TouchableOpacity style={styles.submitGradesButton}>
-                <Text style={styles.submitGradesButtonText}>Submit Grades</Text>
+              <TouchableOpacity
+                style={[styles.submitGradesButton, (gradesSubmitted || submittingGrades) && styles.submitGradesButtonDisabled]}
+                onPress={handleSubmitGrades}
+                disabled={gradesSubmitted || submittingGrades}
+              >
+                {submittingGrades ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.submitGradesButtonText}>
+                    {gradesSubmitted ? 'Grades Submitted' : 'Submit Grades'}
+                  </Text>
+                )}
               </TouchableOpacity>
             </ScrollView>
           ) : null}
@@ -1117,7 +1234,13 @@ const styles = StyleSheet.create({
   questionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  questionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   questionNumber: {
     fontSize: 16,
@@ -1180,6 +1303,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#111827',
   },
+  // Grading Input Styles
+  gradingInputContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  manualGradingLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  gradingInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gradingInput: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#111827',
+    minWidth: 80,
+    textAlign: 'center',
+  },
+  gradingPointsText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 8,
+  },
   // Submit Button Styles
   submitGradesButton: {
     backgroundColor: '#10B981',
@@ -1188,6 +1345,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
     marginBottom: 20,
+  },
+  submitGradesButtonDisabled: {
+    backgroundColor: '#9CA3AF',
   },
   submitGradesButtonText: {
     fontSize: 16,
