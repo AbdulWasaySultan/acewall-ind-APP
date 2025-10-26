@@ -7,7 +7,7 @@ const STORAGE_KEYS = {
 
 export const getStoredBaseUrl = async (): Promise<string | null> => {
   try {
-    return await AsyncStorage.getItem(STORAGE_KEYS.BASE_URL);
+    return 'https://api.acewallscholarslearningonline.org'
   } catch (error) {
     console.error('Error retrieving baseUrl:', error);
     return null;
@@ -16,7 +16,7 @@ export const getStoredBaseUrl = async (): Promise<string | null> => {
 
 export const setStoredBaseUrl = async (baseUrl: string): Promise<boolean> => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.BASE_URL, baseUrl);
+    await AsyncStorage.setItem(STORAGE_KEYS.BASE_URL, 'https://api.acewallscholarslearningonline.org');
     return true;
   } catch (error) {
     console.error('Error saving baseUrl:', error);

@@ -60,8 +60,10 @@ const CreateCoursePage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showSemesterBasedModal, setShowSemesterBasedModal] = useState(false);
   const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
   const [selectedCategoryTitle, setSelectedCategoryTitle] = useState('');
+  const [semesterBased, setSemesterBased] = useState<any>();
   const [selectedSubcategoryTitle, setSelectedSubcategoryTitle] = useState('');
 
   // New state for semester and quarter
@@ -185,8 +187,9 @@ const CreateCoursePage = () => {
       newErrors.thumbnail = 'Course thumbnail is required';
     }
 
-    if (!selectedSyllabusFile) {
-      newErrors.syllabus = 'Course syllabus (PDF) is required';
+   
+    if (!semesterBased) {
+      newErrors.semesterBased = 'Semester based is required';
     }
 
     // Validate teaching points
@@ -318,6 +321,7 @@ const CreateCoursePage = () => {
 
   const handleCreateCourse = async () => {
     if (!validateForm()) {
+      console.log(errors)
       return;
     }
 
@@ -340,9 +344,10 @@ const CreateCoursePage = () => {
         teachingPoints: filteredTeachingPoints,
         requirements: filteredRequirements,
         published: false,
-        semester: selectedSemesters,
-        quarter: selectedQuarters,
-        syllabus: selectedSyllabusFile
+        semesterbased: semesterBased?.title === 'Yes' ? true : false,
+        // semester: selectedSemesters,
+        // quarter: selectedQuarters,
+        // syllabus: selectedSyllabusFile
       };
 
       console.log('Sending course data:', courseData);
@@ -568,6 +573,56 @@ const CreateCoursePage = () => {
           )}
         </>
       )}
+
+<Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Is this a semester-based course</Text>
+          <Pressable
+            style={[
+              { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16, justifyContent: 'center' },
+              errors.category && { borderColor: 'red' }
+            ]}
+            onPress={() => setShowSemesterBasedModal(true)}
+          >
+            <Text>{semesterBased?.title || 'Select'}</Text>
+          </Pressable>
+          {errors.semesterBased && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.semesterBased}</Text>}
+
+          {/* Category Selection Modal */}
+          <Modal
+            visible={showSemesterBasedModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowSemesterBasedModal(false)}
+          >
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+              <View style={{ backgroundColor: 'white', borderRadius: 8, padding: 16, maxHeight: '80%' }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>Select</Text>
+                <ScrollView>
+                 
+                    {[{_id:1,title:'Yes'},{_id:2,title:'No'}].map((sem) => (
+                      <Pressable
+                        key={sem._id}
+                        style={[
+                          { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+                          semesterBased?._id === sem._id && { backgroundColor: '#e6ffe6' }
+                        ]}
+                        onPress={() =>{ setSemesterBased(sem)
+                          setShowSemesterBasedModal(false)
+                        }}
+                      >
+                        <Text style={{ fontSize: 16 }}>{sem.title}</Text>
+                      </Pressable>
+                    ))
+                  }
+                </ScrollView>
+                <Pressable
+                  style={{ marginTop: 16, padding: 12, backgroundColor: '#f0f0f0', borderRadius: 4 }}
+                  onPress={() => setShowSemesterBasedModal(false)}
+                >
+                  <Text style={{ textAlign: 'center' }}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
 
       {/* Language */}
       <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Language</Text>
@@ -818,7 +873,7 @@ const CreateCoursePage = () => {
       )}
 
       {/* Syllabus Upload */}
-      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, marginTop: 16 }}>Upload Syllabus (PDF)</Text>
+      {/* <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, marginTop: 16 }}>Upload Syllabus (PDF)</Text>
       <View style={{ height: 60, borderWidth: 1, borderStyle: 'dashed', borderColor: '#ccc', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
         {selectedSyllabusFile ? (
           <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
@@ -841,7 +896,7 @@ const CreateCoursePage = () => {
           </Pressable>
         )}
       </View>
-      {errors.syllabus && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.syllabus}</Text>}
+      {errors.syllabus && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.syllabus}</Text>} */}
 
       {/* Create Button */}
       <Pressable

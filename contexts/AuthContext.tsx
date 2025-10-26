@@ -23,17 +23,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check authentication and landing page status on app start
     const checkAuth = async () => {
       try {
-        const [auth, landing, userDataString, baseUrl] = await Promise.all([
+        const [auth, landing, userDataString] = await Promise.all([
           AsyncStorage.getItem('isAuthenticated'),
           AsyncStorage.getItem('hasSeenLanding'),
           AsyncStorage.getItem('userData'),
-          AsyncStorage.getItem('selectedBaseUrl'),
+          // AsyncStorage.getItem('selectedBaseUrl'),
         ]);
-        
+        const baseUrl = "https://api.acewallscholarslearningonline.org"
         setIsAuthenticated(auth === 'true');
         
         // Show landing page only if baseUrl is not saved
-        setHasSeenLanding(baseUrl !== null && baseUrl !== '');
+        setHasSeenLanding(baseUrl !== null );
 
         if (auth === 'true' && userDataString) {
           const userData = JSON.parse(userDataString);

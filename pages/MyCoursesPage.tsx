@@ -42,6 +42,7 @@ const MyCoursesPage = () => {
   const [subcategoryItems, setSubcategoryItems] = useState<any[]>([]);
 
   const [selectedTab, setSelectedTab] = useState<'published' | 'unpublished'>('published');
+  const [isVerified,setIsVerified] = useState<'approved' | 'pending'|'rejected'>('approved')
 
   const navigation = useNavigation<DrawerNavigationProp<any>>();
 
@@ -113,7 +114,8 @@ const MyCoursesPage = () => {
           } else {
             // For teacher/admin, get courses based on selected tab
             const isPublished = selectedTab === 'published';
-            response = await getTeacherCourses(isPublished, searchQuery);
+            console.log(isPublished,isVerified,searchQuery)
+            response = await getTeacherCourses(isPublished, isVerified,searchQuery);
             setCourses(response.courses || []);
           }
         } catch (err: any) {
@@ -134,7 +136,7 @@ const MyCoursesPage = () => {
         setSelectedSubcategory(null);
         setSubcategoryItems([]);
       };
-    }, [userRole, selectedSubcategory, searchQuery, selectedTab, fetchCategories, categoryItems.length])
+    }, [userRole, selectedSubcategory, searchQuery, selectedTab,isVerified, fetchCategories, categoryItems.length])
   );
 
   // Initial load effect
@@ -199,7 +201,7 @@ const MyCoursesPage = () => {
       } else {
         // For teacher/admin, get courses based on selected tab
         const isPublished = selectedTab === 'published';
-        response = await getTeacherCourses(isPublished, searchQuery);
+        response = await getTeacherCourses(isPublished, isVerified,searchQuery);
         setCourses(response.courses || []);
       }
       
@@ -210,7 +212,7 @@ const MyCoursesPage = () => {
     } finally {
       setRefreshing(false);
     }
-  }, [userRole, selectedSubcategory, searchQuery, selectedTab, fetchCategories, categoryItems.length]);
+  }, [userRole, selectedSubcategory, searchQuery, selectedTab,isVerified, fetchCategories, categoryItems.length]);
 
   const filteredCourses = courses;
 
@@ -219,6 +221,42 @@ const MyCoursesPage = () => {
       {/* TEACHER UI: Tab Switcher, Search, and Filtered Courses */}
       {userRole === 'teacher' && (
         <>
+        {(isVerified === "pending" || isVerified==="rejected" ) && (
+               <TouchableOpacity          onPress={() => setIsVerified('approved')} style={styles.backButton}>
+               <SimpleIcon name="arrow-back" size={18} color="#000" />
+               <Text style={styles.backButtonText}>Back</Text>
+             </TouchableOpacity>
+
+)}
+        <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+  {(isVerified === "pending" || isVerified==="rejected") ?(
+   <View style={styles.tabSwitcherContainer}>
+   <TouchableOpacity
+     style={[
+       styles.tabButton,
+       isVerified === 'pending' && styles.tabButtonActive
+     ]}
+     onPress={() => setIsVerified('pending')}
+   >
+     <Text style={[
+       styles.tabButtonText,
+       isVerified === 'pending' && styles.tabButtonTextActive
+     ]}>Pending courses</Text>
+   </TouchableOpacity>
+   <TouchableOpacity
+     style={[
+       styles.tabButton,
+      isVerified === 'rejected' && styles.tabButtonActive
+     ]}
+     onPress={() => setIsVerified('rejected')}
+   >
+     <Text style={[
+       styles.tabButtonText,
+      isVerified === 'rejected' && styles.tabButtonTextActive
+     ]}>Rejected courses</Text>
+   </TouchableOpacity>
+ </View>
+  ):
           <View style={styles.tabSwitcherContainer}>
             <TouchableOpacity
               style={[
@@ -230,7 +268,7 @@ const MyCoursesPage = () => {
               <Text style={[
                 styles.tabButtonText,
                 selectedTab === 'published' && styles.tabButtonTextActive
-              ]}>UnArchived</Text>
+              ]}>Published</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -242,9 +280,30 @@ const MyCoursesPage = () => {
               <Text style={[
                 styles.tabButtonText,
                 selectedTab === 'unpublished' && styles.tabButtonTextActive
-              ]}>Archived</Text>
+              ]}>Unpublished</Text>
             </TouchableOpacity>
           </View>
+  }
+
+          {isVerified ==="approved" &&
+          <TouchableOpacity
+              style={[
+                styles.tabButton,
+                {backgroundColor:'#66bb6a',
+                  justifyContent:'center',
+                  alignItems:'center'
+                }
+              ]}
+              onPress={() => setIsVerified('pending')}
+            >
+              <Text style={[
+                styles.tabButtonText,
+              ]}>{'Unverified Courses'}</Text>
+            </TouchableOpacity>
+          }
+
+        </View>
+
           <View style={styles.searchContainer}>
             <SimpleIcon name="search" size={20} color="#666" style={styles.searchSimpleIcon} />
             <TextInput
@@ -433,6 +492,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom:20,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#000",
+    marginLeft: 8,
+  },
   dropdownContainer: {
     marginBottom: 16,
     zIndex: 1000,
@@ -608,12 +685,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#f5f6fa',
     borderRadius: 16,
-    marginBottom: 16,
     alignSelf: 'flex-start',
   },
   tabButton: {
     paddingVertical: 10,
-    paddingHorizontal: 24,
+    paddingHorizontal: 10,
     borderRadius: 12,
     backgroundColor: 'transparent',
   },
@@ -626,7 +702,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   tabButtonText: {
-    fontSize: 18,
+    fontSize: 14,
     color: '#222',
     fontWeight: '500',
   },

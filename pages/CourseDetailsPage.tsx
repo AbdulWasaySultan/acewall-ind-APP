@@ -2335,6 +2335,46 @@ const CourseDetailsPage = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("CourseDetailStudentPage", {
+                courseId: course._id,
+                fromAdmin: true,
+              })
+            }
+            style={[
+              styles.topActionButton,
+              {
+                backgroundColor: "#ffffff",
+                borderWidth: 1,
+                borderColor: "#cccccc",
+              },
+            ]}
+          >
+            <Text style={[styles.topActionButtonText, { color: "#000000" }]}>
+              Manage GradeScale
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("CourseDetailStudentPage", {
+                courseId: course._id,
+                fromAdmin: true,
+              })
+            }
+            style={[
+              styles.topActionButton,
+              {
+                backgroundColor: "#ffffff",
+                borderWidth: 1,
+                borderColor: "#cccccc",
+              },
+            ]}
+          >
+            <Text style={[styles.topActionButtonText, { color: "#000000" }]}>
+           Manage GPA
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={async () => {
               setShowGradebookModal(true);
               setGradebookLoading(true);

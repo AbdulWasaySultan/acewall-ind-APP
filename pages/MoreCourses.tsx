@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import SimpleIcon from '../components/SimpleIcon';
-import { getAllCourses, getCategories, getSubcategories, getCoursesBySubcategory, getStudentEnrolledCourses, getTeacherCourses } from '../services/course';
+import { getAllCourses, getCategories, getSubcategories, getCoursesBySubcategory, getStudentEnrolledCourses } from '../services/course';
 import Toast from 'react-native-simple-toast';
 import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';

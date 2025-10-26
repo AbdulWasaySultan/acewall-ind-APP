@@ -60,6 +60,7 @@ interface Subcategory {
 interface CourseData {
   courseTitle: string;
   category: string;
+  semesterbased: boolean;
   subcategory?: string;
   language: string;
   courseDescription: string;
@@ -156,15 +157,15 @@ export const createCourse = async (courseData: CourseData): Promise<CourseRespon
     formData.append('courseDescription', courseData.courseDescription);
     formData.append('teachingPoints', JSON.stringify(courseData.teachingPoints));
     formData.append('requirements', JSON.stringify(courseData.requirements));
-
+    formData.append('semesterbased', courseData.semesterbased);
     // Add semester and quarter if provided
-    if (courseData.semester && courseData.semester.length > 0) {
-      formData.append('semester', JSON.stringify(courseData.semester));
-    }
+    // if (courseData.semester && courseData.semester.length > 0) {
+    //   formData.append('semester', JSON.stringify(courseData.semester));
+    // }
 
-    if (courseData.quarter && courseData.quarter.length > 0) {
-      formData.append('quarter', JSON.stringify(courseData.quarter));
-    }
+    // if (courseData.quarter && courseData.quarter.length > 0) {
+    //   formData.append('quarter', JSON.stringify(courseData.quarter));
+    // }
 
     // Add syllabus if provided
     if (courseData.syllabus) {
@@ -329,15 +330,15 @@ export const getAllCourses = async (search?: string): Promise<CourseResponse> =>
   }
 };
 
-export const getTeacherCourses = async (published: boolean, search?: string): Promise<CourseResponse> => {
+export const getTeacherCourses = async (published: boolean,isVerified:string, search?: string,): Promise<CourseResponse> => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
     console.log('Fetching teacher courses with published:', published, 'search:', search);
 
     const searchParam = search ? encodeURIComponent(search) : '';
-    const url = `/api/course/getTeacherCourses?published=${published}&search=${searchParam}`;
-
+    const url = (isVerified==="pending" ||  isVerified==="rejected" )? `/api/course/getindividualcourse?isVerified=${isVerified}&search=${searchParam}`:`/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`;
+    
     const response = await api.get<CourseResponse>(url);
     return response.data;
   } catch (error: any) {
