@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Modal, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Modal, TouchableOpacity, FlatList, Alert, Linking } from 'react-native';
 // You will need to install react-native-dropdown-picker: npm install react-native-dropdown-picker or yarn add react-native-dropdown-picker
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getAllAssessmentsByTeacher, getCategories, getAllCourses, getAssessmentSubmissionsForTeacher, getSubmissionDetails, submitGrades } from '../services/course';
@@ -275,7 +275,7 @@ const AssessmentsPage = () => {
       const details = await getSubmissionDetails(submission._id);
       setSubmissionDetails(details.submission);
       // Check if already graded
-      console.log(details)
+      console.log(JSON.stringify(details))
       if (details.submission.graded) {
         setGradesSubmitted(true);
       }
@@ -303,8 +303,10 @@ const AssessmentsPage = () => {
 
   // Handle grade input change
   const handleGradeChange = (answerId: string, value: string, maxPoints: number) => {
-    // Validate that the value is between 0 and maxPoints
+    // Validate that the value is between 0 and maxPoints 
+    console.log(answerId, value, maxPoints)
     const numValue = parseFloat(value);
+    console.log(numValue)
     if (value === '' || isNaN(numValue) || numValue < 0) {
       setAnswerGrades({
         ...answerGrades,
@@ -330,9 +332,9 @@ const AssessmentsPage = () => {
 
       // Prepare grades object in the correct format
       const grades: { [answerId: string]: { awardedPoints: number; maxPoints: number } } = {};
-
+      console.log(answerGrades)
       Object.entries(answerGrades).forEach(([answerId, points]) => {
-        const answer = submissionDetails.answers?.find((a: any) => a._id === answerId);
+        const answer = submissionDetails.answers?.find((a: any) => a.questionId === answerId);
         if (answer) {
           const awardedPoints = parseFloat(points) || 0;
           const maxPoints = answer.questionDetails?.points || 0;
@@ -736,15 +738,54 @@ const AssessmentsPage = () => {
                           {answer.questionDetails?.question?.replace(/<[^>]*>/g, '') || 'No question text'}
                         </Text>
                       </View>
+
+                      {/* Teacher uploaded files */}
+                      {answer.questionDetails?.file && answer.questionDetails.file.length > 0 && (
+                        <View style={styles.teacherFilesContainer}>
+                          <Text style={styles.filesLabel}>Teacher Files:</Text>
+                          {answer.questionDetails.file.map((file: any, fileIndex: number) => (
+                            <TouchableOpacity
+                              key={fileIndex}
+                              style={styles.fileCard}
+                              onPress={() => Linking.openURL(file.url)}
+                            >
+                              <SimpleIcon name="description" size={20} color="#4285F4" />
+                              <Text style={styles.fileName}>{file.filename}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
                     </View>
 
                     <View style={styles.answerContent}>
                       <Text style={styles.answerLabel}>Student's Answer:</Text>
                       <View style={styles.answerTextContainer}>
                         <Text style={styles.answerText}>
-                          {answer.selectedAnswer || answer.fileUrl || 'No answer provided'}
+                          {answer.questionDetails?.type === 'file'
+                            ? (answer.file && answer.file.length > 0
+                              ? `${answer.file.length} file(s) uploaded`
+                              : 'No file uploaded')
+                            : (answer.selectedAnswer || 'No answer provided')
+                          }
                         </Text>
                       </View>
+
+                      {/* Student uploaded files */}
+                      {answer.file && answer.file.length > 0 && (
+                        <View style={styles.studentFilesContainer}>
+                          <Text style={styles.filesLabel}>Student Files:</Text>
+                          {answer.file.map((file: any, fileIndex: number) => (
+                            <TouchableOpacity
+                              key={fileIndex}
+                              style={styles.fileCard}
+                              onPress={() => Linking.openURL(file.url)}
+                            >
+                              <SimpleIcon name="description" size={20} color="#10B144" />
+                              <Text style={styles.fileName}>{file.filename}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
                     </View>
 
                     {/* Manual Grading Input */}
@@ -755,8 +796,8 @@ const AssessmentsPage = () => {
                           <TextInput
                             style={styles.gradingInput}
                             placeholder="0"
-                            value={answerGrades[answer._id] || ''}
-                            onChangeText={(value) => handleGradeChange(answer._id, value, answer.questionDetails?.points || 0)}
+                            value={answerGrades[answer.questionId] || ''}
+                            onChangeText={(value) => handleGradeChange(answer.questionId, value, answer.questionDetails?.points || 0)}
                             keyboardType="numeric"
                             editable={!gradesSubmitted && !submittingGrades}
                           />
@@ -1302,6 +1343,35 @@ const styles = StyleSheet.create({
   answerText: {
     fontSize: 14,
     color: '#111827',
+  },
+  // File Display Styles
+  teacherFilesContainer: {
+    marginTop: 12,
+  },
+  studentFilesContainer: {
+    marginTop: 12,
+  },
+  filesLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  fileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  fileName: {
+    fontSize: 14,
+    color: '#111827',
+    marginLeft: 8,
+    flex: 1,
   },
   // Grading Input Styles
   gradingInputContainer: {
