@@ -330,15 +330,15 @@ export const getAllCourses = async (search?: string): Promise<CourseResponse> =>
   }
 };
 
-export const getTeacherCourses = async (published: boolean,isVerified:string, search?: string,): Promise<CourseResponse> => {
+export const getTeacherCourses = async (published: boolean, isVerified: string, search?: string,): Promise<CourseResponse> => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
     console.log('Fetching teacher courses with published:', published, 'search:', search);
 
     const searchParam = search ? encodeURIComponent(search) : '';
-    const url = (isVerified==="pending" ||  isVerified==="rejected" )? `/api/course/getindividualcourse?isVerified=${isVerified}&search=${searchParam}`:`/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`;
-    
+    const url = (isVerified === "pending" || isVerified === "rejected") ? `/api/course/getindividualcourse?isVerified=${isVerified}&search=${searchParam}` : `/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`;
+
     const response = await api.get<CourseResponse>(url);
     return response.data;
   } catch (error: any) {
@@ -1511,5 +1511,29 @@ export const getStudentCourses = async () => {
   } catch (error: any) {
     console.error("[v0] getStudentCourses error:", error?.response?.data || error?.message)
     throw new Error(error.response?.data?.message || "Failed to fetch student courses")
+  }
+}
+export const getGradeScale = async (courseId: string) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const res = await api.get(`/api/gradebook/getGradingScale/${courseId}`)
+    // API returns { enrolledCourses: [{ _id, course: { _id, courseTitle }}, ...] }
+    return (res.data?.scale) || []
+  } catch (error: any) {
+    console.error("Gradescale error:", error?.response?.data || error?.message)
+    throw new Error(error.response?.data?.message || "Failed to fetch grade scale")
+  }
+}
+export const gradingScale = async (courseId: string, data: any) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const res = await api.post(`/api/gradebook/gradingScale/${courseId}`, { scale: data })
+    // API returns { enrolledCourses: [{ _id, course: { _id, courseTitle }}, ...] }
+    return (res.data?.scale) || []
+  } catch (error: any) {
+    console.error("Gradescale error:", error?.response?.data || error?.message)
+    throw new Error(error.response?.data?.message || "Failed to fetch grade scale")
   }
 }

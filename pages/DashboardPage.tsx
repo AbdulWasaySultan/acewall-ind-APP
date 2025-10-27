@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useAuth } from '../contexts/AuthContext';
-import { dashboardService, Course, RecentActivity } from '../services/dashboard';
+import { dashboardService, RecentActivity, CourseStatsResponse, PublishedCourse } from '../services/dashboard';
 
 // Static data
 const staticRecentActivity: RecentActivity[] = [
@@ -37,7 +37,7 @@ interface StudentEnrollment {
 const DashboardPage = () => {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const { userRole } = useAuth();
-  const [recentCourses, setRecentCourses] = useState<Course[]>([]);
+  const [recentCourses, setRecentCourses] = useState<PublishedCourse[]>([]);
   const [recentCourseslength, setRecentCourseslength] = useState<number>(0);
   const [publishedCoursesCount, setPublishedCoursesCount] = useState<number>(0);
   const [unpublishedCoursesCount, setUnpublishedCoursesCount] = useState<number>(0);
@@ -53,19 +53,26 @@ const DashboardPage = () => {
     try {
       setLoading(true);
       const coursesData = await dashboardService.getRecentCourses();
+      if (!coursesData) {
+        console.log("No course data found");
+        setPublishedCoursesCount(0);
+        setUnpublishedCoursesCount(0);
+        setRecentCourses([]);
+        return;
+      }
       console.log("coursesData *********", coursesData);
 
       // Count published and unpublished courses
-      const publishedCount = coursesData.filter(course => course.published === true).length;
-      const unpublishedCount = coursesData.filter(course => course.published === false).length;
+      const publishedCount = coursesData.published.length;
+      const unpublishedCount = coursesData.unpublished;
 
       setPublishedCoursesCount(publishedCount);
       setUnpublishedCoursesCount(unpublishedCount);
-      setRecentCourseslength(coursesData.length);
+      setRecentCourseslength(coursesData.publishedCount);
 
       // Filter only published courses and take the first 3
-      const publishedCourses = coursesData.filter(course => course.published === true);
-      const limitedCourses = publishedCourses.slice(0, 3).reverse();
+      const limitedCourses = coursesData.published.slice(0, 3).reverse();
+      setRecentCourses(limitedCourses);
       setRecentCourses(limitedCourses);
     } catch (error: any) {
       console.error('Error fetching recent courses:', error);
@@ -236,18 +243,17 @@ const DashboardPage = () => {
           {recentCourses.length > 0 ? (
             recentCourses.map((course) => (
               <TouchableOpacity
-                key={course.id}
+                key={course._id}
                 style={styles.horizontalCourseCard}
-                onPress={() => navigation.navigate('CourseDetails', { courseId: course.id })}
+                onPress={() => navigation.navigate('CourseDetails', { courseId: course._id })}
               >
                 <Image
-                  source={{ uri: course.imageUrl }}
+                  source={{ uri: course.thumbnail.url }}
                   style={styles.horizontalCourseImage}
                   defaultSource={require('../assets/jpg.jpg')}
                 />
                 <View style={styles.horizontalCourseInfo}>
-                  <Text style={styles.horizontalCourseTitle} numberOfLines={1}>{course.title}</Text>
-                  <Text style={styles.horizontalCourseCategory}>{course.category}</Text>
+                  <Text style={styles.horizontalCourseTitle} numberOfLines={1}>{course.courseTitle}</Text>
                 </View>
               </TouchableOpacity>
             ))

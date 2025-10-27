@@ -21,19 +21,29 @@ export interface RecentSale {
   timestamp: string;
 }
 
-export interface Course {
-  id: string;
-  title: string;
+export interface CourseThumbnail {
+  url: string;
+  filename: string;
+}
+
+export interface PublishedCourse {
+  thumbnail: CourseThumbnail;
+  _id: string;
+  courseTitle: string;
   category: string;
-  imageUrl: string;
-  description: string;
-  language: string;
-  teacher: string;
-  published: boolean;
+  courseDescription: string;
   createdAt: string;
-  status: string;
-  startingDate: string;
-  endingDate: string;
+}
+
+export interface CourseStatsResponse {
+  published: PublishedCourse[];
+  unpublished: number;
+  publishedCount: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+  total: number;
+  message: string;
 }
 
 export interface Announcement {
@@ -83,17 +93,17 @@ export const dashboardService = {
       // Get teacher's own courses
       const coursesResponse = await api.get('/api/course/getallCoursesforTeacher');
       const courses = coursesResponse.data.courses || [];
-      
+
       // Get students enrolled in teacher's courses
       const studentsResponse = await api.get('/api/course/getallcoursesforteacher');
       const students = studentsResponse.data.students || [];
-      
+
       // Transform the responses to match DashboardStats interface
       const stats: DashboardStats = {
         courses: courses.length,
         students: students.length
       };
-      
+
       console.log('Dashboard stats:', stats);
       return stats;
     } catch (error) {
@@ -116,12 +126,12 @@ export const dashboardService = {
     try {
       const api = await createDashboardApiInstance();
       const userId = await getStoredUserId();
-      
+
       if (!userId) {
         console.error('No user ID found. User might not be logged in.');
         return [];
       }
-      
+
       // Get comments
       const commentsResponse = await api.get(`/api/comment/teacher/${userId}/comments`);
       const comments = commentsResponse.data.comments.map((comment: any) => ({
@@ -174,7 +184,7 @@ export const dashboardService = {
     try {
       const api = await createDashboardApiInstance();
       const userId = await getStoredUserId();
-      
+
       if (!userId) {
         console.error('No user ID found. User might not be logged in.');
         return [];
@@ -187,7 +197,7 @@ export const dashboardService = {
 
       // Get all purchases for these courses
       const purchasesResponse = await api.get('/api/purchase/courses');
-      const purchases = purchasesResponse.data.purchasedCourses.filter((purchase: any) => 
+      const purchases = purchasesResponse.data.purchasedCourses.filter((purchase: any) =>
         courseIds.includes(purchase.course._id)
       );
 
@@ -223,22 +233,22 @@ export const dashboardService = {
       console.log('Fetching student count from /api/course/getallCoursesforTeacher...');
       const api = await createDashboardApiInstance();
       const response = await api.get('/api/course/getallCoursesforTeacher');
-      
+
       console.log('Students API response:', response.data);
-      
+
       // Check if response has students array
       if (response.data && Array.isArray(response.data.students)) {
         const totalStudents = response.data.students.length;
         console.log('Total students fetched:', totalStudents);
         return totalStudents;
       }
-      
+
       // Fallback: check if there's a totalCount field
       if (response.data && typeof response.data.totalCount === 'number') {
         console.log('Total students from totalCount:', response.data.totalCount);
         return response.data.totalCount;
       }
-      
+
       console.log('No students found in response');
       return 0;
     } catch (error) {
@@ -255,32 +265,19 @@ export const dashboardService = {
   },
 
   // Get recent courses
-  getRecentCourses: async (): Promise<Course[]> => {
+  getRecentCourses: async (): Promise<CourseStatsResponse | null> => {
     try {
       const api = await createDashboardApiInstance();
-      console.log('Calling API endpoint:', '/api/course/getindividualcourse');
-      const response = await api.get('/api/course/getindividualcourse');
+      console.log('Calling API endpoint:', '/api/course//getTeacherCoursesForDesboard');
+      const response = await api.get('/api/course/getTeacherCoursesForDesboard');
       console.log('Recent courses response:', response.data);
-      
-      if (!response.data.courses || !Array.isArray(response.data.courses)) {
+
+      if (!response.data || typeof response.data !== 'object') {
         console.log('No courses found in response or invalid format');
-        return [];
+        return null;
       }
 
-      return response.data.courses.map((course: any) => ({
-        id: course._id,
-        title: course.courseTitle,
-        category: course.category?.title || 'Uncategorized',
-        imageUrl: course.thumbnail?.url || 'https://via.placeholder.com/150',
-        description: course.courseDescription,
-        language: course.language,
-        teacher: course.createdby ? `${course.createdby.firstName} ${course.createdby.middleName} ${course.createdby.lastName}`.trim() : 'Unknown',
-        published: course.published,
-        createdAt: course.createdAt,
-        status: course.status,
-        startingDate: course.startingDate,
-        endingDate: course.endingDate
-      }));
+      return response.data as CourseStatsResponse
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Error fetching recent courses:', {
@@ -290,7 +287,7 @@ export const dashboardService = {
           url: error.config?.url
         });
       }
-      return []; // Return empty array instead of throwing error
+      return null; // Return empty array instead of throwing error
     }
   },
 
@@ -300,15 +297,15 @@ export const dashboardService = {
       const api = await createDashboardApiInstance();
       const studentId = await getStoredUserId();
       console.log('Student ID for announcements:', studentId);
-      
+
       // if (!studentId) {
       //   console.error('No student ID found');
       //   return [];
       // }
-      
+
       const response = await api.get(`/api/announcements/getbystudent/${studentId}`);
       console.log('Student announcements response:', response.data);
-      
+
       // Response: { success: true, announcements: [] }
       if (response.data && response.data.success && Array.isArray(response.data.announcements)) {
         return response.data.announcements.map((a: any) => ({

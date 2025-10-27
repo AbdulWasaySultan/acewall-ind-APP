@@ -14,6 +14,7 @@ import {
   Linking,
   TouchableWithoutFeedback,
 } from "react-native";
+import GradeScaleModal from "../components/GradeScaleModal";
 import {
   useRoute,
   useNavigation,
@@ -50,6 +51,8 @@ import {
   unarchiveCourse,
   getChapterDetailsWithLessons,
   editChapter,
+  getGradeScale,
+  gradingScale,
 } from "../services/course";
 import {
   getCourseRating,
@@ -108,6 +111,12 @@ interface GradebookData {
   limit: number
   gradebook: Student[]
 }
+export interface GradeScaleItem {
+  _id: string;
+  grade: string;
+  min: number;
+  max: number;
+}
 
 const CourseDetailsPage = () => {
   const insets = useSafeAreaInsets();
@@ -147,6 +156,10 @@ const CourseDetailsPage = () => {
   const [assessmentCategories, setAssessmentCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
+
+  // Grade Scale Modal state
+  const [showGradeScaleModal, setShowGradeScaleModal] = useState(false);
+  const [gradeScales, setGradeScales] = useState<any[]>([]);
 
   const [showDeleteAssessmentModal, setShowDeleteAssessmentModal] =
     useState(false);
@@ -324,6 +337,8 @@ const CourseDetailsPage = () => {
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set())
   const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set())
   const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(new Set())
+  const [showGradeScaleManagement, setShowGradeScaleManagement] = useState(false)
+  const [gradeScale, setGradeScale] = useState([])
   const formatDateWithOrdinal = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getUTCDate();
@@ -2335,12 +2350,15 @@ const CourseDetailsPage = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("CourseDetailStudentPage", {
-                courseId: course._id,
-                fromAdmin: true,
-              })
-            }
+            onPress={async () => {
+              try {
+                const res = await getGradeScale(courseId)
+                setShowGradeScaleManagement(true)
+                setGradeScale(res)
+              } catch (err) {
+                Toast.show('Failed to get gradeScale', Toast.LONG)
+              }
+            }}
             style={[
               styles.topActionButton,
               {
@@ -2371,7 +2389,7 @@ const CourseDetailsPage = () => {
             ]}
           >
             <Text style={[styles.topActionButtonText, { color: "#000000" }]}>
-           Manage GPA
+              Manage GPA
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -5905,6 +5923,101 @@ const CourseDetailsPage = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Grade Scale Modal */}
+      <Modal
+        visible={showGradeScaleManagement}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setShowGradeScaleManagement(false)}
+      >
+        <View style={styles.fullScreenModalContainer}>
+          <View style={styles.fullScreenModalContent}>
+            <View style={styles.fullScreenModalHeader}>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowGradeScaleManagement(false);
+                }}
+                style={styles.backButton}
+              >
+                <SimpleIcon name="arrow-back" size={24} color="#10B144" />
+              </TouchableOpacity>
+              <Text style={styles.fullScreenModalTitle}>Grade Scale</Text>
+              <View style={{ width: 40 }} />
+
+            </View>
+            <TouchableOpacity style={styles.manageButton} onPress={() => {
+              setShowGradeScaleManagement(false)
+              setShowGradeScaleModal(true)
+            }}>
+              <Text style={styles.manageButtonText}>Manage Grade Scale</Text>
+            </TouchableOpacity>
+            <ScrollView style={{ flex: 1, marginTop: 20 }}>
+              {/* Table Header */}
+              <View style={styles.tableHeader}>
+                <Text style={[styles.headerText, { flex: 1 }]}>Grade</Text>
+                <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
+                <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
+              </View>
+
+              {/* Table Rows */}
+              {gradeScale?.map((item: GradeScaleItem) => {
+                const percentage = (item.max - item.min) / 100; // simulate visual fill
+
+                return (
+                  <View key={item._id} style={styles.tableRow}>
+                    {/* Grade */}
+                    <View style={styles.gradeBadge}>
+                      <Text style={styles.gradeText}>{item.grade}</Text>
+                    </View>
+
+                    {/* Range */}
+                    <Text style={[styles.rangeText, { flex: 2 }]}>
+                      {item.min}% - {item.max}%
+                    </Text>
+
+                    {/* Custom Progress Bar */}
+                    <View style={[styles.progressWrapper, { flex: 3 }]}>
+                      <View style={[styles.progressBackground]}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${percentage * 100}%` },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+      <GradeScaleModal
+        visible={showGradeScaleModal}
+        onClose={() => {
+          setShowGradeScaleModal(false)
+          setShowGradeScaleManagement(true)
+        }
+        }
+        onSave={async (newGradeScales) => {
+          try {
+            setGradeScales(newGradeScales);
+            console.log(newGradeScales)
+            const res = await gradingScale(courseId, newGradeScales)
+            Toast.show('Successfully created grade scale', Toast.LONG)
+            setShowGradeScaleModal(false)
+            setShowGradeScaleManagement(true)
+          }
+          catch (err) {
+            console.log(err)
+            Toast.show('Failed to create grade scale', Toast.LONG)
+            setShowGradeScaleModal(false)
+            setShowGradeScaleManagement(true)
+          }
+        }}
+      />
     </View>
   );
 };
@@ -8036,6 +8149,68 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     textAlign: "center",
     paddingVertical: 20,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  headerText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  gradeBadge: {
+    backgroundColor: '#6EE7B7',
+    borderRadius: 10,
+    height: 40,
+    flex: 0.8,
+    marginHorizontal: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gradeText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  rangeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111',
+  },
+  progressWrapper: {
+    justifyContent: 'center',
+  },
+  progressBackground: {
+    height: 10,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#10B144',
+    borderRadius: 10,
+  },
+  manageButton: {
+    backgroundColor: '#10B144',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  manageButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 
