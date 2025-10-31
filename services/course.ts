@@ -1525,12 +1525,39 @@ export const getGradeScale = async (courseId: string) => {
     throw new Error(error.response?.data?.message || "Failed to fetch grade scale")
   }
 }
+export const getGPA = async (courseId: string) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const res = await api.get(`/api/gpa/get/${courseId}`)
+    // API returns { enrolledCourses: [{ _id, course: { _id, courseTitle }}, ...] }
+    return (res.data?.grade) || []
+  } catch (error: any) {
+    console.error("Gradescale error:", error?.response?.data || error?.message)
+    throw new Error(error.response?.data?.message || "Failed to fetch grade scale")
+  }
+}
 export const gradingScale = async (courseId: string, data: any) => {
   try {
     const api = await createApiInstance()
     addAuthInterceptor(api)
     const res = await api.post(`/api/gradebook/gradingScale/${courseId}`, { scale: data })
     // API returns { enrolledCourses: [{ _id, course: { _id, courseTitle }}, ...] }
+    return (res.data?.scale) || []
+  } catch (error: any) {
+    console.error("Gradescale error:", error?.response?.data || error?.message)
+    throw new Error(error.response?.data?.message || "Failed to fetch grade scale")
+  }
+}
+export const gpaScale = async (courseId: string, data: any) => {
+  try {
+    const api = await createApiInstance()
+    addAuthInterceptor(api)
+    const gpaData =  data.map((elem:any)=>{
+      return {gpa:elem.gpa, minPercentage:elem.minPercentage, maxPercentage:elem.maxPercentage}
+    })
+    console.log(gpaData)
+    const res = await api.post(`/api/gpa/setGPAscale/${courseId}`, { gpaScale: gpaData })
     return (res.data?.scale) || []
   } catch (error: any) {
     console.error("Gradescale error:", error?.response?.data || error?.message)

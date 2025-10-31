@@ -268,7 +268,7 @@ export const dashboardService = {
   getRecentCourses: async (): Promise<CourseStatsResponse | null> => {
     try {
       const api = await createDashboardApiInstance();
-      console.log('Calling API endpoint:', '/api/course//getTeacherCoursesForDesboard');
+      console.log('Calling API endpoint:', '/api/course/getTeacherCoursesForDesboard');
       const response = await api.get('/api/course/getTeacherCoursesForDesboard');
       console.log('Recent courses response:', response.data);
 

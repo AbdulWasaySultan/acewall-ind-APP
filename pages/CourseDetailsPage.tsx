@@ -53,6 +53,8 @@ import {
   editChapter,
   getGradeScale,
   gradingScale,
+  getGPA,
+  gpaScale,
 } from "../services/course";
 import {
   getCourseRating,
@@ -69,6 +71,7 @@ import Toast from "react-native-simple-toast";
 import { getCourseGradebook } from "../services/gradebook";
 import { pick } from "@react-native-documents/picker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import GPAModal from "../components/GPAModal";
 
 const fallbackImage = require("../assets/jpg.jpg");
 interface Assessment {
@@ -117,6 +120,12 @@ export interface GradeScaleItem {
   min: number;
   max: number;
 }
+export interface GPAItem {
+  _id: string;
+  gpa: number;
+  minPercentage: number;
+  maxPercentage: number;
+}
 
 const CourseDetailsPage = () => {
   const insets = useSafeAreaInsets();
@@ -159,7 +168,7 @@ const CourseDetailsPage = () => {
 
   // Grade Scale Modal state
   const [showGradeScaleModal, setShowGradeScaleModal] = useState(false);
-  const [gradeScales, setGradeScales] = useState<any[]>([]);
+  const [showGPAModal, setShowGPAModal] = useState(false);
 
   const [showDeleteAssessmentModal, setShowDeleteAssessmentModal] =
     useState(false);
@@ -338,7 +347,9 @@ const CourseDetailsPage = () => {
   const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set())
   const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(new Set())
   const [showGradeScaleManagement, setShowGradeScaleManagement] = useState(false)
+  const [showGPAManagement, setShowGPAManagement] = useState(false)
   const [gradeScale, setGradeScale] = useState([])
+  const [GPA, setGPA] = useState([])
   const formatDateWithOrdinal = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getUTCDate();
@@ -2373,12 +2384,15 @@ const CourseDetailsPage = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("CourseDetailStudentPage", {
-                courseId: course._id,
-                fromAdmin: true,
-              })
-            }
+            onPress={async () => {
+              try {
+                const res = await getGPA(courseId)
+                setShowGPAManagement(true)
+                setGPA(res)
+              } catch (err) {
+                Toast.show('Failed to get GPA', Toast.LONG)
+              }
+            }}
             style={[
               styles.topActionButton,
               {
@@ -6003,7 +6017,6 @@ const CourseDetailsPage = () => {
         }
         onSave={async (newGradeScales) => {
           try {
-            setGradeScales(newGradeScales);
             console.log(newGradeScales)
             const res = await gradingScale(courseId, newGradeScales)
             Toast.show('Successfully created grade scale', Toast.LONG)
@@ -6015,6 +6028,98 @@ const CourseDetailsPage = () => {
             Toast.show('Failed to create grade scale', Toast.LONG)
             setShowGradeScaleModal(false)
             setShowGradeScaleManagement(true)
+          }
+        }}
+      />
+      <Modal
+        visible={showGPAManagement}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setShowGPAManagement(false)}
+      >
+        <View style={styles.fullScreenModalContainer}>
+          <View style={styles.fullScreenModalContent}>
+            <View style={styles.fullScreenModalHeader}>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowGPAManagement(false);
+                }}
+                style={styles.backButton}
+              >
+                <SimpleIcon name="arrow-back" size={24} color="#10B144" />
+              </TouchableOpacity>
+              <Text style={styles.fullScreenModalTitle}>GPA</Text>
+              <View style={{ width: 40 }} />
+
+            </View>
+            <TouchableOpacity style={styles.manageButton} onPress={() => {
+              setShowGPAManagement(false)
+              setShowGPAModal(true)
+            }}>
+              <Text style={styles.manageButtonText}>Manage GPA</Text>
+            </TouchableOpacity>
+            <ScrollView style={{ flex: 1, marginTop: 20 }}>
+              {/* Table Header */}
+              <View style={styles.tableHeader}>
+                <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>
+                <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
+                <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
+              </View>
+
+              {/* Table Rows */}
+              {GPA?.map((item: GPAItem) => {
+                const percentage = (item.maxPercentage - item.minPercentage) / 100; // simulate visual fill
+                console.log(percentage)
+                return (
+                  <View key={item._id} style={styles.tableRow}>
+                    {/* Grade */}
+                    <View style={styles.gradeBadge}>
+                      <Text style={styles.gradeText}>{item.gpa}</Text>
+                    </View>
+
+                    {/* Range */}
+                    <Text style={[styles.rangeText, { flex: 2 }]}>
+                      {item.minPercentage}% - {item.maxPercentage}%
+                    </Text>
+
+                    {/* Custom Progress Bar */}
+                    <View style={[styles.progressWrapper, { flex: 3 }]}>
+                      <View style={[styles.progressBackground]}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${percentage * 100}%` },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+      <GPAModal
+        visible={showGPAModal}
+        onClose={() => {
+          setShowGPAModal(false)
+          setShowGPAManagement(true)
+        }
+        }
+        onSave={async (newGradeScales) => {
+          try {
+            console.log(newGradeScales,courseId)
+            const res = await gpaScale(courseId, newGradeScales)
+            Toast.show('Successfully created gpa scale', Toast.LONG)
+            setShowGPAModal(false)
+            setShowGPAManagement(true)
+          }
+          catch (err) {
+            console.log(err)
+            Toast.show('Failed to create gpa scale', Toast.LONG)
+            setShowGPAModal(false)
+            setShowGPAManagement(true)
           }
         }}
       />
