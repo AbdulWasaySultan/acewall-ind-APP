@@ -1109,6 +1109,7 @@ export const getSemesters = async () => {
     return response.data;
   } catch (error: any) {
     if (error.response) {
+      console.log(error.response.data);
       throw new Error(error.response.data.message || 'Failed to fetch semesters');
     } else if (error.request) {
       throw new Error('No response from server. Please check your internet connection.');

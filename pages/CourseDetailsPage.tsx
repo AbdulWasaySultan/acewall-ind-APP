@@ -409,6 +409,7 @@ const CourseDetailsPage = () => {
           const res = await getSemesters();
           setAllSemesters(res.semesters || []);
         } catch (error: any) {
+          console.error(error)
           Toast.show(error.message || "Failed to fetch semesters.", Toast.LONG);
         } finally {
           setLoadingSemesters(false);
