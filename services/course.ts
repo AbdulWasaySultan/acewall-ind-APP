@@ -1067,6 +1067,21 @@ export const updateAssessmentCategory = async (courseId: string, categoryId: str
     }
   }
 };
+export const createStripeCheckoutSession = async (courseId: string, studentId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.post('/api/stripe/create-checkout-session', {
+      courseId,
+      studentId,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creating Stripe checkout session:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create checkout session');
+  }
+};
+
 export const enrollInCourse = async (courseId: string) => {
   try {
     const api = await createApiInstance();

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, Linking, Alert, Platform } from 'react-native';
 import SimpleIcon from '../components/SimpleIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { getCourseById, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse } from '../services/course';
+import { getCourseById, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse, createStripeCheckoutSession } from '../services/course';
+import { useUser } from '../contexts/UserContext';
 import axios from 'axios';
 
 const fallbackImage = require('../assets/jpg.jpg');
@@ -12,6 +13,7 @@ const TABS = ['Overview', 'Reviews', 'Curriculum', 'Instructor'];
 const CourseDetailStudentPage = () => {
   const route = useRoute();
   const navigation = useNavigation();
+  const { user } = useUser();
   const { courseId, fromAdmin, enrollmentId } = route.params as { courseId: string, fromAdmin?: boolean, enrollmentId?: string };
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -81,11 +83,35 @@ const CourseDetailStudentPage = () => {
     setEnrollLoading(true);
     setEnrollError(null);
     try {
-      const result = await enrollInCourse(courseId)
-      setShowEnrollModal(false);
-      (navigation as any).navigate('Main', { screen: 'MyCourses' });
+      if (course?.price > 0) {
+        // For paid courses, create Stripe checkout session
+        const studentId = user?._id;
+        if (!studentId) {
+          throw new Error('Student ID not found. Please log in again.');
+        }
+
+        const result = await createStripeCheckoutSession(courseId, studentId);
+        setShowEnrollModal(false);
+        // Open the checkout URL from Stripe
+        console.log('Result:', result);
+        if (result.url) {
+          const checkoutUrl = result.url as string;
+          console.log('Checkout URL:', checkoutUrl);
+          await Linking.openURL(checkoutUrl);
+          // } else {
+          //   throw new Error('Cannot open checkout URL');
+          // }
+        } else {
+          throw new Error('No checkout URL received from server');
+        }
+      } else {
+        // For free courses, enroll directly
+        const result = await enrollInCourse(courseId);
+        setShowEnrollModal(false);
+        (navigation as any).navigate('Main', { screen: 'MyCourses' });
+      }
     } catch (err: any) {
-      setEnrollError(err.response?.data?.message || 'Failed to enroll');
+      setEnrollError(err.response?.data?.message || err.message || 'Failed to enroll');
     } finally {
       setEnrollLoading(false);
     }
@@ -169,8 +195,8 @@ const CourseDetailStudentPage = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{course.price > 0 ? 'Confirm Purchase' : 'Enroll for free'}</Text>
-            <Text style={styles.modalText}>{course.price > 0 ? "You'll be redirected to Stripe's secure payment screen to complete your purchase." : 'Click below to enroll in this free course'}</Text>
+            <Text style={styles.modalTitle}>{course?.price > 0 ? 'Confirm Purchase' : 'Enroll for free'}</Text>
+            <Text style={styles.modalText}>{course?.price > 0 ? "You'll be redirected to Stripe's secure payment screen to complete your purchase." : 'Click below to enroll in this free course'}</Text>
             {enrollError && <Text style={styles.errorText}>{enrollError}</Text>}
             {enrollLoading ? (
               <ActivityIndicator size="large" color="#43a047" />
@@ -180,7 +206,7 @@ const CourseDetailStudentPage = () => {
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={handleEnroll}>
-                  <Text style={styles.confirmButtonText}>{course.price > 0 ? `Pay $${course.price}` : 'Enroll Now'}</Text>
+                  <Text style={styles.confirmButtonText}>{course?.price > 0 ? `Pay $${course?.price}` : 'Enroll Now'}</Text>
                 </TouchableOpacity>
               </View>
             )}
