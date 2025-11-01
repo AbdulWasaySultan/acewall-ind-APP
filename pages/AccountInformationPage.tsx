@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
 import { launchImageLibrary, ImagePickerResponse, ImageLibraryOptions } from 'react-native-image-picker';
 import Toast from 'react-native-simple-toast';
 import { getUserInfo, uploadProfileImage, updateUserProfile, UpdateUserProfileData } from '../services/schoolService';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useUser } from '../contexts/UserContext';
-
-interface UserData {
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+export interface UserData {
   firstName: string;
   middleName: string;
   lastName: string;
@@ -26,6 +27,7 @@ interface UserData {
   mailingState: string;
   mailingZip: string;
   profileImage?: string;
+  isVarified:boolean
 }
 
 const AccountInformationPage = () => {
@@ -48,17 +50,22 @@ const AccountInformationPage = () => {
     mailingCity: '',
     mailingState: '',
     mailingZip: '',
+    isVarified:false
   });
   const [isLoading, setIsLoading] = useState(false);
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const [isImageChanged, setIsImageChanged] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const navigation = useNavigation();
+
+  const navigation =
+  useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, setUser } = useUser();
 
-  useEffect(() => {
-    fetchAndLoadUserInfo();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchAndLoadUserInfo();
+    }, [])
+  );
 
   const fetchAndLoadUserInfo = async () => {
     setIsLoading(true);
@@ -102,6 +109,7 @@ const AccountInformationPage = () => {
           mailingState: mailingAddress.state,
           mailingZip: mailingAddress.zip,
           profileImage: response.user.profileImg?.url || undefined,
+          isVarified:response.user.isVarified||false
         });
         setProfileImageUri(response.user.profileImg?.url || null);
       }
@@ -178,6 +186,7 @@ const AccountInformationPage = () => {
         mailingState: mailingAddress.state,
         mailingZip: mailingAddress.zip,
         profileImage: latestUserInfo.user.profileImg?.url || undefined,
+        isVarified:latestUserInfo.user.isVarified||false
       });
       setProfileImageUri(latestUserInfo.user.profileImg?.url || null);
       setIsImageChanged(false);
@@ -204,7 +213,7 @@ const AccountInformationPage = () => {
   };
 
   const handleEditCredentials = () => {
-    navigation.navigate('EditCredentials' as never);
+    navigation.navigate('EditCredentials' ,{userData:userData});
   };
 
   const handleSaveChanges = async () => {
@@ -215,8 +224,8 @@ const AccountInformationPage = () => {
         middleName: userData.middleName,
         lastName: userData.lastName,
         Bio: userData.Bio,
-        pronoun: userData.pronoun,
-        gender: userData.gender,
+        pronoun: userData?.pronoun || null,
+        gender: userData?.gender || null,
         phone: userData.phone,
         email: userData.email,
         homeAddressLine1: userData.homeAddressLine1,
@@ -251,7 +260,18 @@ const AccountInformationPage = () => {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',
+    marginBottom: 24,
+
+      }}>
+
       <Text style={styles.header}>Account Information</Text>
+      <View style={{padding:5,backgroundColor:userData.isVarified?'#D1FAE5':'#FEE2E2',borderRadius:10}}>
+
+    <Text style={{textAlign:'right',color:userData?.isVarified?'#065F46':'#991B1B'}}>{userData.isVarified? 'Verfied':'Not Verified'}</Text>
+    </View>
+
+    </View>
 
       {/* Action Buttons */}
       {!isEditMode && (
@@ -632,7 +652,6 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,

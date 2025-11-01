@@ -224,8 +224,8 @@ export interface UpdateUserProfileData {
   middleName: string;
   lastName: string;
   Bio: string;
-  pronoun: string;
-  gender: string;
+  pronoun?: string |null;
+  gender?: string | null 
   email: string;
   phone: string;
   homeAddressLine1: string;

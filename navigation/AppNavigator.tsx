@@ -19,7 +19,7 @@ import AnnouncementsPage from '../pages/AnnouncementsPage';
 import MessagesPage from '../pages/MessagesPage';
 import StudentsPage from '../pages/StudentsPage';
 import StudentProfilePage from '../pages/StudentProfilePage';
-import AccountInformationPage from '../pages/AccountInformationPage';
+import AccountInformationPage, { UserData } from '../pages/AccountInformationPage';
 import EditCredentialsPage from '../pages/EditCredentialsPage';
 import GradebookPage from '../pages/GradebookPage';
 import OTPVerificationPage from '../pages/OTPVerificationPage';
@@ -50,7 +50,7 @@ export type RootStackParamList = {
   Main: undefined;
   StudentProfile: { studentId: string };
   AccountInformation: undefined;
-  EditCredentials: undefined;
+  EditCredentials: {userData: UserData};
   CourseDetails: { courseId: string };
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;

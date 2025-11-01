@@ -1181,6 +1181,30 @@ export const getChaptersByQuarter = async (courseId: string, quarterId: string) 
     }
   }
 };
+export const getChaptersForCourses = async (courseId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/chapter/chapterofCourse/${courseId}`);
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      // Handle 404 or "No chapters found" case gracefully
+      if (error.response.status === 404 ||
+        error.response.data?.message === "No chapters found for this course") {
+        return {
+          chapters: [],
+          message: "No chapters found for this course"
+        };
+      }
+      throw new Error(error.response.data.message || 'Failed to fetch chapters for course');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
 
 export const getAssessmentsByLesson = async (lessonId: string) => {
   try {

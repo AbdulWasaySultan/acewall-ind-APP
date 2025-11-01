@@ -55,6 +55,7 @@ import {
   gradingScale,
   getGPA,
   gpaScale,
+  getChaptersForCourses,
 } from "../services/course";
 import {
   getCourseRating,
@@ -347,7 +348,9 @@ const CourseDetailsPage = () => {
   const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set())
   const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(new Set())
   const [showGradeScaleManagement, setShowGradeScaleManagement] = useState(false)
+  const [showGradeScaleManagementLoader, setShowGradeScaleManagementLoader] = useState(false)
   const [showGPAManagement, setShowGPAManagement] = useState(false)
+  const [showGPAManagementLoader, setShowGPAManagementLoader] = useState(false)
   const [gradeScale, setGradeScale] = useState([])
   const [GPA, setGPA] = useState([])
   const formatDateWithOrdinal = (dateString: string) => {
@@ -395,7 +398,9 @@ const CourseDetailsPage = () => {
     setError(null);
     console.log("Fetching course details for:", courseId);
     getCourseDetails(courseId)
-      .then((res) => setCourse(res.course))
+      .then((res) => {
+        console.log(res,'Course details')
+        setCourse(res.course)})
       .catch(() => setError("Failed to load course details."))
       .finally(() => setLoading(false));
     console.log("Course details fetched:", course);
@@ -537,7 +542,29 @@ const CourseDetailsPage = () => {
       setLoadingSemesterQuarters(false);
     }
   };
-
+  const handleChapterPress = async () => {
+      setExpandedChapter(null);
+      setShowChaptersForQuarterModal(true);
+      await refreshChaptersForCourse(courseId);
+  };
+  const refreshChaptersForCourse = async (courseId: string) => {
+    setLoadingChaptersForQuarter(true);
+    setChaptersForQuarter([]);
+    setChaptersMessage("");
+    try {
+      const res = await getChaptersForCourses(courseId);
+      if (res.chapters && res.chapters.length > 0) {
+        setChaptersForQuarter(res.chapters);
+      } else {
+        setChaptersMessage(res.message || "No chapters found.");
+      }
+    } catch (error: any) {
+      Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);
+      setChaptersMessage("Failed to fetch chapters.");
+    } finally {
+      setLoadingChaptersForQuarter(false);
+    }
+  };
   const refreshChaptersForQuarter = async (quarterId: string) => {
     setLoadingChaptersForQuarter(true);
     setChaptersForQuarter([]);
@@ -1588,7 +1615,37 @@ const CourseDetailsPage = () => {
       }
     });
   };
+  const loadGradeScale= async () => {
+    setShowGradeScaleManagement(true)
+    setShowGradeScaleManagementLoader(true)
+    try {
+      const res = await getGradeScale(courseId)
+    
+      setGradeScale(res)
+    } catch (err:any) {
+      Toast.show(err?.message || 'Failed to get gradeScale', Toast.LONG)
+    }
+    finally{
+    setShowGradeScaleManagementLoader(false)
+      
+    }
+  }
 
+
+
+ const loadGPA =  async () => {
+  setShowGPAManagement(true)
+  setShowGPAManagementLoader(true)
+    try {
+      const res = await getGPA(courseId)
+      setGPA(res)
+    } catch (err:any) {
+      Toast.show(err?.message ||'Failed to get GPA', Toast.LONG)
+    }
+    finally{
+      setShowGPAManagementLoader(false)
+      }
+  }
   const uploadThumbnail = async (thumbnail: any) => {
     setThumbnailUploading(true);
     setThumbnailError(null);
@@ -2362,15 +2419,7 @@ const CourseDetailsPage = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={async () => {
-              try {
-                const res = await getGradeScale(courseId)
-                setShowGradeScaleManagement(true)
-                setGradeScale(res)
-              } catch (err) {
-                Toast.show('Failed to get gradeScale', Toast.LONG)
-              }
-            }}
+            onPress={loadGradeScale}
             style={[
               styles.topActionButton,
               {
@@ -2385,15 +2434,7 @@ const CourseDetailsPage = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={async () => {
-              try {
-                const res = await getGPA(courseId)
-                setShowGPAManagement(true)
-                setGPA(res)
-              } catch (err) {
-                Toast.show('Failed to get GPA', Toast.LONG)
-              }
-            }}
+            onPress={loadGPA}
             style={[
               styles.topActionButton,
               {
@@ -2520,7 +2561,7 @@ const CourseDetailsPage = () => {
           <Text style={styles.addSemesterButtonText}>Add new semester</Text>
         </TouchableOpacity>
 
-        {course.semester && course.semester.length > 0 && (
+        {course.semesterbased ? course.semester && course.semester.length > 0 ?(
           <View style={styles.semesterSection}>
             {course.semester.map((sem: any, index: number) => (
               <TouchableOpacity
@@ -2536,6 +2577,24 @@ const CourseDetailsPage = () => {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+          ) : (
+            <View style={styles.semesterCard}>
+
+          <Text style={styles.semesterTitle}>No semesters found for this course.</Text>
+          </View>
+        
+        ):(
+            <View style={styles.semesterSection}>
+              <TouchableOpacity
+                style={styles.semesterCard}
+                onPress={handleChapterPress}
+              >
+                <Text style={styles.semesterTitle}>Course Chapters</Text>
+                <Text style={styles.semesterDates}>
+                 Chapters
+                </Text>
+              </TouchableOpacity>
           </View>
         )}
 
@@ -3001,6 +3060,7 @@ const CourseDetailsPage = () => {
         animationType="slide"
         onRequestClose={() => {
           setShowChaptersForQuarterModal(false);
+          course?.semesterbased &&
           setShowQuartersModal(true);
         }}
       >
@@ -3010,7 +3070,8 @@ const CourseDetailsPage = () => {
             <TouchableOpacity
               onPress={() => {
                 setShowChaptersForQuarterModal(false);
-                setShowQuartersModal(true);
+                      course?.semesterbased &&
+          setShowQuartersModal(true);
               }}
             >
               <SimpleIcon name="close" size={32} color="#333" />
@@ -5967,6 +6028,13 @@ const CourseDetailsPage = () => {
             }}>
               <Text style={styles.manageButtonText}>Manage Grade Scale</Text>
             </TouchableOpacity>
+            {showGradeScaleManagementLoader ? 
+              <ActivityIndicator
+                size="large"
+                color="#10B144"
+                style={{ marginTop: 20 }}
+              />:
+              Object.keys(gradeScale).length>0 ?
             <ScrollView style={{ flex: 1, marginTop: 20 }}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
@@ -6006,6 +6074,9 @@ const CourseDetailsPage = () => {
                 );
               })}
             </ScrollView>
+            :
+            <Text style={{marginTop: 20 }}>No gradescale found for this course.</Text>
+          }
           </View>
         </View>
       </Modal>
@@ -6022,7 +6093,8 @@ const CourseDetailsPage = () => {
             const res = await gradingScale(courseId, newGradeScales)
             Toast.show('Successfully created grade scale', Toast.LONG)
             setShowGradeScaleModal(false)
-            setShowGradeScaleManagement(true)
+          loadGradeScale()
+            
           }
           catch (err) {
             console.log(err)
@@ -6059,6 +6131,12 @@ const CourseDetailsPage = () => {
             }}>
               <Text style={styles.manageButtonText}>Manage GPA</Text>
             </TouchableOpacity>
+            {showGPAManagementLoader ? 
+              <ActivityIndicator
+                size="large"
+                color="#10B144"
+                style={{ marginTop: 20 }}
+              />:         Object.keys(GPA).length>0 ?
             <ScrollView style={{ flex: 1, marginTop: 20 }}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
@@ -6098,6 +6176,8 @@ const CourseDetailsPage = () => {
                 );
               })}
             </ScrollView>
+             :
+             <Text style={{marginTop: 20 }}>No gradescale found for this course.</Text>}
           </View>
         </View>
       </Modal>
@@ -6114,7 +6194,7 @@ const CourseDetailsPage = () => {
             const res = await gpaScale(courseId, newGradeScales)
             Toast.show('Successfully created gpa scale', Toast.LONG)
             setShowGPAModal(false)
-            setShowGPAManagement(true)
+            loadGradeScale()
           }
           catch (err) {
             console.log(err)

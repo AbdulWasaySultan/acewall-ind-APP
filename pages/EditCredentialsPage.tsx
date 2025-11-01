@@ -12,7 +12,9 @@ import {
   Platform,
 } from 'react-native';
 import Toast from 'react-native-simple-toast';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { RootStackParamList } from '../navigation/AppNavigator';
+type RouteParams = RouteProp<RootStackParamList, 'EditCredentials'>;
 import {
   updatePasswordOTP,
   updateEmailOTP,
@@ -33,7 +35,8 @@ const EditCredentialsPage: React.FC = () => {
   const [otpData, setOtpData] = useState<any>(null);
   const [otp, setOtp] = useState('');
   const [otpTimer, setOtpTimer] = useState(600); // 10 minutes in seconds
-
+  const route = useRoute<RouteParams>();
+  const {userData} = route.params;
   // Form states
   const [emailForm, setEmailForm] = useState({ newEmail: '' });
   const [passwordForm, setPasswordForm] = useState({
@@ -75,11 +78,11 @@ const EditCredentialsPage: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await updateEmailOTP(emailForm.newEmail);
-      setOtpData({ type: 'email', email: emailForm.newEmail });
+      setOtpData({ type: 'email', email: userData.email });
       setShowOTPModal(true);
       setOtpTimer(600);
       Toast.show('OTP sent successfully to previous email', Toast.LONG);
-    } catch (error) {
+    } catch (error:any) {
       Toast.show(error?.response?.data.message || 'Failed to update email', Toast.LONG);
     } finally {
       setIsLoading(false);
@@ -119,7 +122,7 @@ const EditCredentialsPage: React.FC = () => {
       setShowOTPModal(true);
       setOtpTimer(600);
       Toast.show('OTP sent successfully', Toast.LONG);
-    } catch (error) {
+    } catch (error:any) {
       console.error('Error sending password OTP:', error);
       Toast.show(error?.response?.data?.message || 'Failed to update password', Toast.LONG);
     } finally {
@@ -178,7 +181,7 @@ const EditCredentialsPage: React.FC = () => {
       Toast.show('Credentials updated successfully!', Toast.LONG);
       setShowOTPModal(false);
       navigation.goBack();
-    } catch (error) {
+    } catch (error) { 
       console.error('Error verifying OTP:', error);
       Toast.show('Invalid OTP or update failed', Toast.LONG);
     } finally {
