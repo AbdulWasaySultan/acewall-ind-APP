@@ -56,6 +56,13 @@ import {
   getGPA,
   gpaScale,
   getChaptersForCourses,
+  getSemestersOfCourse,
+  createSemester,
+  updateSemester,
+  toggleSemesterArchive,
+  createQuarter,
+  updateQuarter,
+  toggleQuarterArchive,
 } from "../services/course";
 import {
   getCourseRating,
@@ -198,6 +205,24 @@ const CourseDetailsPage = () => {
     useState(false);
   const [showAddSemesterModal, setShowAddSemesterModal] = useState(false);
   const [allSemesters, setAllSemesters] = useState<any[]>([]);
+  const [showGradingPeriodsModal, setShowGradingPeriodsModal] = useState(false);
+  const [gradingPeriods, setGradingPeriods] = useState<any[]>([]);
+  const [loadingGradingPeriods, setLoadingGradingPeriods] = useState(false);
+  const [showNewSemesterModal, setShowNewSemesterModal] = useState(false);
+  const [showNewQuarterModal, setShowNewQuarterModal] = useState(false);
+  const [showEditSemesterModal, setShowEditSemesterModal] = useState(false);
+  const [showEditQuarterModal, setShowEditQuarterModal] = useState(false);
+  const [selectedSemesterForQuarter, setSelectedSemesterForQuarter] = useState<any>(null);
+  const [editingSemester, setEditingSemester] = useState<any>(null);
+  const [editingQuarter, setEditingQuarter] = useState<any>(null);
+  const [semesterTitle, setSemesterTitle] = useState("");
+  const [semesterStartDate, setSemesterStartDate] = useState("");
+  const [semesterEndDate, setSemesterEndDate] = useState("");
+  const [quarterTitle, setQuarterTitle] = useState("");
+  const [quarterStartDate, setQuarterStartDate] = useState("");
+  const [quarterEndDate, setQuarterEndDate] = useState("");
+  const [showSemesterDatePicker, setShowSemesterDatePicker] = useState<'start' | 'end' | null>(null);
+  const [showQuarterDatePicker, setShowQuarterDatePicker] = useState<'start' | 'end' | null>(null);
   const [quarters, setQuarters] = useState<any[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<any>(null);
   const [selectedQuarter, setSelectedQuarter] = useState<any>(null);
@@ -399,8 +424,9 @@ const CourseDetailsPage = () => {
     console.log("Fetching course details for:", courseId);
     getCourseDetails(courseId)
       .then((res) => {
-        console.log(res,'Course details')
-        setCourse(res.course)})
+        console.log(res, 'Course details')
+        setCourse(res.course)
+      })
       .catch(() => setError("Failed to load course details."))
       .finally(() => setLoading(false));
     console.log("Course details fetched:", course);
@@ -423,6 +449,25 @@ const CourseDetailsPage = () => {
       fetchSemesters();
     }
   }, [showAddSemesterModal]);
+
+  useEffect(() => {
+    if (showGradingPeriodsModal && courseId) {
+      fetchGradingPeriods();
+    }
+  }, [showGradingPeriodsModal, courseId]);
+
+  const fetchGradingPeriods = async () => {
+    setLoadingGradingPeriods(true);
+    try {
+      const res = await getSemestersOfCourse(courseId);
+      setGradingPeriods(res.semesters || []);
+    } catch (error: any) {
+      console.error(error);
+      Toast.show(error.message || "Failed to fetch grading periods.", Toast.LONG);
+    } finally {
+      setLoadingGradingPeriods(false);
+    }
+  };
 
   useEffect(() => {
     if (course?._id) {
@@ -543,9 +588,9 @@ const CourseDetailsPage = () => {
     }
   };
   const handleChapterPress = async () => {
-      setExpandedChapter(null);
-      setShowChaptersForQuarterModal(true);
-      await refreshChaptersForCourse(courseId);
+    setExpandedChapter(null);
+    setShowChaptersForQuarterModal(true);
+    await refreshChaptersForCourse(courseId);
   };
   const refreshChaptersForCourse = async (courseId: string) => {
     setLoadingChaptersForQuarter(true);
@@ -1615,36 +1660,36 @@ const CourseDetailsPage = () => {
       }
     });
   };
-  const loadGradeScale= async () => {
+  const loadGradeScale = async () => {
     setShowGradeScaleManagement(true)
     setShowGradeScaleManagementLoader(true)
     try {
       const res = await getGradeScale(courseId)
-    
+
       setGradeScale(res)
-    } catch (err:any) {
+    } catch (err: any) {
       Toast.show(err?.message || 'Failed to get gradeScale', Toast.LONG)
     }
-    finally{
-    setShowGradeScaleManagementLoader(false)
-      
+    finally {
+      setShowGradeScaleManagementLoader(false)
+
     }
   }
 
 
 
- const loadGPA =  async () => {
-  setShowGPAManagement(true)
-  setShowGPAManagementLoader(true)
+  const loadGPA = async () => {
+    setShowGPAManagement(true)
+    setShowGPAManagementLoader(true)
     try {
       const res = await getGPA(courseId)
       setGPA(res)
-    } catch (err:any) {
-      Toast.show(err?.message ||'Failed to get GPA', Toast.LONG)
+    } catch (err: any) {
+      Toast.show(err?.message || 'Failed to get GPA', Toast.LONG)
     }
-    finally{
+    finally {
       setShowGPAManagementLoader(false)
-      }
+    }
   }
   const uploadThumbnail = async (thumbnail: any) => {
     setThumbnailUploading(true);
@@ -1699,6 +1744,259 @@ const CourseDetailsPage = () => {
     }
     setExpandedQuarters(newSet)
   }
+
+  // Format date for input (dd/mm/yyyy)
+  const formatDateForInput = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Parse date from dd/mm/yyyy to ISO string
+  const parseDateFromInput = (dateString: string) => {
+    const [day, month, year] = dateString.split('/');
+    const date = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+    return date.toISOString();
+  };
+
+  // Get last semester end date
+  const getLastSemesterEndDate = () => {
+    if (gradingPeriods.length === 0) return null;
+    const sortedSemesters = [...gradingPeriods].sort((a, b) =>
+      new Date(b.endDate).getTime() - new Date(a.endDate).getTime()
+    );
+    return sortedSemesters[0].endDate;
+  };
+
+  const handleCreateSemester = async () => {
+    if (!semesterTitle.trim()) {
+      Toast.show("Please enter a semester title", Toast.LONG);
+      return;
+    }
+    if (!semesterStartDate || !semesterEndDate) {
+      Toast.show("Please select both start and end dates", Toast.LONG);
+      return;
+    }
+
+    const lastEndDate = getLastSemesterEndDate();
+    if (lastEndDate) {
+      const startDate = new Date(parseDateFromInput(semesterStartDate));
+      const lastEnd = new Date(lastEndDate);
+      if (startDate <= lastEnd) {
+        Toast.show("New semester must start after the last semester ends", Toast.LONG);
+        return;
+      }
+    }
+
+    const start = new Date(parseDateFromInput(semesterStartDate));
+    const end = new Date(parseDateFromInput(semesterEndDate));
+    if (start >= end) {
+      Toast.show("End date must be after start date", Toast.LONG);
+      return;
+    }
+
+    try {
+      await createSemester(
+        courseId,
+        semesterTitle,
+        parseDateFromInput(semesterStartDate),
+        parseDateFromInput(semesterEndDate)
+      );
+      Toast.show("Semester created successfully", Toast.LONG);
+      setShowNewSemesterModal(false);
+      setSemesterTitle("");
+      setSemesterStartDate("");
+      setSemesterEndDate("");
+      fetchGradingPeriods();
+    } catch (error: any) {
+      Toast.show(error.message || "Failed to create semester", Toast.LONG);
+    }
+  };
+
+  const handleEditSemester = async () => {
+    if (!semesterTitle.trim()) {
+      Toast.show("Please enter a semester title", Toast.LONG);
+      return;
+    }
+    if (!semesterStartDate || !semesterEndDate) {
+      Toast.show("Please select both start and end dates", Toast.LONG);
+      return;
+    }
+
+    const start = new Date(parseDateFromInput(semesterStartDate));
+    const end = new Date(parseDateFromInput(semesterEndDate));
+    if (start >= end) {
+      Toast.show("End date must be after start date", Toast.LONG);
+      return;
+    }
+
+    try {
+      await updateSemester(
+        editingSemester._id,
+        courseId,
+        semesterTitle,
+        parseDateFromInput(semesterStartDate),
+        parseDateFromInput(semesterEndDate)
+      );
+      Toast.show("Semester updated successfully", Toast.LONG);
+      setShowEditSemesterModal(false);
+      setEditingSemester(null);
+      setSemesterTitle("");
+      setSemesterStartDate("");
+      setSemesterEndDate("");
+      fetchGradingPeriods();
+    } catch (error: any) {
+      Toast.show(error.message || "Failed to update semester", Toast.LONG);
+    }
+  };
+
+  const handleCreateQuarter = async () => {
+    if (!quarterTitle.trim()) {
+      Toast.show("Please enter a quarter title", Toast.LONG);
+      return;
+    }
+    if (!quarterStartDate || !quarterEndDate) {
+      Toast.show("Please select both start and end dates", Toast.LONG);
+      return;
+    }
+
+    const semesterStart = new Date(selectedSemesterForQuarter.startDate);
+    const semesterEnd = new Date(selectedSemesterForQuarter.endDate);
+    const quarterStart = new Date(parseDateFromInput(quarterStartDate));
+    const quarterEnd = new Date(parseDateFromInput(quarterEndDate));
+
+    if (quarterStart < semesterStart || quarterEnd > semesterEnd) {
+      Toast.show("Quarter dates must be within the semester duration", Toast.LONG);
+      return;
+    }
+
+    if (quarterStart >= quarterEnd) {
+      Toast.show("End date must be after start date", Toast.LONG);
+      return;
+    }
+
+    try {
+      await createQuarter(
+        selectedSemesterForQuarter._id,
+        quarterTitle,
+        parseDateFromInput(quarterStartDate),
+        parseDateFromInput(quarterEndDate)
+      );
+      Toast.show("Quarter created successfully", Toast.LONG);
+      setShowNewQuarterModal(false);
+      setSelectedSemesterForQuarter(null);
+      setQuarterTitle("");
+      setQuarterStartDate("");
+      setQuarterEndDate("");
+      fetchGradingPeriods();
+    } catch (error: any) {
+      Toast.show(error.message || "Failed to create quarter", Toast.LONG);
+    }
+  };
+
+  const handleEditQuarter = async () => {
+    if (!quarterTitle.trim()) {
+      Toast.show("Please enter a quarter title", Toast.LONG);
+      return;
+    }
+    if (!quarterStartDate || !quarterEndDate) {
+      Toast.show("Please select both start and end dates", Toast.LONG);
+      return;
+    }
+
+    const semester = gradingPeriods.find(s =>
+      s.quarters?.some((q: any) => q._id === editingQuarter._id)
+    );
+    if (!semester) return;
+
+    const semesterStart = new Date(semester.startDate);
+    const semesterEnd = new Date(semester.endDate);
+    const quarterStart = new Date(parseDateFromInput(quarterStartDate));
+    const quarterEnd = new Date(parseDateFromInput(quarterEndDate));
+
+    if (quarterStart < semesterStart || quarterEnd > semesterEnd) {
+      Toast.show("Quarter dates must be within the semester duration", Toast.LONG);
+      return;
+    }
+
+    if (quarterStart >= quarterEnd) {
+      Toast.show("End date must be after start date", Toast.LONG);
+      return;
+    }
+
+    try {
+      console.log(editingQuarter)
+      await updateQuarter(
+        editingQuarter._id,
+        courseId,
+        editingQuarter.semester,
+        quarterTitle,
+        parseDateFromInput(quarterStartDate),
+        parseDateFromInput(quarterEndDate)
+      );
+      Toast.show("Quarter updated successfully", Toast.LONG);
+      setShowEditQuarterModal(false);
+      setEditingQuarter(null);
+      setQuarterTitle("");
+      setQuarterStartDate("");
+      setQuarterEndDate("");
+      fetchGradingPeriods();
+    } catch (error: any) {
+      Toast.show(error.message || "Failed to update quarter", Toast.LONG);
+    }
+  };
+
+  const handleToggleSemesterArchive = async (semester: any) => {
+    try {
+      await toggleSemesterArchive(semester._id, !semester.isArchived);
+      Toast.show(
+        semester.isArchived ? "Semester unarchived" : "Semester archived",
+        Toast.LONG
+      );
+      fetchGradingPeriods();
+    } catch (error: any) {
+      Toast.show(error.message || "Failed to update semester", Toast.LONG);
+    }
+  };
+
+  const handleToggleQuarterArchive = async (quarter: any) => {
+    try {
+      await toggleQuarterArchive(quarter._id, !quarter.isArchived);
+      Toast.show(
+        quarter.isArchived ? "Quarter unarchived" : "Quarter archived",
+        Toast.LONG
+      );
+      fetchGradingPeriods();
+    } catch (error: any) {
+      Toast.show(error.message || "Failed to update quarter", Toast.LONG);
+    }
+  };
+
+  const openEditSemesterModal = (semester: any) => {
+    setEditingSemester(semester);
+    setSemesterTitle(semester.title);
+    setSemesterStartDate(formatDateForInput(semester.startDate));
+    setSemesterEndDate(formatDateForInput(semester.endDate));
+    setShowEditSemesterModal(true);
+  };
+
+  const openEditQuarterModal = (quarter: any) => {
+    setEditingQuarter(quarter);
+    setQuarterTitle(quarter.title);
+    setQuarterStartDate(formatDateForInput(quarter.startDate));
+    setQuarterEndDate(formatDateForInput(quarter.endDate));
+    setShowEditQuarterModal(true);
+  };
+
+  const openNewQuarterModal = (semester: any) => {
+    setSelectedSemesterForQuarter(semester);
+    setQuarterTitle("");
+    setQuarterStartDate("");
+    setQuarterEndDate("");
+    setShowNewQuarterModal(true);
+  };
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -2556,12 +2854,12 @@ const CourseDetailsPage = () => {
 
         <TouchableOpacity
           style={styles.addSemesterButton}
-          onPress={() => setShowAddSemesterModal(true)}
+          onPress={() => setShowGradingPeriodsModal(true)}
         >
-          <Text style={styles.addSemesterButtonText}>Add new semester</Text>
+          <Text style={styles.addSemesterButtonText}>Manage semesters & Quarters</Text>
         </TouchableOpacity>
 
-        {course.semesterbased ? course.semester && course.semester.length > 0 ?(
+        {course.semesterbased ? course.semester && course.semester.length > 0 ? (
           <View style={styles.semesterSection}>
             {course.semester.map((sem: any, index: number) => (
               <TouchableOpacity
@@ -2578,23 +2876,23 @@ const CourseDetailsPage = () => {
               </TouchableOpacity>
             ))}
           </View>
-          ) : (
-            <View style={styles.semesterCard}>
+        ) : (
+          <View style={styles.semesterCard}>
 
-          <Text style={styles.semesterTitle}>No semesters found for this course.</Text>
+            <Text style={styles.semesterTitle}>No semesters found for this course.</Text>
           </View>
-        
-        ):(
-            <View style={styles.semesterSection}>
-              <TouchableOpacity
-                style={styles.semesterCard}
-                onPress={handleChapterPress}
-              >
-                <Text style={styles.semesterTitle}>Course Chapters</Text>
-                <Text style={styles.semesterDates}>
-                 Chapters
-                </Text>
-              </TouchableOpacity>
+
+        ) : (
+          <View style={styles.semesterSection}>
+            <TouchableOpacity
+              style={styles.semesterCard}
+              onPress={handleChapterPress}
+            >
+              <Text style={styles.semesterTitle}>Course Chapters</Text>
+              <Text style={styles.semesterDates}>
+                Chapters
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -2735,6 +3033,412 @@ const CourseDetailsPage = () => {
           )}
         </View>
       </ScrollView>
+
+      {/* Grading Periods Modal */}
+      <Modal
+        visible={showGradingPeriodsModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowGradingPeriodsModal(false)}
+      >
+        <View style={styles.gradingPeriodsModalOverlay}>
+          <View style={styles.gradingPeriodsModalContent}>
+            <TouchableOpacity
+              onPress={() => setShowGradingPeriodsModal(false)}
+              style={styles.gradingPeriodsBackButton}
+            >
+              <SimpleIcon name="arrow-back" size={20} color="#000" />
+              <Text style={styles.gradingPeriodsBackText}>Back</Text>
+            </TouchableOpacity>
+            <View style={styles.gradingPeriodsHeader}>
+              <View style={styles.gradingPeriodsTitleContainer}>
+                <SimpleIcon name="calendar" size={24} color="#10B144" />
+                <Text style={styles.gradingPeriodsTitle}>Grading Periods</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setSemesterTitle("");
+                  setSemesterStartDate("");
+                  setSemesterEndDate("");
+                  setShowNewSemesterModal(true);
+                }}
+                style={styles.gradingPeriodsCreateButton}
+              >
+                <SimpleIcon name="add" size={20} color="#fff" />
+                <Text style={styles.gradingPeriodsCreateText}>Create Semester</Text>
+              </TouchableOpacity>
+            </View>
+
+            {loadingGradingPeriods ? (
+              <View style={styles.gradingPeriodsLoadingContainer}>
+                <ActivityIndicator size="large" color="#10B144" />
+              </View>
+            ) : (
+              <ScrollView style={styles.gradingPeriodsList}>
+                {gradingPeriods.length === 0 ? (
+                  <Text style={styles.gradingPeriodsEmptyText}>
+                    No semesters found. Create your first semester.
+                  </Text>
+                ) : (
+                  gradingPeriods.map((semester: any) => (
+                    <View key={semester._id} style={styles.gradingPeriodItem}>
+                      <View style={styles.gradingPeriodRow}>
+                        <View style={styles.gradingPeriodInfo}>
+                          <Text style={styles.gradingPeriodTitleText}>
+                            {semester.title}
+                          </Text>
+                          <Text style={styles.gradingPeriodDates}>
+                            {formatDateForInput(semester.startDate)} - {formatDateForInput(semester.endDate)}
+                          </Text>
+                        </View>
+                        <View style={styles.gradingPeriodActions}>
+                          <TouchableOpacity
+                            style={styles.gradingPeriodToggle}
+                            onPress={() => handleToggleSemesterArchive(semester)}
+                          >
+                            <Text style={styles.gradingPeriodToggleText}>
+                              {semester.isArchived ? "Archived" : "Unarchived"}
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.gradingPeriodAddButton}
+                            onPress={() => openNewQuarterModal(semester)}
+                          >
+                            <SimpleIcon name="add" size={16} color="#10B144" />
+                            <Text style={styles.gradingPeriodAddButtonText}>Quarter</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.gradingPeriodEditButton}
+                            onPress={() => openEditSemesterModal(semester)}
+                          >
+                            <SimpleIcon name="edit" size={18} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      {semester.quarters && semester.quarters.length > 0 && (
+                        <View style={styles.gradingPeriodQuarters}>
+                          {semester.quarters.map((quarter: any) => (
+                            <View key={quarter._id} style={styles.gradingPeriodQuarterItem}>
+                              <View style={styles.gradingPeriodRow}>
+                                <View style={styles.gradingPeriodInfo}>
+                                  <Text style={styles.gradingPeriodQuarterTitle}>
+                                    {quarter.title}
+                                  </Text>
+                                  <Text style={styles.gradingPeriodDates}>
+                                    {formatDateForInput(quarter.startDate)} - {formatDateForInput(quarter.endDate)}
+                                  </Text>
+                                </View>
+                                <View style={styles.gradingPeriodActions}>
+                                  <TouchableOpacity
+                                    style={styles.gradingPeriodToggle}
+                                    onPress={() => handleToggleQuarterArchive(quarter)}
+                                  >
+                                    <Text style={styles.gradingPeriodToggleText}>
+                                      {quarter.isArchived ? "Archived" : "Unarchived"}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={styles.gradingPeriodEditButton}
+                                    onPress={() => openEditQuarterModal(quarter)}
+                                  >
+                                    <SimpleIcon name="edit" size={18} color="#fff" />
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* New Semester Modal */}
+      <Modal
+        visible={showNewSemesterModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowNewSemesterModal(false)}
+      >
+        <View style={styles.semesterModalOverlay}>
+          <View style={styles.semesterModalContent}>
+            <Text style={styles.semesterModalTitle}>New Semester</Text>
+            {getLastSemesterEndDate() && (
+              <Text style={styles.semesterModalInfo}>
+                Last semester ends on: {formatDateForInput(getLastSemesterEndDate()!)}
+              </Text>
+            )}
+            <TextInput
+              style={styles.semesterModalInput}
+              placeholder="Semester Title"
+              value={semesterTitle}
+              onChangeText={setSemesterTitle}
+            />
+            <TouchableOpacity
+              style={styles.semesterModalInput}
+              onPress={() => setShowSemesterDatePicker('start')}
+            >
+              <Text style={semesterStartDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+                {semesterStartDate || "dd/mm/yyyy"}
+              </Text>
+            </TouchableOpacity>
+            {showSemesterDatePicker === 'start' && (
+              <DateTimePicker
+                value={semesterStartDate ? new Date(parseDateFromInput(semesterStartDate)) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowSemesterDatePicker(null);
+                  if (date) {
+                    setSemesterStartDate(formatDateForInput(date.toISOString()));
+                  }
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.semesterModalInput}
+              onPress={() => setShowSemesterDatePicker('end')}
+            >
+              <Text style={semesterEndDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+                {semesterEndDate || "dd/mm/yyyy"}
+              </Text>
+            </TouchableOpacity>
+            {showSemesterDatePicker === 'end' && (
+              <DateTimePicker
+                value={semesterEndDate ? new Date(parseDateFromInput(semesterEndDate)) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowSemesterDatePicker(null);
+                  if (date) {
+                    setSemesterEndDate(formatDateForInput(date.toISOString()));
+                  }
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.semesterModalButton}
+              onPress={handleCreateSemester}
+            >
+              <Text style={styles.semesterModalButtonText}>Create Semester</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Semester Modal */}
+      <Modal
+        visible={showEditSemesterModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEditSemesterModal(false)}
+      >
+        <View style={styles.semesterModalOverlay}>
+          <View style={styles.semesterModalContent}>
+            <Text style={styles.semesterModalTitle}>Edit Semester</Text>
+            <TextInput
+              style={[styles.semesterModalInput, { backgroundColor: '#f0f0f0' }]}
+              placeholder="Semester Title"
+              value={semesterTitle}
+              onChangeText={setSemesterTitle}
+            />
+            <TouchableOpacity
+              style={styles.semesterModalInput}
+              onPress={() => setShowSemesterDatePicker('start')}
+            >
+              <Text style={semesterStartDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+                {semesterStartDate || "dd/mm/yyyy"}
+              </Text>
+            </TouchableOpacity>
+            {showSemesterDatePicker === 'start' && (
+              <DateTimePicker
+                value={semesterStartDate ? new Date(parseDateFromInput(semesterStartDate)) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowSemesterDatePicker(null);
+                  if (date) {
+                    setSemesterStartDate(formatDateForInput(date.toISOString()));
+                  }
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.semesterModalInput}
+              onPress={() => setShowSemesterDatePicker('end')}
+            >
+              <Text style={semesterEndDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+                {semesterEndDate || "dd/mm/yyyy"}
+              </Text>
+            </TouchableOpacity>
+            {showSemesterDatePicker === 'end' && (
+              <DateTimePicker
+                value={semesterEndDate ? new Date(parseDateFromInput(semesterEndDate)) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowSemesterDatePicker(null);
+                  if (date) {
+                    setSemesterEndDate(formatDateForInput(date.toISOString()));
+                  }
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.semesterModalButton}
+              onPress={handleEditSemester}
+            >
+              <Text style={styles.semesterModalButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* New Quarter Modal */}
+      <Modal
+        visible={showNewQuarterModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowNewQuarterModal(false)}
+      >
+        <View style={styles.semesterModalOverlay}>
+          <View style={styles.semesterModalContent}>
+            <Text style={styles.semesterModalTitle}>New Quarter</Text>
+            {selectedSemesterForQuarter && (
+              <Text style={styles.semesterModalInfo}>
+                Semester duration: {formatDateForInput(selectedSemesterForQuarter.startDate)} - {formatDateForInput(selectedSemesterForQuarter.endDate)}
+              </Text>
+            )}
+            <TextInput
+              style={styles.semesterModalInput}
+              placeholder="Quarter Title"
+              value={quarterTitle}
+              onChangeText={setQuarterTitle}
+            />
+            <TouchableOpacity
+              style={styles.semesterModalInput}
+              onPress={() => setShowQuarterDatePicker('start')}
+            >
+              <Text style={quarterStartDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+                {quarterStartDate || "dd/mm/yyyy"}
+              </Text>
+            </TouchableOpacity>
+            {showQuarterDatePicker === 'start' && (
+              <DateTimePicker
+                value={quarterStartDate ? new Date(parseDateFromInput(quarterStartDate)) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowQuarterDatePicker(null);
+                  if (date) {
+                    setQuarterStartDate(formatDateForInput(date.toISOString()));
+                  }
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.semesterModalInput}
+              onPress={() => setShowQuarterDatePicker('end')}
+            >
+              <Text style={quarterEndDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+                {quarterEndDate || "dd/mm/yyyy"}
+              </Text>
+            </TouchableOpacity>
+            {showQuarterDatePicker === 'end' && (
+              <DateTimePicker
+                value={quarterEndDate ? new Date(parseDateFromInput(quarterEndDate)) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowQuarterDatePicker(null);
+                  if (date) {
+                    setQuarterEndDate(formatDateForInput(date.toISOString()));
+                  }
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.semesterModalButton}
+              onPress={handleCreateQuarter}
+            >
+              <Text style={styles.semesterModalButtonText}>Create Quarter</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Quarter Modal */}
+      <Modal
+        visible={showEditQuarterModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEditQuarterModal(false)}
+      >
+        <View style={styles.semesterModalOverlay}>
+          <View style={styles.semesterModalContent}>
+            <Text style={styles.semesterModalTitle}>Edit Quarter</Text>
+            <TextInput
+              style={[styles.semesterModalInput, { backgroundColor: '#f0f0f0' }]}
+              placeholder="Quarter Title"
+              value={quarterTitle}
+              onChangeText={setQuarterTitle}
+            />
+            <TouchableOpacity
+              style={styles.semesterModalInput}
+              onPress={() => setShowQuarterDatePicker('start')}
+            >
+              <Text style={quarterStartDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+                {quarterStartDate || "dd/mm/yyyy"}
+              </Text>
+            </TouchableOpacity>
+            {showQuarterDatePicker === 'start' && (
+              <DateTimePicker
+                value={quarterStartDate ? new Date(parseDateFromInput(quarterStartDate)) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowQuarterDatePicker(null);
+                  if (date) {
+                    setQuarterStartDate(formatDateForInput(date.toISOString()));
+                  }
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.semesterModalInput}
+              onPress={() => setShowQuarterDatePicker('end')}
+            >
+              <Text style={quarterEndDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+                {quarterEndDate || "dd/mm/yyyy"}
+              </Text>
+            </TouchableOpacity>
+            {showQuarterDatePicker === 'end' && (
+              <DateTimePicker
+                value={quarterEndDate ? new Date(parseDateFromInput(quarterEndDate)) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, date) => {
+                  setShowQuarterDatePicker(null);
+                  if (date) {
+                    setQuarterEndDate(formatDateForInput(date.toISOString()));
+                  }
+                }}
+              />
+            )}
+            <TouchableOpacity
+              style={styles.semesterModalButton}
+              onPress={handleEditQuarter}
+            >
+              <Text style={styles.semesterModalButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={showManageCategoriesModal}
@@ -3061,7 +3765,7 @@ const CourseDetailsPage = () => {
         onRequestClose={() => {
           setShowChaptersForQuarterModal(false);
           course?.semesterbased &&
-          setShowQuartersModal(true);
+            setShowQuartersModal(true);
         }}
       >
         <View style={styles.chaptersModalContainer}>
@@ -3070,8 +3774,8 @@ const CourseDetailsPage = () => {
             <TouchableOpacity
               onPress={() => {
                 setShowChaptersForQuarterModal(false);
-                      course?.semesterbased &&
-          setShowQuartersModal(true);
+                course?.semesterbased &&
+                  setShowQuartersModal(true);
               }}
             >
               <SimpleIcon name="close" size={32} color="#333" />
@@ -6028,55 +6732,55 @@ const CourseDetailsPage = () => {
             }}>
               <Text style={styles.manageButtonText}>Manage Grade Scale</Text>
             </TouchableOpacity>
-            {showGradeScaleManagementLoader ? 
+            {showGradeScaleManagementLoader ?
               <ActivityIndicator
                 size="large"
                 color="#10B144"
                 style={{ marginTop: 20 }}
-              />:
-              Object.keys(gradeScale).length>0 ?
-            <ScrollView style={{ flex: 1, marginTop: 20 }}>
-              {/* Table Header */}
-              <View style={styles.tableHeader}>
-                <Text style={[styles.headerText, { flex: 1 }]}>Grade</Text>
-                <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
-                <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
-              </View>
-
-              {/* Table Rows */}
-              {gradeScale?.map((item: GradeScaleItem) => {
-                const percentage = (item.max - item.min) / 100; // simulate visual fill
-
-                return (
-                  <View key={item._id} style={styles.tableRow}>
-                    {/* Grade */}
-                    <View style={styles.gradeBadge}>
-                      <Text style={styles.gradeText}>{item.grade}</Text>
-                    </View>
-
-                    {/* Range */}
-                    <Text style={[styles.rangeText, { flex: 2 }]}>
-                      {item.min}% - {item.max}%
-                    </Text>
-
-                    {/* Custom Progress Bar */}
-                    <View style={[styles.progressWrapper, { flex: 3 }]}>
-                      <View style={[styles.progressBackground]}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            { width: `${percentage * 100}%` },
-                          ]}
-                        />
-                      </View>
-                    </View>
+              /> :
+              Object.keys(gradeScale).length > 0 ?
+                <ScrollView style={{ flex: 1, marginTop: 20 }}>
+                  {/* Table Header */}
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.headerText, { flex: 1 }]}>Grade</Text>
+                    <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
+                    <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
                   </View>
-                );
-              })}
-            </ScrollView>
-            :
-            <Text style={{marginTop: 20 }}>No gradescale found for this course.</Text>
-          }
+
+                  {/* Table Rows */}
+                  {gradeScale?.map((item: GradeScaleItem) => {
+                    const percentage = (item.max - item.min) / 100; // simulate visual fill
+
+                    return (
+                      <View key={item._id} style={styles.tableRow}>
+                        {/* Grade */}
+                        <View style={styles.gradeBadge}>
+                          <Text style={styles.gradeText}>{item.grade}</Text>
+                        </View>
+
+                        {/* Range */}
+                        <Text style={[styles.rangeText, { flex: 2 }]}>
+                          {item.min}% - {item.max}%
+                        </Text>
+
+                        {/* Custom Progress Bar */}
+                        <View style={[styles.progressWrapper, { flex: 3 }]}>
+                          <View style={[styles.progressBackground]}>
+                            <View
+                              style={[
+                                styles.progressFill,
+                                { width: `${percentage * 100}%` },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </ScrollView>
+                :
+                <Text style={{ marginTop: 20 }}>No gradescale found for this course.</Text>
+            }
           </View>
         </View>
       </Modal>
@@ -6093,8 +6797,8 @@ const CourseDetailsPage = () => {
             const res = await gradingScale(courseId, newGradeScales)
             Toast.show('Successfully created grade scale', Toast.LONG)
             setShowGradeScaleModal(false)
-          loadGradeScale()
-            
+            loadGradeScale()
+
           }
           catch (err) {
             console.log(err)
@@ -6131,53 +6835,53 @@ const CourseDetailsPage = () => {
             }}>
               <Text style={styles.manageButtonText}>Manage GPA</Text>
             </TouchableOpacity>
-            {showGPAManagementLoader ? 
+            {showGPAManagementLoader ?
               <ActivityIndicator
                 size="large"
                 color="#10B144"
                 style={{ marginTop: 20 }}
-              />:         Object.keys(GPA).length>0 ?
-            <ScrollView style={{ flex: 1, marginTop: 20 }}>
-              {/* Table Header */}
-              <View style={styles.tableHeader}>
-                <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>
-                <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
-                <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
-              </View>
-
-              {/* Table Rows */}
-              {GPA?.map((item: GPAItem) => {
-                const percentage = (item.maxPercentage - item.minPercentage) / 100; // simulate visual fill
-                console.log(percentage)
-                return (
-                  <View key={item._id} style={styles.tableRow}>
-                    {/* Grade */}
-                    <View style={styles.gradeBadge}>
-                      <Text style={styles.gradeText}>{item.gpa}</Text>
-                    </View>
-
-                    {/* Range */}
-                    <Text style={[styles.rangeText, { flex: 2 }]}>
-                      {item.minPercentage}% - {item.maxPercentage}%
-                    </Text>
-
-                    {/* Custom Progress Bar */}
-                    <View style={[styles.progressWrapper, { flex: 3 }]}>
-                      <View style={[styles.progressBackground]}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            { width: `${percentage * 100}%` },
-                          ]}
-                        />
-                      </View>
-                    </View>
+              /> : Object.keys(GPA).length > 0 ?
+                <ScrollView style={{ flex: 1, marginTop: 20 }}>
+                  {/* Table Header */}
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>
+                    <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
+                    <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
                   </View>
-                );
-              })}
-            </ScrollView>
-             :
-             <Text style={{marginTop: 20 }}>No gradescale found for this course.</Text>}
+
+                  {/* Table Rows */}
+                  {GPA?.map((item: GPAItem) => {
+                    const percentage = (item.maxPercentage - item.minPercentage) / 100; // simulate visual fill
+                    console.log(percentage)
+                    return (
+                      <View key={item._id} style={styles.tableRow}>
+                        {/* Grade */}
+                        <View style={styles.gradeBadge}>
+                          <Text style={styles.gradeText}>{item.gpa}</Text>
+                        </View>
+
+                        {/* Range */}
+                        <Text style={[styles.rangeText, { flex: 2 }]}>
+                          {item.minPercentage}% - {item.maxPercentage}%
+                        </Text>
+
+                        {/* Custom Progress Bar */}
+                        <View style={[styles.progressWrapper, { flex: 3 }]}>
+                          <View style={[styles.progressBackground]}>
+                            <View
+                              style={[
+                                styles.progressFill,
+                                { width: `${percentage * 100}%` },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </ScrollView>
+                :
+                <Text style={{ marginTop: 20 }}>No gradescale found for this course.</Text>}
           </View>
         </View>
       </Modal>
@@ -6190,7 +6894,7 @@ const CourseDetailsPage = () => {
         }
         onSave={async (newGradeScales) => {
           try {
-            console.log(newGradeScales,courseId)
+            console.log(newGradeScales, courseId)
             const res = await gpaScale(courseId, newGradeScales)
             Toast.show('Successfully created gpa scale', Toast.LONG)
             setShowGPAModal(false)
@@ -8397,6 +9101,215 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 16,
+  },
+  // Grading Periods Modal Styles
+  gradingPeriodsModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  gradingPeriodsModalContent: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 10
+  },
+  gradingPeriodsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  gradingPeriodsBackButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    width: 100,
+    margin: 10,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+  },
+  gradingPeriodsBackText: {
+    marginLeft: 4,
+    fontSize: 16,
+    color: "#000",
+  },
+  gradingPeriodsTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gradingPeriodsTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000",
+    marginLeft: 8,
+  },
+  gradingPeriodsCreateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#374151",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  gradingPeriodsCreateText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 4,
+  },
+  gradingPeriodsLoadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  gradingPeriodsList: {
+    flex: 1,
+    padding: 16,
+  },
+  gradingPeriodsEmptyText: {
+    textAlign: "center",
+    color: "#6b7280",
+    fontSize: 16,
+    marginTop: 40,
+  },
+  gradingPeriodItem: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    marginBottom: 12,
+    padding: 16,
+  },
+  gradingPeriodRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  gradingPeriodInfo: {
+    flex: 1,
+  },
+  gradingPeriodTitleText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 4,
+  },
+  gradingPeriodQuarterTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 4,
+    marginLeft: 16,
+  },
+  gradingPeriodDates: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+  gradingPeriodActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  gradingPeriodToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: "#f3f4f6",
+  },
+  gradingPeriodToggleText: {
+    fontSize: 12,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  gradingPeriodAddButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#D1FAE5",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  gradingPeriodAddButtonText: {
+    color: "#10B144",
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 4,
+  },
+  gradingPeriodEditButton: {
+    backgroundColor: "#374151",
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  gradingPeriodQuarters: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+  },
+  gradingPeriodQuarterItem: {
+    marginTop: 8,
+  },
+  // Semester/Quarter Modal Styles
+  semesterModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  semesterModalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 24,
+    width: "85%",
+    maxWidth: 400,
+  },
+  semesterModalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 16,
+  },
+  semesterModalInfo: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginBottom: 16,
+  },
+  semesterModalInput: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: "#fff",
+    marginBottom: 12,
+    minHeight: 48,
+    justifyContent: "center",
+  },
+  semesterModalInputText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  semesterModalPlaceholder: {
+    fontSize: 16,
+    color: "#9ca3af",
+  },
+  semesterModalButton: {
+    backgroundColor: "#374151",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  semesterModalButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

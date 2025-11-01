@@ -1157,6 +1157,155 @@ export const addSemesterToCourse = async (courseId: string, semesterId: string, 
   }
 };
 
+// Get semesters of a course
+export const getSemestersOfCourse = async (courseId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/semester/getSemesterOfCourse/${courseId}`);
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch semesters');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
+
+// Create semester
+export const createSemester = async (courseId: string, title: string, startDate: string, endDate: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.post(`/api/semester/create/${courseId}`, {
+      title,
+      startDate,
+      endDate,
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to create semester');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
+
+// Update semester
+export const updateSemester = async (semesterId: string, courseId: string, title: string, startDate: string, endDate: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.put(`/api/semester/editSemester/${semesterId}`, {
+      title,
+      course: courseId,
+      startDate,
+      endDate,
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to update semester');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
+
+// Toggle archive status for semester
+export const toggleSemesterArchive = async (semesterId: string, isArchived: boolean) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.put(`/api/admin/updateSemArchiveStatus/${semesterId}`, {
+      isArchived,
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to update semester archive status');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
+
+// Create quarter
+export const createQuarter = async (semesterId: string, title: string, startDate: string, endDate: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.post(`/api/quarter/create/${semesterId}`, {
+      title,
+      startDate,
+      endDate,
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to create quarter');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
+
+// Update quarter
+export const updateQuarter = async (quarterId: string, courseId: string, semesterId: string, title: string, startDate: string, endDate: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.put(`/api/quarter/editQuarter/${quarterId}`, {
+      title,
+      course: courseId,
+      semester: semesterId,
+      startDate,
+      endDate,
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to update quarter');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
+
+// Toggle archive status for quarter
+export const toggleQuarterArchive = async (quarterId: string, isArchived: boolean) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.put(`/api/quarter/archive/${quarterId}`, {
+      isArchived,
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to update quarter archive status');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
+      throw new Error('Error setting up the request');
+    }
+  }
+};
+
 export const getChaptersByQuarter = async (courseId: string, quarterId: string) => {
   try {
     const api = await createApiInstance();
@@ -1578,8 +1727,8 @@ export const gpaScale = async (courseId: string, data: any) => {
   try {
     const api = await createApiInstance()
     addAuthInterceptor(api)
-    const gpaData =  data.map((elem:any)=>{
-      return {gpa:elem.gpa, minPercentage:elem.minPercentage, maxPercentage:elem.maxPercentage}
+    const gpaData = data.map((elem: any) => {
+      return { gpa: elem.gpa, minPercentage: elem.minPercentage, maxPercentage: elem.maxPercentage }
     })
     console.log(gpaData)
     const res = await api.post(`/api/gpa/setGPAscale/${courseId}`, { gpaScale: gpaData })
