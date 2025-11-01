@@ -266,7 +266,7 @@ const GradeScaleModal: React.FC<GradeScaleModalProps> = ({
 
                         {isScaleComplete() && (
                             <View style={styles.completionContainer}>
-                                <SimpleIcon name="checkmark-circle" size={20} color="#10B144" />
+                                <SimpleIcon name="check-circle" size={20} color="#10B144" />
                                 <Text style={styles.completionText}>Perfect! Scale covers 0% to 100%</Text>
                             </View>
                         )}

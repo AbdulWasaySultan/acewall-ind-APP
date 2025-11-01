@@ -2151,7 +2151,7 @@ const CourseDetailsPage = () => {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <SimpleIcon
-                name="checkmark-circle"
+                name="check-circle"
                 size={24}
                 color="#43a047"
                 style={{ marginRight: 8 }}
@@ -3800,7 +3800,7 @@ const CourseDetailsPage = () => {
                     </Text>
                     {isExisting && (
                       <SimpleIcon
-                        name="checkmark-circle"
+                        name="check-circle"
                         size={22}
                         color="black"
                       />
@@ -3885,7 +3885,7 @@ const CourseDetailsPage = () => {
           <View style={styles.chaptersContent}>
             <TouchableOpacity style={styles.chaptersHeaderButton}>
               {/* <SimpleIcon
-                name="book-outline"
+                name="menu-book"
                 size={24}
                 color="black"
                 style={{ marginRight: 8 }}
@@ -6098,7 +6098,7 @@ const CourseDetailsPage = () => {
                     </View>
                   ) : (
                     <View style={styles.noLessonsContainer}>
-                      <SimpleIcon name="book-outline" size={48} color="#ccc" />
+                      <SimpleIcon name="menu-book" size={48} color="#ccc" />
                       <Text style={styles.noLessonsTitle}>No lessons yet</Text>
                       <Text style={styles.noLessonsDescription}>
                         Create your first lesson to start building your chapter

@@ -39,6 +39,7 @@ import AssessmentScreenStudent from '../pages/AssessmentScreenStudent';
 import DiscussionStudent from '../pages/DiscussionStudent';
 import CoursePagesStudent from '../pages/CoursePagesStudent';
 import MoreCoursesPage from '../pages/MoreCourses';
+import WalletPage from '../pages/WalletPage';
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -135,7 +136,8 @@ const DrawerNavigator = () => {
             'Gradebook': 'Gradebook',
             'AccountInformation': 'Account Information',
             'Discussions': 'Discussions',
-            'Support': 'Support'
+            'Support': 'Support',
+            'Wallet': 'Wallet'
           };
 
           // Update active state based on current route
@@ -184,7 +186,10 @@ const DrawerNavigator = () => {
       )}
 
       {userRole !== 'student' && (
-        <Drawer.Screen name="Support" component={SupportPage} options={{ title: 'Support' }} />
+        <>
+          <Drawer.Screen name="Support" component={SupportPage} options={{ title: 'Support' }} />
+          <Drawer.Screen name="Wallet" component={WalletPage} options={{ title: 'Wallet' }} />
+        </>
       )}
       <Drawer.Screen
         name="StudentProfile"

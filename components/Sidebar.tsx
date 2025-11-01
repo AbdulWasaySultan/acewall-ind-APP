@@ -52,6 +52,7 @@ const teacherMenuItems = [
   { label: 'Students', icon: require('../assets/jpg.jpg') },
   { label: 'Discussions', icon: require('../assets/jpg.jpg') },
   { label: 'Support', icon: require('../assets/jpg.jpg') },
+  { label: 'Wallet', icon: require('../assets/jpg.jpg') },
   { label: 'Account Information', icon: require('../assets/jpg.jpg') },
 ];
 
@@ -109,6 +110,9 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
     }
     if (label === 'Support') {
       screenName = 'Support';
+    }
+    if (label === 'Account Information') {
+      screenName = 'AccountInformation';
     }
     navigation.navigate(screenName);
     navigation.closeDrawer();

@@ -41,6 +41,7 @@ const CourseDetailStudentPage = () => {
 
     const fetchCourseData = async () => {
       try {
+        console.log('Enrollment ID:', enrollmentId);
         if (enrollmentId) {
           // For enrolled courses, get the enrolled course details
           const enrolledCourseData = await getStudentEnrolledCourseDetails(enrollmentId);
@@ -436,7 +437,7 @@ const CourseDetailStudentPage = () => {
           <Image source={course.thumbnail?.url ? { uri: course.thumbnail.url } : fallbackImage} style={styles.courseImage} />
 
           {/* Semester Information */}
-          {course.semester && course.semester.length > 0 && (
+          {/* {course.semester && course.semester.length > 0 && (
             <TouchableOpacity
               style={styles.semesterCard}
               onPress={() => handleSemesterClick(course.semester[0]._id)}
@@ -454,7 +455,7 @@ const CourseDetailStudentPage = () => {
                 })}
               </Text>
             </TouchableOpacity>
-          )}
+          )} */}
 
           {/* Tabs */}
           <View style={styles.tabsRow}>
@@ -472,19 +473,21 @@ const CourseDetailStudentPage = () => {
               <Text style={styles.sectionTitle}>What you will learn in this course</Text>
               {course.teachingPoints && course.teachingPoints.length > 0 ? course.teachingPoints.map((tp: string, idx: number) => (
                 <View key={idx} style={styles.bulletRow}>
-                  <SimpleIcon name="checkmark-circle" size={22} color="#43a047" style={{ marginRight: 8 }} />
+                  <SimpleIcon name="check-circle" size={22} color="#43a047" style={{ marginRight: 8 }} />
                   <Text style={styles.bulletText}>{tp}</Text>
                 </View>
               )) : <Text style={styles.sectionText}>No learning points listed.</Text>}
               <Text style={styles.sectionTitle}>Course requirements</Text>
               {course.requirements && course.requirements.length > 0 ? course.requirements.map((req: string, idx: number) => (
                 <View key={idx} style={styles.bulletRow}>
-                  <SimpleIcon name="checkmark-circle" size={22} color="#43a047" style={{ marginRight: 8 }} />
+                  <SimpleIcon name="check-circle" size={22} color="#43a047" style={{ marginRight: 8 }} />
                   <Text style={styles.bulletText}>{req}</Text>
                 </View>
               )) : <Text style={styles.sectionText}>No requirements listed.</Text>}
               {/* Enroll Button & Course Includes */}
               <View style={styles.enrollBox}>
+
+                <Text style={[styles.includesTitle, { fontSize: 25 }]}>$ {course?.price} </Text>
                 <TouchableOpacity
                   style={[styles.enrollButton, fromAdmin && { opacity: 0.5 }]}
                   onPress={() => !fromAdmin && setShowEnrollModal(true)}
@@ -498,16 +501,16 @@ const CourseDetailStudentPage = () => {
                   <Text style={styles.includeText}>hours on-demand video</Text>
                 </View>
                 <View style={styles.includeRow}>
-                  <SimpleIcon name="checkmark-circle-outline" size={20} color="#43a047" style={{ marginRight: 8 }} />
+                  <SimpleIcon name="check-circle-outline" size={20} color="#43a047" style={{ marginRight: 8 }} />
                   <Text style={styles.includeText}>Full lifetime access</Text>
                 </View>
                 <View style={styles.includeRow}>
-                  <SimpleIcon name="phone-portrait-outline" size={20} color="#43a047" style={{ marginRight: 8 }} />
+                  <SimpleIcon name="smartphone" size={20} color="#43a047" style={{ marginRight: 8 }} />
                   <Text style={styles.includeText}>Access on mobile and web</Text>
                 </View>
                 {course.chapters && course.chapters.length > 0 && (
                   <View style={styles.includeRow}>
-                    <SimpleIcon name="book-outline" size={20} color="#43a047" style={{ marginRight: 8 }} />
+                    <SimpleIcon name="menu-book" size={20} color="#43a047" style={{ marginRight: 8 }} />
                     <Text style={styles.includeText}>
                       Includes {course.chapters.length} {course.chapters.length === 1 ? 'chapter' : 'chapters'}
                     </Text>
