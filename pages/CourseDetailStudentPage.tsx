@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, Linking, Alert, Platform } from 'react-native';
 import SimpleIcon from '../components/SimpleIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { getCourseById, getStudentEnrolledCourseDetails, getCourseForStudentPreview, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse } from '../services/course';
+import { getCourseById, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse } from '../services/course';
 import axios from 'axios';
 
 const fallbackImage = require('../assets/jpg.jpg');
 const avatarPlaceholder = require('../assets/placeholder.png');
-const TABS = ['Overview', 'Reviews', 'Syllabus'];
+const TABS = ['Overview', 'Reviews', 'Curriculum', 'Instructor'];
 
 const CourseDetailStudentPage = () => {
   const route = useRoute();
@@ -20,7 +20,7 @@ const CourseDetailStudentPage = () => {
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [enrollLoading, setEnrollLoading] = useState(false);
   const [enrollError, setEnrollError] = useState<string | null>(null);
-  const [expandedChapters, setExpandedChapters] = useState<{ [key: number]: boolean }>({});
+  const [expandedChapters, setExpandedChapters] = useState<{ [key: string]: boolean }>({});
   const [expandedLessons, setExpandedLessons] = useState<{ [key: string]: boolean }>({});
 
   // Modal states
@@ -47,10 +47,10 @@ const CourseDetailStudentPage = () => {
           const enrolledCourseData = await getStudentEnrolledCourseDetails(enrollmentId);
           setCourse(enrolledCourseData?.courseDetails || null);
         } else {
-          // For regular course details - use student preview API
-          const res = await getCourseForStudentPreview(courseId);
-          console.log('Course data from Student Preview API:', res.course);
-          console.log('Semester data:', res.course?.semester);
+          // For regular course details - use getCourseById API which includes chapters
+          const res = await getCourseById(courseId);
+          console.log('Course data from getCourseById API:', res.course);
+          console.log('Chapters data:', res.course?.chapters);
           setCourse(res.course);
         }
       } catch (err) {
@@ -91,11 +91,11 @@ const CourseDetailStudentPage = () => {
     }
   };
 
-  const toggleChapter = (idx: number) => {
-    setExpandedChapters(prev => ({ ...prev, [idx]: !prev[idx] }));
+  const toggleChapter = (chapterId: string) => {
+    setExpandedChapters(prev => ({ ...prev, [chapterId]: !prev[chapterId] }));
   };
 
-  const toggleLesson = (lessonId: string | number) => {
+  const toggleLesson = (lessonId: string) => {
     setExpandedLessons(prev => ({ ...prev, [lessonId]: !prev[lessonId] }));
   };
 
@@ -169,18 +169,18 @@ const CourseDetailStudentPage = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Enroll in Course</Text>
-            <Text style={styles.modalText}>Are you sure you want to enroll in this course?</Text>
+            <Text style={styles.modalTitle}>{course.price > 0 ? 'Confirm Purchase' : 'Enroll for free'}</Text>
+            <Text style={styles.modalText}>{course.price > 0 ? "You'll be redirected to Stripe's secure payment screen to complete your purchase." : 'Click below to enroll in this free course'}</Text>
             {enrollError && <Text style={styles.errorText}>{enrollError}</Text>}
             {enrollLoading ? (
               <ActivityIndicator size="large" color="#43a047" />
             ) : (
               <View style={styles.modalButtons}>
                 <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setShowEnrollModal(false)}>
-                  <Text style={styles.cancelButtonText}>No</Text>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={handleEnroll}>
-                  <Text style={styles.confirmButtonText}>Yes</Text>
+                  <Text style={styles.confirmButtonText}>{course.price > 0 ? `Pay $${course.price}` : 'Enroll Now'}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -431,10 +431,14 @@ const CourseDetailStudentPage = () => {
           <Text style={styles.title}>{course.courseTitle}</Text>
           <Text style={styles.subtitle}>{course.courseDescription}</Text>
           <View style={styles.instructorRow}>
-            <Image source={avatarPlaceholder} style={styles.avatar} />
-            <Text style={styles.instructorName}>{course.createdby ? `${course.createdby.firstName} ${course.createdby.middleName || ''} ${course.createdby.lastName}`.trim() : 'Unknown Instructor'}</Text>
+            <Image source={
+              course.createdby?.profileImg?.url
+                ? { uri: course.createdby.profileImg.url }
+                : avatarPlaceholder
+            } style={styles.avatar} />
+
+            <Text style={styles.instructorName}>{course.createdby ? `${course.createdby.firstName}${course.createdby.middleName || ''} ${course.createdby.lastName}`.trim() : 'Unknown Instructor'}</Text>
           </View>
-          <Image source={course.thumbnail?.url ? { uri: course.thumbnail.url } : fallbackImage} style={styles.courseImage} />
 
           {/* Semester Information */}
           {/* {course.semester && course.semester.length > 0 && (
@@ -458,13 +462,18 @@ const CourseDetailStudentPage = () => {
           )} */}
 
           {/* Tabs */}
-          <View style={styles.tabsRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.tabsScrollContainer}
+            contentContainerStyle={styles.tabsRow}
+          >
             {TABS.map(tab => (
               <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={[styles.tabButton, activeTab === tab && styles.activeTabButton]}>
                 <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
           {/* Tab Content */}
           {activeTab === 'Overview' && (
             <View>
@@ -493,7 +502,7 @@ const CourseDetailStudentPage = () => {
                   onPress={() => !fromAdmin && setShowEnrollModal(true)}
                   disabled={!!fromAdmin}
                 >
-                  <Text style={styles.enrollButtonText}>Enroll Now</Text>
+                  <Text style={styles.enrollButtonText}>Buy Now</Text>
                 </TouchableOpacity>
                 <Text style={styles.includesTitle}>This course includes:</Text>
                 <View style={styles.includeRow}>
@@ -519,36 +528,116 @@ const CourseDetailStudentPage = () => {
               </View>
             </View>
           )}
-          {activeTab === 'Syllabus' && (
+          {activeTab === 'Curriculum' && (
             <View>
-              <Text style={styles.sectionTitle}>Course Syllabus</Text>
-              {course.syllabus && course.syllabus.url ? (
-                <View style={styles.syllabusContainer}>
-                  <View style={styles.syllabusCard}>
-                    <SimpleIcon name="description" size={32} color="#43a047" />
-                    <View style={styles.syllabusInfo}>
-                      <Text style={styles.syllabusTitle}>{course.syllabus.filename || 'Course Syllabus'}</Text>
-                      <Text style={styles.syllabusSubtitle}>PDF Document</Text>
-                      <Text style={styles.syllabusDate}>
-                        Uploaded: {new Date(course.syllabus.uploadedAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </Text>
+              {course?.chapters && course.chapters.length > 0 ? (
+                course.chapters.map((chapter: any) => {
+                  const isChapterExpanded = expandedChapters[chapter._id];
+                  return (
+                    <View key={chapter._id} style={styles.curriculumChapterContainer}>
+                      <TouchableOpacity
+                        style={styles.curriculumChapterHeader}
+                        onPress={() => toggleChapter(chapter._id)}
+                      >
+                        <SimpleIcon
+                          name={isChapterExpanded ? "chevron-up" : "chevron-down"}
+                          size={20}
+                          color="#000"
+                        />
+                        <Text style={styles.curriculumChapterTitle}>{chapter.title}</Text>
+                      </TouchableOpacity>
+
+                      {isChapterExpanded && (
+                        <View style={styles.curriculumChapterContent}>
+                          {chapter.description && (
+                            <View style={styles.curriculumDescriptionContainer}>
+                              <Text style={styles.curriculumDescriptionLabel}>Description</Text>
+                              <Text style={styles.curriculumDescriptionText}>{chapter.description}</Text>
+                            </View>
+                          )}
+
+                          {chapter.lessons && chapter.lessons.length > 0 && (
+                            chapter.lessons.map((lesson: any) => {
+                              const isLessonExpanded = expandedLessons[lesson._id];
+                              return (
+                                <View key={lesson._id} style={styles.curriculumLessonContainer}>
+                                  <TouchableOpacity
+                                    style={styles.curriculumLessonHeader}
+                                    onPress={() => toggleLesson(lesson._id)}
+                                  >
+                                    <SimpleIcon
+                                      name={isLessonExpanded ? "chevron-up" : "chevron-down"}
+                                      size={18}
+                                      color="#000"
+                                    />
+                                    <Text style={styles.curriculumLessonTitle}>{lesson.title}</Text>
+                                  </TouchableOpacity>
+
+                                  {isLessonExpanded && lesson.description && (
+                                    <View style={styles.curriculumLessonContent}>
+                                      <Text style={styles.curriculumDescriptionLabel}>Description</Text>
+                                      <Text style={styles.curriculumDescriptionText}>{lesson.description}</Text>
+                                    </View>
+                                  )}
+                                </View>
+                              );
+                            })
+                          )}
+                        </View>
+                      )}
                     </View>
-                    <TouchableOpacity
-                      style={styles.downloadButton}
-                      onPress={() => handleOpenSyllabus(course.syllabus.url)}
-                    >
-                      <SimpleIcon name="open-in-new" size={20} color="#fff" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                  );
+                })
               ) : (
                 <View style={styles.tabContentCentered}>
-                  <SimpleIcon name="file" size={48} color="#ccc" />
-                  <Text style={styles.sectionText}>No syllabus available</Text>
+                  <Text style={styles.sectionText}>No curriculum available</Text>
+                </View>
+              )}
+            </View>
+          )}
+          {activeTab === 'Instructor' && (
+            <View>
+              <View style={styles.instructorContainer}>
+                <Image
+                  source={
+                    course.createdby?.profileImg?.url
+                      ? { uri: course.createdby.profileImg.url }
+                      : avatarPlaceholder
+                  }
+                  style={styles.instructorAvatar}
+                />
+                <Text style={styles.instructorNameText}>
+                  {course.createdby
+                    ? `${course.createdby.firstName} ${course.createdby.middleName || ''} ${course.createdby.lastName}`.trim()
+                    : 'Unknown Instructor'}
+                </Text>
+              </View>
+
+              {course.syllabus && course.syllabus.url && (
+                <View style={styles.syllabusSection}>
+                  <Text style={styles.sectionTitle}>Course Syllabus</Text>
+                  <View style={styles.syllabusContainer}>
+                    <View style={styles.syllabusCard}>
+                      <SimpleIcon name="description" size={32} color="#43a047" />
+                      <View style={styles.syllabusInfo}>
+                        <Text style={styles.syllabusTitle}>{course.syllabus.filename || 'Course Syllabus'}</Text>
+                        <Text style={styles.syllabusSubtitle}>PDF Document</Text>
+                        <Text style={styles.syllabusDate}>
+                          Uploaded: {new Date(course.syllabus.uploadedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.downloadButton}
+                        onPress={() => handleOpenSyllabus(course.syllabus.url)}
+                      >
+                        <SimpleIcon name="open-in-new" size={20} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
               )}
             </View>
@@ -579,13 +668,20 @@ const styles = StyleSheet.create({
   avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
   instructorName: { fontWeight: 'bold', fontSize: 16, color: '#222' },
   courseImage: { width: '100%', height: 200, borderRadius: 12, marginBottom: 16 },
-  tabsRow: { flexDirection: 'row', marginBottom: 20 },
+  tabsScrollContainer: {
+    marginBottom: 20,
+  },
+  tabsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 4,
+  },
   tabButton: {
     marginRight: 12,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: 'transparent',
+    flexShrink: 0,
   },
   activeTabButton: {
     backgroundColor: '#e8f5e8',
@@ -804,6 +900,85 @@ const styles = StyleSheet.create({
   assessmentDescription: {
     fontSize: 14,
     color: '#666',
+  },
+  // Curriculum Styles
+  curriculumChapterContainer: {
+    marginBottom: 12,
+  },
+  curriculumChapterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+  curriculumChapterTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    marginLeft: 8,
+  },
+  curriculumChapterContent: {
+    paddingLeft: 28,
+    paddingBottom: 8,
+  },
+  curriculumDescriptionContainer: {
+    marginBottom: 12,
+    paddingBottom: 12,
+  },
+  curriculumDescriptionLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 6,
+  },
+  curriculumDescriptionText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  curriculumLessonContainer: {
+    marginBottom: 8,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 8,
+    marginLeft: -8,
+  },
+  curriculumLessonHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  curriculumLessonTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+    marginLeft: 6,
+  },
+  curriculumLessonContent: {
+    paddingLeft: 24,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  // Instructor Styles
+  instructorContainer: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    marginBottom: 20,
+  },
+  instructorAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 12,
+  },
+  instructorNameText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+  syllabusSection: {
+    marginTop: 16,
   },
 });
 
