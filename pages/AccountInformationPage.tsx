@@ -1,12 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Linking, Modal } from 'react-native';
 import { launchImageLibrary, ImagePickerResponse, ImageLibraryOptions } from 'react-native-image-picker';
 import Toast from 'react-native-simple-toast';
-import { getUserInfo, uploadProfileImage, updateUserProfile, UpdateUserProfileData } from '../services/schoolService';
+import { pick } from '@react-native-documents/picker';
+import { getUserInfo, uploadProfileImage, updateUserProfile, UpdateUserProfileData, uploadDocument, deleteDocument } from '../services/schoolService';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useUser } from '../contexts/UserContext';
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+export interface Document {
+  name: string;
+  url: string;
+  filename: string;
+  verificationStatus: string;
+  _id: string;
+}
+
+export interface Documents {
+  ids: Document[];
+  portfolio: Document[];
+  resume: Document[];
+  teacherLicenses: Document[];
+  universityTranscripts: Document[];
+}
+
 export interface UserData {
   firstName: string;
   middleName: string;
@@ -27,7 +45,8 @@ export interface UserData {
   mailingState: string;
   mailingZip: string;
   profileImage?: string;
-  isVarified:boolean
+  isVarified: boolean;
+  documents?: Documents;
 }
 
 const AccountInformationPage = () => {
@@ -50,15 +69,32 @@ const AccountInformationPage = () => {
     mailingCity: '',
     mailingState: '',
     mailingZip: '',
-    isVarified:false
+    isVarified: false
   });
   const [isLoading, setIsLoading] = useState(false);
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const [isImageChanged, setIsImageChanged] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [documents, setDocuments] = useState<Documents>({
+    ids: [],
+    portfolio: [],
+    resume: [],
+    teacherLicenses: [],
+    universityTranscripts: []
+  });
+  const [selectedCategory, setSelectedCategory] = useState<string>('Identification Documents');
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
+    ids: false,
+    portfolio: false,
+    resume: false,
+    teacherLicenses: false,
+    universityTranscripts: false
+  });
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const navigation =
-  useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, setUser } = useUser();
 
   useFocusEffect(
@@ -109,9 +145,20 @@ const AccountInformationPage = () => {
           mailingState: mailingAddress.state,
           mailingZip: mailingAddress.zip,
           profileImage: response.user.profileImg?.url || undefined,
-          isVarified:response.user.isVarified||false
+          isVarified: response.user.isVarified || false
         });
         setProfileImageUri(response.user.profileImg?.url || null);
+
+        // Load documents if available
+        if (response.user.documents) {
+          setDocuments({
+            ids: response.user.documents.ids || [],
+            portfolio: response.user.documents.portfolio || [],
+            resume: response.user.documents.resume || [],
+            teacherLicenses: response.user.documents.teacherLicenses || [],
+            universityTranscripts: response.user.documents.universityTranscripts || []
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching user info:', error);
@@ -186,7 +233,7 @@ const AccountInformationPage = () => {
         mailingState: mailingAddress.state,
         mailingZip: mailingAddress.zip,
         profileImage: latestUserInfo.user.profileImg?.url || undefined,
-        isVarified:latestUserInfo.user.isVarified||false
+        isVarified: latestUserInfo.user.isVarified || false
       });
       setProfileImageUri(latestUserInfo.user.profileImg?.url || null);
       setIsImageChanged(false);
@@ -213,7 +260,7 @@ const AccountInformationPage = () => {
   };
 
   const handleEditCredentials = () => {
-    navigation.navigate('EditCredentials' ,{userData:userData});
+    navigation.navigate('EditCredentials', { userData: userData });
   };
 
   const handleSaveChanges = async () => {
@@ -258,20 +305,144 @@ const AccountInformationPage = () => {
     fetchAndLoadUserInfo();
   };
 
+  const handleFilePick = async () => {
+    try {
+      const result = await pick({
+        type: ['application/pdf', 'image/*'],
+        copyTo: 'cachesDirectory',
+      });
+      if (result && result.length > 0) {
+        const file = result[0];
+        setSelectedFile({
+          uri: file.uri,
+          name: file.name || file.uri.split('/').pop() || 'document',
+          type: file.type || 'application/pdf',
+        });
+      }
+    } catch (error) {
+      console.error('Error picking file:', error);
+      Toast.show('Failed to pick file', Toast.LONG);
+    }
+  };
+
+  const handleUploadDocument = async () => {
+    if (!selectedFile) {
+      Toast.show('Please select a file first', Toast.LONG);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Map category display names to API category names
+      const categoryMap: { [key: string]: string } = {
+        'Identification Documents': 'ids',
+        'Portfolio': 'portfolio',
+        'Resume / CV': 'resume',
+        'Teacher Licenses / Certifications': 'teacherLicenses',
+        'University Transcripts': 'universityTranscripts'
+      };
+
+      const apiCategory = categoryMap[selectedCategory] || selectedCategory;
+
+      await uploadDocument(
+        selectedFile.uri,
+        selectedFile.name,
+        selectedFile.type,
+        apiCategory
+      );
+
+      // Refresh user info to get updated documents
+      await fetchAndLoadUserInfo();
+      setSelectedFile(null);
+      Toast.show('Document uploaded successfully!', Toast.LONG);
+    } catch (error: any) {
+      console.error('Error uploading document:', error);
+      Toast.show(error.message || 'Failed to upload document', Toast.LONG);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: string, category: string) => {
+    setIsLoading(true);
+    try {
+      // Map category display names to API category names
+      const categoryMap: { [key: string]: string } = {
+        'Identification Documents': 'ids',
+        'Portfolio': 'portfolio',
+        'Resume / CV': 'resume',
+        'Teacher Licenses / Certifications': 'teacherLicenses',
+        'University Transcripts': 'universityTranscripts'
+      };
+
+      const apiCategory = categoryMap[category] || category;
+
+      await deleteDocument(documentId, apiCategory);
+
+      // Refresh user info to get updated documents
+      await fetchAndLoadUserInfo();
+      Toast.show('Document deleted successfully!', Toast.LONG);
+    } catch (error: any) {
+      console.error('Error deleting document:', error);
+      Toast.show(error.message || 'Failed to delete document', Toast.LONG);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleViewDocument = (url: string) => {
+    Linking.openURL(url).catch((err) => {
+      console.error('Error opening document:', err);
+      Toast.show('Failed to open document', Toast.LONG);
+    });
+  };
+
+  const toggleCategory = (categoryKey: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryKey]: !prev[categoryKey]
+    }));
+  };
+
+  const getCategoryDocuments = (categoryKey: string): Document[] => {
+    const categoryMap: { [key: string]: keyof Documents } = {
+      'Identification Documents': 'ids',
+      'Portfolio': 'portfolio',
+      'Resume / CV': 'resume',
+      'Teacher Licenses / Certifications': 'teacherLicenses',
+      'University Transcripts': 'universityTranscripts'
+    };
+
+    const apiCategory = categoryMap[categoryKey];
+    return apiCategory ? documents[apiCategory] : [];
+  };
+
+  const getRequiredCount = (categoryKey: string): number => {
+    const requiredCounts: { [key: string]: number } = {
+      'Identification Documents': 2,
+      'Portfolio': 1,
+      'Resume / CV': 2,
+      'Teacher Licenses / Certifications': 4,
+      'University Transcripts': 4
+    };
+    return requiredCounts[categoryKey] || 0;
+  };
+
   return (
     <ScrollView style={styles.container}>
-      <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',
-    marginBottom: 24,
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 24,
 
       }}>
 
-      <Text style={styles.header}>Account Information</Text>
-      <View style={{padding:5,backgroundColor:userData.isVarified?'#D1FAE5':'#FEE2E2',borderRadius:10}}>
+        <Text style={styles.header}>Account Information</Text>
+        <View style={{ padding: 5, backgroundColor: userData.isVarified ? '#D1FAE5' : '#FEE2E2', borderRadius: 10 }}>
 
-    <Text style={{textAlign:'right',color:userData?.isVarified?'#065F46':'#991B1B'}}>{userData.isVarified? 'Verfied':'Not Verified'}</Text>
-    </View>
+          <Text style={{ textAlign: 'right', color: userData?.isVarified ? '#065F46' : '#991B1B' }}>{userData.isVarified ? 'Verfied' : 'Not Verified'}</Text>
+        </View>
 
-    </View>
+      </View>
 
       {/* Action Buttons */}
       {!isEditMode && (
@@ -623,6 +794,144 @@ const AccountInformationPage = () => {
         </>
       )}
 
+      {/* Uploaded Documents Section - Only show when edit mode is off */}
+      {!isEditMode && (
+        <>
+          <Text style={styles.sectionTitle}>Uploaded Documents</Text>
+
+          {/* Document Upload Interface */}
+          <View style={styles.uploadContainer}>
+            <View style={styles.uploadRow}>
+              {/* Category Dropdown */}
+              <View style={styles.categoryDropdownContainer}>
+                <Text style={styles.dropdownLabel}>Select Document Category</Text>
+                <TouchableOpacity style={styles.categoryDropdown} onPress={() => setShowCategoryDropdown(true)}>
+                  <Text style={styles.categoryDropdownText}>{selectedCategory}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </TouchableOpacity>
+
+                <Modal
+                  visible={showCategoryDropdown}
+                  transparent={true}
+                  animationType="fade"
+                  onRequestClose={() => setShowCategoryDropdown(false)}
+                >
+                  <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowCategoryDropdown(false)}
+                  >
+                    <View style={styles.modalContent}>
+                      {['Identification Documents', 'Portfolio', 'Resume / CV', 'Teacher Licenses / Certifications', 'University Transcripts'].map((cat) => (
+                        <TouchableOpacity
+                          key={cat}
+                          style={[
+                            styles.modalOption,
+                            selectedCategory === cat && styles.modalOptionSelected
+                          ]}
+                          onPress={() => {
+                            setSelectedCategory(cat);
+                            setShowCategoryDropdown(false);
+                          }}
+                        >
+                          <Text style={selectedCategory === cat && styles.modalOptionTextSelected}>{cat}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
+              </View>
+
+              {/* File Input */}
+              <View style={styles.fileInputContainer}>
+                <TouchableOpacity style={styles.fileInputButton} onPress={handleFilePick}>
+                  <Text style={styles.fileInputText}>
+                    {selectedFile ? selectedFile.name : 'Choose files No file chosen'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Upload Button */}
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={handleUploadDocument}
+              disabled={isLoading || !selectedFile}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.uploadButtonText}>Upload Document(s)</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Document Categories List */}
+          <View style={styles.documentsList}>
+            {['Identification Documents', 'Portfolio', 'Resume / CV', 'Teacher Licenses / Certifications', 'University Transcripts'].map((categoryKey) => {
+              const categoryDocs = getCategoryDocuments(categoryKey);
+              const requiredCount = getRequiredCount(categoryKey);
+              const uploadedCount = categoryDocs.length;
+              const isExpanded = expandedCategories[categoryKey] || false;
+              const categoryMap: { [key: string]: keyof Documents } = {
+                'Identification Documents': 'ids',
+                'Portfolio': 'portfolio',
+                'Resume / CV': 'resume',
+                'Teacher Licenses / Certifications': 'teacherLicenses',
+                'University Transcripts': 'universityTranscripts'
+              };
+              const apiCategory = categoryMap[categoryKey];
+
+              return (
+                <View key={categoryKey} style={styles.categoryCard}>
+                  <TouchableOpacity
+                    style={styles.categoryHeader}
+                    onPress={() => toggleCategory(categoryKey)}
+                  >
+                    <Text style={styles.categoryTitle}>{categoryKey} ({uploadedCount}/{requiredCount})</Text>
+                    <Text style={styles.expandIcon}>{isExpanded ? '▲' : '▼'}</Text>
+                  </TouchableOpacity>
+
+                  {isExpanded && (
+                    <View style={styles.categoryContent}>
+                      {categoryDocs.length > 0 ? (
+                        categoryDocs.map((doc) => (
+                          <View key={doc._id} style={styles.documentItem}>
+                            <Text style={styles.documentName}>{doc.name}</Text>
+                            <View style={styles.documentActions}>
+                              <TouchableOpacity onPress={() => handleViewDocument(doc.url)}>
+                                <Text style={styles.viewLink}>View</Text>
+                              </TouchableOpacity>
+                              <View style={[
+                                styles.statusBadge,
+                                doc.verificationStatus === 'pending' && styles.statusPending,
+                                doc.verificationStatus === 'approved' && styles.statusApproved,
+                                doc.verificationStatus === 'rejected' && styles.statusRejected
+                              ]}>
+                                <Text style={styles.statusText}>{doc.verificationStatus}</Text>
+                              </View>
+                              <TouchableOpacity
+                                style={styles.deleteButton}
+                                onPress={() => handleDeleteDocument(doc._id, categoryKey)}
+                                disabled={isLoading}
+                              >
+                                <Text style={styles.deleteIcon}>🗑️</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        ))
+                      ) : (
+                        <Text style={styles.emptyMessage}>No documents uploaded yet</Text>
+                      )}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        </>
+      )}
+
       {/* Save/Cancel Buttons for Edit Mode */}
       {isEditMode && (
         <View style={styles.editButtonContainer}>
@@ -706,7 +1015,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-    marginBottom: 50,
   },
   infoLabel: {
     fontSize: 16,
@@ -846,6 +1154,189 @@ const styles = StyleSheet.create({
   },
   addressField: {
     flex: 1,
+  },
+  // Document Upload Styles
+  uploadContainer: {
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+  },
+  uploadRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  categoryDropdownContainer: {
+    flex: 1,
+  },
+  dropdownLabel: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 4,
+  },
+  categoryDropdown: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    padding: 12,
+    backgroundColor: '#fff',
+  },
+  categoryDropdownText: {
+    fontSize: 14,
+    color: '#000',
+    flex: 1,
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+  },
+  fileInputContainer: {
+    flex: 1,
+  },
+  fileInputButton: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    padding: 12,
+    backgroundColor: '#fff',
+    marginTop: 20,
+  },
+  fileInputText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  uploadButton: {
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  documentsList: {
+    marginTop: 8,
+  },
+  categoryCard: {
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    flex: 1,
+  },
+  expandIcon: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+  },
+  categoryContent: {
+    padding: 16,
+    paddingTop: 0,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  documentItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  documentName: {
+    fontSize: 14,
+    color: '#000',
+    flex: 1,
+  },
+  documentActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  viewLink: {
+    color: '#2196F3',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  statusPending: {
+    backgroundColor: '#FFF3CD',
+  },
+  statusApproved: {
+    backgroundColor: '#D1FAE5',
+  },
+  statusRejected: {
+    backgroundColor: '#FEE2E2',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#000',
+    textTransform: 'capitalize',
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  deleteIcon: {
+    fontSize: 18,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: '#999',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    minWidth: 280,
+    maxWidth: '80%',
+  },
+  modalOption: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalOptionSelected: {
+    backgroundColor: '#E3F2FD',
+  },
+  modalOptionTextSelected: {
+    fontWeight: '600',
+    color: '#2196F3',
   },
 });
 

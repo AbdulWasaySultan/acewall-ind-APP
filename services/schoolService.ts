@@ -98,7 +98,7 @@ export const login = async (email: string, password: string) => {
         'Content-Type': 'application/json',
       }
     });
-    console.log('Login API URL:', authApi.defaults.baseURL+'/api/auth/login');
+    console.log('Login API URL:', authApi.defaults.baseURL + '/api/auth/login');
     const response = await authApi.post('/api/auth/login', { email, password });
     console.log(response.data)
     if (response.data && response.data.token) {
@@ -113,7 +113,7 @@ export const login = async (email: string, password: string) => {
         data: error.response?.data,
         url: error.config?.url
       });
-      
+
       if (error.response?.status === 404) {
         throw new Error('Authentication service not found. Please check your school configuration.');
       }
@@ -139,7 +139,7 @@ export const signup = async (userData: any) => {
         'Content-Type': 'application/json',
       }
     });
-    console.log('Login API URL:', authApi.defaults.baseURL+'/api/auth/register');
+    console.log('Login API URL:', authApi.defaults.baseURL + '/api/auth/register');
     const response = await authApi.post('/api/auth/register', userData);
     return response.data;
   } catch (error) {
@@ -150,7 +150,7 @@ export const signup = async (userData: any) => {
         data: error.response?.data,
         url: error.config?.url
       });
-      
+
       if (error.response?.status === 404) {
         throw new Error('Authentication service not found. Please check your school configuration.');
       }
@@ -161,9 +161,9 @@ export const signup = async (userData: any) => {
 
 export const verifyOtpAndSignup = async (data: { email: string; otp: string }) => {
   const baseUrl = await getStoredBaseUrl();
-    if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
-    }
+  if (!baseUrl) {
+    throw new Error('No base URL configured. Please select a school first.');
+  }
   try {
     const response = await axios.post(`${baseUrl}/api/auth/verifyOTP`, data);
     return response.data;
@@ -224,8 +224,8 @@ export interface UpdateUserProfileData {
   middleName: string;
   lastName: string;
   Bio: string;
-  pronoun?: string |null;
-  gender?: string | null 
+  pronoun?: string | null;
+  gender?: string | null
   email: string;
   phone: string;
   homeAddressLine1: string;
@@ -267,7 +267,7 @@ export const updateUserProfile = async (userData: UpdateUserProfileData) => {
         data: error.response?.data,
         url: error.config?.url
       });
-      
+
       if (error.response?.status === 404) {
         throw new Error('Profile update service not found. Please check your school configuration.');
       }
@@ -489,6 +489,84 @@ export const updatePhone = async (newPhone: string, otp: string) => {
     });
     return response.data;
   } catch (error) {
+    throw error;
+  }
+};
+
+// Upload Document
+export const uploadDocument = async (fileUri: string, fileName: string, fileType: string, category: string) => {
+  try {
+    const baseUrl = await getStoredBaseUrl();
+    if (!baseUrl) {
+      throw new Error('No base URL configured. Please select a school first.');
+    }
+
+    const formData = new FormData();
+    formData.append('document', {
+      uri: fileUri,
+      name: fileName,
+      type: fileType || 'application/pdf',
+    } as any);
+    formData.append('category', category);
+
+    const response = await axios.post(`${baseUrl}/api/auth/uploadDocument`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Upload document error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      if (error.response?.status === 404) {
+        throw new Error('Document upload service not found. Please check your school configuration.');
+      }
+      throw new Error(error.response?.data?.message || 'Failed to upload document');
+    }
+    throw error;
+  }
+};
+
+// Delete Document
+export const deleteDocument = async (documentId: string, category: string) => {
+  try {
+    const baseUrl = await getStoredBaseUrl();
+    if (!baseUrl) {
+      throw new Error('No base URL configured. Please select a school first.');
+    }
+
+    const response = await axios.delete(`${baseUrl}/api/auth/deleteDocument`, {
+      data: {
+        documentId,
+        category
+      },
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Delete document error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      if (error.response?.status === 404) {
+        throw new Error('Document delete service not found. Please check your school configuration.');
+      }
+      throw new Error(error.response?.data?.message || 'Failed to delete document');
+    }
     throw error;
   }
 }; 
