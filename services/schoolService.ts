@@ -542,11 +542,7 @@ export const deleteDocument = async (documentId: string, category: string) => {
       throw new Error('No base URL configured. Please select a school first.');
     }
 
-    const response = await axios.delete(`${baseUrl}/api/auth/deleteDocument`, {
-      data: {
-        documentId,
-        category
-      },
+    const response = await axios.delete(`${baseUrl}/api/auth/teacher/document/${documentId}?category=${category}`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',

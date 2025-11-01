@@ -82,7 +82,7 @@ const AccountInformationPage = () => {
     teacherLicenses: [],
     universityTranscripts: []
   });
-  const [selectedCategory, setSelectedCategory] = useState<string>('Identification Documents');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
     ids: false,
@@ -92,6 +92,8 @@ const AccountInformationPage = () => {
     universityTranscripts: false
   });
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<{ id: string; name: string; category: string } | null>(null);
 
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -331,6 +333,11 @@ const AccountInformationPage = () => {
       return;
     }
 
+    if (!selectedCategory) {
+      Toast.show('Please select a document category first', Toast.LONG);
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Map category display names to API category names
@@ -354,6 +361,7 @@ const AccountInformationPage = () => {
       // Refresh user info to get updated documents
       await fetchAndLoadUserInfo();
       setSelectedFile(null);
+      setSelectedCategory('');
       Toast.show('Document uploaded successfully!', Toast.LONG);
     } catch (error: any) {
       console.error('Error uploading document:', error);
@@ -363,7 +371,14 @@ const AccountInformationPage = () => {
     }
   };
 
-  const handleDeleteDocument = async (documentId: string, category: string) => {
+  const handleDeleteClick = (documentId: string, documentName: string, category: string) => {
+    setDocumentToDelete({ id: documentId, name: documentName, category });
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!documentToDelete) return;
+
     setIsLoading(true);
     try {
       // Map category display names to API category names
@@ -375,12 +390,14 @@ const AccountInformationPage = () => {
         'University Transcripts': 'universityTranscripts'
       };
 
-      const apiCategory = categoryMap[category] || category;
+      const apiCategory = categoryMap[documentToDelete.category] || documentToDelete.category;
 
-      await deleteDocument(documentId, apiCategory);
+      await deleteDocument(documentToDelete.id, apiCategory);
 
       // Refresh user info to get updated documents
       await fetchAndLoadUserInfo();
+      setShowDeleteModal(false);
+      setDocumentToDelete(null);
       Toast.show('Document deleted successfully!', Toast.LONG);
     } catch (error: any) {
       console.error('Error deleting document:', error);
@@ -388,6 +405,11 @@ const AccountInformationPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setDocumentToDelete(null);
   };
 
   const handleViewDocument = (url: string) => {
@@ -806,7 +828,9 @@ const AccountInformationPage = () => {
               <View style={styles.categoryDropdownContainer}>
                 <Text style={styles.dropdownLabel}>Select Document Category</Text>
                 <TouchableOpacity style={styles.categoryDropdown} onPress={() => setShowCategoryDropdown(true)}>
-                  <Text style={styles.categoryDropdownText}>{selectedCategory}</Text>
+                  <Text style={[styles.categoryDropdownText, !selectedCategory && styles.categoryDropdownPlaceholder]}>
+                    {selectedCategory || 'Select Document Category'}
+                  </Text>
                   <Text style={styles.dropdownArrow}>▼</Text>
                 </TouchableOpacity>
 
@@ -856,7 +880,7 @@ const AccountInformationPage = () => {
             <TouchableOpacity
               style={styles.uploadButton}
               onPress={handleUploadDocument}
-              disabled={isLoading || !selectedFile}
+              disabled={isLoading || !selectedFile || !selectedCategory}
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color="#fff" />
@@ -912,7 +936,7 @@ const AccountInformationPage = () => {
                               </View>
                               <TouchableOpacity
                                 style={styles.deleteButton}
-                                onPress={() => handleDeleteDocument(doc._id, categoryKey)}
+                                onPress={() => handleDeleteClick(doc._id, doc.name, categoryKey)}
                                 disabled={isLoading}
                               >
                                 <Text style={styles.deleteIcon}>🗑️</Text>
@@ -947,6 +971,43 @@ const AccountInformationPage = () => {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelDelete}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={styles.deleteModalContent}>
+            <Text style={styles.deleteModalTitle}>Confirm Delete</Text>
+            <Text style={styles.deleteModalMessage}>
+              Are you sure you want to delete <Text style={styles.deleteModalBold}>{documentToDelete?.name}</Text> from <Text style={styles.deleteModalBold}>{documentToDelete?.category}</Text>?
+            </Text>
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={styles.deleteModalCancelButton}
+                onPress={handleCancelDelete}
+                disabled={isLoading}
+              >
+                <Text style={styles.deleteModalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteModalDeleteButton}
+                onPress={handleConfirmDelete}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.deleteModalDeleteText}>Delete</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
     </ScrollView>
   );
@@ -1190,6 +1251,9 @@ const styles = StyleSheet.create({
     color: '#000',
     flex: 1,
   },
+  categoryDropdownPlaceholder: {
+    color: '#999',
+  },
   dropdownArrow: {
     fontSize: 12,
     color: '#666',
@@ -1224,6 +1288,7 @@ const styles = StyleSheet.create({
   },
   documentsList: {
     marginTop: 8,
+    marginBlock: 24
   },
   categoryCard: {
     marginBottom: 12,
@@ -1337,6 +1402,72 @@ const styles = StyleSheet.create({
   modalOptionTextSelected: {
     fontWeight: '600',
     color: '#2196F3',
+  },
+  // Delete Modal Styles
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    minWidth: 300,
+    maxWidth: '85%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  deleteModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 16,
+  },
+  deleteModalMessage: {
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  deleteModalBold: {
+    fontWeight: 'bold',
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  deleteModalCancelButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+  },
+  deleteModalCancelText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
+  },
+  deleteModalDeleteButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 6,
+    backgroundColor: '#f44336',
+  },
+  deleteModalDeleteText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 
