@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, Image, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, Image, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 // Assuming you have an image picker library installed like react-native-image-picker
 import { launchImageLibrary, ImagePickerResponse, ImageLibraryOptions, MediaType } from 'react-native-image-picker';
 import { pick } from '@react-native-documents/picker';
@@ -50,6 +50,7 @@ const CreateCoursePage = () => {
   const [teachingPoints, setTeachingPoints] = useState<string[]>(['']); // State for teaching points
   const [courseRequirements, setCourseRequirements] = useState<string[]>(['']); // State for course requirements
   const [courseTitle, setCourseTitle] = useState('');
+  const [coursePrice, setCoursePrice] = useState('');
   const [category, setCategory] = useState('');
   const [subcategory, setSubcategory] = useState('');
   const [language, setLanguage] = useState('English');
@@ -152,7 +153,11 @@ const CreateCoursePage = () => {
     } else if (/^[.,\s]+$/.test(courseTitle) || /\.{3,}/.test(courseTitle) || /,{3,}/.test(courseTitle)) {
       newErrors.courseTitle = 'Course title contains invalid characters';
     }
-
+    if (!coursePrice) {
+      newErrors.coursePrice = 'Course price is required';
+    } else if (!/^\d+$/.test(coursePrice)) {
+      newErrors.coursePrice = 'Course price must contain only numbers';
+    }
     // Only validate category and subcategory if categories exist
     if (categories.length > 0) {
       if (!category) {
@@ -187,7 +192,7 @@ const CreateCoursePage = () => {
       newErrors.thumbnail = 'Course thumbnail is required';
     }
 
-   
+
     if (!semesterBased) {
       newErrors.semesterBased = 'Semester based is required';
     }
@@ -345,6 +350,7 @@ const CreateCoursePage = () => {
         requirements: filteredRequirements,
         published: false,
         semesterbased: semesterBased?.title === 'Yes' ? true : false,
+        price: coursePrice,
         // semester: selectedSemesters,
         // quarter: selectedQuarters,
         // syllabus: selectedSyllabusFile
@@ -463,6 +469,31 @@ const CreateCoursePage = () => {
         maxLength={100}
       />
       {errors.courseTitle && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.courseTitle}</Text>}
+      {/* Course Price */}
+      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Course Price</Text>
+      <TextInput
+        style={[
+          { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16 },
+          errors.coursePrice && { borderColor: 'red' }
+        ]}
+        placeholder='Course Price (USD $)'
+        placeholderTextColor="#999999"
+        value={coursePrice}
+        keyboardType='numeric'
+        onChangeText={(text) => {
+          // Only allow digits
+          let numericValue = text.replace(/[^0-9]/g, '');
+
+          // If it starts with 1–9 and length exceeds 4 → limit to 4 digits
+          if (/^[1-9]/.test(numericValue) && numericValue.length > 4) {
+            numericValue = '9999';
+          }
+
+          setCoursePrice(numericValue);
+        }}
+        maxLength={100}
+      />
+      {errors.coursePrice && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.coursePrice}</Text>}
 
       {/* Category Selection - Only show if categories exist */}
       {categories.length > 0 && (
@@ -574,55 +605,56 @@ const CreateCoursePage = () => {
         </>
       )}
 
-<Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Is this a semester-based course</Text>
-          <Pressable
-            style={[
-              { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16, justifyContent: 'center' },
-              errors.category && { borderColor: 'red' }
-            ]}
-            onPress={() => setShowSemesterBasedModal(true)}
-          >
-            <Text>{semesterBased?.title || 'Select'}</Text>
-          </Pressable>
-          {errors.semesterBased && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.semesterBased}</Text>}
+      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Is this a semester-based course</Text>
+      <Pressable
+        style={[
+          { height: 40, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, paddingHorizontal: 8, marginBottom: 16, justifyContent: 'center' },
+          errors.category && { borderColor: 'red' }
+        ]}
+        onPress={() => setShowSemesterBasedModal(true)}
+      >
+        <Text>{semesterBased?.title || 'Select'}</Text>
+      </Pressable>
+      {errors.semesterBased && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.semesterBased}</Text>}
 
-          {/* Category Selection Modal */}
-          <Modal
-            visible={showSemesterBasedModal}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setShowSemesterBasedModal(false)}
-          >
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
-              <View style={{ backgroundColor: 'white', borderRadius: 8, padding: 16, maxHeight: '80%' }}>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>Select</Text>
-                <ScrollView>
-                 
-                    {[{_id:1,title:'Yes'},{_id:2,title:'No'}].map((sem) => (
-                      <Pressable
-                        key={sem._id}
-                        style={[
-                          { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
-                          semesterBased?._id === sem._id && { backgroundColor: '#e6ffe6' }
-                        ]}
-                        onPress={() =>{ setSemesterBased(sem)
-                          setShowSemesterBasedModal(false)
-                        }}
-                      >
-                        <Text style={{ fontSize: 16 }}>{sem.title}</Text>
-                      </Pressable>
-                    ))
-                  }
-                </ScrollView>
+      {/* Category Selection Modal */}
+      <Modal
+        visible={showSemesterBasedModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSemesterBasedModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: 'white', borderRadius: 8, padding: 16, maxHeight: '80%' }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>Select</Text>
+            <ScrollView>
+
+              {[{ _id: 1, title: 'Yes' }, { _id: 2, title: 'No' }].map((sem) => (
                 <Pressable
-                  style={{ marginTop: 16, padding: 12, backgroundColor: '#f0f0f0', borderRadius: 4 }}
-                  onPress={() => setShowSemesterBasedModal(false)}
+                  key={sem._id}
+                  style={[
+                    { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+                    semesterBased?._id === sem._id && { backgroundColor: '#e6ffe6' }
+                  ]}
+                  onPress={() => {
+                    setSemesterBased(sem)
+                    setShowSemesterBasedModal(false)
+                  }}
                 >
-                  <Text style={{ textAlign: 'center' }}>Cancel</Text>
+                  <Text style={{ fontSize: 16 }}>{sem.title}</Text>
                 </Pressable>
-              </View>
-            </View>
-          </Modal>
+              ))
+              }
+            </ScrollView>
+            <Pressable
+              style={{ marginTop: 16, padding: 12, backgroundColor: '#f0f0f0', borderRadius: 4 }}
+              onPress={() => setShowSemesterBasedModal(false)}
+            >
+              <Text style={{ textAlign: 'center' }}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* Language */}
       <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Language</Text>
@@ -899,7 +931,7 @@ const CreateCoursePage = () => {
       {errors.syllabus && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.syllabus}</Text>} */}
 
       {/* Create Button */}
-      <Pressable
+      <TouchableOpacity
         style={{
           backgroundColor: isLoading ? '#ccc' : 'green',
           padding: 16,
@@ -916,7 +948,7 @@ const CreateCoursePage = () => {
         ) : (
           <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>Create Course</Text>
         )}
-      </Pressable>
+      </TouchableOpacity>
 
     </ScrollView>
   );
