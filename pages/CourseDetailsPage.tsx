@@ -13,6 +13,7 @@ import {
   Platform,
   Linking,
   TouchableWithoutFeedback,
+  Switch,
 } from "react-native";
 import GradeScaleModal from "../components/GradeScaleModal";
 import {
@@ -455,7 +456,13 @@ const CourseDetailsPage = () => {
       fetchGradingPeriods();
     }
   }, [showGradingPeriodsModal, courseId]);
-
+  const fetchCourseDetails = async () => {
+    setError(null);
+    getCourseDetails(courseId)
+      .then((res) => setCourse(res.course))
+      .catch(() => setError("Failed to load course details."))
+      .finally(() => setLoading(false));
+  }
   const fetchGradingPeriods = async () => {
     setLoadingGradingPeriods(true);
     try {
@@ -1810,6 +1817,7 @@ const CourseDetailsPage = () => {
       setSemesterStartDate("");
       setSemesterEndDate("");
       fetchGradingPeriods();
+      fetchCourseDetails()
     } catch (error: any) {
       Toast.show(error.message || "Failed to create semester", Toast.LONG);
     }
@@ -1847,6 +1855,7 @@ const CourseDetailsPage = () => {
       setSemesterStartDate("");
       setSemesterEndDate("");
       fetchGradingPeriods();
+      fetchCourseDetails()
     } catch (error: any) {
       Toast.show(error.message || "Failed to update semester", Toast.LONG);
     }
@@ -1891,6 +1900,7 @@ const CourseDetailsPage = () => {
       setQuarterStartDate("");
       setQuarterEndDate("");
       fetchGradingPeriods();
+      fetchCourseDetails()
     } catch (error: any) {
       Toast.show(error.message || "Failed to create quarter", Toast.LONG);
     }
@@ -1943,6 +1953,7 @@ const CourseDetailsPage = () => {
       setQuarterStartDate("");
       setQuarterEndDate("");
       fetchGradingPeriods();
+      fetchCourseDetails()
     } catch (error: any) {
       Toast.show(error.message || "Failed to update quarter", Toast.LONG);
     }
@@ -1956,6 +1967,7 @@ const CourseDetailsPage = () => {
         Toast.LONG
       );
       fetchGradingPeriods();
+      fetchCourseDetails()
     } catch (error: any) {
       Toast.show(error.message || "Failed to update semester", Toast.LONG);
     }
@@ -1969,6 +1981,7 @@ const CourseDetailsPage = () => {
         Toast.LONG
       );
       fetchGradingPeriods();
+      fetchCourseDetails()
     } catch (error: any) {
       Toast.show(error.message || "Failed to update quarter", Toast.LONG);
     }
@@ -2746,6 +2759,25 @@ const CourseDetailsPage = () => {
               Manage GPA
             </Text>
           </TouchableOpacity>
+          {course.semesterbased &&
+            <TouchableOpacity
+              onPress={() => setShowGradingPeriodsModal(true)}
+              style={[
+                styles.topActionButton,
+                {
+                  backgroundColor: "#ffffff",
+                  borderWidth: 1,
+                  borderColor: "#cccccc",
+                },
+              ]}
+            >
+              <Text style={[styles.topActionButtonText, { color: "#000000" }]}>
+                Manage semesters & Quarters
+              </Text>
+            </TouchableOpacity>
+          }
+
+
           <TouchableOpacity
             onPress={async () => {
               setShowGradebookModal(true);
@@ -2852,12 +2884,7 @@ const CourseDetailsPage = () => {
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.addSemesterButton}
-          onPress={() => setShowGradingPeriodsModal(true)}
-        >
-          <Text style={styles.addSemesterButtonText}>Manage semesters & Quarters</Text>
-        </TouchableOpacity>
+
 
         {course.semesterbased ? course.semester && course.semester.length > 0 ? (
           <View style={styles.semesterSection}>
@@ -3080,77 +3107,150 @@ const CourseDetailsPage = () => {
                     No semesters found. Create your first semester.
                   </Text>
                 ) : (
-                  gradingPeriods.map((semester: any) => (
-                    <View key={semester._id} style={styles.gradingPeriodItem}>
-                      <View style={styles.gradingPeriodRow}>
-                        <View style={styles.gradingPeriodInfo}>
-                          <Text style={styles.gradingPeriodTitleText}>
-                            {semester.title}
-                          </Text>
-                          <Text style={styles.gradingPeriodDates}>
-                            {formatDateForInput(semester.startDate)} - {formatDateForInput(semester.endDate)}
-                          </Text>
-                        </View>
-                        <View style={styles.gradingPeriodActions}>
-                          <TouchableOpacity
-                            style={styles.gradingPeriodToggle}
-                            onPress={() => handleToggleSemesterArchive(semester)}
-                          >
-                            <Text style={styles.gradingPeriodToggleText}>
-                              {semester.isArchived ? "Archived" : "Unarchived"}
+                  gradingPeriods.map((semester: any) => {
+                    const isSemesterArchived = semester.isArchived;
+                    return (
+                      <View
+                        key={semester._id}
+                        style={[
+                          styles.gradingPeriodItem,
+                          isSemesterArchived && styles.gradingPeriodItemDisabled
+                        ]}
+                      >
+                        <View style={styles.gradingPeriodRow}>
+                          <View style={styles.gradingPeriodInfo}>
+                            <Text style={[
+                              styles.gradingPeriodTitleText,
+                              isSemesterArchived && styles.gradingPeriodTextDisabled
+                            ]}>
+                              {semester.title}
                             </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.gradingPeriodAddButton}
-                            onPress={() => openNewQuarterModal(semester)}
-                          >
-                            <SimpleIcon name="add" size={16} color="#10B144" />
-                            <Text style={styles.gradingPeriodAddButtonText}>Quarter</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.gradingPeriodEditButton}
-                            onPress={() => openEditSemesterModal(semester)}
-                          >
-                            <SimpleIcon name="edit" size={18} color="#fff" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      {semester.quarters && semester.quarters.length > 0 && (
-                        <View style={styles.gradingPeriodQuarters}>
-                          {semester.quarters.map((quarter: any) => (
-                            <View key={quarter._id} style={styles.gradingPeriodQuarterItem}>
-                              <View style={styles.gradingPeriodRow}>
-                                <View style={styles.gradingPeriodInfo}>
-                                  <Text style={styles.gradingPeriodQuarterTitle}>
-                                    {quarter.title}
-                                  </Text>
-                                  <Text style={styles.gradingPeriodDates}>
-                                    {formatDateForInput(quarter.startDate)} - {formatDateForInput(quarter.endDate)}
-                                  </Text>
-                                </View>
-                                <View style={styles.gradingPeriodActions}>
-                                  <TouchableOpacity
-                                    style={styles.gradingPeriodToggle}
-                                    onPress={() => handleToggleQuarterArchive(quarter)}
-                                  >
-                                    <Text style={styles.gradingPeriodToggleText}>
-                                      {quarter.isArchived ? "Archived" : "Unarchived"}
-                                    </Text>
-                                  </TouchableOpacity>
-                                  <TouchableOpacity
-                                    style={styles.gradingPeriodEditButton}
-                                    onPress={() => openEditQuarterModal(quarter)}
-                                  >
-                                    <SimpleIcon name="edit" size={18} color="#fff" />
-                                  </TouchableOpacity>
-                                </View>
-                              </View>
+                            <Text style={[
+                              styles.gradingPeriodDates,
+                              isSemesterArchived && styles.gradingPeriodTextDisabled
+                            ]}>
+                              {formatDateForInput(semester.startDate)} - {formatDateForInput(semester.endDate)}
+                            </Text>
+                          </View>
+                          <View style={styles.gradingPeriodActions}>
+                            <View style={styles.gradingPeriodSwitchContainer}>
+                              <Switch
+                                value={isSemesterArchived}
+                                onValueChange={() => handleToggleSemesterArchive(semester)}
+                                trackColor={{ false: '#d1d5db', true: '#10B144' }}
+                                thumbColor={isSemesterArchived ? '#fff' : '#fff'}
+                              />
+                              <Text style={[
+                                styles.gradingPeriodSwitchLabel,
+                                isSemesterArchived && styles.gradingPeriodTextDisabled
+                              ]}>
+                                {isSemesterArchived ? "Archived" : "Unarchived"}
+                              </Text>
                             </View>
-                          ))}
+                            <TouchableOpacity
+                              style={[
+                                styles.gradingPeriodAddButton,
+                                isSemesterArchived && styles.gradingPeriodButtonDisabled
+                              ]}
+                              onPress={() => openNewQuarterModal(semester)}
+                              disabled={isSemesterArchived}
+                            >
+                              <SimpleIcon
+                                name="add"
+                                size={16}
+                                color={isSemesterArchived ? "#9ca3af" : "#10B144"}
+                              />
+                              <Text style={[
+                                styles.gradingPeriodAddButtonText,
+                                isSemesterArchived && styles.gradingPeriodTextDisabled
+                              ]}>
+                                Quarter
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[
+                                styles.gradingPeriodEditButton,
+                                isSemesterArchived && styles.gradingPeriodButtonDisabled
+                              ]}
+                              onPress={() => openEditSemesterModal(semester)}
+                              disabled={isSemesterArchived}
+                            >
+                              <SimpleIcon
+                                name="edit"
+                                size={18}
+                                color={"#fff"}
+                              />
+                            </TouchableOpacity>
+                          </View>
                         </View>
-                      )}
-                    </View>
-                  ))
+                        {semester.quarters && semester.quarters.length > 0 && (
+                          <View style={styles.gradingPeriodQuarters}>
+                            {semester.quarters.map((quarter: any) => {
+                              const isQuarterArchived = quarter.isArchived;
+                              const isDisabled = isSemesterArchived || isQuarterArchived;
+                              return (
+                                <View
+                                  key={quarter._id}
+                                  style={[
+                                    styles.gradingPeriodQuarterItem,
+                                    isDisabled && styles.gradingPeriodItemDisabled
+                                  ]}
+                                >
+                                  <View style={styles.gradingPeriodRow}>
+                                    <View style={styles.gradingPeriodInfo}>
+                                      <Text style={[
+                                        styles.gradingPeriodQuarterTitle,
+                                        isDisabled && styles.gradingPeriodTextDisabled
+                                      ]}>
+                                        {quarter.title}
+                                      </Text>
+                                      <Text style={[
+                                        styles.gradingPeriodDates,
+                                        isDisabled && styles.gradingPeriodTextDisabled
+                                      ]}>
+                                        {formatDateForInput(quarter.startDate)} - {formatDateForInput(quarter.endDate)}
+                                      </Text>
+                                    </View>
+                                    <View style={styles.gradingPeriodActions}>
+                                      <View style={styles.gradingPeriodSwitchContainer}>
+                                        <Switch
+                                          value={isQuarterArchived}
+                                          onValueChange={() => handleToggleQuarterArchive(quarter)}
+                                          trackColor={{ false: '#d1d5db', true: '#10B144' }}
+                                          thumbColor={isQuarterArchived ? '#fff' : '#fff'}
+                                          disabled={isSemesterArchived}
+                                        />
+                                        <Text style={[
+                                          styles.gradingPeriodSwitchLabel,
+                                          isDisabled && styles.gradingPeriodTextDisabled
+                                        ]}>
+                                          {isQuarterArchived ? "Archived" : "Unarchived"}
+                                        </Text>
+                                      </View>
+                                      <TouchableOpacity
+                                        style={[
+                                          styles.gradingPeriodEditButton,
+
+                                        ]}
+                                        onPress={() => openEditQuarterModal(quarter)}
+                                        disabled={isDisabled}
+                                      >
+                                        <SimpleIcon
+                                          name="edit"
+                                          size={18}
+                                          color={"#fff"}
+                                        />
+                                      </TouchableOpacity>
+                                    </View>
+                                  </View>
+                                </View>
+                              );
+                            })}
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })
                 )}
               </ScrollView>
             )}
@@ -9213,16 +9313,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  gradingPeriodToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: "#f3f4f6",
+  gradingPeriodSwitchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  gradingPeriodToggleText: {
+  gradingPeriodSwitchLabel: {
     fontSize: 12,
     color: "#374151",
     fontWeight: "500",
+  },
+  gradingPeriodItemDisabled: {
+    opacity: 0.8,
+    backgroundColor: "#f9fafb",
+  },
+  gradingPeriodTextDisabled: {
+    color: "#9ca3af",
+  },
+  gradingPeriodButtonDisabled: {
+    opacity: 0.8,
   },
   gradingPeriodAddButton: {
     flexDirection: "row",

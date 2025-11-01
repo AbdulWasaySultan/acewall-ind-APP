@@ -1291,7 +1291,7 @@ export const toggleQuarterArchive = async (quarterId: string, isArchived: boolea
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.put(`/api/quarter/archive/${quarterId}`, {
+    const response = await api.put(`api/admin/updateQtrArchiveStatus/${quarterId}`, {
       isArchived,
     });
     return response.data;
