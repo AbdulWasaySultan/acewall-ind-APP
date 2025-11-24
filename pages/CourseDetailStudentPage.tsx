@@ -4,8 +4,7 @@ import SimpleIcon from '../components/SimpleIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { getCourseById, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse, createStripeCheckoutSession } from '../services/course';
 import { useUser } from '../contexts/UserContext';
-import axios from 'axios';
-
+import { getCourseRating } from '../services/rating';
 const fallbackImage = require('../assets/jpg.jpg');
 const avatarPlaceholder = require('../assets/placeholder.png');
 const TABS = ['Overview', 'Reviews', 'Curriculum', 'Instructor'];
@@ -24,7 +23,7 @@ const CourseDetailStudentPage = () => {
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<{ [key: string]: boolean }>({});
   const [expandedLessons, setExpandedLessons] = useState<{ [key: string]: boolean }>({});
-
+  const [courseRating, setCourseRating] = useState<{count:number,averageStar:number}>();
   // Modal states
   const [showQuartersModal, setShowQuartersModal] = useState(false);
   const [showChaptersModal, setShowChaptersModal] = useState(false);
@@ -36,7 +35,11 @@ const CourseDetailStudentPage = () => {
   const [loadingQuarters, setLoadingQuarters] = useState(false);
   const [loadingChapters, setLoadingChapters] = useState(false);
   const [loadingChapterDetails, setLoadingChapterDetails] = useState(false);
-
+  const isLong = course?.courseDescription && course.courseDescription.length > 500;
+  const [showMore, setShowMore] = useState(false);
+  const courseDescription = course?.courseDescription && (showMore
+    ? course.courseDescription
+    : course.courseDescription.slice(0, 500) + (isLong ? "..." : ""))
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -61,8 +64,17 @@ const CourseDetailStudentPage = () => {
         setLoading(false);
       }
     };
-
+    const fetchCourseRating = async () => {
+      try {
+      const res = await getCourseRating(courseId)
+      setCourseRating(res)
+        console.log(res)
+      } catch (err) {
+        console.log(err)
+      }
+    };
     fetchCourseData();
+    fetchCourseRating()
   }, [courseId, enrollmentId]);
 
   // Helper for rendering stars
@@ -455,7 +467,17 @@ const CourseDetailStudentPage = () => {
       ) : course ? (
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>{course.courseTitle}</Text>
-          <Text style={styles.subtitle}>{course.courseDescription}</Text>
+          <Text style={styles.subtitle}>
+            {courseDescription}
+            {isLong && (
+              <Text
+                onPress={() => setShowMore(!showMore)}
+                style={{ color: '#10B144', marginTop: 5, fontWeight: '600' }}
+              >
+                {showMore ? " Read Less" : "Read More"}
+              </Text>
+            )}
+          </Text>
           <View style={styles.instructorRow}>
             <Image source={
               course.createdby?.profileImg?.url
@@ -669,13 +691,17 @@ const CourseDetailStudentPage = () => {
             </View>
           )}
           {activeTab === 'Reviews' && (
+            courseRating?.averageStar? 
             <View style={styles.tabContentCentered}>
+               <Text style={{ fontWeight: 'bold', fontSize: 35, color: '#222', marginBottom: 8 }}>{courseRating?.averageStar?.toFixed(1)}</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 8 }}>
-                {renderStars(4.5)}
+              {renderStars(courseRating?.averageStar || 0)}
               </View>
-              <Text style={{ color: '#888', fontSize: 16, textAlign: 'center', marginBottom: 18 }}>Course Rating</Text>
-              <Text style={{ fontWeight: 'bold', fontSize: 20, color: '#222', marginBottom: 8 }}>Students Feedback</Text>
-              <Text style={styles.sectionText}>No reviews available</Text>
+              {courseRating?.count&& <Text style={styles.sectionText}>({courseRating.count} rating)</Text>}
+            </View>
+            :
+            <View>
+            <Text style={styles.sectionText}>This course is not rated</Text>
             </View>
           )}
         </ScrollView>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Keyboard,ActivityIndicator } from 'react-native';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import SimpleIcon from '../components/SimpleIcon';
 import { getMessages, sendMessage } from '../services/message';
@@ -18,6 +18,7 @@ const ChatPage = () => {
 
     const [messages, setMessages] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
     const [newMessage, setNewMessage] = useState('');
     const [keyboardMargin, setKeyboardMargin] = useState(0);
 
@@ -62,8 +63,8 @@ const ChatPage = () => {
     }, [fetchMessages]);
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim() || !user) return;
-
+        if (!newMessage.trim() || !user || sending) return;
+        setSending(true);
         try {
             const response = await sendMessage(conversationId, newMessage);
             if (response.newMessage) {
@@ -72,6 +73,8 @@ const ChatPage = () => {
             setNewMessage('');
         } catch (error) {
             console.error("Failed to send message:", error);
+        }finally {
+            setSending(false);
         }
     };
 
@@ -110,8 +113,16 @@ const ChatPage = () => {
                     onChangeText={setNewMessage}
                     multiline
                 />
-                <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-                    <SimpleIcon name="send" size={24} color="#fff" />
+                  <TouchableOpacity
+                    style={[styles.sendButton, (sending || !newMessage.trim()) && styles.sendButtonDisabled]}
+                    onPress={handleSendMessage}
+                    disabled={sending || !newMessage.trim()}
+                >
+                    {sending ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <SimpleIcon name="send" size={24} color="#fff" />
+                    )}
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
@@ -188,6 +199,9 @@ const styles = StyleSheet.create({
         height: 50,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    sendButtonDisabled: {
+        opacity: 0.5,
     },
 });
 

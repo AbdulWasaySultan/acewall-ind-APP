@@ -22,7 +22,7 @@ const ChapterPagesPage = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<any | null>(null);
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<any>({});
   const [submitting, setSubmitting] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedPage, setSelectedPage] = useState<any | null>(null);
@@ -169,18 +169,16 @@ const ChapterPagesPage = () => {
               style={styles.filePickerButton}
               onPress={async () => {
                 try {
-                  const result = await pick({ type: ['application/pdf'], copyTo: 'cachesDirectory' });
+                  const result = await pick({ type: ['application/pdf'], copyTo: 'cachesDirectory', allowMultiSelection: false });
                   if (result && result.length > 0) {
                     const f = result[0];
-                    setFiles((prev) => [
-                      ...prev,
-                      {
-                        uri: f.uri,
-                        type: 'application/pdf',
-                        name: f.name || f.uri.split('/').pop(),
-                        fileName: f.name,
-                      },
-                    ]);
+                    setFiles({
+                      uri: f.uri,
+                      type: 'application/pdf',
+                      name: f.name || f.uri.split('/').pop(),
+                      fileName: f.name,
+                    }
+                    );
                   }
                 } catch (e) {
                   Toast.show('Error picking file', Toast.LONG);
@@ -188,7 +186,7 @@ const ChapterPagesPage = () => {
               }}
             >
               <Text style={styles.filePickerButtonText}>
-                {files.length > 0 ? `${files.length} file(s) selected` : 'Choose files No file chosen'}
+              {Object.keys(files).length > 0 ? `${files?.name} ` : 'Choose files No file chosen'}
               </Text>
             </TouchableOpacity>
 

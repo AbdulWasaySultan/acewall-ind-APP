@@ -192,8 +192,8 @@ const AnnouncementsPage = () => {
               <View style={{ padding: 12 }}>
                 {/* Table Headers */}
                 <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: '#eee', paddingBottom: 8, marginBottom: 8 }}>
-                  <Text style={{ flex: 1, fontWeight: 'bold' }}>Date</Text>
-                  <Text style={{ flex: 1, fontWeight: 'bold' }}>Title</Text>
+                  <Text style={{ flex: 1.5, fontWeight: 'bold' }}>Date</Text>
+                  <Text style={{ flex: 1.5, fontWeight: 'bold' }}>Title</Text>
                   <Text style={{ flex: 2, fontWeight: 'bold' }}>Message Summary</Text>
                   <Text style={{ width: 30 }}></Text>
                 </View>
@@ -206,9 +206,8 @@ const AnnouncementsPage = () => {
                 ) : (
                   announcements.map((a) => (
                     <View key={a._id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#f5f5f5' }}>
-                      <Text style={{ flex: 1 }}>{new Date(a.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
-                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={{ color: '#7b61ff', marginRight: 4 }}>📢</Text>
+                    <Text style={{ flex: 1.5, marginRight: 2 }}>{new Date(a.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
+                    <View style={{ flex: 1.5, marginRight: 2 }}>
                         <Text style={{ color: '#7b61ff', textDecorationLine: 'underline' }}>{a.title}</Text>
                       </View>
                       <Text style={{ flex: 2 }}>{a.message}</Text>
@@ -319,7 +318,8 @@ const AnnouncementsPage = () => {
         ) : studentAnnouncements.length === 0 ? (
           <Text style={{ textAlign: 'center', color: '#666', marginTop: 32 }}>No announcements found.</Text>
         ) : (
-          studentAnnouncements.map((a) => {
+          <ScrollView showsVerticalScrollIndicator={false}>
+          {studentAnnouncements.map((a) => {
             const expanded = expandedAnnouncements[a._id] || false;
             return (
               <Pressable
@@ -357,7 +357,8 @@ const AnnouncementsPage = () => {
                 )}
               </Pressable>
             );
-          })
+          })}
+          </ScrollView>
         )}
       </>
       )}

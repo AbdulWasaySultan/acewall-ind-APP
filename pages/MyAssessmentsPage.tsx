@@ -154,7 +154,7 @@ export interface AssessmentItem {
   };
   createdAt: string;
   isSubmitted: boolean;
-  source: string;
+  source: 'assessment' | 'discussion' ;
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -286,7 +286,16 @@ const MyAssessmentsPage = () => {
         </Text>
 
         {!item.isSubmitted && (
-          <TouchableOpacity style={styles.submitBtn} onPress={() => navigation.navigate("AssessmentScreenStudent", { assessmentId: item._id })}>
+            <TouchableOpacity style={styles.submitBtn} onPress={() => {
+              console.log(item.source)
+              if(item.source==='discussion'){
+                navigation.navigate("DiscussionStudent",{ discussionId: item._id })
+              }else{
+  
+              navigation.navigate("AssessmentScreenStudent", { assessmentId: item._id })
+              }
+  
+              }}>
             <Text style={styles.submitBtnText}>Submit Assessment</Text>
           </TouchableOpacity>
         )}
@@ -385,6 +394,7 @@ const MyAssessmentsPage = () => {
           <FlatList
             data={filtered}
             keyExtractor={(item, index) => item._id || `${index}`}
+            contentContainerStyle={{ paddingBottom: 60 }}
             renderItem={({ item, index }) => (
               <Row
                 item={item}

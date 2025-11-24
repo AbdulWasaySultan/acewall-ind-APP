@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, ActivityIndicator,Image } from 'react-native';
 import SimpleIcon from './SimpleIcon';
 import { useNavigation } from '@react-navigation/native';
 import { createConversation, getConversations } from '../services/conversation';
@@ -9,6 +9,7 @@ interface ConversationsModalProps {
     onClose: () => void;
     conversationId: string | null;
 }
+const avatarPlaceholder = require('../assets/placeholder.png');
 
 const ConversationsModal: React.FC<ConversationsModalProps> = ({ visible, onClose, conversationId }) => {
     const [conversations, setConversations] = useState<any[]>([]);
@@ -46,7 +47,7 @@ const ConversationsModal: React.FC<ConversationsModalProps> = ({ visible, onClos
         <TouchableOpacity onPress={() => handleConversationPress(item.conversationId, item.otherMember?.name)}>
             <View style={styles.card}>
                 <View style={styles.avatar}>
-                    <SimpleIcon name="person-circle-outline" size={48} color="#888" />
+                <Image source={item?.otherMember?.profileImg?.url ?{uri:item?.otherMember?.profileImg?.url  }:avatarPlaceholder} style={{width:56,height:56,borderRadius:28}} />
                 </View>
                 <Text style={styles.name}>{item.otherMember?.name || 'Unknown User'}</Text>
             </View>

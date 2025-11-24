@@ -351,4 +351,25 @@ export const dashboardService = {
       return [];
     }
   },
+  fetchStaticRecentActivity: async (): Promise<any[]> => {
+    try {
+      const api = await createDashboardApiInstance();
+      const response = await api.get('/api/comment/teacher/allComment');
+      // Response: { message: 'Enrolled Courses', enrolledCourses: [] }
+      if (response.data.recentComments && Array.isArray(response.data.recentComments)) {
+        return response.data.recentComments;
+      }
+      return [];
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error fetching student courses:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          url: error.config?.url
+        });
+      }
+      return [];
+    }
+  },
 }; 

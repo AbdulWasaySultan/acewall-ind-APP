@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ import {
   updatePhone,
 } from '../services/schoolService';
 import { countryCodes } from '../utils/countries';
-
+import SimpleIcon from '../components/SimpleIcon';
 type TabType = 'email' | 'password' | 'phone';
 
 const EditCredentialsPage: React.FC = () => {
@@ -35,6 +35,7 @@ const EditCredentialsPage: React.FC = () => {
   const [otpData, setOtpData] = useState<any>(null);
   const [otp, setOtp] = useState('');
   const [otpTimer, setOtpTimer] = useState(600); // 10 minutes in seconds
+  const otpInputRefs = useRef<(TextInput | null)[]>([]);
   const route = useRoute<RouteParams>();
   const {userData} = route.params;
   // Form states
@@ -48,7 +49,9 @@ const EditCredentialsPage: React.FC = () => {
 
   // Password validation
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
-
+  // Password visibility states
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // Country dropdown
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
 
@@ -58,6 +61,110 @@ const EditCredentialsPage: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [showOTPModal, otpTimer]);
+  useEffect(() => {
+    if (showOTPModal) {
+      // Reset OTP and focus first input when modal opens
+      setOtp('');
+      setTimeout(() => {
+        otpInputRefs.current[0]?.focus();
+      }, 100);
+    } else {
+      // Reset OTP when modal closes
+      setOtp('');
+    }
+  }, [showOTPModal]);
+
+  const handleOtpChange = (text: string, index: number) => {
+    // Remove any non-numeric characters
+    const numericText = text.replace(/[^0-9]/g, '');
+
+    // Handle paste - if multiple digits are pasted, distribute them across inputs
+    if (numericText.length > 1) {
+      const digits = numericText.slice(0, 6).split('');
+      const newOtp = [...otp.split('')];
+      // Pad array to ensure we have 6 elements
+      while (newOtp.length < 6) {
+        newOtp.push('');
+      }
+
+      // Fill OTP starting from current index
+      digits.forEach((digit, i) => {
+        if (index + i < 6) {
+          newOtp[index + i] = digit;
+        }
+      });
+
+      setOtp(newOtp.join(''));
+
+      // Focus the last filled input or the last input if all 6 digits were pasted
+      const nextIndex = Math.min(index + digits.length, 5);
+      otpInputRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    // Handle single digit input
+    if (numericText.length === 1) {
+      const newOtp = otp.split('');
+      // Pad array to ensure we have 6 elements
+      while (newOtp.length < 6) {
+        newOtp.push('');
+      }
+      newOtp[index] = numericText;
+      const updatedOtp = newOtp.join('');
+      setOtp(updatedOtp);
+
+      // Auto-focus next input if available
+      if (index < 5) {
+        otpInputRefs.current[index + 1]?.focus();
+      }
+    } else if (text === '') {
+      // User deleted the current digit (backspace pressed)
+      const newOtp = otp.split('');
+      // Pad array to ensure we have 6 elements
+      while (newOtp.length < 6) {
+        newOtp.push('');
+      }
+
+      if (newOtp[index]) {
+        // If current input had a value, clear it and move to previous input
+        newOtp[index] = '';
+        setOtp(newOtp.join(''));
+        if (index > 0) {
+          otpInputRefs.current[index - 1]?.focus();
+        }
+      } else if (index > 0) {
+        // If current input is empty, clear the previous input and move focus
+        newOtp[index - 1] = '';
+        setOtp(newOtp.join(''));
+        otpInputRefs.current[index - 1]?.focus();
+      }
+    }
+  };
+
+  const handleOtpKeyPress = (e: any, index: number) => {
+    // Handle backspace
+    if (e.nativeEvent.key === 'Backspace') {
+      const currentOtp = otp.split('');
+      // Pad array to ensure we have 6 elements
+      while (currentOtp.length < 6) {
+        currentOtp.push('');
+      }
+
+      if (currentOtp[index] && index > 0) {
+        // Current input has a value, clear it and move to previous
+        const newOtp = [...currentOtp];
+        newOtp[index] = '';
+        setOtp(newOtp.join(''));
+        otpInputRefs.current[index - 1]?.focus();
+      } else if (!currentOtp[index] && index > 0) {
+        // Current input is empty, move to previous and clear it
+        const newOtp = [...currentOtp];
+        newOtp[index - 1] = '';
+        setOtp(newOtp.join(''));
+        otpInputRefs.current[index - 1]?.focus();
+      }
+    }
+  };
 
   const validatePassword = (password: string) => {
     const errors: string[] = [];
@@ -252,29 +359,53 @@ const EditCredentialsPage: React.FC = () => {
 
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>New password</Text>
-              <TextInput
-                style={styles.input}
-                value={passwordForm.newPassword}
-                onChangeText={(text) => {
-                  setPasswordForm({ ...passwordForm, newPassword: text });
-                  setPasswordErrors(validatePassword(text));
-                }}
-                placeholder="Enter new password"
-                secureTextEntry
-                placeholderTextColor="#000"
-              />
+              <View style={styles.passwordInputContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={passwordForm.newPassword}
+                  onChangeText={(text) => {
+                    setPasswordForm({ ...passwordForm, newPassword: text });
+                    setPasswordErrors(validatePassword(text));
+                  }}
+                  placeholder="Enter new password"
+                  secureTextEntry={!showNewPassword}
+                  placeholderTextColor="#000"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowNewPassword(!showNewPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <SimpleIcon
+                    name={showNewPassword ? 'visibility-off' : 'visibility'}
+                    size={20}
+                    color="#4CAF50"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Confirm password</Text>
-              <TextInput
-                style={styles.input}
-                value={passwordForm.confirmPassword}
-                onChangeText={(text) => setPasswordForm({ ...passwordForm, confirmPassword: text })}
-                placeholder="Confirm new password"
-                secureTextEntry
-                placeholderTextColor="#000"
-              />
+              <View style={styles.passwordInputContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={passwordForm.confirmPassword}
+                  onChangeText={(text) => setPasswordForm({ ...passwordForm, confirmPassword: text })}
+                  placeholder="Confirm new password"
+                  secureTextEntry={!showConfirmPassword}
+                  placeholderTextColor="#000"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <SimpleIcon
+                    name={showConfirmPassword ? 'visibility-off' : 'visibility'}
+                    size={20}
+                    color="#4CAF50"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {passwordErrors.length > 0 && (
@@ -445,17 +576,16 @@ const EditCredentialsPage: React.FC = () => {
               {[0, 1, 2, 3, 4, 5].map((index) => (
                 <TextInput
                   key={index}
+                  ref={(ref) => {
+                    otpInputRefs.current[index] = ref;
+                  }}
                   style={styles.otpInput}
                   value={otp[index] || ''}
-                  onChangeText={(text) => {
-                    if (text.length <= 1) {
-                      const newOtp = otp.split('');
-                      newOtp[index] = text;
-                      setOtp(newOtp.join(''));
-                    }
-                  }}
+                  onChangeText={(text) => handleOtpChange(text, index)}
+                  onKeyPress={(e) => handleOtpKeyPress(e, index)}
                   keyboardType="numeric"
                   maxLength={1}
+                  selectTextOnFocus
                 />
               ))}
             </View>
@@ -566,6 +696,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff',
     color: '#000',
+  },
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+    color: '#000',
+  },
+  eyeIcon: {
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   phoneContainer: {
     flexDirection: 'row',

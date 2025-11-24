@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { searchSchools, School } from "../services/schoolService";
@@ -26,7 +27,27 @@ const LandingPage = () => {
   const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation();
   const { markLandingSeen } = useAuth();
+  useEffect(() => {
+    const handleDeepLink = ({ url }: { url: string }) => {
+      console.log("Deep link received:", url);
 
+      if (url.includes("payment-success")) {
+        Toast.show('Payment successful',Toast.LONG)
+
+      if (url.includes("payment-failed")) {
+        Toast.show('Payment failed',Toast.LONG)
+
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    return () => subscription.remove();
+  }}, []);
   const handleSchoolSelect = async (baseUrl: string) => {
     try {
       await AsyncStorage.setItem("selectedBaseUrl", baseUrl);

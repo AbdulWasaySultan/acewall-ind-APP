@@ -132,7 +132,7 @@ const DashboardPage = () => {
           ) : studentError ? (
             <Text style={styles.sectionSubtitle}>{studentError}</Text>
           ) : studentAnnouncements.length > 0 ? (
-            studentAnnouncements.map((a) => (
+            studentAnnouncements.slice(0, 3).map((a) => (
               <View key={a.id} style={styles.activityCard}>
                 <Text style={styles.activityText}>{a.title}</Text>
                 <Text style={styles.activityTime}>{a.date ? new Date(a.date).toLocaleString() : ''}</Text>

@@ -313,10 +313,11 @@ export const getAllCourses = async (search?: string): Promise<CourseResponse> =>
     addAuthInterceptor(api);
     console.log('Fetching courses from:', search);
     const url = search
-      ? `/api/course/getindividualcourse?search=${encodeURIComponent(search)}`
-      : '/api/course/getindividualcourse';
+      ? `/api/course/getindividualcourse?published=true&isVerified=approved?&search=${encodeURIComponent(search)}`
+      : `/api/course/getindividualcourse?published=true&isVerified=approved`;
 
     const response = await api.get<CourseResponse>(url);
+    console.log(response)
     return response.data;
   } catch (error: any) {
     console.error('Get all courses error:', error);
@@ -1025,11 +1026,11 @@ export const getLessonPagesForStudent = async (lessonId: string) => {
   }
 };
 
-export const getStudentEnrolledCourses = async () => {
+export const getStudentEnrolledCourses = async (searchQuery: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.get('/api/enrollment/studentCourses?search=');
+    const response = await api.get(`/api/enrollment/studentCourses?search=${searchQuery}`);
     return response.data;
   } catch (error: any) {
     console.error('Error fetching enrolled courses:', error);
@@ -1071,7 +1072,7 @@ export const createStripeCheckoutSession = async (courseId: string, studentId: s
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.post('/api/stripe/create-checkout-session', {
+    const response = await api.post('/api/stripe/create-checkout-session-mobile', {
       courseId,
       studentId,
     });

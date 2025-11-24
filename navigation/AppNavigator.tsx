@@ -59,7 +59,7 @@ export type RootStackParamList = {
   ChapterDetailsStudent: { chapterId: string };
   Chat: undefined;
   ResetPassword: { email: string };
-  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string, refreshAssessments: () => void };
+  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string | null, refreshAssessments: () => void };
   ChapterPages: { courseId: string; chapterId: string };
   ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string };
   AssessmentScreenStudent: { assessmentId: string };
@@ -261,63 +261,66 @@ const AppNavigator = () => {
             />
           </>
         ) : (
+          <>
           <Stack.Screen
             name="Main"
             component={DrawerNavigator}
             options={{ headerShown: false }}
           />
+          <Stack.Screen
+            name="CourseDetails"
+            component={CourseDetailsPage}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CourseDetailStudentPage"
+            component={CourseDetailStudentPage}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AssessmentScreenStudent"
+            component={AssessmentScreenStudent}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CourseDetailStudentPageEnrolled"
+            component={CourseDetailStudentPageEnrolled}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ChapterDetailsStudent"
+            component={ChapterDetailsStudent}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="Chat" component={ChatPage} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="EditCredentials"
+            component={EditCredentialsPage}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CreateAssessment"
+            component={CreateAssessmentPage}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ChapterPages"
+            component={ChapterPagesPage}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ChapterDiscussions"
+            component={ChapterDiscussionsPage}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DiscussionStudent"
+            component={DiscussionStudent}
+            options={{ headerShown: false }}
+          />
+        </>
         )}
-        <Stack.Screen
-          name="CourseDetails"
-          component={CourseDetailsPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="CourseDetailStudentPage"
-          component={CourseDetailStudentPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="AssessmentScreenStudent"
-          component={AssessmentScreenStudent}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="CourseDetailStudentPageEnrolled"
-          component={CourseDetailStudentPageEnrolled}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ChapterDetailsStudent"
-          component={ChapterDetailsStudent}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="Chat" component={ChatPage} options={{ headerShown: false }} />
-        <Stack.Screen
-          name="EditCredentials"
-          component={EditCredentialsPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="CreateAssessment"
-          component={CreateAssessmentPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ChapterPages"
-          component={ChapterPagesPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ChapterDiscussions"
-          component={ChapterDiscussionsPage}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DiscussionStudent"
-          component={DiscussionStudent}
-          options={{ headerShown: false }}
-        />
+     
       </Stack.Navigator>
     </NavigationContainer>
   );

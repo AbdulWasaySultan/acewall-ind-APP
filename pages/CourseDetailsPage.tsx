@@ -373,6 +373,11 @@ const CourseDetailsPage = () => {
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set())
   const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set())
   const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(new Set())
+  const [showMore, setShowMore] = useState(false);
+  const isLong = course?.courseDescription && course.courseDescription.length > 500;
+  const courseDescription = course?.courseDescription && (showMore
+    ? course.courseDescription
+    : course.courseDescription.slice(0, 500) + (isLong ? "..." : ""))
   const [showGradeScaleManagement, setShowGradeScaleManagement] = useState(false)
   const [showGradeScaleManagementLoader, setShowGradeScaleManagementLoader] = useState(false)
   const [showGPAManagement, setShowGPAManagement] = useState(false)
@@ -587,7 +592,21 @@ const CourseDetailsPage = () => {
     try {
       setLoadingSemesterQuarters(true);
       const res = await getQuartersForSemester(semester._id);
-      setSemesterQuarters(res.quarters || []);
+          // If the course's semester object already contains associated quarters,
+      // filter the fetched quarters to only those that belong to this course.
+      const fetchedQuarters: any[] = res.quarters || [];
+      const assignedQuarterIds: string[] = Array.isArray(course?.quarter)
+        ? course.quarter
+          .map((q: any) => q?._id || q?.quarterId || q?.quarter || q)
+          .filter(Boolean)
+        : [];
+      console.log(course?.quarter, assignedQuarterIds);
+      const quartersToShow = assignedQuarterIds.length > 0
+        ? fetchedQuarters.filter((q: any) => assignedQuarterIds.includes(q._id))
+        : fetchedQuarters;
+      console.log(quartersToShow);
+
+      setSemesterQuarters(quartersToShow);
     } catch (error: any) {
       Toast.show(error.message || "Failed to fetch quarters.", Toast.LONG);
     } finally {
@@ -1038,7 +1057,7 @@ const CourseDetailsPage = () => {
         // Close any open modals and navigate to CreateAssessmentPage
         setShowAddAssessmentModal(false);
         // setShowChapterDetailsModal(false);
-        if (chapterDetails && selectedQuarterId) {
+        if (chapterDetails || selectedQuarterId) {
           // Find semester ID from the quarter data
           const semesterId =
             selectedQuarter?.semester || course?.semester?.[0]?._id;
@@ -1089,7 +1108,7 @@ const CourseDetailsPage = () => {
         // Close any open modals and navigate to CreateAssessmentPage
         setShowAddAssessmentModal(false);
         // setShowChapterDetailsModal(false);
-        if (currentLessonForAssessment && selectedQuarterId) {
+        if (currentLessonForAssessment  || selectedQuarterId) {
           // Find semester ID from the quarter data
           const semesterId =
             selectedQuarter?.semester || course?.semester?.[0]?._id;
@@ -2862,7 +2881,18 @@ const CourseDetailsPage = () => {
           </Text>
         </View>
         <Text style={styles.title}>{course.courseTitle?.toUpperCase()}</Text>
-        <Text style={styles.subtitle}>{course.courseDescription}</Text>
+        <Text style={styles.chapterDetailsDescription}>
+          {courseDescription}
+          {isLong && (
+            <Text
+              onPress={() => setShowMore(!showMore)}
+              style={{ color: '#10B144', marginTop: 5, fontWeight: '600' }}
+            >
+              {showMore ? " Read Less" : "Read More"}
+            </Text>
+          )}
+        </Text>
+
         <View style={styles.infoCard}>
           <Text style={styles.infoLabel}>Category:</Text>
           <Text style={styles.infoValue}>
@@ -3608,7 +3638,7 @@ const CourseDetailsPage = () => {
                           onPress={() => handleDeleteCategory(cat)}
                         >
                           <SimpleIcon
-                            name="trash-can"
+                            name="trash"
                             size={24}
                             color="#ef4444"
                           />
@@ -3932,9 +3962,9 @@ const CourseDetailsPage = () => {
                           style={styles.chapterDeleteButton}
                         >
                           <SimpleIcon
-                            name="trash-can"
+                            name="trash"
                             size={20}
-                            color="#666"
+                            color="#ef4444"
                           />
                         </TouchableOpacity>
                       </View>
@@ -5655,7 +5685,7 @@ const CourseDetailsPage = () => {
                                 <SimpleIcon
                                   name="trash"
                                   size={25}
-                                  color="#dc2626"
+                                  color="#ef4444"
                                 />
                               </TouchableOpacity>
                             </View>
@@ -5753,7 +5783,7 @@ const CourseDetailsPage = () => {
                                   <SimpleIcon
                                     name="trash"
                                     size={30}
-                                    color="#6b7280"
+                                    color="#ef4444"
                                   />
                                 </TouchableOpacity>
 
@@ -5766,7 +5796,7 @@ const CourseDetailsPage = () => {
                                   >
                                     <SimpleIcon
                                       name="plus"
-                                      size={25}
+                                      size={22}
                                       color="#fff"
                                     />
                                   </TouchableOpacity>
@@ -5890,7 +5920,7 @@ const CourseDetailsPage = () => {
                                         <SimpleIcon
                                           name="trash"
                                           size={16}
-                                          color="#6b7280"
+                                          color="#ef4444"
                                         />
                                       </TouchableOpacity>
                                     </View>
@@ -6229,7 +6259,7 @@ const CourseDetailsPage = () => {
                         <TouchableOpacity
                           onPress={() => handleRemoveFile(index)}
                         >
-                          <SimpleIcon name="trash" size={16} color="#ff6b6b" />
+                          <SimpleIcon name="trash" size={16} color="#ef4444" />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -6579,7 +6609,7 @@ const CourseDetailsPage = () => {
                         onPress={() => handleRemoveSelectedFile(index)}
                       >
                         <SimpleIcon
-                          name="trash-can"
+                          name="trash"
                           size={20}
                           color="#ef4444"
                         />
@@ -8241,9 +8271,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chapterDetailsActionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 40,
     backgroundColor: "#10B144",
     justifyContent: "center",
     alignItems: "center",

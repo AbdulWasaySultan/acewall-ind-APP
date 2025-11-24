@@ -313,14 +313,14 @@ const ChapterDetailsStudent = () => {
           <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Lesson Discussion</Text>
           {lessonDiscussions && lessonDiscussions.length > 0 ? (
             lessonDiscussions.map((discussion, index) => (
-              <View key={`lesson-discussion-${index}`} style={styles.discussionCard}>
+              <TouchableOpacity key={`lesson-discussion-${index}`} style={styles.discussionCard}  onPress={() => navigation.navigate('DiscussionStudent', { discussionId: discussion?._id })}>
                 <Image source={{ uri: discussion.course.thumbnail.url }} style={{ width: "100%", height: 150 }} />
                 <Text style={styles.dueDate}>Due Date: {new Date(discussion.dueDate.date).toDateString()}</Text>
                 <View style={styles.chapterBadge}><Text style={styles.chapterBadgeText}>{discussion.type}</Text></View>
                 <Text style={styles.discussionTitle}>{discussion.topic}</Text>
                 <Text style={styles.discussionSubtitle}>{discussion.course.courseTitle || "test"}</Text>
                 <Text style={styles.discussionDescription}>{discussion.description}</Text>
-              </View>
+                </TouchableOpacity>
             ))
           ) : (
             <Text style={styles.emptyMessage}>No discussions found for this lesson</Text>

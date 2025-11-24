@@ -360,9 +360,10 @@ const CreateAssessmentPage = () => {
       formData.append('assessmentType', assessmentType);
       formData.append('chapter', chapterId);
       formData.append('course', courseId);
-      formData.append('dueDate', dueDate.toISOString());
-      formData.append('semester', semesterId);
-      formData.append('quarter', quarterId);
+      formData.append('dueDate', dueDate?.toISOString());
+
+      semesterId && formData.append('semester', semesterId);
+      quarterId&&formData.append('quarter', quarterId);
       // formData.append('questions', JSON.stringify(normalizedQuestions));
 
       // Add lesson field if lessonId is provided (for lesson-based assessments)
@@ -398,7 +399,7 @@ const CreateAssessmentPage = () => {
         chapter: chapterId,
         lesson: lessonId || 'not provided',
         course: courseId,
-        dueDate: dueDate.toISOString(),
+        dueDate: dueDate?.toISOString(),
         semester: semesterId,
         quarter: quarterId,
         questions: JSON.stringify(normalizedQuestions),
@@ -692,7 +693,7 @@ const CreateAssessmentPage = () => {
                       {file.fileName}
                     </Text>
                     <TouchableOpacity onPress={() => handleRemoveFile(index)}>
-                      <SimpleIcon name="close-circle" size={20} color="#dc2626" />
+                    <SimpleIcon name="close" size={20} color="#dc2626" />
                     </TouchableOpacity>
                   </View>
                 ))}

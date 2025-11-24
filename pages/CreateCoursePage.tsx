@@ -851,7 +851,7 @@ const CreateCoursePage = () => {
       {errors.courseDescription && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.courseDescription}</Text>}
 
       {/* Teaching Points */}
-      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>What you will teach in this course (max 6)</Text>
+      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>What you will teach in this course (max 12)</Text>
       {teachingPoints.map((point: string, index: number) => (
         <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <Text style={{ marginRight: 8 }}>{String(index + 1).padStart(2, '0')}</Text>
@@ -871,14 +871,14 @@ const CreateCoursePage = () => {
         </View>
       ))}
       {errors.teachingPoints && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.teachingPoints}</Text>}
-      {teachingPoints.length < 6 && (
+      {teachingPoints.length < 12 && (
         <Pressable style={{ alignSelf: 'flex-start', padding: 8 }} onPress={addTeachingPointInput}>
           <Text style={{ color: 'blue' }}>+ Add Teaching Point</Text>
         </Pressable>
       )}
 
       {/* Course Requirements */}
-      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, marginTop: 16 }}>Course Requirements (max 6)</Text>
+      <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8, marginTop: 16 }}>Course Requirements (max 12)</Text>
       {courseRequirements.map((requirement: string, index: number) => (
         <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <Text style={{ marginRight: 8 }}>{String(index + 1).padStart(2, '0')}</Text>
@@ -898,7 +898,7 @@ const CreateCoursePage = () => {
         </View>
       ))}
       {errors.requirements && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.requirements}</Text>}
-      {courseRequirements.length < 6 && (
+      {courseRequirements.length < 12 && (
         <Pressable style={{ alignSelf: 'flex-start', padding: 8 }} onPress={addRequirementInput}>
           <Text style={{ color: 'blue' }}>+ Add Requirement</Text>
         </Pressable>

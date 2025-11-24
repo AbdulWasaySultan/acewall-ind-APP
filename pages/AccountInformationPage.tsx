@@ -8,7 +8,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useUser } from '../contexts/UserContext';
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
+import SimpleIcon from '../components/SimpleIcon';
 export interface Document {
   name: string;
   url: string;
@@ -47,6 +47,8 @@ export interface UserData {
   profileImage?: string;
   isVarified: boolean;
   documents?: Documents;
+  role:'teacher'|'student'|string
+  
 }
 
 const AccountInformationPage = () => {
@@ -69,6 +71,7 @@ const AccountInformationPage = () => {
     mailingCity: '',
     mailingState: '',
     mailingZip: '',
+    role:'',
     isVarified: false
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -147,7 +150,8 @@ const AccountInformationPage = () => {
           mailingState: mailingAddress.state,
           mailingZip: mailingAddress.zip,
           profileImage: response.user.profileImg?.url || undefined,
-          isVarified: response.user.isVarified || false
+          isVarified: response.user.isVarified || false,
+          role:response.user.role,
         });
         setProfileImageUri(response.user.profileImg?.url || null);
 
@@ -235,7 +239,8 @@ const AccountInformationPage = () => {
         mailingState: mailingAddress.state,
         mailingZip: mailingAddress.zip,
         profileImage: latestUserInfo.user.profileImg?.url || undefined,
-        isVarified: latestUserInfo.user.isVarified || false
+        isVarified: latestUserInfo.user.isVarified || false,
+        role:latestUserInfo.user.role
       });
       setProfileImageUri(latestUserInfo.user.profileImg?.url || null);
       setIsImageChanged(false);
@@ -490,6 +495,7 @@ const AccountInformationPage = () => {
               <Text style={styles.avatarText}>👤</Text>
             </View>
           )}
+           <SimpleIcon name='edit' size={22} color={'#fff'} style={{ position: 'absolute', bottom: 20, right: 10 }} />
         </TouchableOpacity>
         {isImageChanged && (
           <TouchableOpacity style={styles.imageSaveButton} onPress={handleSaveImage} disabled={isLoading}>
@@ -530,6 +536,7 @@ const AccountInformationPage = () => {
               onChangeText={(text) => setUserData({ ...userData, lastName: text })}
             />
           </View>
+          {userData?.role === "teacher"&&
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Bio</Text>
             <TextInput
@@ -540,7 +547,7 @@ const AccountInformationPage = () => {
               numberOfLines={4}
               placeholder="Write your bio here..."
             />
-          </View>
+          </View>}
         </>
       ) : (
         <>
@@ -556,10 +563,12 @@ const AccountInformationPage = () => {
             <Text style={styles.infoLabel}>Last Name:</Text>
             <Text style={styles.infoValue}>{formatDisplayValue(userData.lastName)}</Text>
           </View>
-          <View style={styles.infoRow}>
+          {userData?.role ==="teacher"&&
+          <View style={[styles.infoRow,{ alignItems: 'flex-start' }]}>
             <Text style={styles.infoLabel}>Bio:</Text>
-            <Text style={styles.infoValue}>{formatDisplayValue(userData.Bio)}</Text>
+            <Text style={[styles.infoValue]}>{formatDisplayValue(userData.Bio)}</Text>
           </View>
+            } 
         </>
       )}
 
@@ -1227,6 +1236,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 12,
+    alignItems:'flex-end',
   },
   categoryDropdownContainer: {
     flex: 1,

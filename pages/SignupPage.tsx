@@ -745,7 +745,7 @@ const styles = StyleSheet.create({
   },
   rowContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
   },
 });
 

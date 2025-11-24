@@ -498,12 +498,15 @@ const CourseDetailStudentPageEnrolled = () => {
                     const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
                     const userName = c.createdby ? `${c.createdby.firstName} ${c.createdby.lastName}` : (c.user?.firstName || 'User');
                     const userRole = c.createdby?.role;
-
+                    const profileImg = c.createdby?.profileImg?.url
                     return (
                       <View key={c._id} style={styles.commentItem}>
                         <View style={styles.commentHeader}>
                           <View style={styles.commentAvatar}>
+                            {profileImg?
+                            <Image source={{uri:profileImg}}  style={styles.commentProfileImg}/>:
                             <SimpleIcon name="account-circle" size={32} color="#888" />
+                            }
                           </View>
                           <Text style={styles.commentUser}>{userName}</Text>
                           {userRole && (
@@ -837,6 +840,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  commentProfileImg:{
+    width: 32,
+    height: 32,
+    borderRadius: 32,
   },
   commentUser: {
     fontWeight: 'bold',

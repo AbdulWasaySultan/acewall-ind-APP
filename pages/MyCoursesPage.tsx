@@ -97,7 +97,7 @@ const MyCoursesPage = () => {
           let response;
           if (userRole === 'student') {
             // If a subcategory is selected, get courses for that subcategory
-            const enrolledResponse = await getStudentEnrolledCourses();
+            const enrolledResponse = await getStudentEnrolledCourses(searchQuery);
             const enrolledCourses = enrolledResponse.enrolledCourses || [];
             const newEnrolledCoursesMap: Map<string, string> = new Map(enrolledCourses.map((e: any) => [String(e.course._id), String(e._id)]));
             setEnrolledCoursesMap(newEnrolledCoursesMap);
@@ -186,7 +186,7 @@ const MyCoursesPage = () => {
       // Refresh course data
       let response;
       if (userRole === 'student') {
-        const enrolledResponse = await getStudentEnrolledCourses();
+        const enrolledResponse = await getStudentEnrolledCourses(searchQuery);
         const enrolledCourses = enrolledResponse.enrolledCourses || [];
         const newEnrolledCoursesMap: Map<string, string> = new Map(enrolledCourses.map((e: any) => [String(e.course._id), String(e._id)]));
         setEnrolledCoursesMap(newEnrolledCoursesMap);

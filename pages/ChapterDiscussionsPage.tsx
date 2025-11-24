@@ -257,6 +257,7 @@ const ChapterDiscussionsPage = () => {
                 }
                 try {
                   setCreating(true);
+                  setError(null);
                   const due = {
                     date: new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()).toISOString(),
                     time: `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`,

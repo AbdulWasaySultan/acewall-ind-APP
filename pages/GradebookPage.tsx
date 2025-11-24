@@ -396,6 +396,8 @@ const styles = StyleSheet.create({
   quarterTitle: {
     fontSize: 20,
     fontWeight: "bold",
+    marginRight: 5,
+    flexShrink: 1,
     color: "#000",
     marginBottom: 8,
   },
