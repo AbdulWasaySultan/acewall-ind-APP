@@ -50,7 +50,7 @@ export interface Withdrawal {
   method: string;
   stripeAccountId?: string;
   status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
+  requestedAt: string;
   updatedAt?: string;
 }
 

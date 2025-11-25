@@ -71,6 +71,7 @@ interface CourseData {
   semester?: string[];
   quarter?: string[];
   syllabus?: any;
+  price:string
 }
 
 interface CourseResponse {
@@ -158,6 +159,7 @@ export const createCourse = async (courseData: CourseData): Promise<CourseRespon
     formData.append('teachingPoints', JSON.stringify(courseData.teachingPoints));
     formData.append('requirements', JSON.stringify(courseData.requirements));
     formData.append('semesterbased', courseData.semesterbased);
+    formData.append('price', courseData.price);
     // Add semester and quarter if provided
     // if (courseData.semester && courseData.semester.length > 0) {
     //   formData.append('semester', JSON.stringify(courseData.semester));
@@ -175,19 +177,8 @@ export const createCourse = async (courseData: CourseData): Promise<CourseRespon
         name: courseData.syllabus.name || courseData.syllabus.uri.split('/').pop() || 'syllabus.pdf'
       } as any);
     }
-
-    console.log('Sending form data:', {
-      courseTitle: courseData.courseTitle,
-      category: courseData.category,
-      subcategory: courseData.subcategory,
-      language: courseData.language,
-      courseDescription: courseData.courseDescription,
-      teachingPoints: courseData.teachingPoints,
-      requirements: courseData.requirements,
-      semester: courseData.semester,
-      quarter: courseData.quarter,
-      syllabus: courseData.syllabus ? 'PDF file attached' : 'No syllabus'
-    });
+    console.log('Sending form data:',formData)
+  
 
     const response = await api.post<CourseResponse>('/api/course/create', formData, {
       headers: {
@@ -1424,6 +1415,26 @@ export const getStudentEnrolledCourseDetails = async (enrollmentId: string) => {
       throw new Error('No response from server. Please check your internet connection.');
     } else {
       // Something happened in setting up the request that triggered an Error
+      throw new Error('Error: ' + error.message);
+    }
+  }
+};
+
+export const getEnrollStatus = async (enrollmentId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/enrollment/isEnrolled/${enrollmentId}`);
+    return response.data?.enrolled || null;
+  } catch (error: any) {
+    console.error('Error fetching enrolled status:', error.response?.data);
+    if (error.response) {
+ 
+      console.error('Error fetching enrolled status:', error.response.data);
+      throw new Error(error.response.data.message || 'Failed to fetch enrolled status');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your internet connection.');
+    } else {
       throw new Error('Error: ' + error.message);
     }
   }

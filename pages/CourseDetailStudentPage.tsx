@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, Linking, Alert, Platform } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, Linking, Alert, Platform, AppState } from 'react-native';
 import SimpleIcon from '../components/SimpleIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { getCourseById, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse, createStripeCheckoutSession } from '../services/course';
+import { getCourseById, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse, createStripeCheckoutSession, getEnrollStatus } from '../services/course';
 import { useUser } from '../contexts/UserContext';
+import Toast from 'react-native-simple-toast'
 import { getCourseRating } from '../services/rating';
 const fallbackImage = require('../assets/jpg.jpg');
 const avatarPlaceholder = require('../assets/placeholder.png');
@@ -37,9 +38,23 @@ const CourseDetailStudentPage = () => {
   const [loadingChapterDetails, setLoadingChapterDetails] = useState(false);
   const isLong = course?.courseDescription && course.courseDescription.length > 500;
   const [showMore, setShowMore] = useState(false);
+  const [enrollStatus,setEnrollStatus] = useState(true)
   const courseDescription = course?.courseDescription && (showMore
     ? course.courseDescription
     : course.courseDescription.slice(0, 500) + (isLong ? "..." : ""))
+    const appState = useRef(AppState.currentState);
+
+    useEffect(() => {
+      Linking.addEventListener('url',(e)=>  handleLink(e.url))
+    }, []);
+  
+    const handleLink = (url:any) => {
+      if (url.includes("payment-success")) {
+        Toast.show("Payment successful", Toast.LONG);
+      } else if (url.includes("payment-failed")) {
+        Toast.show("Payment failed", Toast.LONG);
+      }
+    };
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -73,8 +88,18 @@ const CourseDetailStudentPage = () => {
         console.log(err)
       }
     };
+    const checkEnrollment = async () => {
+      try {
+      const res = await getEnrollStatus(courseId)
+      setEnrollStatus(res)
+        console.log(res)
+      } catch (err) {
+        console.log(err)
+      }
+    };
     fetchCourseData();
     fetchCourseRating()
+    checkEnrollment()
   }, [courseId, enrollmentId]);
 
   // Helper for rendering stars
@@ -546,11 +571,11 @@ const CourseDetailStudentPage = () => {
 
                 <Text style={[styles.includesTitle, { fontSize: 25 }]}>$ {course?.price} </Text>
                 <TouchableOpacity
-                  style={[styles.enrollButton, fromAdmin && { opacity: 0.5 }]}
+                  style={[styles.enrollButton, (fromAdmin||enrollStatus) && { opacity: 0.5 }]}
                   onPress={() => !fromAdmin && setShowEnrollModal(true)}
-                  disabled={!!fromAdmin}
+                  disabled={!!fromAdmin || enrollStatus}
                 >
-                  <Text style={styles.enrollButtonText}>Buy Now</Text>
+                  <Text style={styles.enrollButtonText}>{enrollStatus? "Enrolled":"Buy Now"}</Text>
                 </TouchableOpacity>
                 <Text style={styles.includesTitle}>This course includes:</Text>
                 <View style={styles.includeRow}>

@@ -624,10 +624,12 @@ const CourseDetailsPage = () => {
     setChaptersMessage("");
     try {
       const res = await getChaptersForCourses(courseId);
+      console.log(res)
       if (res.chapters && res.chapters.length > 0) {
         setChaptersForQuarter(res.chapters);
+        
       } else {
-        setChaptersMessage(res.message || "No chapters found.");
+        setChaptersMessage( "No chapters found.");
       }
     } catch (error: any) {
       Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);
@@ -645,7 +647,7 @@ const CourseDetailsPage = () => {
       if (res.chapters && res.chapters.length > 0) {
         setChaptersForQuarter(res.chapters);
       } else {
-        setChaptersMessage(res.message || "No chapters found.");
+        setChaptersMessage("No chapters found.");
       }
     } catch (error: any) {
       Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);

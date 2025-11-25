@@ -148,7 +148,7 @@ const DashboardPage = () => {
             {studentLoading ? (
               <Text style={styles.sectionSubtitle}>Loading...</Text>
             ) : studentCourses.length > 0 ? (
-              studentCourses.map((enrollment) => (
+              studentCourses.slice(0,3).map((enrollment) => (
                 <TouchableOpacity
                   key={enrollment._id}
                   style={styles.horizontalCourseCard}

@@ -245,11 +245,14 @@ const WalletPage = () => {
                 <View key={withdrawal._id} style={styles.tableRow}>
                   <Text style={styles.tableCell}>{formatCurrency(withdrawal.amount)}</Text>
                   <Text style={styles.tableCell}>{withdrawal.method}</Text>
-                  <Text style={styles.tableCell}>{formatDate(withdrawal.createdAt)}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(withdrawal.status) + '20' }]}>
+                  <Text style={styles.tableCell}>{formatDate(withdrawal.requestedAt)}</Text>
+                  <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
+
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(withdrawal.status) + '20', }]}>
                     <Text style={[styles.statusText, { color: getStatusColor(withdrawal.status) }]}>
                       {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
                     </Text>
+                  </View>
                   </View>
                 </View>
               ))}
@@ -394,11 +397,14 @@ const WalletPage = () => {
                       <View key={withdrawal._id} style={styles.tableRow}>
                         <Text style={styles.tableCell}>{formatCurrency(withdrawal.amount)}</Text>
                         <Text style={styles.tableCell}>{withdrawal.method}</Text>
-                        <Text style={styles.tableCell}>{formatDate(withdrawal.createdAt)}</Text>
+                        <Text style={styles.tableCell}>{formatDate(withdrawal.requestedAt)}</Text>
+                        <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
+
                         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(withdrawal.status) + '20' }]}>
                           <Text style={[styles.statusText, { color: getStatusColor(withdrawal.status) }]}>
                             {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
                           </Text>
+                        </View>
                         </View>
                       </View>
                     ))}
