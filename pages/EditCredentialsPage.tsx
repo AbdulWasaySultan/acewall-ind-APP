@@ -606,7 +606,18 @@ const EditCredentialsPage: React.FC = () => {
                 style={styles.resendButton}
                 onPress={() => {
                   // Resend OTP logic here
-                  Toast.show('OTP resent successfully', Toast.LONG);
+                  switch(activeTab){
+                    case 'email':
+                    handleEmailSubmit();
+                    break;
+                    case 'password':
+                      handlePasswordSubmit()
+                      break;
+                    case 'phone':
+                      handlePhoneSubmit()
+                      break;
+                  }
+                  // Toast.show('OTP resent successfully', Toast.LONG);
                 }}
               >
                 <Text style={styles.resendButtonText}>Resend OTP</Text>
