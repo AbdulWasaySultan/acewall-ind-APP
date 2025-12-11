@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert, Linking, Platform, KeyboardAvoidingView } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getPagesForChapter, createPageForChapter, deletePage, getPagesForLesson, createPageForLesson } from '../services/page';
 import * as ImagePicker from 'react-native-image-picker';
-import { pick } from '@react-native-documents/picker';
+import { pick, types } from '@react-native-documents/picker';
 import Toast from 'react-native-simple-toast';
 import SimpleIcon from '../components/SimpleIcon';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type RouteParams = RouteProp<RootStackParamList, 'ChapterPages'>;
 
 const ChapterPagesPage = () => {
   const route = useRoute<RouteParams>();
   const navigation = useNavigation();
-  const { courseId, chapterId, lessonId } = route.params as any;
+  const { courseId, chapterId, lessonId,navigateBack } = route.params as any;
+  const insets = useSafeAreaInsets()
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +53,8 @@ const ChapterPagesPage = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => (navigation as any).goBack()} style={{ padding: 4, marginRight: 12 }}>
+ <View style={[styles.header,{paddingTop:insets.top}]}>
+ <TouchableOpacity onPress={() => navigateBack?navigateBack():(navigation as any).goBack()} style={{ padding: 4, marginRight: 12 }}>
           <SimpleIcon name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pages for chapter</Text>
@@ -123,13 +124,17 @@ const ChapterPagesPage = () => {
         onRequestClose={() => setShowCreateModal(false)}
       >
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
-          <View style={styles.header}>
+        <View style={[styles.header,{paddingTop:insets.top}]}>
             <TouchableOpacity onPress={() => setShowCreateModal(false)} style={{ padding: 4, marginRight: 12 }}>
               <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Create New Page</Text>
             <View style={{ width: 28 }} />
           </View>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
           <ScrollView contentContainerStyle={{ padding: 16 }}>
             <Text style={styles.inputLabel}>Title *</Text>
             <TextInput
@@ -169,7 +174,7 @@ const ChapterPagesPage = () => {
               style={styles.filePickerButton}
               onPress={async () => {
                 try {
-                  const result = await pick({ type: ['application/pdf'], copyTo: 'cachesDirectory', allowMultiSelection: false });
+                  const result = await pick({ type: [types.pdf], copyTo: 'cachesDirectory', allowMultiSelection: false });
                   if (result && result.length > 0) {
                     const f = result[0];
                     setFiles({
@@ -181,7 +186,7 @@ const ChapterPagesPage = () => {
                     );
                   }
                 } catch (e) {
-                  Toast.show('Error picking file', Toast.LONG);
+                  // Toast.show('Error picking file', Toast.LONG);
                 }
               }}
             >
@@ -252,6 +257,7 @@ const ChapterPagesPage = () => {
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
@@ -263,7 +269,7 @@ const ChapterPagesPage = () => {
         onRequestClose={() => setShowDetails(false)}
       >
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
-          <View style={styles.header}>
+        <View style={[styles.header,{paddingTop:insets.top}]}>
             <TouchableOpacity onPress={() => setShowDetails(false)} style={{ padding: 4, marginRight: 12 }}>
               <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
@@ -297,7 +303,8 @@ const ChapterPagesPage = () => {
 
 const styles = StyleSheet.create({
   header: {
-    height: 56,
+    minHeight: 56,
+    paddingBottom:Platform.OS === "ios"? 10:0,
     backgroundColor: '#10B144',
     flexDirection: 'row',
     alignItems: 'center',

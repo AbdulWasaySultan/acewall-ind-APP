@@ -14,6 +14,8 @@ import {
   Linking,
   TouchableWithoutFeedback,
   Switch,
+  Keyboard,
+  KeyboardAvoidingView,
 } from "react-native";
 import GradeScaleModal from "../components/GradeScaleModal";
 import {
@@ -64,6 +66,8 @@ import {
   createQuarter,
   updateQuarter,
   toggleQuarterArchive,
+  createApiInstance,
+  addAuthInterceptor,
 } from "../services/course";
 import {
   getCourseRating,
@@ -78,7 +82,7 @@ import * as ImagePicker from "react-native-image-picker";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import Toast from "react-native-simple-toast";
 import { getCourseGradebook } from "../services/gradebook";
-import { pick } from "@react-native-documents/picker";
+import { pick, types } from "@react-native-documents/picker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import GPAModal from "../components/GPAModal";
 
@@ -278,6 +282,14 @@ const CourseDetailsPage = () => {
   const [editAssessmentDueDate, setEditAssessmentDueDate] =
     useState<Date | null>(null);
 
+
+  const [showEditCategoryMenu, setShowEditCategoryMenu] = useState(false);
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  const [showEditTimePicker, setShowEditTimePicker] = useState(false);
+  const [tempEditDate, setTempEditDate] = useState<Date | null>(null);
+  const [editQuarterDates, setEditQuarterDates] = useState<{ startDate: string, endDate: string } | null>(null);
+  const [editQuarterId, setEditQuarterId] = useState<string | null>(null);
+
   const [showGradebookModal, setShowGradebookModal] = useState(false);
   const [gradebookLoading, setGradebookLoading] = useState(false);
   const [gradebookData, setGradebookData] = useState<any>(null);
@@ -384,6 +396,7 @@ const CourseDetailsPage = () => {
   const [showGPAManagementLoader, setShowGPAManagementLoader] = useState(false)
   const [gradeScale, setGradeScale] = useState([])
   const [GPA, setGPA] = useState([])
+  const [keyboardPadding,setKeyboardPadding] = useState(16)
   const formatDateWithOrdinal = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getUTCDate();
@@ -407,7 +420,25 @@ const CourseDetailsPage = () => {
     };
     return `${month} ${day}${getOrdinal(day)}, ${year}`;
   };
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardPadding(17);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardPadding(16);
+      }
+    );
 
+    return () => {
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
+  }, []);
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -884,6 +915,19 @@ const CourseDetailsPage = () => {
       Toast.show("All fields are required", Toast.LONG);
       return;
     }
+    if (editAssessmentDueDate && editQuarterDates) {
+      const dueDateTimestamp = editAssessmentDueDate.getTime();
+      const quarterStartTimestamp = new Date(editQuarterDates.startDate).getTime();
+      const quarterEndTimestamp = new Date(editQuarterDates.endDate).getTime();
+
+      if (dueDateTimestamp < quarterStartTimestamp || dueDateTimestamp > quarterEndTimestamp) {
+        Toast.show(
+          `Due date must be between ${formatDate(new Date(editQuarterDates.startDate))} and ${formatDate(new Date(editQuarterDates.endDate))}`,
+          Toast.LONG
+        );
+        return;
+      }
+    }
 
     try {
       setEditAssessmentLoading(true);
@@ -894,11 +938,12 @@ const CourseDetailsPage = () => {
         dueDate: editAssessmentDueDate.toISOString(),
       };
 
-      await editAssessment(selectedAssessmentForModal._id, payload);
+      const res = await editAssessment(selectedAssessmentForModal._id, payload);
       Toast.show("Assessment updated successfully", Toast.LONG);
 
       // Close modals and refresh data
       setShowEditAssessmentModal(false);
+      setShowAssessmentDetailsModal(true)
       // setShowAssessmentDetailsModal(false);
 
       // Refresh chapter details if we're in the chapter details modal
@@ -908,6 +953,7 @@ const CourseDetailsPage = () => {
             chapterDetails._id
           );
           setChapterDetails(response.chapter);
+          setSelectedAssessmentForModal((prev:any)=>response.chapter.chapter_assessments.find((assessment:any)=>assessment._id ===prev._id ))
         } catch (error) {
           console.error("Error refreshing chapter details:", error);
         }
@@ -924,7 +970,22 @@ const CourseDetailsPage = () => {
     }
   };
 
-  const openEditAssessmentModal = (assessment: any) => {
+  const fetchQuarterDatesForEdit = async (quarterId: string) => {
+    try {
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+      const response = await api.get(`/api/quarter/getDatesofQuarter/${quarterId}`);
+      setEditQuarterDates({
+        startDate: response.data.startDate,
+        endDate: response.data.endDate
+      });
+    } catch (error) {
+      console.error('Error fetching quarter dates:', error);
+      // Don't show error toast as this is not critical
+    }
+  };
+
+  const openEditAssessmentModal = async (assessment: any) => {
     setSelectedAssessmentForModal(assessment);
     setEditAssessmentTitle(assessment.title);
     setEditAssessmentDescription(assessment.description);
@@ -940,6 +1001,27 @@ const CourseDetailsPage = () => {
       setEditAssessmentDueDate(dueDate);
     }
 
+    // Fetch assessment categories
+    try {
+      const response = await getAssessmentCategories(courseId);
+      setAssessmentCategories(
+        response.categories.map((category: any) => ({
+          id: category._id,
+          title: category.name,
+          weight: category.weight.toString(),
+        }))
+      );
+    } catch (error) {
+      console.error('Error fetching assessment categories:', error);
+    }
+
+    // Get quarter ID and fetch quarter dates
+    const quarterId = assessment.quarter || chapterDetails?.quarter || selectedQuarterId;
+    if (quarterId) {
+      setEditQuarterId(quarterId);
+      await fetchQuarterDatesForEdit(quarterId);
+    }
+    setShowAssessmentDetailsModal(false)
     setShowEditAssessmentModal(true);
   };
 
@@ -1006,7 +1088,7 @@ const CourseDetailsPage = () => {
     try {
       // Close the chapters modal first
       setShowChaptersForQuarterModal(false);
-
+      setShowChapterDetailsModal(true);
       setChapterDetailsLoading(true);
       setChapterDetailsError(null);
       const response = await getChapterDetailsWithLessons(chapterId);
@@ -1017,7 +1099,6 @@ const CourseDetailsPage = () => {
       );
       setChapterDetails(response.chapter);
       setCurrentChapterForLesson(chapterId);
-      setShowChapterDetailsModal(true);
     } catch (error: any) {
       console.error("Error fetching chapter details:", error);
       setChapterDetailsError(
@@ -1212,7 +1293,7 @@ const CourseDetailsPage = () => {
   const handleFilePickForLessonCreation = async () => {
     try {
       const result = await pick({
-        type: ["application/pdf"],
+        type: [types.pdf],
         copyTo: "cachesDirectory",
       });
 
@@ -1236,8 +1317,8 @@ const CourseDetailsPage = () => {
         ]);
       }
     } catch (error) {
-      console.error("Error picking file:", error);
-      Toast.show("Error picking file", Toast.LONG);
+      // console.error("Error picking file:", error);
+      // Toast.show("Error picking file", Toast.LONG);
     }
   };
 
@@ -1388,7 +1469,7 @@ const CourseDetailsPage = () => {
   const handleFilePickForAddFiles = async () => {
     try {
       const result = await pick({
-        type: ["application/pdf"],
+        type: [types.pdf],
         copyTo: "cachesDirectory",
       });
 
@@ -1427,7 +1508,7 @@ const CourseDetailsPage = () => {
       }
     } catch (error) {
       console.error("Error picking files:", error);
-      Toast.show("Failed to pick files. Please try again.", Toast.LONG);
+      // Toast.show("Failed to pick files. Please try again.", Toast.LONG);
     }
   };
 
@@ -2228,7 +2309,7 @@ const CourseDetailsPage = () => {
               <SimpleIcon name="close" size={32} color="#333" />
             </TouchableOpacity>
           </View>
-          <View style={styles.chaptersContent}>
+          <ScrollView style={styles.chaptersContent}>
             <View
               style={[styles.modalContent, { width: "100%", maxWidth: "100%" }]}
             >
@@ -2343,7 +2424,7 @@ const CourseDetailsPage = () => {
                 </Text>
               ) : null}
             </View>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
 
@@ -2699,7 +2780,7 @@ const CourseDetailsPage = () => {
         </View>
       </Modal>
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView contentContainerStyle={{ padding: keyboardPadding }}>
         <View style={styles.thumbnailContainer}>
           <Image
             source={
@@ -4052,7 +4133,7 @@ const CourseDetailsPage = () => {
               onPress={() => openEditAssessmentModal(selectedAssessmentForModal)}
               style={styles.assessmentDetailsEditButton}
             >
-              <SimpleIcon name="pencil" size={20} color="#fff" />
+               <SimpleIcon name="pencil" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
 
@@ -4221,21 +4302,24 @@ const CourseDetailsPage = () => {
         visible={showEditAssessmentModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setShowEditAssessmentModal(false)}
+        onRequestClose={() => {setShowEditAssessmentModal(false)
+          setShowAssessmentDetailsModal(true)
+       }}
       >
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
-          <View style={styles.assessmentDetailsHeader}>
+        <View style={[styles.assessmentDetailsHeader,{paddingTop:insets.top}]}>
             <TouchableOpacity
-              onPress={() => setShowEditAssessmentModal(false)}
+            onPress={() => {setShowEditAssessmentModal(false)
+              setShowAssessmentDetailsModal(true)
+           }}
               style={styles.assessmentDetailsBackButton}
             >
               <SimpleIcon name="arrow-back" size={24} color="#fff" />
-              <Text style={styles.assessmentDetailsBackText}>Back</Text>
             </TouchableOpacity>
             <Text style={styles.assessmentDetailsHeaderTitle}>
               Edit Assessment
             </Text>
-            <View style={{ width: 60 }} />
+            <View style={{ width: 40 }} />
           </View>
 
           <ScrollView style={{ flex: 1, padding: 16 }}>
@@ -4262,38 +4346,51 @@ const CourseDetailsPage = () => {
             <Text style={styles.editAssessmentLabel}>Category</Text>
             <TouchableOpacity
               style={styles.editAssessmentCategoryButton}
-              onPress={() => {
-                // Show category picker
-                Alert.alert(
-                  "Select Category",
-                  "Category selection will be implemented",
-                  [{ text: "OK" }]
-                );
-              }}
+              onPress={() => setShowEditCategoryMenu((s) => !s)}
+              activeOpacity={0.8}
             >
               <Text style={styles.editAssessmentCategoryButtonText}>
                 {assessmentCategories.find(
-                  (c) => c._id === editAssessmentCategory
-                )?.name || "Select Category"}
+                   (c) => c.id === editAssessmentCategory
+                  )?.title || "Select Category"}
               </Text>
-              <SimpleIcon name="chevron-down" size={20} color="#666" />
+              <SimpleIcon
+                name={showEditCategoryMenu ? "chevron-up" : "chevron-down"}
+                size={20}
+                color="#666"
+              />
             </TouchableOpacity>
+
+            {showEditCategoryMenu && (
+              <View style={styles.editCategoryDropdownMenu}>
+                <ScrollView>
+                  {assessmentCategories.map((c) => (
+                    <TouchableOpacity
+                      key={c.id}
+                      onPress={() => {
+                        setEditAssessmentCategory(c.id);
+                        setShowEditCategoryMenu(false);
+                      }}
+                      style={[
+                        styles.editCategoryDropdownItem,
+                        editAssessmentCategory === c.id && styles.editCategoryDropdownItemActive
+                      ]}
+                    >
+                      <Text style={{ color: "#111" }}>{c.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             <Text style={styles.editAssessmentLabel}>Due Date</Text>
             <TouchableOpacity
               style={styles.editAssessmentInput}
-              onPress={() => {
-                // Show date picker
-                Alert.alert(
-                  "Select Due Date",
-                  "Date picker will be implemented",
-                  [{ text: "OK" }]
-                );
-              }}
+              onPress={() => setShowEditDatePicker(true)}
             >
               <Text style={{ color: editAssessmentDueDate ? "#000" : "#999" }}>
                 {editAssessmentDueDate
-                  ? editAssessmentDueDate.toLocaleDateString()
+                  ? `${editAssessmentDueDate.toLocaleDateString()} at ${editAssessmentDueDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
                   : "Select due date"}
               </Text>
             </TouchableOpacity>
@@ -4315,6 +4412,115 @@ const CourseDetailsPage = () => {
               )}
             </TouchableOpacity>
           </ScrollView>
+          {showEditDatePicker && (
+            <>
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={{
+                    alignSelf: 'flex-end',
+                    marginTop: 10,
+                    marginRight: 15
+                  }}
+                  onPress={() => {
+                    setShowEditDatePicker(false);
+                    if (tempEditDate) {
+                      setTimeout(() => setShowEditTimePicker(true), 200);
+                    }
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#007AFF',
+                      fontSize: 18,
+                      fontWeight: '600'
+                    }}
+                  >
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              )}
+              <DateTimePicker
+                value={editAssessmentDueDate || new Date()}
+                mode="date"
+                style={{ alignSelf: 'center' }}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, selectedDate) => {
+                  if (Platform.OS === 'android') {
+                    setShowEditDatePicker(false);
+                    if (event.type === 'set' && selectedDate) {
+                      setTempEditDate(selectedDate);
+                      setTimeout(() => setShowEditTimePicker(true), 200);
+                    } else {
+                      setTempEditDate(null);
+                    }
+                  } else {
+                    if (selectedDate) {
+                      setTempEditDate(selectedDate);
+                      setEditAssessmentDueDate(selectedDate);
+                    }
+                  }
+                }}
+              />
+            </>
+          )}
+
+          {showEditTimePicker && (
+            <>
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={{
+                    alignSelf: 'flex-end',
+                    marginTop: 10,
+                    marginRight: 15
+                  }}
+                  onPress={() => {
+                    setShowEditTimePicker(false);
+                    if (tempEditDate) {
+                      setEditAssessmentDueDate(tempEditDate);
+                    }
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: '#007AFF',
+                      fontSize: 18,
+                      fontWeight: '600'
+                    }}
+                  >
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              )}
+              <DateTimePicker
+                value={tempEditDate || new Date()}
+                mode="time"
+                style={{ alignSelf: 'center' }}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, selectedTime) => {
+                  if (Platform.OS === 'android') {
+                    setShowEditTimePicker(false);
+                    if (event.type === 'set' && selectedTime && tempEditDate) {
+                      const combined = new Date(tempEditDate);
+                      combined.setHours(selectedTime.getHours());
+                      combined.setMinutes(selectedTime.getMinutes());
+                      setEditAssessmentDueDate(combined);
+                    } else {
+                      setTempEditDate(null);
+                      setEditAssessmentDueDate(null);
+                    }
+                  } else {
+                    // iOS: just update the time selection
+                    if (selectedTime && tempEditDate) {
+                      const combined = new Date(tempEditDate);
+                      combined.setHours(selectedTime.getHours());
+                      combined.setMinutes(selectedTime.getMinutes());
+                      setTempEditDate(combined);
+                    }
+                  }
+                }}
+              />
+            </>
+          )}
         </View>
       </Modal>
 
@@ -4938,14 +5144,12 @@ const CourseDetailsPage = () => {
         animationType="fade"
         onRequestClose={() => setShowEditCourseModal(false)}
       >
-        <TouchableWithoutFeedback
-          onPress={() => {
-            setShowSubcategoryDropdown(false);
-            setShowLanguageDropdown(false);
-          }}
+       <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => { }}>
+            
               <View
                 style={[styles.modalContent, { width: "95%", maxWidth: 420 }]}
               >
@@ -4974,7 +5178,7 @@ const CourseDetailsPage = () => {
                     <SimpleIcon name="close" size={24} color="#666" />
                   </TouchableOpacity>
                 </View>
-                <ScrollView>
+                <ScrollView nestedScrollEnabled={true}>
                   <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
                     Course Title
                   </Text>
@@ -5046,7 +5250,7 @@ const CourseDetailsPage = () => {
                         shadowRadius: 4,
                       }}
                     >
-                      <ScrollView style={{ maxHeight: 200 }}>
+                      <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
                         {subcategories.map((subcategory) => (
                           <TouchableOpacity
                             key={subcategory._id}
@@ -5453,9 +5657,8 @@ const CourseDetailsPage = () => {
                   </TouchableOpacity>
                 </ScrollView>
               </View>
-            </TouchableWithoutFeedback>
           </View>
-        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Chapter Details Modal */}
@@ -9451,6 +9654,21 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  editCategoryDropdownMenu: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    maxHeight: 180,
+    marginTop: 6,
+  },
+  editCategoryDropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  editCategoryDropdownItemActive: {
+    backgroundColor: "#eef2ff",
   },
 });
 

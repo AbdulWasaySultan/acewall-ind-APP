@@ -1,113 +1,7 @@
-// import React, { useEffect, useState } from 'react';
-// import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
-// import { getAllAssessmentForStudent } from '../services/course';
 
-// const MyAssessmentsPage = () => {
-//   const [searchQuery, setSearchQuery] = useState('');
-//   const getAllAssessment = async () => {
-//     try {
-
-//       const res = await getAllAssessmentForStudent()
-//       console.log(res)
-//     } catch (err) {
-//       console.log(err)
-//     }
-//   }
-//   useEffect(() => {
-//     getAllAssessment()
-//   })
-//   return (
-//     <ScrollView style={styles.container}>
-//       <View style={styles.header}>
-//         <TextInput
-//           style={styles.searchInput}
-//           placeholder="Search by title"
-//           placeholderTextColor="#888"
-//           value={searchQuery}
-//           onChangeText={setSearchQuery}
-//         />
-//       </View>
-
-//       <View style={styles.assessmentHeaderRow}>
-//         <Text style={[styles.assessmentHeaderText, styles.assessmentNameColumn]}>Assessment Name</Text>
-//         <Text style={[styles.assessmentHeaderText, styles.courseColumn]}>Course</Text>
-//         <Text style={[styles.assessmentHeaderText, styles.dueDateColumn]}>Due Date</Text>
-//         <Text style={[styles.assessmentHeaderText, styles.statusColumn]}>Status</Text>
-//         <Text style={[styles.assessmentHeaderText, styles.typeColumn]}>Type</Text>
-//       </View>
-
-//       <View style={styles.noAssessmentsContainer}>
-//         <Text style={styles.noAssessmentsText}>No assessments available.</Text>
-//       </View>
-//     </ScrollView>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#fff',
-//     paddingHorizontal: 16,
-//     paddingTop: 16,
-//   },
-//   header: {
-//     marginBottom: 16,
-//   },
-//   searchInput: {
-//     height: 40,
-//     borderColor: '#ddd',
-//     borderWidth: 1,
-//     borderRadius: 8,
-//     paddingHorizontal: 12,
-//     fontSize: 16,
-//     backgroundColor: '#f9f9f9',
-//   },
-//   assessmentHeaderRow: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     paddingVertical: 12,
-//     borderBottomWidth: 1,
-//     borderBottomColor: '#eee',
-//     marginBottom: 12,
-//   },
-//   assessmentHeaderText: {
-//     fontWeight: 'bold',
-//     color: '#555',
-//     fontSize: 14,
-//     textAlign: 'center',
-//   },
-//   assessmentNameColumn: {
-//     flex: 2,
-//     textAlign: 'left',
-//   },
-//   courseColumn: {
-//     flex: 1.5,
-//   },
-//   dueDateColumn: {
-//     flex: 1.5,
-//   },
-//   statusColumn: {
-//     flex: 1,
-//   },
-//   typeColumn: {
-//     flex: 1,
-//   },
-//   noAssessmentsContainer: {
-//     flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     marginTop: 50,
-//   },
-//   noAssessmentsText: {
-//     fontSize: 16,
-//     color: '#666',
-//   },
-// });
-
-// export default MyAssessmentsPage; 
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -118,12 +12,15 @@ import {
   RefreshControl,
   FlatList,
   TouchableOpacity,
+  Modal,
+  Linking,
 } from "react-native";
-import { getAllAssessmentForStudent } from "../services/course";
+import { getAllAssessmentForStudent ,getStudentAssessmentDetails} from "../services/course";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-
+import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 // ---------- INTERFACE ----------
 export interface AssessmentItem {
   _id: string;
@@ -167,7 +64,13 @@ const MyAssessmentsPage = () => {
   const [assessments, setAssessments] = useState<AssessmentItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
+  const [detailedModalVisible, setDetailedModalVisible] = useState(false);
+  const [submissionDetails, setSubmissionDetails] = useState<any>(null);
+  const [submissionDetailsLoading, setSubmissionDetailsLoading] = useState(false);
+  const [submissionDetailsError, setSubmissionDetailsError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'needs_grading' | 'graded'>('all');
+  
+  const insets = useSafeAreaInsets()
   // ----------- FETCHING -----------
   const normalizeArray = (res: any): AssessmentItem[] => {
     if (Array.isArray(res)) return res;
@@ -176,7 +79,17 @@ const MyAssessmentsPage = () => {
     if (Array.isArray(res?.items)) return res.items;
     return [];
   };
-
+  const formatDateTime = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
   const fetchAssessments = async () => {
     try {
       setLoading(true);
@@ -229,7 +142,18 @@ const MyAssessmentsPage = () => {
       ? "—"
       : date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   };
+  const getFilteredQuestions = () => {
+    if (!submissionDetails?.answers) return [];
 
+    switch (activeTab) {
+      case 'needs_grading':
+        return submissionDetails.answers.filter((answer: any) => answer.requiresManualCheck);
+      case 'graded':
+        return submissionDetails.answers.filter((answer: any) => !answer.requiresManualCheck);
+      default:
+        return submissionDetails.answers;
+    }
+  };
   const getTitle = (item: AssessmentItem) => item.title || "Untitled";
   const getCourse = (item: AssessmentItem) => item?.course?.courseTitle || "—";
   const getChapter = (item: AssessmentItem) => item?.chapter?.title || "—";
@@ -285,20 +209,37 @@ const MyAssessmentsPage = () => {
           {formatDate(due.date)} at {formatTime(due.time)}
         </Text>
 
-        {!item.isSubmitted && (
-            <TouchableOpacity style={styles.submitBtn} onPress={() => {
+        {/* {!item?.isSubmitted && ( */}
+            <TouchableOpacity style={styles.submitBtn} onPress={async() => {
               console.log(item.source)
               if(item.source==='discussion'){
                 navigation.navigate("DiscussionStudent",{ discussionId: item._id })
               }else{
   
-              navigation.navigate("AssessmentScreenStudent", { assessmentId: item._id })
+                if(item?.isSubmitted){
+                  setDetailedModalVisible(true);
+                  setSubmissionDetails(null);
+                  setSubmissionDetailsLoading(true);
+                  setSubmissionDetailsError(null);
+  
+                  try {
+                    const details = await getStudentAssessmentDetails(item._id);
+                    setSubmissionDetails(details.submission);
+                  } catch (err: any) {
+                    setSubmissionDetailsError('Failed to load submission details');
+                    console.error('Error fetching submission details:', err);
+                  } finally {
+                    setSubmissionDetailsLoading(false);
+                  }
+                }else{
+                  navigation.navigate("AssessmentScreenStudent", { assessmentId: item._id })
+                }
               }
   
               }}>
-            <Text style={styles.submitBtnText}>Submit Assessment</Text>
+              <Text style={styles.submitBtnText}>{item?.isSubmitted?'See Result':'Submit Assessment'}</Text>
           </TouchableOpacity>
-        )}
+        {/* )} */}
       </View>
     );
   };
@@ -375,7 +316,8 @@ const MyAssessmentsPage = () => {
         </View>
       ) : (
         <>
-
+<ScrollView horizontal showsHorizontalScrollIndicator={true}>
+<View>
           <TouchableOpacity style={styles.row}>
             <Text style={[styles.td, styles.colName]} >
               Assessment Name
@@ -406,6 +348,203 @@ const MyAssessmentsPage = () => {
             )}
             scrollEnabled={false}
           />
+             </View>
+             </ScrollView>
+             <Modal
+        visible={detailedModalVisible}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => {
+          setDetailedModalVisible(false)
+        }
+        }
+      >
+        <View style={[styles.detailedModalContainer,{paddingTop:insets.top || 20}]}>
+          {/* Header */}
+          <View style={[styles.detailedModalHeader]}>
+            <Text style={styles.detailedModalTitle}>Submission Details</Text>
+            <TouchableOpacity
+              style={styles.detailedModalCloseButton}
+              onPress={() => {
+                setDetailedModalVisible(false)
+              }}
+            >
+              <SimpleIcon name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+
+          {submissionDetailsLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007bff" />
+            </View>
+          ) : submissionDetailsError ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{submissionDetailsError}</Text>
+            </View>
+          ) : submissionDetails ? (
+            <ScrollView style={styles.detailedModalContent}>
+              {/* Student and Submission Overview */}
+              <View style={styles.submissionOverview}>
+              
+                <View style={styles.studentOverviewDetails}>
+                 
+                    <View style={styles.statusTags}>
+                      <View style={[styles.statusTag, { backgroundColor: '#E5E7EB' }]}>
+                        <Text style={styles.statusTagText}>{submissionDetails.status}</Text>
+                      </View>
+                      <View style={[styles.statusTag, { backgroundColor: '#E5E7EB' }]}>
+                        <Text style={styles.statusTagText}>
+                          {submissionDetails.graded ? 'Graded' : 'Not Graded'}
+                        </Text>
+                      </View>
+                  </View>
+                 
+                  <Text style={styles.submissionTime}>
+                    Submitted on: {formatDateTime(submissionDetails.submittedAt || submissionDetails.createdAt)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Assessment Summary */}
+              <View style={styles.assessmentSummary}>
+                <Text style={styles.assessmentSummaryTitle}>Assessment Summary</Text>
+                <View style={styles.assessmentSummaryCard}>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Assessment ID</Text>
+                    <Text style={styles.summaryValue}>{submissionDetails.assessment}</Text>
+                  </View>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Total Points</Text>
+                    <Text style={styles.summaryValue}>{submissionDetails.totalScore} points</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Question Tabs */}
+              <View style={styles.questionTabs}>
+                <TouchableOpacity
+                  style={[styles.tab, activeTab === 'all' && styles.activeTab]}
+                  onPress={() => setActiveTab('all')}
+                >
+                  <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
+                    All Questions ({submissionDetails.answers?.length || 0})
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tab, activeTab === 'needs_grading' && styles.activeTab]}
+                  onPress={() => setActiveTab('needs_grading')}
+                >
+                  <Text style={[styles.tabText, activeTab === 'needs_grading' && styles.activeTabText]}>
+                    Needs Grading ({submissionDetails.answers?.filter((a: any) => a.requiresManualCheck).length || 0})
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.tab, activeTab === 'graded' && styles.activeTab]}
+                  onPress={() => setActiveTab('graded')}
+                >
+                  <Text style={[styles.tabText, activeTab === 'graded' && styles.activeTabText]}>
+                    Graded ({submissionDetails.answers?.filter((a: any) => !a.requiresManualCheck).length || 0})
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Questions List */}
+              <View style={styles.questionsContainer}>
+                {getFilteredQuestions().map((answer: any, index: number) => (
+                  <View key={answer._id} style={styles.questionCard}>
+                    <View style={styles.questionHeader}>
+                      <View style={styles.questionHeaderLeft}>
+                        <Text style={styles.questionNumber}>Question {index + 1}</Text>
+                        <Text style={styles.questionType}>{answer.questionDetails?.type == "truefalse" ? "True/False" : answer.questionDetails?.type}</Text>
+                      </View>
+                      <View style={styles.questionTags}>
+                        {answer.requiresManualCheck ? (
+                          <View style={[styles.questionTag, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B', borderWidth: 1 }]}>
+                            <Text style={[styles.questionTagText, { color: '#92400E' }]}>
+                              Needs Manual Grading
+                            </Text>
+                          </View>
+                        ) : (
+                          <View style={[styles.questionTag, { backgroundColor: answer.isCorrect ? '#D1FAE5' : '#FEE2E2' }]}>
+                            <Text style={[styles.questionTagText, { color: answer.isCorrect ? '#065F46' : '#991B1B' }]}>
+                              {answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                            </Text>
+                          </View>
+                        )}
+                        <View style={[styles.questionTag, { backgroundColor: '#F3F4F6' }]}>
+                          <Text style={[styles.questionTagText, { color: '#374151' }]}>
+                            {answer.pointsAwarded}/{answer.questionDetails?.points} pts
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.questionContent}>
+                      <Text style={styles.questionLabel}>Question:</Text>
+                      <View style={styles.questionTextContainer}>
+                        <Text style={styles.questionText}>
+                          {answer.questionDetails?.question?.replace(/<[^>]*>/g, '') || 'No question text'}
+                        </Text>
+                      </View>
+
+                      {/* Teacher uploaded files */}
+                      {answer.questionDetails?.file && answer.questionDetails.file.length > 0 && (
+                        <View style={styles.teacherFilesContainer}>
+                          <Text style={styles.filesLabel}>Teacher Files:</Text>
+                          {answer.questionDetails.file.map((file: any, fileIndex: number) => (
+                            <TouchableOpacity
+                              key={fileIndex}
+                              style={styles.fileCard}
+                              onPress={() => Linking.openURL(file.url)}
+                            >
+                              <SimpleIcon name="description" size={20} color="#4285F4" />
+                              <Text style={styles.fileName}>{file.filename}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.answerContent}>
+                      <Text style={styles.answerLabel}>Student's Answer:</Text>
+                      <View style={styles.answerTextContainer}>
+                        <Text style={styles.answerText}>
+                          {answer.questionDetails?.type === 'file'
+                            ? (answer.file && answer.file.length > 0
+                              ? `${answer.file.length} file(s) uploaded`
+                              : 'No file uploaded')
+                            : (answer.selectedAnswer || 'No answer provided')
+                          }
+                        </Text>
+                      </View>
+
+                      {/* Student uploaded files */}
+                      {answer.file && answer.file.length > 0 && (
+                        <View style={styles.studentFilesContainer}>
+                          <Text style={styles.filesLabel}>Student Files:</Text>
+                          {answer.file.map((file: any, fileIndex: number) => (
+                            <TouchableOpacity
+                              key={fileIndex}
+                              style={styles.fileCard}
+                              onPress={() => Linking.openURL(file.url)}
+                            >
+                              <SimpleIcon name="description" size={20} color="#10B144" />
+                              <Text style={styles.fileName}>{file.filename}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+
+                  
+                  </View>
+                ))}
+              </View>
+
+            </ScrollView>
+          ) : null}
+        </View>
+          </Modal>
         </>
 
       )}
@@ -451,16 +590,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray100,
+    minWidth: 800,
   },
   td: {
     color: COLORS.gray700,
     fontSize: 14,
   },
-  colName: { flex: 1.3, },
-  colCourse: { flex: 1, },
-  colDue: { flex: 1, },
-  colStatus: { flex: 1, },
-  colType: { flex: 1, },
+  colName: { width: 200, },
+  colCourse: { width: 150 },
+  colDue: { width: 180 },
+  colStatus: { width: 120 },
+  colType: { width: 150 },
   badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -486,7 +626,338 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   submitBtnText: { color: COLORS.white, fontWeight: "700" },
-  centered: { alignItems: "center", justifyContent: "center" },
+  centered: { alignItems: "flex-start", justifyContent: "flex-start" },
+   detailedModalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  detailedModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    position: 'relative',
+  },
+  detailedModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  detailedModalCloseButton: {
+    position: 'absolute',
+    right: 20,
+    top: 16,
+    bottom: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailedModalContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  // Submission Overview Styles
+  submissionOverview: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  studentOverviewDetails: {
+    flex: 1,
+    gap:10
+  },
+  studentNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  studentOverviewName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+    flex: 1,
+  },
+  studentOverviewEmail: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  statusTags: {
+    flexDirection: 'row',
+    gap:8
+  },
+  statusTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusTagText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  submissionTime: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  // Assessment Summary Styles
+  assessmentSummary: {
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  assessmentSummaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  assessmentSummaryCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
+  },
+  // Question Tabs Styles
+  questionTabs: {
+    flexDirection: 'row',
+    marginVertical: 20,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  activeTab: {
+    backgroundColor: '#111827',
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  activeTabText: {
+    color: '#FFFFFF',
+  },
+  // Questions Container Styles
+  questionsContainer: {
+    marginBottom: 20,
+  },
+  questionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  questionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  questionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  questionNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginRight: 12,
+  },
+  questionType: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginRight: 12,
+  },
+  questionTags: {
+    flexDirection: 'row',
+    marginLeft: 'auto',
+  },
+  questionTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  questionTagText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  questionContent: {
+    marginBottom: 16,
+  },
+  questionLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  questionTextContainer: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+  },
+  questionText: {
+    fontSize: 14,
+    color: '#111827',
+  },
+  answerContent: {
+    marginBottom: 8,
+  },
+  answerLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  answerTextContainer: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+  },
+  answerText: {
+    fontSize: 14,
+    color: '#111827',
+  },
+  // File Display Styles
+  teacherFilesContainer: {
+    marginTop: 12,
+  },
+  studentFilesContainer: {
+    marginTop: 12,
+  },
+  filesLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  fileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  fileName: {
+    fontSize: 14,
+    color: '#111827',
+    marginLeft: 8,
+    flex: 1,
+  },
+  // Grading Input Styles
+  gradingInputContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  manualGradingLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  gradingInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gradingInput: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#111827',
+    minWidth: 80,
+    textAlign: 'center',
+  },
+  gradingPointsText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 8,
+  },
+  // Submit Button Styles
+  submitGradesButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  submitGradesButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  submitGradesButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 50,
+  },
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#6B7280',
+  },
 });
 
 export default MyAssessmentsPage;

@@ -56,12 +56,12 @@ export type RootStackParamList = {
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;
   CourseDetailStudentPageEnrolled: { enrollmentId: string };
-  ChapterDetailsStudent: { chapterId: string };
+  ChapterDetailsStudent: { chapterId: string,navigateBack?:()=>void };
   Chat: undefined;
   ResetPassword: { email: string };
-  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string | null, refreshAssessments: () => void };
+  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string, refreshAssessments: () => void ,navigateBack?:()=>void };
   ChapterPages: { courseId: string; chapterId: string };
-  ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string };
+  ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string,navigateBack?:()=>void };
   AssessmentScreenStudent: { assessmentId: string };
   DiscussionStudent: { discussionId: string }
 };

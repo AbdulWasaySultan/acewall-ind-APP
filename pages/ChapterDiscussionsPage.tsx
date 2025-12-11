@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Linking, Modal, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Linking, Modal, TextInput, Alert, Platform, KeyboardAvoidingView } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getDiscussionsForChapter, getDiscussionsForLesson, createDiscussionForChapter, createDiscussionForLesson, getDiscussionDetails, getDiscussionComments } from '../services/discussion';
-import { getAssessmentCategories } from '../services/course';
+import { addAuthInterceptor, createApiInstance, getAssessmentCategories } from '../services/course';
 import * as ImagePicker from 'react-native-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Toast from 'react-native-simple-toast';
 import SimpleIcon from '../components/SimpleIcon';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type RouteParams = RouteProp<RootStackParamList, 'ChapterDiscussions'>;
 
 const ChapterDiscussionsPage = () => {
   const route = useRoute<RouteParams>();
   const navigation = useNavigation();
-  const { chapterId, courseId, semesterId, quarterId, lessonId } = route.params;
-
+  const { chapterId, courseId, semesterId, quarterId, lessonId,navigateBack } = route.params;
+  const insets = useSafeAreaInsets()
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<any[]>([]);
@@ -41,6 +41,23 @@ const ChapterDiscussionsPage = () => {
   const [discussionDetails, setDiscussionDetails] = useState<any | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingDiscussion, setLoadingDiscussion] = useState(false);
+
+  const [quarterDates, setQuarterDates] = useState<{ startDate: string, endDate: string } | null>(null);
+  const fetchQuarterDates = async () => {
+    try {
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+
+      const response = await api.get(`/api/quarter/getDatesofQuarter/${quarterId}`);
+      setQuarterDates({
+        startDate: response.data.startDate,
+        endDate: response.data.endDate
+      });
+    } catch (error) {
+      console.error('Error fetching quarter dates:', error);
+      // Don't show error toast as this is not critical
+    }
+  };
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -69,6 +86,7 @@ const ChapterDiscussionsPage = () => {
       }
     };
     fetchData();
+    fetchQuarterDates()
   }, [chapterId]);
 
   const openDiscussionModal = async (discussion: any) => {
@@ -94,8 +112,8 @@ const ChapterDiscussionsPage = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => (navigation as any).goBack()} style={{ padding: 4, marginRight: 12 }}>
+  <View style={[styles.header,{paddingTop:insets.top}]}>
+      <TouchableOpacity onPress={() => navigateBack?navigateBack():(navigation as any).goBack()} style={{ padding: 4, marginRight: 12 }}>
           <SimpleIcon name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{lessonId ? 'Lesson Discussions' : 'Chapter Discussions'}</Text>
@@ -158,13 +176,18 @@ const ChapterDiscussionsPage = () => {
         onRequestClose={() => setShowCreate(false)}
       >
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
-          <View style={styles.header}>
+        <View style={[styles.header,{paddingTop:insets.top}]}>
             <TouchableOpacity onPress={() => setShowCreate(false)} style={{ padding: 4, marginRight: 12 }}>
               <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Create New Discussion</Text>
             <View style={{ width: 28 }} />
           </View>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+
           <ScrollView contentContainerStyle={{ padding: 16 }}>
             <Text style={styles.inputLabel}>Topic</Text>
             <TextInput style={styles.textInput} value={topic} onChangeText={setTopic} placeholder="Topic" />
@@ -251,6 +274,19 @@ const ChapterDiscussionsPage = () => {
                   Alert.alert('Validation', 'Topic, Description, Category and Total Points are required.');
                   return;
                 }
+                if (dueDate && quarterDates) {
+                  const dueDateTimestamp = dueDate.getTime();
+                  const quarterStartTimestamp = new Date(quarterDates.startDate).getTime();
+                  const quarterEndTimestamp = new Date(quarterDates.endDate).getTime();
+                
+                  if (dueDateTimestamp < quarterStartTimestamp || dueDateTimestamp > quarterEndTimestamp) {
+                    Toast.show(
+                      `Due date must be between ${formatDate(new Date(quarterDates.startDate))} and ${formatDate(new Date(quarterDates.endDate))}`,
+                      Toast.LONG
+                    );
+                    return;
+                  }
+                }
                 if (!dueDate) {
                   Alert.alert('Validation', 'Please select due date');
                   return;
@@ -312,47 +348,87 @@ const ChapterDiscussionsPage = () => {
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           </ScrollView>
+          </KeyboardAvoidingView>
           {showDatePicker && (
+             <>
+             {Platform.OS === 'ios' && (
+              <Text style={{color: '#007AFF', fontSize: 18, fontWeight: '600',alignSelf:'flex-end',marginTop:10,marginRight:15}}
+              onPress={() => {
+                setShowDatePicker(false);
+                if (tempDate) {
+                  setTimeout(() => setShowTimePicker(true), 200);
+                }
+              }}>
+                Done
+              </Text>
+          )}
             <DateTimePicker
               value={dueDate || new Date()}
               mode="date"
+              style={{alignSelf:'center'}}
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              minimumDate={new Date()}
               onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (event.type === 'set' && selectedDate) {
-                  // User picked a date -> store temporarily
-                  setTempDate(selectedDate);
-                  // Now open time picker
-                  setTimeout(() => setShowTimePicker(true), 200);
+                if (Platform.OS === 'android') {
+                  setShowDatePicker(false);
+                  if (event.type === 'set' && selectedDate) {
+                    setTempDate(selectedDate);
+                    setTimeout(() => setShowTimePicker(true), 200);
+                  } else {
+                    setTempDate(null);
+                    
+                  }
                 } else {
-                  // User cancelled date picker
-                  setTempDate(null);
+                  if (selectedDate) {
+                    setTempDate(selectedDate);
+                    setDueDate(selectedDate)
+                  }
                 }
               }}
             />
+            </>
           )}
 
           {showTimePicker && (
+               <>
+               {Platform.OS === 'ios' && (
+               <Text style={{color: '#007AFF', fontSize: 18, fontWeight: '600',alignSelf:'flex-end',marginTop:10,marginRight:15}}
+               onPress={() => {
+                 setShowTimePicker(false);
+                 if (tempDate) {
+                   setDueDate(tempDate);
+                 }
+               }}>
+                 Done
+               </Text>
+           )}
             <DateTimePicker
               value={tempDate || new Date()}
               mode="time"
+              style={{alignSelf:'center'}}
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={(event, selectedTime) => {
-                setShowTimePicker(false);
-                if (event.type === 'set' && selectedTime && tempDate) {
-                  // Combine the selected date and time
-                  const combined = new Date(tempDate);
-                  combined.setHours(selectedTime.getHours());
-                  combined.setMinutes(selectedTime.getMinutes());
-                  setDueDate(combined);
+                if (Platform.OS === 'android') {
+                  setShowTimePicker(false);
+                  if (event.type === 'set' && selectedTime && tempDate) {
+                    const combined = new Date(tempDate);
+                    combined.setHours(selectedTime.getHours());
+                    combined.setMinutes(selectedTime.getMinutes());
+                    setDueDate(combined);
+                  } else {
+                    setTempDate(null);
+                    setDueDate(null);
+                  }
                 } else {
-                  // User cancelled time picker → discard date as well
-                  setTempDate(null);
-                  setDueDate(null);
+                  if (selectedTime && tempDate) {
+                    const combined = new Date(tempDate);
+                    combined.setHours(selectedTime.getHours());
+                    combined.setMinutes(selectedTime.getMinutes());
+                    setTempDate(combined);
+                  }
                 }
               }}
             />
+            </>
           )}
         </View>
 
@@ -457,11 +533,12 @@ const ChapterDiscussionsPage = () => {
 
 const styles = StyleSheet.create({
   header: {
-    height: 56,
+    minHeight: 56,
     backgroundColor: '#10B144',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
+    paddingBottom:Platform.OS === "ios"?10:0,
   },
   headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },

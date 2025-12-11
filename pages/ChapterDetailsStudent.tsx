@@ -8,7 +8,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import YoutubePlayer from "react-native-youtube-iframe";
 import { RootStackParamList } from "../navigation/AppNavigator"
 interface ChapterDetailParams {
-  chapterId: string
+  chapterId: string,
+  navigateBack:()=>void
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -126,7 +127,7 @@ const extractVideoId = (url: string): string | null => {
 const ChapterDetailsStudent = () => {
   const route = useRoute<RouteProp<Record<string, ChapterDetailParams>, string>>()
   const navigation = useNavigation<NavigationProp>()
-  const { chapterId } = route.params
+  const { chapterId,navigateBack } = route.params
   const [chapter, setChapter] = useState<null | ChapterDetails>(null)
   const [chapterDetailsLoading, setChapterDetailsLoading] = useState(false)
   const [discussions, setDiscussions] = useState<null | Discussion[]>(null)
@@ -394,7 +395,7 @@ const ChapterDetailsStudent = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+      <TouchableOpacity onPress={() => navigateBack?navigateBack():navigation.goBack()} style={styles.backButton}>
           <SimpleIcon name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>

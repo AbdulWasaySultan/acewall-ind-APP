@@ -11,6 +11,7 @@ import {
   Platform,
   ActivityIndicator,
   TextInput,
+  Keyboard,
   Linking,
 } from "react-native"
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native"
@@ -134,7 +135,20 @@ const DiscussionStudent = () => {
   const [sendingComment, setSendingComment] = useState(false)
   const [hasCommented, setHasCommented] = useState(false)
   const [checkingCommented, setCheckingCommented] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(20);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
 
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
   useEffect(() => {
     fetchDiscussionDetails()
     fetchComments(1)
@@ -463,7 +477,7 @@ const DiscussionStudent = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{paddingBottom:keyboardHeight}} >
         <View style={styles.discussionBanner}>
           <Text style={styles.discussionBannerText}>Discussion</Text>
         </View>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, Image, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 // Assuming you have an image picker library installed like react-native-image-picker
 import { launchImageLibrary, ImagePickerResponse, ImageLibraryOptions, MediaType } from 'react-native-image-picker';
-import { pick } from '@react-native-documents/picker';
+import { pick , types} from '@react-native-documents/picker';
 import { createCourse, getCategories, getSubcategories, getSemesters, getQuartersBySemesters } from '../services/course';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -260,7 +260,7 @@ const CreateCoursePage = () => {
     try {
       const [result] = await pick({
         mode: 'open',
-        type: ['application/pdf'],
+        type: [types.pdf],
       });
 
       if (result.error) {
@@ -272,7 +272,7 @@ const CreateCoursePage = () => {
       setSelectedSyllabusFile(file);
       Toast.show('Syllabus PDF selected successfully', Toast.SHORT);
     } catch (err: any) {
-      Toast.show(err || 'Error picking PDF file', Toast.LONG);
+      // Toast.show(err || 'Error picking PDF file', Toast.LONG);
     }
   };
 

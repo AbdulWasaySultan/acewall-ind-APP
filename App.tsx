@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {StatusBar, useColorScheme, View, ActivityIndicator} from 'react-native';
+import {StatusBar, useColorScheme, View, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import AppNavigator from './navigation/AppNavigator';
 import 'react-native-gesture-handler';
@@ -51,11 +51,16 @@ function AppContent(): React.JSX.Element {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+      <KeyboardAvoidingView
+  style={{ flex: 1 }}
+  behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+>
         <StatusBar
           barStyle={isDarkMode ? 'light-content' : 'dark-content'}
           backgroundColor={backgroundStyle.backgroundColor}
         />
         <AppNavigator />
+        </KeyboardAvoidingView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

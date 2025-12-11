@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, TextInput, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { getAllCourses } from '../services/course';
@@ -232,8 +232,13 @@ const AnnouncementsPage = () => {
             visible={isModalVisible}
             onRequestClose={toggleModal}
           >
+             <KeyboardAvoidingView
+            style={{ flex: 1 }}
+           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-              <ScrollView style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: '90%', maxHeight: '80%' }}>
+              <ScrollView style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: '90%', maxHeight: '70%' }}>
                 {/* <TouchableOpacity style={{ alignSelf: 'flex-end' }} onPress={toggleModal}>
                   <Text style={{ fontSize: 18, fontWeight: 'bold' }}>×</Text>
                 </TouchableOpacity> */}
@@ -306,6 +311,8 @@ const AnnouncementsPage = () => {
                 </Pressable>
               </ScrollView>
             </View>
+          </KeyboardAvoidingView>
+
           </Modal>
         </>
       ) : (

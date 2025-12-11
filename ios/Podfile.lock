@@ -1480,6 +1480,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - Toast (~> 4)
     - Yoga
+  - react-native-vector-icons-evil-icons (12.3.0)
+  - react-native-vector-icons-fontawesome6 (12.2.0)
   - react-native-vector-icons-material-icons (12.3.0)
   - react-native-webview (13.16.0):
     - DoubleConversion
@@ -2147,6 +2149,8 @@ DEPENDENCIES:
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-simple-toast (from `../node_modules/react-native-simple-toast`)
+  - "react-native-vector-icons-evil-icons (from `../node_modules/@react-native-vector-icons/evil-icons`)"
+  - "react-native-vector-icons-fontawesome6 (from `../node_modules/@react-native-vector-icons/fontawesome6`)"
   - "react-native-vector-icons-material-icons (from `../node_modules/@react-native-vector-icons/material-icons`)"
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -2279,6 +2283,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-simple-toast:
     :path: "../node_modules/react-native-simple-toast"
+  react-native-vector-icons-evil-icons:
+    :path: "../node_modules/@react-native-vector-icons/evil-icons"
+  react-native-vector-icons-fontawesome6:
+    :path: "../node_modules/@react-native-vector-icons/fontawesome6"
   react-native-vector-icons-material-icons:
     :path: "../node_modules/@react-native-vector-icons/material-icons"
   react-native-webview:
@@ -2403,6 +2411,8 @@ SPEC CHECKSUMS:
   react-native-image-picker: c73e6edfdbc2bbc1c12b3fe9c2149441fa08f149
   react-native-safe-area-context: fdeca0a1561ee57464631f8334cae4bbf34265ad
   react-native-simple-toast: 24f8d9808febe98e699b149227ff23e0a6488209
+  react-native-vector-icons-evil-icons: 74d1fe2b104d1b4286359313713c7a4a9dcef1be
+  react-native-vector-icons-fontawesome6: 1b667969bef2f430d1d7515163b980b856f58670
   react-native-vector-icons-material-icons: eff7417eb1ac6c740ab802837ad34b8233fded34
   react-native-webview: 31e5182717002afb31a4452498e890daf28a77de
   React-NativeModulesApple: 6d750bb9829fdf0f02c56e9a68cbb390e1f5de25

@@ -6,12 +6,15 @@ import { getCourseById, getStudentEnrolledCourseDetails, getQuartersForSemester,
 import { useUser } from '../contexts/UserContext';
 import Toast from 'react-native-simple-toast'
 import { getCourseRating } from '../services/rating';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 const fallbackImage = require('../assets/jpg.jpg');
 const avatarPlaceholder = require('../assets/placeholder.png');
 const TABS = ['Overview', 'Reviews', 'Curriculum', 'Instructor'];
 
 const CourseDetailStudentPage = () => {
+  
   const route = useRoute();
+  const insets = useSafeAreaInsets()
   const navigation = useNavigation();
   const { user } = useUser();
   const { courseId, fromAdmin, enrollmentId } = route.params as { courseId: string, fromAdmin?: boolean, enrollmentId?: string };
@@ -218,9 +221,9 @@ const CourseDetailStudentPage = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Close Button */}
-      <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity style={[styles.closeButton,{top:insets.top||16}]} onPress={() => navigation.goBack()}>
         <SimpleIcon name="close" size={32} color="#222" />
       </TouchableOpacity>
       {/* Enroll Modal */}
@@ -731,7 +734,7 @@ const CourseDetailStudentPage = () => {
           )}
         </ScrollView>
       ) : null}
-    </View>
+  </SafeAreaView>
   );
 };
 

@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   showHideButton: {
     position: "absolute",
     right: 15,
-    top: 13,
+    top: 9,
     padding: 5,
   },
   showHideText: {

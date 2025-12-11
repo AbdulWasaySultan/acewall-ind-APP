@@ -4,8 +4,9 @@ import { View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Modal
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getAllAssessmentsByTeacher, getCategories, getAllCourses, getAssessmentSubmissionsForTeacher, getSubmissionDetails, submitGrades } from '../services/course';
 import SimpleIcon from '../components/SimpleIcon';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const AssessmentsPage = () => {
+  const insets = useSafeAreaInsets()
   const [searchQuery, setSearchQuery] = useState('');
   const [rawAssessments, setRawAssessments] = useState([]); // Store the original fetched assessments
   const [filteredAssessments, setFilteredAssessments] = useState([]); // Store filtered assessments
@@ -457,7 +458,7 @@ const AssessmentsPage = () => {
         transparent={false}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+       <View style={[styles.modalContainer,{paddingTop:insets.top || 20 }]}>
           {/* Header: Assessment Title, Due Date and Close Icon */}
           <View style={styles.modalHeader}>
             <View style={{ flex: 1 }}>
@@ -600,7 +601,7 @@ const AssessmentsPage = () => {
         }
         }
       >
-        <View style={styles.detailedModalContainer}>
+       <View style={[styles.detailedModalContainer,{paddingTop:insets.top || 20}]}>
           {/* Header */}
           <View style={styles.detailedModalHeader}>
             <Text style={styles.detailedModalTitle}>Submission Details</Text>

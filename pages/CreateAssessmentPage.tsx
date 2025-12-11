@@ -6,20 +6,17 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Alert,
   Platform,
-  Image,
   ActivityIndicator,
   Modal,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { launchImageLibrary, launchCamera, MediaType } from 'react-native-image-picker';
 import Toast from 'react-native-simple-toast';
 import SimpleIcon from '../components/SimpleIcon';
 import { createApiInstance, addAuthInterceptor } from '../services/course';
-import { pick } from '@react-native-documents/picker';
-
+import { pick,types } from '@react-native-documents/picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 interface Question {
   id: string;
   type: 'mcq' | 'truefalse' | 'qa';
@@ -42,7 +39,8 @@ interface QuestionType {
 const CreateAssessmentPage = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { courseId, chapterId, lessonId, semesterId, quarterId, refreshAssessments } = route.params as any;
+  const insets = useSafeAreaInsets()
+  const { courseId, chapterId, lessonId, semesterId, quarterId, refreshAssessments,navigateBack } = route.params as any;
   const QuestionType: QuestionType[] = [{
     _id: '646f1f4f4f4f4f4f4f4f4f4f5',
     name: 'Multiple Choice',
@@ -151,6 +149,7 @@ const CreateAssessmentPage = () => {
         setSelectedCategory({ _id: created._id, name: created.name });
       }
       setShowAddCategoryModal(false);
+      setShowCategoryModal(true)
       setNewCategoryName('');
       setNewCategoryWeight('0');
       await fetchCategories();
@@ -248,7 +247,7 @@ const CreateAssessmentPage = () => {
   const handleFilePick = async () => {
 
     const result = await pick({
-      type: ["application/pdf"],
+      type: [types.pdf],
       copyTo: "cachesDirectory",
       allowMultiSelection: true,
     });
@@ -339,7 +338,24 @@ const CreateAssessmentPage = () => {
       Toast.show('Please upload at least one file', Toast.SHORT);
       return;
     }
-
+    if (dueDate && quarterDates) {
+      const dueDateTimestamp = dueDate.getTime();
+      const quarterStartTimestamp = new Date(quarterDates.startDate).getTime();
+      const quarterEndTimestamp = new Date(quarterDates.endDate).getTime();
+    
+      if (dueDateTimestamp < quarterStartTimestamp || dueDateTimestamp > quarterEndTimestamp) {
+        Toast.show(
+          `Due date must be between ${formatDate(new Date(quarterDates.startDate))} and ${formatDate(new Date(quarterDates.endDate))}`,
+          Toast.LONG
+        );
+        return;
+      }
+    }
+    
+    if (!dueDate) {
+      Toast.show('Please select a due date', Toast.SHORT);
+      return;
+    }
     try {
       setLoading(true);
       const api = await createApiInstance();
@@ -442,8 +458,8 @@ const CreateAssessmentPage = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+       <View style={[styles.header,{paddingTop:insets.top}]}>
+       <TouchableOpacity onPress={() => navigateBack?navigateBack():navigation.goBack()} style={styles.backButton}>
           <SimpleIcon name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -802,6 +818,7 @@ const CreateAssessmentPage = () => {
                     onPress={() => {
                       setCurrentQuestion({ ...currentQuestion, type: category.type as any });
                       setShowQuestionTypeModal(false);
+                      setShowAddQuestionModal(true)
                     }}
                   >
                     <Text style={[
@@ -818,7 +835,10 @@ const CreateAssessmentPage = () => {
             </ScrollView>
             <TouchableOpacity
               style={styles.modalCloseButton}
-              onPress={() => setShowQuestionTypeModal(false)}
+              onPress={() => {
+                setShowQuestionTypeModal(false)
+                setShowAddQuestionModal(true)
+              }}
             >
               <Text style={styles.modalCloseButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -912,6 +932,7 @@ const CreateAssessmentPage = () => {
                     // const currentIndex = types.indexOf(currentQuestion.type || 'mcq');
                     // const nextType = types[(currentIndex + 1) % types.length];
                     // setCurrentQuestion({...currentQuestion, type: nextType as any});
+                    setShowAddQuestionModal(false)
                     setShowQuestionTypeModal(true);
                   }}
                 >
@@ -1064,63 +1085,89 @@ const CreateAssessmentPage = () => {
         </View>
       </Modal>
 
-      {/* Date Picker */}
-      {/* {showDatePicker && (
-        <DateTimePicker
-          value={dueDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) {
-              setDueDate(selectedDate);
-            }
-          }}
-          minimumDate={new Date()}
-        />
-      )} */}
+  
 
       {showDatePicker && (
-        <DateTimePicker
-          value={dueDate || new Date()}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          minimumDate={new Date()}
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (event.type === 'set' && selectedDate) {
-              // User picked a date -> store temporarily
-              setTempDate(selectedDate);
-              // Now open time picker
-              setTimeout(() => setShowTimePicker(true), 200);
-            } else {
-              // User cancelled date picker
-              setTempDate(null);
-            }
-          }}
-        />
+        <>
+        {Platform.OS === 'ios' && (
+              <Text style={{color: '#007AFF', fontSize: 18, fontWeight: '600',alignSelf:'flex-end',marginTop:10,marginRight:15}}
+              onPress={() => {
+                setShowDatePicker(false);
+                if (tempDate) {
+                  setTimeout(() => setShowTimePicker(true), 200);
+                }
+              }}>
+                Done
+              </Text>
+          )}
+          <DateTimePicker
+            value={dueDate || new Date()}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            style={{alignSelf:'center'}}
+            onChange={(event, selectedDate) => {
+              if (Platform.OS === 'android') {
+                setShowDatePicker(false);
+                if (event.type === 'set' && selectedDate) {
+                  setTempDate(selectedDate);
+                  setTimeout(() => setShowTimePicker(true), 200);
+                } else {
+                  setTempDate(null);
+                }
+              } else {
+                if (selectedDate) {
+                  setTempDate(selectedDate);
+                  setDueDate(selectedDate)
+                }
+              }
+            }}
+          />
+          
+        </>
       )}
 
       {showTimePicker && (
-        <DateTimePicker
-          value={tempDate || new Date()}
-          mode="time"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(event, selectedTime) => {
+      <>
+      {Platform.OS === 'ios' && (
+          <Text style={{color: '#007AFF', fontSize: 18, fontWeight: '600',alignSelf:'flex-end',marginTop:10,marginRight:15}}
+          onPress={() => {
+            setShowTimePicker(false);
+            if (tempDate) {
+              setDueDate(tempDate);
+            }
+          }}>
+            Done
+          </Text>
+      )}
+      <DateTimePicker
+        value={tempDate || new Date()} 
+        mode="time"
+        style={{alignSelf:'center'}}
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+        onChange={(event, selectedTime) => {
+          if (Platform.OS === 'android') {
             setShowTimePicker(false);
             if (event.type === 'set' && selectedTime && tempDate) {
-              // Combine the selected date and time
               const combined = new Date(tempDate);
               combined.setHours(selectedTime.getHours());
               combined.setMinutes(selectedTime.getMinutes());
               setDueDate(combined);
             } else {
-              // User cancelled time picker → discard date as well
               setTempDate(null);
               setDueDate(null);
             }
-          }}
-        />
+          } else {
+            // iOS: just update the time selection
+            if (selectedTime && tempDate) {
+              const combined = new Date(tempDate);
+              combined.setHours(selectedTime.getHours());
+              combined.setMinutes(selectedTime.getMinutes());
+              setTempDate(combined);
+            }
+          }
+        }}
+      />
+    </>
       )}
     </View>
   );

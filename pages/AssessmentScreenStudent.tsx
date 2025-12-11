@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform, Alert, ActivityIndicator, Linking } from "react-native"
 import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native"
 import SimpleIcon from "../components/SimpleIcon"
-import { pick } from "@react-native-documents/picker";
+import { pick, types } from "@react-native-documents/picker";
 import { getStudentAssessmentDetails, submitAssessment } from "../services/course";
 import Toast from 'react-native-simple-toast'
 interface AssessmentParams {
@@ -74,7 +74,7 @@ const AssessmentScreenStudent = () => {
   const handleFileUpload = async (questionId: string) => {
     try {
         const result = await pick({
-            type: ["application/pdf"],
+          type: [types.pdf],
             copyTo: "cachesDirectory",
             allowMultiSelection:false
           });
@@ -84,8 +84,8 @@ const AssessmentScreenStudent = () => {
           [questionId]: result[0].uri,
         }))
     } catch (error) {
-      console.error("Error picking document:", error)
-      Alert.alert("Error", "Failed to pick document")
+   // console.error("Error picking document:", error)
+      // Alert.alert("Error", "Failed to pick document")
     }
   }
 

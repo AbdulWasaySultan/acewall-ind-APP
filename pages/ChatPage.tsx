@@ -4,7 +4,7 @@ import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import SimpleIcon from '../components/SimpleIcon';
 import { getMessages, sendMessage } from '../services/message';
 import { useAuth } from '../contexts/AuthContext'; // Assuming useAuth provides the current user
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type ChatPageParams = {
     conversationId: string;
     otherMemberName: string;
@@ -15,24 +15,24 @@ const ChatPage = () => {
     const { conversationId, otherMemberName } = route.params;
     const navigation = useNavigation();
     const { user } = useAuth(); // Get the current user
-
+    const insets = useSafeAreaInsets()
     const [messages, setMessages] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [newMessage, setNewMessage] = useState('');
-    const [keyboardMargin, setKeyboardMargin] = useState(0);
+    const [keyboardMargin, setKeyboardMargin] = useState(20);
 
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
             'keyboardDidShow',
             () => {
-                setKeyboardMargin(30);
+                setKeyboardMargin(21);
             }
         );
         const keyboardDidHideListener = Keyboard.addListener(
             'keyboardDidHide',
             () => {
-                setKeyboardMargin(0);
+                setKeyboardMargin(20);
             }
         );
 
@@ -88,8 +88,8 @@ const ChatPage = () => {
     };
 
     return (
-        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={styles.header}>
+        <View style={styles.container} >
+            <View style={[styles.header,{paddingTop:insets.top || 10}]}>
                 <View>
                     <Text style={styles.headerName}>{otherMemberName}</Text>
                 </View>
@@ -104,7 +104,7 @@ const ChatPage = () => {
                 contentContainerStyle={styles.listContainer}
                 inverted // To keep the list scrolled to the bottom
             />
-            <View style={[styles.inputContainer, { marginBottom: keyboardMargin }]}>
+            <View style={[styles.inputContainer, { paddingBottom: keyboardMargin }]}>
                 <TextInput
                     style={styles.input}
                     placeholder="Type your message..."
@@ -125,7 +125,7 @@ const ChatPage = () => {
                     )}
                 </TouchableOpacity>
             </View>
-        </KeyboardAvoidingView>
+            </View>
     );
 };
 

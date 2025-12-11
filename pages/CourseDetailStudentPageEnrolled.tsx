@@ -8,6 +8,7 @@ import { getComments, sendComment } from '../services/comment';
 import { createConversation } from '../services/conversation';
 import ConversationsModal from '../components/ConversationsModal';
 import Toast from "react-native-simple-toast";
+import { SafeAreaView } from 'react-native-safe-area-context';
 // Type for navigation param
 const avatarPlaceholder = require('../assets/placeholder.png');
 interface Params {
@@ -313,10 +314,8 @@ const CourseDetailStudentPageEnrolled = () => {
     }
   };
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    <SafeAreaView
+    style={{flex:1,backgroundColor: '#fff'}}
     >
       <ScrollView style={{ backgroundColor: '#fff' }}>
         {/* Banner */}
@@ -566,7 +565,7 @@ const CourseDetailStudentPageEnrolled = () => {
         <ConversationsModal
           visible={isConversationsModalVisible}
           onClose={() => setIsConversationsModalVisible(false)}
-          teacherId={teacherId}
+          conversationId={teacherId}
         />
       )}
       <Modal
@@ -708,9 +707,14 @@ const CourseDetailStudentPageEnrolled = () => {
                       style={styles.quarterCard}
                       onPress={() => {
                         // setShowChaptersForQuarterModal(false)
-                        ; (navigation as any).navigate("ChapterDetailsStudent", {
-                          chapterId: chapter._id
-                        })
+                        setShowChaptersForQuarterModal(false);
+                        (navigation as any).navigate("ChapterDetailsStudent", {
+                         chapterId: chapter._id,
+                         navigateBack:()=>{
+                           navigation.goBack()
+                           setShowChaptersForQuarterModal(true)
+                         }
+                       })
                       }}
                     >
                       <Text
@@ -735,7 +739,7 @@ const CourseDetailStudentPageEnrolled = () => {
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+      </SafeAreaView>
   );
 };
 
