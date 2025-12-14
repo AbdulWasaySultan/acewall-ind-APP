@@ -379,15 +379,19 @@ export const deleteCourse = async (courseId: string) => {
   }
 };
 
-export const createChapter = async (courseId: string, title: string, description: string, quarterId: string) => {
+export const createChapter = async (courseId: string, title: string, description: string, quarterId: string | null) => {
   if (!title || !description) {
     throw new Error('Both title and description are required');
   }
   try {
     const api = await createApiInstance();
+    let url = `/api/chapter/create/${courseId}`
+    if(quarterId){
+      url += `/${quarterId}`
+    }
     addAuthInterceptor(api);
     const response = await api.post(
-      `/api/chapter/create/${courseId}/${quarterId}`,
+      url,
       { title, description }
     );
     return response.data;
@@ -1252,8 +1256,9 @@ export const createQuarter = async (semesterId: string, title: string, startDate
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.post(`/api/quarter/create/${semesterId}`, {
+    const response = await api.post(`/api/quarter/create`, {
       title,
+      semester:semesterId,
       startDate,
       endDate,
     });
@@ -1467,6 +1472,7 @@ export const editCourseBasics = async (
     courseTitle: string;
     category: string;
     subcategory: string;
+    price:string,
     language: string;
     courseDescription: string;
     teachingPoints: string;

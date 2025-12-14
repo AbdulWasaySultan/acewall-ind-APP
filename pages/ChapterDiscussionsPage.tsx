@@ -442,7 +442,7 @@ const ChapterDiscussionsPage = () => {
         onRequestClose={() => setShowDiscussionModal(false)}
       >
         <View style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
-          <View style={styles.header}>
+          <View style={[styles.header,{paddingTop:insets.top}]}>
             <TouchableOpacity onPress={() => setShowDiscussionModal(false)} style={{ padding: 4, marginRight: 12 }}>
               <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>

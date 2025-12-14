@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, TextInput, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { getAllCourses } from '../services/course';
 import { createAnnouncement, getAnnouncementsByTeacher, deleteAnnouncement, getAnnouncementsByStudent } from '../services/announcement';
+import { useFocusEffect } from '@react-navigation/native';
 
 const AnnouncementsPage = () => {
   const [isAnnouncementsExpanded, setIsAnnouncementsExpanded] = useState(true);
@@ -82,20 +83,30 @@ const AnnouncementsPage = () => {
   }, [isModalVisible]);
 
   // Fetch student announcements on mount (for students)
-  useEffect(() => {
-    if (userRole === 'student' && user?._id) {
-      setStudentAnnouncementsLoading(true);
-      setStudentAnnouncementsError('');
-      getAnnouncementsByStudent(user._id)
-        .then((res) => {
-          setStudentAnnouncements(res.announcements || []);
-        })
-        .catch((err) => {
-          setStudentAnnouncementsError(err.message || 'Failed to load announcements');
-        })
-        .finally(() => setStudentAnnouncementsLoading(false));
-    }
-  }, [userRole, user]);
+  useFocusEffect(
+    useCallback(() => {
+      if (userRole === 'student' && user?._id) {
+        setStudentAnnouncementsLoading(true);
+        setStudentAnnouncementsError('');
+  
+        getAnnouncementsByStudent(user._id)
+          .then((res) => {
+            setStudentAnnouncements(res.announcements || []);
+          })
+          .catch((err) => {
+            setStudentAnnouncementsError(
+              err.message || 'Failed to load announcements'
+            );
+          })
+          .finally(() => {
+            setStudentAnnouncementsLoading(false);
+          });
+      }
+  
+      // Optional cleanup
+      return () => {};
+    }, [userRole, user?._id])
+  );
 
   const toggleAnnouncements = () => {
     setIsAnnouncementsExpanded(!isAnnouncementsExpanded);
@@ -342,16 +353,16 @@ const AnnouncementsPage = () => {
                   shadowOpacity: 0.08,
                   shadowRadius: 8,
                   elevation: 2,
-                  borderWidth: 1,
                   borderColor: '#e5e8ef',
+                  
                 }}
               >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <View>
-                    <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginBottom: 8 }}>{a.title}</Text>
+                <View style={{ flexDirection: 'row',marginBottom: 8 }}>
+                  <View style={{flex:1}}>
+                    <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginBottom: 8 ,lineHeight: 22,}}>{a.title}</Text>
                     <Text style={{ fontSize: 18, color: '#374151' }}><Text style={{ fontWeight: 'bold' }}>Course:</Text> {a.course?.courseTitle || '-'}</Text>
                   </View>
-                  <View style={{ alignItems: 'flex-end', flexDirection: 'row', gap: 8 }}>
+                  <View style={{  flexDirection: 'row', gap: 5 }}>
                     <Text style={{ fontSize: 15, color: '#6b7280', marginRight: 8 }}>{new Date(a.createdAt).toLocaleDateString('en-GB')}</Text>
                     <Text style={{ color: '#6b7280', fontSize: 15 }}>{expanded ? '▲' : '▼'}</Text>
                   </View>

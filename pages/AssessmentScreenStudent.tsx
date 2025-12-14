@@ -187,7 +187,7 @@ const AssessmentScreenStudent = () => {
 
   const renderTrueFalse = (question: Question) => (
     <View style={styles.optionsContainer}>
-      {["True", "False"].map((option) => (
+      {["true", "false"].map((option) => (
         <TouchableOpacity
           key={option}
           style={styles.optionButton}

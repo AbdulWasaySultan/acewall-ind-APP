@@ -65,7 +65,7 @@ const studentMenuItems = [
   { label: 'Messages', icon: require('../assets/jpg.jpg') },
   { label: 'Gradebook', icon: require('../assets/jpg.jpg') },
   { label: 'Discussions', icon: require('../assets/jpg.jpg') },
-  { label: 'Pages', icon: require('../assets/jpg.jpg') },
+  // { label: 'Pages', icon: require('../assets/jpg.jpg') },
   { label: 'Account Information', icon: require('../assets/jpg.jpg') },
 ];
 
