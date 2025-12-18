@@ -1139,8 +1139,7 @@ const CourseDetailsPage = () => {
         break;
       case "assessment":
         // Close any open modals and navigate to CreateAssessmentPage
-        setShowAddAssessmentModal(false);
-        // setShowChapterDetailsModal(false);
+        setShowChapterDetailsModal(false);
         if (chapterDetails ) {
           // Find semester ID from the quarter data
           const semesterId =
@@ -1152,6 +1151,10 @@ const CourseDetailsPage = () => {
             quarterId: selectedQuarterId,
             
             refreshAssessments: () => { handleViewChapterDetails(chapterDetails._id) },
+            navigateBack() {
+              setShowChapterDetailsModal(true)
+              navigation.goBack()
+            },
           });
         } else {
           Toast.show("Please select a chapter and quarter first", Toast.LONG);
@@ -1200,8 +1203,7 @@ const CourseDetailsPage = () => {
     switch (option) {
       case "assessment":
         // Close any open modals and navigate to CreateAssessmentPage
-        setShowAddAssessmentModal(false);
-        // setShowChapterDetailsModal(false);
+        setShowChapterDetailsModal(false);
         if (currentLessonForAssessment  || selectedQuarterId) {
           // Find semester ID from the quarter data
           const semesterId =
@@ -1213,6 +1215,10 @@ const CourseDetailsPage = () => {
             semesterId: semesterId || "",
             quarterId: selectedQuarterId,
             refreshAssessments: () => { handleViewChapterDetails(chapterDetails._id) },
+            navigateBack() {
+              setShowChapterDetailsModal(true)
+              navigation.goBack()
+            },
           });
         } else {
           Toast.show("Please select a lesson and quarter first", Toast.LONG);
@@ -1220,11 +1226,15 @@ const CourseDetailsPage = () => {
         break;
       case "page":
         if (currentLessonForAssessment && course?._id) {
-          // setShowChapterDetailsModal(false);
+          setShowChapterDetailsModal(false);
           (navigation as any).navigate("ChapterPages", {
             courseId: course._id,
             chapterId: chapterDetails._id,
             lessonId: currentLessonForAssessment._id,
+            navigateBack() {
+              setShowChapterDetailsModal(true)
+              navigation.goBack()
+            },
           });
         } else {
           Toast.show("Please select a lesson first", Toast.LONG);
@@ -1232,13 +1242,17 @@ const CourseDetailsPage = () => {
         break;
       case "discussion":
         if (chapterDetails && currentLessonForAssessment) {
-          // setShowChapterDetailsModal(false);
+          setShowChapterDetailsModal(false);
           (navigation as any).navigate("ChapterDiscussions", {
             chapterId: chapterDetails._id,
             courseId: course._id,
             semesterId: selectedQuarter?.semester || course?.semester?.[0]?._id,
             quarterId: selectedQuarterId || undefined,
             lessonId: currentLessonForAssessment._id,
+            navigateBack() {
+              setShowChapterDetailsModal(true)
+              navigation.goBack()
+            },
           });
         } else {
           Toast.show("Please select a lesson first", Toast.LONG);

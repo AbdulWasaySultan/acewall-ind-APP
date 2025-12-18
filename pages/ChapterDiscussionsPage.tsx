@@ -10,7 +10,10 @@ import Toast from 'react-native-simple-toast';
 import SimpleIcon from '../components/SimpleIcon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type RouteParams = RouteProp<RootStackParamList, 'ChapterDiscussions'>;
-
+interface AssessmentCategory {
+  _id: string;
+  name: string;
+}
 const ChapterDiscussionsPage = () => {
   const route = useRoute<RouteParams>();
   const navigation = useNavigation();
@@ -25,14 +28,14 @@ const ChapterDiscussionsPage = () => {
   const [description, setDescription] = useState('');
   const [totalMarks, setTotalMarks] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
-  const [categoryId, setCategoryId] = useState<string>('');
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
-
+  const [loadingCategories,setLoadingCategories] = useState(false)
 
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<AssessmentCategory | null>(null);
 
 
   const [file, setFile] = useState<any | null>(null);
@@ -41,7 +44,11 @@ const ChapterDiscussionsPage = () => {
   const [discussionDetails, setDiscussionDetails] = useState<any | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingDiscussion, setLoadingDiscussion] = useState(false);
-
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryWeight, setNewCategoryWeight] = useState<string>('0');
+  const [creatingCategory, setCreatingCategory] = useState(false);
   const [quarterDates, setQuarterDates] = useState<{ startDate: string, endDate: string } | null>(null);
   const fetchQuarterDates = async () => {
     try {
@@ -87,7 +94,59 @@ const ChapterDiscussionsPage = () => {
     };
     fetchData();
     fetchQuarterDates()
+    fetchCategories()
   }, [chapterId]);
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+
+      const response = await api.get(`/api/assessmentCategory/${courseId}`);
+      setCategories(response.data.categories || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Toast.show('Failed to fetch categories', Toast.LONG);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim();
+    const weight = parseFloat(newCategoryWeight);
+    if (!name) {
+      Toast.show('Please enter topic name', Toast.SHORT);
+      return;
+    }
+    if (Number.isNaN(weight) || weight <= 0) {
+      Toast.show('Please enter a valid weight (> 0)', Toast.SHORT);
+      return;
+    }
+
+    try {
+      setCreatingCategory(true);
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+      const payload = { name, weight, course: courseId } as any;
+      const response = await api.post(`/api/assessmentCategory/${courseId}`, payload);
+      Toast.show('Assessment category created successfully', Toast.LONG);
+      const created = response.data?.category || response.data?.data || null;
+      if (created) {
+        setSelectedCategory({ _id: created._id, name: created.name });
+      }
+      setShowAddCategoryModal(false);
+      setShowCategoryModal(true)
+      setNewCategoryName('');
+      setNewCategoryWeight('0');
+      await fetchCategories();
+    } catch (e: any) {
+      console.error('Create category error:', e);
+      Toast.show(e?.response?.data?.message || e.message || 'Failed to create category', Toast.LONG);
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const openDiscussionModal = async (discussion: any) => {
     try {
@@ -210,32 +269,19 @@ const ChapterDiscussionsPage = () => {
                 <Text style={styles.inputLabel}>Category</Text>
                 <TouchableOpacity
                   style={styles.dropdownTrigger}
-                  onPress={() => setShowCategoryMenu((s) => !s)}
+                  onPress={() => setShowCategoryModal(true)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.dropdownTriggerText}>
-                    {categories.find((c) => c._id === categoryId)?.name || 'Select a Topic'}
+                  <Text style={[styles.dropdownTriggerText,
+                     !selectedCategory && styles.dropdownPlaceholder
+                  ]
+                    
+                  }>
+                  {selectedCategory ? selectedCategory.name : 'Select a Topic'}
                   </Text>
                   <SimpleIcon name={showCategoryMenu ? 'chevron-up' : 'chevron-down'} size={18} color="#333" />
                 </TouchableOpacity>
-                {showCategoryMenu && (
-                  <View style={styles.dropdownMenu}>
-                    <ScrollView>
-                      {categories.map((c) => (
-                        <TouchableOpacity
-                          key={c._id}
-                          onPress={() => {
-                            setCategoryId(c._id);
-                            setShowCategoryMenu(false);
-                          }}
-                          style={[styles.dropdownItem, categoryId === c._id && styles.dropdownItemActive]}
-                        >
-                          <Text style={{ color: '#111' }}>{c.name}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                )}
+             
               </View>
             </View>
 
@@ -270,7 +316,7 @@ const ChapterDiscussionsPage = () => {
               style={[styles.createButton, creating && { opacity: 0.7 }]}
               disabled={creating}
               onPress={async () => {
-                if (!topic.trim() || !description.trim() || !categoryId || !totalMarks) {
+                if (!topic.trim() || !description.trim() || !selectedCategory?._id || !totalMarks) {
                   Alert.alert('Validation', 'Topic, Description, Category and Total Points are required.');
                   return;
                 }
@@ -304,7 +350,7 @@ const ChapterDiscussionsPage = () => {
                       course: courseId,
                       topic: topic.trim(),
                       description: description.trim(),
-                      category: categoryId,
+                      category: selectedCategory?._id,
                       type: 'lesson',
                       dueDate: due,
                       totalMarks: Number(totalMarks),
@@ -317,7 +363,7 @@ const ChapterDiscussionsPage = () => {
                       course: courseId,
                       topic: topic.trim(),
                       description: description.trim(),
-                      category: categoryId,
+                      category: selectedCategory?._id,
                       type: 'chapter',
                       dueDate: due,
                       totalMarks: Number(totalMarks),
@@ -328,7 +374,7 @@ const ChapterDiscussionsPage = () => {
                     });
                   Toast.show(res.message || 'Discussion created successfully', Toast.LONG);
                   setShowCreate(false);
-                  setTopic(''); setDescription(''); setTotalMarks(''); setCategoryId(''); setDueDate(null); setFile(null);
+                  setTopic(''); setDescription(''); setTotalMarks(''); setSelectedCategory(null); setDueDate(null); setFile(null);
                   // refresh
                   setLoading(true);
                   const refreshed = lessonId ? await getDiscussionsForLesson(lessonId) : await getDiscussionsForChapter(chapterId);
@@ -430,6 +476,120 @@ const ChapterDiscussionsPage = () => {
             />
             </>
           )}
+            <Modal
+        visible={showCategoryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Category</Text>
+            <ScrollView style={styles.categoryList}>
+              {loadingCategories ? (
+                <ActivityIndicator size="large" color="#10B144" />
+              ) : categories.length > 0 ? (
+                categories.map((category) => (
+                  <TouchableOpacity
+                    key={category._id}
+                    style={[
+                      styles.categoryItem,
+                      selectedCategory?._id === category._id && styles.categoryItemSelected
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory(category);
+                      setShowCategoryModal(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.categoryItemText,
+                      selectedCategory?._id === category._id && styles.categoryItemTextSelected
+                    ]}>
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noCategoriesText}>No categories available</Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowCategoryModal(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+
+            {/* Add New Topic CTA */}
+            <TouchableOpacity
+              style={[styles.modalCloseButton, { backgroundColor: '#111' }]}
+              onPress={() => {
+                setShowCategoryModal(false);
+                setShowAddCategoryModal(true);
+              }}
+            >
+              <Text style={[styles.modalCloseButtonText, { color: '#fff' }]}>+ Add New Topic</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={showAddCategoryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAddCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Topic</Text>
+            <Text style={{ color: '#6b7280', marginBottom: 16 }}>
+              Create a new assessment category for this course.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Topic Name</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g., Midterm Exam, Quiz, Assignment"
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Weight (%)</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="0"
+                value={newCategoryWeight}
+                onChangeText={setNewCategoryWeight}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+              <TouchableOpacity
+                style={[styles.cancelQuestionButton]}
+                onPress={() => setShowAddCategoryModal(false)}
+                disabled={creatingCategory}
+              >
+                <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveQuestionButton]}
+                onPress={handleCreateCategory}
+                disabled={creatingCategory}
+              >
+                {creatingCategory ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveQuestionButtonText}>Create Category</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
         </View>
 
       </Modal>
@@ -742,6 +902,107 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+  },
+  questionModalContent: {
+    maxHeight: '90%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111',
+    marginBottom: 16,
+  },
+  categoryList: {
+    maxHeight: 200,
+  },
+  categoryItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  categoryItemSelected: {
+    backgroundColor: '#f0fdf4',
+  },
+  categoryItemText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  categoryItemTextSelected: {
+    color: '#10B144',
+    fontWeight: 'bold',
+  },
+  noCategoriesText: {
+    textAlign: 'center',
+    color: '#7b8794',
+    paddingVertical: 20,
+  },
+  modalCloseButton: {
+    backgroundColor: '#eee',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  modalCloseButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#555',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  characterCount: {
+    fontSize: 12,
+    color: '#7b8794',
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  saveQuestionButton: {
+    flex: 1,
+    backgroundColor: '#222',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  saveQuestionButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  cancelQuestionButton: {
+    flex: 1,
+    backgroundColor: '#eee',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelQuestionButtonText: {
+    color: '#555',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  dropdownPlaceholder: {
+    color: '#7b8794',
   },
 });
 

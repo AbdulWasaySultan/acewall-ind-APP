@@ -119,7 +119,7 @@ const CreateAssessmentPage = () => {
       setCategories(response.data.categories || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      Toast.show('Failed to fetch categories', Toast.LONG);
+      // Toast.show('Failed to fetch categories', Toast.LONG);
     } finally {
       setLoadingCategories(false);
     }

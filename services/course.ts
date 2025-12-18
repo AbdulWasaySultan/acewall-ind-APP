@@ -390,6 +390,7 @@ export const createChapter = async (courseId: string, title: string, description
       url += `/${quarterId}`
     }
     addAuthInterceptor(api);
+    console.log(url)
     const response = await api.post(
       url,
       { title, description }
@@ -1482,6 +1483,7 @@ export const editCourseBasics = async (
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
+    console.log(data)
     const response = await api.put(
       `/api/course/editCourseBasics/${courseId}`,
       data

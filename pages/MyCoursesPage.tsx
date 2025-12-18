@@ -58,7 +58,7 @@ const MyCoursesPage = () => {
       }
     } catch (err: any) {
       console.error('Error fetching categories:', err);
-      Toast.show(err.message || 'Failed to fetch categories', Toast.LONG);
+      // Toast.show(err.message || 'Failed to fetch categories', Toast.LONG);
     }
   }, []);
 
