@@ -36,12 +36,13 @@ export const getMessages = async (conversationId: string) => {
 export const getConversations = async () => {
   try {
     const api = await createApiInstance();
-    const response = await api.get('/conversation/get-updated');
+    const response = await api.get('/conversation/get');
     // console.log(response)
     return response.data;
   } catch (error: any) {
+    console.log(error)
     if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to fetch conversations');
+      throw new Error(error.response.data.message || 'Failed to fetch conversation');
     } else if (error.request) {
       throw new Error('No response from server. Please check your internet connection.');
     } else {

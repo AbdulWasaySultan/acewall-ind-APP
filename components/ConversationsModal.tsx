@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, ActivityIndi
 import SimpleIcon from './SimpleIcon';
 import { useNavigation } from '@react-navigation/native';
 import { createConversation, getConversations } from '../services/conversation';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ConversationsModalProps {
     visible: boolean;
@@ -15,7 +16,7 @@ const ConversationsModal: React.FC<ConversationsModalProps> = ({ visible, onClos
     const [conversations, setConversations] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const navigation = useNavigation<any>();
-
+    const insets = useSafeAreaInsets()
     useEffect(() => {
         const fetchConversations = async () => {
             if (visible && conversationId) {
@@ -61,9 +62,9 @@ const ConversationsModal: React.FC<ConversationsModalProps> = ({ visible, onClos
             visible={visible}
             onRequestClose={onClose}
         >
-            <View style={styles.container}>
+            <View style={[styles.container,{paddingTop:insets.top}]}>
                 <TouchableOpacity
-                    style={styles.closeSimpleIcon}
+                    style={[styles.closeSimpleIcon,{top:insets.top}]}
                     onPress={onClose}
                     hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
                 >

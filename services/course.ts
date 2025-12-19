@@ -386,14 +386,15 @@ export const createChapter = async (courseId: string, title: string, description
   try {
     const api = await createApiInstance();
     let url = `/api/chapter/create/${courseId}`
+    let body={ title, description }
     if(quarterId){
-      url += `/${quarterId}`
+      body = {...body,quarter:quarterId}
     }
     addAuthInterceptor(api);
-    console.log(url)
+    console.log(body,url)
     const response = await api.post(
       url,
-      { title, description }
+      body
     );
     return response.data;
   } catch (error: any) {

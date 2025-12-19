@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ActivityIndicator, Button, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import ConversationsModal from '../components/ConversationsModal';
 import { getConversations } from '../services/message';
 
@@ -52,9 +52,11 @@ const MessagesPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchConversations();
-  }, []);
+  useFocusEffect(
+    useCallback(()=>{
+      fetchConversations();
+    },[])
+  );
 
   // Auto-open conversation if conversationId is provided
   useEffect(() => {
