@@ -22,7 +22,6 @@ const GradebookPage = () => {
   const [data, setData] = useState<any>(null)
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
   const [expandedSemesters, setExpandedSemesters] = useState<Record<string, boolean>>({})
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
@@ -60,6 +59,48 @@ const GradebookPage = () => {
     if (average >= 70) return "C"
     if (average >= 60) return "D"
     return "F"
+  }
+  const renderAssessment = (a: any) => {
+    const max = Number(a.maxPoints ?? 0)
+    const pts = Number(a.studentPoints ?? 0)
+    const pct = max > 0 ? (pts / max) * 100 : 0
+    return (
+      <View key={a.assessmentId} style={styles.assessmentItemCard}>
+        <View style={styles.assessmentItemRow}>
+          <Text style={styles.assessmentLabel}>Assessment</Text>
+          <Text style={styles.assessmentValue}>
+            {a.assessmentTitle || "Assessment"}
+          </Text>
+        </View>
+        <View style={styles.assessmentItemRow}>
+          <Text style={styles.assessmentLabel}>Category</Text>
+          <Text style={styles.assessmentValue}>{a.category || "—"}</Text>
+        </View>
+        <View style={styles.assessmentItemRow}>
+          <Text style={styles.assessmentLabel}>Score</Text>
+          <Text style={styles.assessmentValue}>
+            {isNaN(pts) ? "0" : String(pts)}
+          </Text>
+        </View>
+        <View style={styles.assessmentItemRow}>
+          <Text style={styles.assessmentLabel}>Max Points</Text>
+          <Text style={styles.assessmentValue}>
+            {isNaN(max) ? "0" : String(max)}
+          </Text>
+        </View>
+        <View style={[styles.assessmentItemRow, { marginBottom: 0, borderBottomWidth: 0 }]}>
+          <Text style={styles.assessmentLabel}>Percentage</Text>
+          <Text
+            style={[
+              styles.assessmentValueStrong,
+              pct >= 60 ? styles.percentPass : styles.percentFail,
+            ]}
+          >
+            {pct.toFixed(1)}%
+          </Text>
+        </View>
+      </View>
+    )
   }
 
   return (
@@ -99,11 +140,19 @@ const GradebookPage = () => {
                     <Text style={styles.courseName}>{course.courseName || "Untitled Course"}</Text>
                   </View>
                   <View style={styles.semesterInfo}>
-                    <Text style={styles.courseLabel}>Semesters</Text>
+                    <Text style={styles.courseLabel}>
+                      {Array.isArray(course.semesters) && course.semesters.length > 0
+                        ? "Semesters"
+                        : Array.isArray(course.assessments) && course.assessments.length > 0
+                          ? "Assessments"
+                          : "Semesters"}
+                    </Text>
                     <Text style={styles.semesterText}>
-                      {Array.isArray(course.semesters)
+                      {Array.isArray(course.semesters) && course.semesters.length > 0
                         ? `${course.semesters.length} semester${course.semesters.length === 1 ? "" : "s"}`
-                        : "0 semesters"}
+                        : Array.isArray(course.assessments) && course.assessments.length > 0
+                          ? `${course.assessments.length} assessment${course.assessments.length === 1 ? "" : "s"}`
+                          : "0 semesters"}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -165,48 +214,7 @@ const GradebookPage = () => {
 
                                     <View style={styles.assessmentsList}>
                                       {Array.isArray(qtr.assessments) && qtr.assessments.length > 0 ? (
-                                        qtr.assessments.map((a: any) => {
-                                          const max = Number(a.maxPoints ?? 0)
-                                          const pts = Number(a.studentPoints ?? 0)
-                                          const pct = max > 0 ? (pts / max) * 100 : 0
-                                          return (
-                                            <View key={a.assessmentId} style={styles.assessmentItemCard}>
-                                              <View style={styles.assessmentItemRow}>
-                                                <Text style={styles.assessmentLabel}>Assessment</Text>
-                                                <Text style={styles.assessmentValue}>
-                                                  {a.assessmentTitle || "Assessment"}
-                                                </Text>
-                                              </View>
-                                              <View style={styles.assessmentItemRow}>
-                                                <Text style={styles.assessmentLabel}>Category</Text>
-                                                <Text style={styles.assessmentValue}>{a.category || "—"}</Text>
-                                              </View>
-                                              <View style={styles.assessmentItemRow}>
-                                                <Text style={styles.assessmentLabel}>Score</Text>
-                                                <Text style={styles.assessmentValue}>
-                                                  {isNaN(pts) ? "0" : String(pts)}
-                                                </Text>
-                                              </View>
-                                              <View style={styles.assessmentItemRow}>
-                                                <Text style={styles.assessmentLabel}>Max Points</Text>
-                                                <Text style={styles.assessmentValue}>
-                                                  {isNaN(max) ? "0" : String(max)}
-                                                </Text>
-                                              </View>
-                                              <View style={[styles.assessmentItemRow, { marginBottom: 0, borderBottomWidth: 0 }]}>
-                                                <Text style={styles.assessmentLabel}>Percentage</Text>
-                                                <Text
-                                                  style={[
-                                                    styles.assessmentValueStrong,
-                                                    pct >= 60 ? styles.percentPass : styles.percentFail,
-                                                  ]}
-                                                >
-                                                  {pct.toFixed(1)}%
-                                                </Text>
-                                              </View>
-                                            </View>
-                                          )
-                                        })
+                                        qtr.assessments.map(renderAssessment)
                                       ) : (
                                         <Text style={styles.noAssessments}>No assessments available</Text>
                                       )}
@@ -220,6 +228,13 @@ const GradebookPage = () => {
                           </View>
                         )
                       })
+                    ) : Array.isArray(course.assessments) && course.assessments.length > 0 ? (
+                      <View style={styles.quarterCard}>
+                        <Text style={[styles.quarterTitle, { marginBottom: 12 }]}>Assessments</Text>
+                        <View style={styles.assessmentsList}>
+                          {course.assessments.map(renderAssessment)}
+                        </View>
+                      </View>
                     ) : (
                       <Text style={styles.noDataText}>No semesters available</Text>
                     )}

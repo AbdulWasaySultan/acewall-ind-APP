@@ -20,7 +20,6 @@ const StudentsPage = () => {
   const [courseFilterValue, setCourseFilterValue] = useState<string | null>(null);
   const [courseFilterItems, setCourseFilterItems] = useState<{ label: string; value: string }[]>([]);
   const [courseGradesModalVisible, setCourseGradesModalVisible] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [courseGradebook, setCourseGradebook] = useState<CourseGradebook | null>(null);
   const [loadingGradebook, setLoadingGradebook] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
@@ -56,10 +55,10 @@ const StudentsPage = () => {
       setMessageLoading(true);
       const response = await createConversation(studentId);
       console.log('Conversation created:', response);
-      
+
       // Close the modal
       setModalVisible(false);
-      
+
       // Navigate to messages page
       navigation.navigate('Messages' as never);
     } catch (error) {
@@ -79,8 +78,8 @@ const StudentsPage = () => {
 
       {/* Filter Dropdown */}
       <View style={{
-         marginBottom: 24,
-         zIndex: courseFilterOpen ? 1000 : 0, // Ensure dropdown is on top when open
+        marginBottom: 24,
+        zIndex: courseFilterOpen ? 1000 : 0, // Ensure dropdown is on top when open
       }}>
         <DropDownPicker
           open={courseFilterOpen}
@@ -182,11 +181,11 @@ const StudentsPage = () => {
 
                 {/* Message Button */}
                 <Pressable
-                  style={{ 
-                    backgroundColor: '#007bff', 
-                    padding: 12, 
-                    borderRadius: 8, 
-                    alignItems: 'center', 
+                  style={{
+                    backgroundColor: '#007bff',
+                    padding: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
                     width: '90%',
                     marginBottom: 24,
                     opacity: messageLoading ? 0.6 : 1
@@ -245,7 +244,6 @@ const StudentsPage = () => {
                     onPress={async () => {
                       setModalVisible(false);
                       console.log('Course clicked:', course.courseTitle);
-                      setSelectedCourse(course);
                       setCourseGradesModalVisible(true);
                       setLoadingGradebook(true);
                       try {
@@ -298,7 +296,7 @@ const StudentsPage = () => {
             ) : courseGradebook && (
               <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: 60, paddingBottom: 40 }}>
                 {/* Course Title */}
-                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 8, color: '#232b3b', width: '90%', textAlign: 'left', alignSelf: 'flex-start',paddingLeft:10,paddingBottom:10 }}>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 8, color: '#232b3b', width: '90%', textAlign: 'left', alignSelf: 'flex-start', paddingLeft: 10, paddingBottom: 10 }}>
                   {courseGradebook.courseName}
                 </Text>
                 {/* Course Thumbnail */}
@@ -310,13 +308,13 @@ const StudentsPage = () => {
                   {courseGradebook.course.courseDescription}
                 </Text>
                 {/* Gradebook Card - Matching Image Design */}
-                <View style={{ 
-                  width: '95%', 
-                  backgroundColor: '#fff', 
-                  borderRadius: 16, 
-                  borderWidth: 1, 
-                  borderColor: '#eee', 
-                  marginBottom: 16, 
+                <View style={{
+                  width: '95%',
+                  backgroundColor: '#fff',
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: '#eee',
+                  marginBottom: 16,
                   padding: 16,
                   shadowColor: '#000',
                   shadowOpacity: 0.05,
@@ -324,12 +322,12 @@ const StudentsPage = () => {
                   elevation: 2,
                 }}>
                   {/* Table Header */}
-                  <View style={{ 
-                    flexDirection: 'row', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    borderBottomWidth: 1, 
-                    borderColor: '#eee', 
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottomWidth: 1,
+                    borderColor: '#eee',
                     paddingBottom: 12,
                     marginBottom: 12
                   }}>
@@ -337,13 +335,13 @@ const StudentsPage = () => {
                     <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 1, textAlign: 'center' }}>Average</Text>
                     <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 1, textAlign: 'right' }}>Grade</Text>
                   </View>
-                  
+
                   {/* Course Row */}
-                  <View style={{ 
-                    flexDirection: 'row', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    paddingVertical: 8 
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 8
                   }}>
                     <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
                       <Text style={{ fontSize: 16, marginRight: 8 }}>▼</Text>
@@ -359,30 +357,30 @@ const StudentsPage = () => {
                         paddingHorizontal: 8,
                         paddingVertical: 4,
                       }}>
-                        <Text style={{ 
-                          color: '#dc2626', 
-                          fontWeight: 'bold', 
-                          fontSize: 14 
+                        <Text style={{
+                          color: '#dc2626',
+                          fontWeight: 'bold',
+                          fontSize: 14
                         }}>
                           {courseGradebook.letterGrade}
                         </Text>
                       </View>
                     </View>
                   </View>
-                  
+
                   {/* No Assessments Message */}
                   {courseGradebook.totalAssessments === 0 && (
-                    <View style={{ 
-                      alignItems: 'center', 
+                    <View style={{
+                      alignItems: 'center',
                       paddingVertical: 20,
                       borderTopWidth: 1,
                       borderTopColor: '#f5f5f5',
                       marginTop: 12
                     }}>
-                      <Text style={{ 
-                        color: '#9ca3af', 
-                        fontSize: 14, 
-                        fontStyle: 'italic' 
+                      <Text style={{
+                        color: '#9ca3af',
+                        fontSize: 14,
+                        fontStyle: 'italic'
                       }}>
                         No assessments found for this course.
                       </Text>

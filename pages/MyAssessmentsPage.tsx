@@ -15,7 +15,7 @@ import {
   Modal,
   Linking,
 } from "react-native";
-import { getAllAssessmentForStudent ,getStudentAssessmentDetails} from "../services/course";
+import { getAllAssessmentForStudent, getStudentAssessmentDetails } from "../services/course";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -51,7 +51,7 @@ export interface AssessmentItem {
   };
   createdAt: string;
   isSubmitted: boolean;
-  source: 'assessment' | 'discussion' ;
+  source: 'assessment' | 'discussion';
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -69,7 +69,7 @@ const MyAssessmentsPage = () => {
   const [submissionDetailsLoading, setSubmissionDetailsLoading] = useState(false);
   const [submissionDetailsError, setSubmissionDetailsError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'needs_grading' | 'graded'>('all');
-  
+
   const insets = useSafeAreaInsets()
   // ----------- FETCHING -----------
   const normalizeArray = (res: any): AssessmentItem[] => {
@@ -113,7 +113,7 @@ const MyAssessmentsPage = () => {
   useFocusEffect(
     useCallback(() => {
       fetchAssessments();
-  
+
       return () => {
         console.log('Screen unfocused');
       };
@@ -210,35 +210,35 @@ const MyAssessmentsPage = () => {
         </Text>
 
         {/* {!item?.isSubmitted && ( */}
-            <TouchableOpacity style={styles.submitBtn} onPress={async() => {
-              console.log(item.source)
-              if(item.source==='discussion'){
-                navigation.navigate("DiscussionStudent",{ discussionId: item._id })
-              }else{
-  
-                if(item?.isSubmitted){
-                  setDetailedModalVisible(true);
-                  setSubmissionDetails(null);
-                  setSubmissionDetailsLoading(true);
-                  setSubmissionDetailsError(null);
-  
-                  try {
-                    const details = await getStudentAssessmentDetails(item._id);
-                    setSubmissionDetails(details.submission);
-                  } catch (err: any) {
-                    setSubmissionDetailsError('Failed to load submission details');
-                    console.error('Error fetching submission details:', err);
-                  } finally {
-                    setSubmissionDetailsLoading(false);
-                  }
-                }else{
-                  navigation.navigate("AssessmentScreenStudent", { assessmentId: item._id })
-                }
+        <TouchableOpacity style={styles.submitBtn} onPress={async () => {
+          console.log(item.source)
+          if (item.source === 'discussion') {
+            navigation.navigate("DiscussionStudent", { discussionId: item._id })
+          } else {
+
+            if (item?.isSubmitted) {
+              setDetailedModalVisible(true);
+              setSubmissionDetails(null);
+              setSubmissionDetailsLoading(true);
+              setSubmissionDetailsError(null);
+
+              try {
+                const details = await getStudentAssessmentDetails(item._id);
+                setSubmissionDetails(details.submission);
+              } catch (err: any) {
+                setSubmissionDetailsError('Failed to load submission details');
+                console.error('Error fetching submission details:', err);
+              } finally {
+                setSubmissionDetailsLoading(false);
               }
-  
-              }}>
-              <Text style={styles.submitBtnText}>{item?.isSubmitted?'See Result':'Submit Assessment'}</Text>
-          </TouchableOpacity>
+            } else {
+              navigation.navigate("AssessmentScreenStudent", { assessmentId: item._id })
+            }
+          }
+
+        }}>
+          <Text style={styles.submitBtnText}>{item?.isSubmitted ? 'See Result' : 'Submit Assessment'}</Text>
+        </TouchableOpacity>
         {/* )} */}
       </View>
     );
@@ -316,234 +316,235 @@ const MyAssessmentsPage = () => {
         </View>
       ) : (
         <>
-<ScrollView horizontal showsHorizontalScrollIndicator={true}>
-<View>
-          <TouchableOpacity style={styles.row}>
-            <Text style={[styles.td, styles.colName]} >
-              Assessment Name
-            </Text>
-            <Text style={[styles.td, styles.colCourse]} >
-              Course
-            </Text>
-            <Text style={[styles.td, styles.colDue]}>
-              Due Date
-            </Text>
-            <Text style={[styles.colStatus, styles.td]}>
-              Status
-            </Text>
-            <Text style={[styles.td, styles.colType]}>Type</Text>
-          </TouchableOpacity>
-          <FlatList
-            data={filtered}
-            keyExtractor={(item, index) => item._id || `${index}`}
-            contentContainerStyle={{ paddingBottom: 60 }}
-            renderItem={({ item, index }) => (
-              <Row
-                item={item}
-                rowKey={item._id}
-                onPress={() =>
-                  setExpanded((prev) => ({ ...prev, [item._id]: !prev[item._id] }))
-                }
+          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+            <View>
+              <TouchableOpacity style={styles.row}>
+                <Text style={[styles.td, styles.colName]} >
+                  Assessment Name
+                </Text>
+                <Text style={[styles.td, styles.colCourse]} >
+                  Course
+                </Text>
+                <Text style={[styles.td, styles.colDue]}>
+                  Due Date
+                </Text>
+                <Text style={[styles.colStatus, styles.td]}>
+                  Status
+                </Text>
+                <Text style={[styles.td, styles.colType]}>Type</Text>
+              </TouchableOpacity>
+              <FlatList
+                data={filtered}
+                keyExtractor={(item, index) => item._id || `${index}`}
+                contentContainerStyle={{ paddingBottom: 60 }}
+                renderItem={({ item, index }) => (
+                  <Row
+                    item={item}
+                    rowKey={item._id}
+                    onPress={() =>
+                      setExpanded((prev) => ({ ...prev, [item._id]: !prev[item._id] }))
+                    }
+                  />
+                )}
+                scrollEnabled={false}
               />
-            )}
-            scrollEnabled={false}
-          />
-             </View>
-             </ScrollView>
-             <Modal
-        visible={detailedModalVisible}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={() => {
-          setDetailedModalVisible(false)
-        }
-        }
-      >
-        <View style={[styles.detailedModalContainer,{paddingTop:insets.top || 20}]}>
-          {/* Header */}
-          <View style={[styles.detailedModalHeader]}>
-            <Text style={styles.detailedModalTitle}>Submission Details</Text>
-            <TouchableOpacity
-              style={styles.detailedModalCloseButton}
-              onPress={() => {
-                setDetailedModalVisible(false)
-              }}
-            >
-              <SimpleIcon name="close" size={24} color="#333" />
-            </TouchableOpacity>
-          </View>
-
-          {submissionDetailsLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007bff" />
             </View>
-          ) : submissionDetailsError ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{submissionDetailsError}</Text>
-            </View>
-          ) : submissionDetails ? (
-            <ScrollView style={styles.detailedModalContent}>
-              {/* Student and Submission Overview */}
-              <View style={styles.submissionOverview}>
-              
-                <View style={styles.studentOverviewDetails}>
-                 
-                    <View style={styles.statusTags}>
-                      <View style={[styles.statusTag, { backgroundColor: '#E5E7EB' }]}>
-                        <Text style={styles.statusTagText}>{submissionDetails.status}</Text>
-                      </View>
-                      <View style={[styles.statusTag, { backgroundColor: '#E5E7EB' }]}>
-                        <Text style={styles.statusTagText}>
-                          {submissionDetails.graded ? 'Graded' : 'Not Graded'}
-                        </Text>
-                      </View>
-                  </View>
-                 
-                  <Text style={styles.submissionTime}>
-                    Submitted on: {formatDateTime(submissionDetails.submittedAt || submissionDetails.createdAt)}
-                  </Text>
+          </ScrollView>
+          <Modal
+            visible={detailedModalVisible}
+            animationType="slide"
+            transparent={false}
+            onRequestClose={() => {
+              setDetailedModalVisible(false)
+            }
+            }
+          >
+            <View style={[styles.detailedModalContainer, { paddingTop: insets.top || 20 }]}>
+              {/* Header */}
+              <View style={[styles.detailedModalHeader]}>
+                <Text style={styles.detailedModalTitle}>Submission Details</Text>
+                <TouchableOpacity
+                  style={styles.detailedModalCloseButton}
+                  onPress={() => {
+                    setDetailedModalVisible(false)
+                  }}
+                >
+                  <SimpleIcon name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+
+              {submissionDetailsLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#007bff" />
                 </View>
-              </View>
-
-              {/* Assessment Summary */}
-              <View style={styles.assessmentSummary}>
-                <Text style={styles.assessmentSummaryTitle}>Assessment Summary</Text>
-                <View style={styles.assessmentSummaryCard}>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Assessment ID</Text>
-                    <Text style={styles.summaryValue}>{submissionDetails.assessment}</Text>
-                  </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Total Points</Text>
-                    <Text style={styles.summaryValue}>{submissionDetails.totalScore} points</Text>
-                  </View>
+              ) : submissionDetailsError ? (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{submissionDetailsError}</Text>
                 </View>
-              </View>
+              ) : submissionDetails ? (
+                <ScrollView style={styles.detailedModalContent}>
+                  {console.log(submissionDetails)}
+                  {/* Student and Submission Overview */}
+                  <View style={styles.submissionOverview}>
 
-              {/* Question Tabs */}
-              <View style={styles.questionTabs}>
-                <TouchableOpacity
-                  style={[styles.tab, activeTab === 'all' && styles.activeTab]}
-                  onPress={() => setActiveTab('all')}
-                >
-                  <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
-                    All Questions ({submissionDetails.answers?.length || 0})
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.tab, activeTab === 'needs_grading' && styles.activeTab]}
-                  onPress={() => setActiveTab('needs_grading')}
-                >
-                  <Text style={[styles.tabText, activeTab === 'needs_grading' && styles.activeTabText]}>
-                    Needs Grading ({submissionDetails.answers?.filter((a: any) => a.requiresManualCheck).length || 0})
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.tab, activeTab === 'graded' && styles.activeTab]}
-                  onPress={() => setActiveTab('graded')}
-                >
-                  <Text style={[styles.tabText, activeTab === 'graded' && styles.activeTabText]}>
-                    Graded ({submissionDetails.answers?.filter((a: any) => !a.requiresManualCheck).length || 0})
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                    <View style={styles.studentOverviewDetails}>
 
-              {/* Questions List */}
-              <View style={styles.questionsContainer}>
-                {getFilteredQuestions().map((answer: any, index: number) => (
-                  <View key={answer._id} style={styles.questionCard}>
-                    <View style={styles.questionHeader}>
-                      <View style={styles.questionHeaderLeft}>
-                        <Text style={styles.questionNumber}>Question {index + 1}</Text>
-                        <Text style={styles.questionType}>{answer.questionDetails?.type == "truefalse" ? "True/False" : answer.questionDetails?.type}</Text>
-                      </View>
-                      <View style={styles.questionTags}>
-                        {answer.requiresManualCheck ? (
-                          <View style={[styles.questionTag, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B', borderWidth: 1 }]}>
-                            <Text style={[styles.questionTagText, { color: '#92400E' }]}>
-                              Needs Manual Grading
-                            </Text>
-                          </View>
-                        ) : (
-                          <View style={[styles.questionTag, { backgroundColor: answer.isCorrect ? '#D1FAE5' : '#FEE2E2' }]}>
-                            <Text style={[styles.questionTagText, { color: answer.isCorrect ? '#065F46' : '#991B1B' }]}>
-                              {answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                            </Text>
-                          </View>
-                        )}
-                        <View style={[styles.questionTag, { backgroundColor: '#F3F4F6' }]}>
-                          <Text style={[styles.questionTagText, { color: '#374151' }]}>
-                            {answer.pointsAwarded}/{answer.questionDetails?.points} pts
+                      <View style={styles.statusTags}>
+                        <View style={[styles.statusTag, { backgroundColor: '#E5E7EB' }]}>
+                          <Text style={styles.statusTagText}>{submissionDetails.status}</Text>
+                        </View>
+                        <View style={[styles.statusTag, { backgroundColor: '#E5E7EB' }]}>
+                          <Text style={styles.statusTagText}>
+                            {submissionDetails.graded ? 'Graded' : 'Not Graded'}
                           </Text>
                         </View>
                       </View>
+
+                      <Text style={styles.submissionTime}>
+                        Submitted on: {formatDateTime(submissionDetails.submittedAt || submissionDetails.createdAt)}
+                      </Text>
                     </View>
-
-                    <View style={styles.questionContent}>
-                      <Text style={styles.questionLabel}>Question:</Text>
-                      <View style={styles.questionTextContainer}>
-                        <Text style={styles.questionText}>
-                          {answer.questionDetails?.question?.replace(/<[^>]*>/g, '') || 'No question text'}
-                        </Text>
-                      </View>
-
-                      {/* Teacher uploaded files */}
-                      {answer.questionDetails?.file && answer.questionDetails.file.length > 0 && (
-                        <View style={styles.teacherFilesContainer}>
-                          <Text style={styles.filesLabel}>Teacher Files:</Text>
-                          {answer.questionDetails.file.map((file: any, fileIndex: number) => (
-                            <TouchableOpacity
-                              key={fileIndex}
-                              style={styles.fileCard}
-                              onPress={() => Linking.openURL(file.url)}
-                            >
-                              <SimpleIcon name="description" size={20} color="#4285F4" />
-                              <Text style={styles.fileName}>{file.filename}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
-                    </View>
-
-                    <View style={styles.answerContent}>
-                      <Text style={styles.answerLabel}>Student's Answer:</Text>
-                      <View style={styles.answerTextContainer}>
-                        <Text style={styles.answerText}>
-                          {answer.questionDetails?.type === 'file'
-                            ? (answer.file && answer.file.length > 0
-                              ? `${answer.file.length} file(s) uploaded`
-                              : 'No file uploaded')
-                            : (answer.selectedAnswer || 'No answer provided')
-                          }
-                        </Text>
-                      </View>
-
-                      {/* Student uploaded files */}
-                      {answer.file && answer.file.length > 0 && (
-                        <View style={styles.studentFilesContainer}>
-                          <Text style={styles.filesLabel}>Student Files:</Text>
-                          {answer.file.map((file: any, fileIndex: number) => (
-                            <TouchableOpacity
-                              key={fileIndex}
-                              style={styles.fileCard}
-                              onPress={() => Linking.openURL(file.url)}
-                            >
-                              <SimpleIcon name="description" size={20} color="#10B144" />
-                              <Text style={styles.fileName}>{file.filename}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
-                    </View>
-
-                  
                   </View>
-                ))}
-              </View>
 
-            </ScrollView>
-          ) : null}
-        </View>
+                  {/* Assessment Summary */}
+                  <View style={styles.assessmentSummary}>
+                    <Text style={styles.assessmentSummaryTitle}>Assessment Summary</Text>
+                    <View style={styles.assessmentSummaryCard}>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Assessment ID</Text>
+                        <Text style={styles.summaryValue}>{submissionDetails.assessment}</Text>
+                      </View>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Total Points</Text>
+                        <Text style={styles.summaryValue}>{submissionDetails.totalScore} points</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Question Tabs */}
+                  <View style={styles.questionTabs}>
+                    <TouchableOpacity
+                      style={[styles.tab, activeTab === 'all' && styles.activeTab]}
+                      onPress={() => setActiveTab('all')}
+                    >
+                      <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
+                        All Questions ({submissionDetails.answers?.length || 0})
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.tab, activeTab === 'needs_grading' && styles.activeTab]}
+                      onPress={() => setActiveTab('needs_grading')}
+                    >
+                      <Text style={[styles.tabText, activeTab === 'needs_grading' && styles.activeTabText]}>
+                        Needs Grading ({submissionDetails.answers?.filter((a: any) => a.requiresManualCheck).length || 0})
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.tab, activeTab === 'graded' && styles.activeTab]}
+                      onPress={() => setActiveTab('graded')}
+                    >
+                      <Text style={[styles.tabText, activeTab === 'graded' && styles.activeTabText]}>
+                        Graded ({submissionDetails.answers?.filter((a: any) => !a.requiresManualCheck).length || 0})
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Questions List */}
+                  <View style={styles.questionsContainer}>
+                    {getFilteredQuestions().map((answer: any, index: number) => (
+                      <View key={answer._id} style={styles.questionCard}>
+                        <View style={styles.questionHeader}>
+                          <View style={styles.questionHeaderLeft}>
+                            <Text style={styles.questionNumber}>Question {index + 1}</Text>
+                            {/* <Text style={styles.questionType}>{answer.question?.type == "truefalse" ? "True/False" : answer.question?.type}</Text> */}
+                          </View>
+                          <View style={styles.questionTags}>
+                            {answer.requiresManualCheck ? (
+                              <View style={[styles.questionTag, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B', borderWidth: 1 }]}>
+                                <Text style={[styles.questionTagText, { color: '#92400E' }]}>
+                                  Needs Manual Grading
+                                </Text>
+                              </View>
+                            ) : (
+                              <View style={[styles.questionTag, { backgroundColor: answer.isCorrect ? '#D1FAE5' : '#FEE2E2' }]}>
+                                <Text style={[styles.questionTagText, { color: answer.isCorrect ? '#065F46' : '#991B1B' }]}>
+                                  {answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                                </Text>
+                              </View>
+                            )}
+                            <View style={[styles.questionTag, { backgroundColor: '#F3F4F6' }]}>
+                              <Text style={[styles.questionTagText, { color: '#374151' }]}>
+                                {answer.pointsAwarded}/{answer.questionDetails?.points} pts
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+
+                        <View style={styles.questionContent}>
+                          <Text style={styles.questionLabel}>Question:</Text>
+                          <View style={styles.questionTextContainer}>
+                            <Text style={styles.questionText}>
+                              {answer.question?.question?.replace(/<[^>]*>/g, '') || 'No question text'}
+                            </Text>
+                          </View>
+
+                          {/* Teacher uploaded files */}
+                          {answer.questionDetails?.file && answer.questionDetails.file.length > 0 && (
+                            <View style={styles.teacherFilesContainer}>
+                              <Text style={styles.filesLabel}>Teacher Files:</Text>
+                              {answer.questionDetails.file.map((file: any, fileIndex: number) => (
+                                <TouchableOpacity
+                                  key={fileIndex}
+                                  style={styles.fileCard}
+                                  onPress={() => Linking.openURL(file.url)}
+                                >
+                                  <SimpleIcon name="description" size={20} color="#4285F4" />
+                                  <Text style={styles.fileName}>{file.filename}</Text>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          )}
+                        </View>
+
+                        <View style={styles.answerContent}>
+                          <Text style={styles.answerLabel}>Student's Answer:</Text>
+                          <View style={styles.answerTextContainer}>
+                            <Text style={styles.answerText}>
+                              {answer.questionDetails?.type === 'file'
+                                ? (answer.file && answer.file.length > 0
+                                  ? `${answer.file.length} file(s) uploaded`
+                                  : 'No file uploaded')
+                                : (answer.selectedAnswer || 'No answer provided')
+                              }
+                            </Text>
+                          </View>
+
+                          {/* Student uploaded files */}
+                          {answer.file && answer.file.length > 0 && (
+                            <View style={styles.studentFilesContainer}>
+                              <Text style={styles.filesLabel}>Student Files:</Text>
+                              {answer.file.map((file: any, fileIndex: number) => (
+                                <TouchableOpacity
+                                  key={fileIndex}
+                                  style={styles.fileCard}
+                                  onPress={() => Linking.openURL(file.url)}
+                                >
+                                  <SimpleIcon name="description" size={20} color="#10B144" />
+                                  <Text style={styles.fileName}>{file.filename}</Text>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          )}
+                        </View>
+
+
+                      </View>
+                    ))}
+                  </View>
+
+                </ScrollView>
+              ) : null}
+            </View>
           </Modal>
         </>
 
@@ -616,6 +617,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginVertical: 6,
+    width: 800,
   },
   sectionTitle: { fontWeight: "700", color: COLORS.gray700 },
   sectionBody: { color: COLORS.gray700, marginTop: 2 },
@@ -627,7 +629,7 @@ const styles = StyleSheet.create({
   },
   submitBtnText: { color: COLORS.white, fontWeight: "700" },
   centered: { alignItems: "flex-start", justifyContent: "flex-start" },
-   detailedModalContainer: {
+  detailedModalContainer: {
     flex: 1,
     backgroundColor: '#fff',
   },
@@ -679,7 +681,7 @@ const styles = StyleSheet.create({
   },
   studentOverviewDetails: {
     flex: 1,
-    gap:10
+    gap: 10
   },
   studentNameRow: {
     flexDirection: 'row',
@@ -700,7 +702,7 @@ const styles = StyleSheet.create({
   },
   statusTags: {
     flexDirection: 'row',
-    gap:8
+    gap: 8
   },
   statusTag: {
     paddingHorizontal: 12,

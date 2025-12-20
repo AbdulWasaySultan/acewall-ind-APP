@@ -71,7 +71,7 @@ interface CourseData {
   semester?: string[];
   quarter?: string[];
   syllabus?: any;
-  price:string
+  price: string
 }
 
 interface CourseResponse {
@@ -177,8 +177,8 @@ export const createCourse = async (courseData: CourseData): Promise<CourseRespon
         name: courseData.syllabus.name || courseData.syllabus.uri.split('/').pop() || 'syllabus.pdf'
       } as any);
     }
-    console.log('Sending form data:',formData)
-  
+    console.log('Sending form data:', formData)
+
 
     const response = await api.post<CourseResponse>('/api/course/create', formData, {
       headers: {
@@ -386,12 +386,12 @@ export const createChapter = async (courseId: string, title: string, description
   try {
     const api = await createApiInstance();
     let url = `/api/chapter/create/${courseId}`
-    let body={ title, description }
-    if(quarterId){
-      body = {...body,quarter:quarterId}
+    let body = { title, description }
+    if (quarterId) {
+      body = { ...body, quarter: quarterId }
     }
     addAuthInterceptor(api);
-    console.log(body,url)
+    console.log(body, url)
     const response = await api.post(
       url,
       body
@@ -1260,7 +1260,7 @@ export const createQuarter = async (semesterId: string, title: string, startDate
     addAuthInterceptor(api);
     const response = await api.post(`/api/quarter/create`, {
       title,
-      semester:semesterId,
+      semester: semesterId,
       startDate,
       endDate,
     });
@@ -1436,7 +1436,7 @@ export const getEnrollStatus = async (enrollmentId: string) => {
   } catch (error: any) {
     console.error('Error fetching enrolled status:', error.response?.data);
     if (error.response) {
- 
+
       console.error('Error fetching enrolled status:', error.response.data);
       throw new Error(error.response.data.message || 'Failed to fetch enrolled status');
     } else if (error.request) {
@@ -1474,7 +1474,7 @@ export const editCourseBasics = async (
     courseTitle: string;
     category: string;
     subcategory: string;
-    price:string,
+    price: string,
     language: string;
     courseDescription: string;
     teachingPoints: string;

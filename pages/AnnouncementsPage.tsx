@@ -88,7 +88,7 @@ const AnnouncementsPage = () => {
       if (userRole === 'student' && user?._id) {
         setStudentAnnouncementsLoading(true);
         setStudentAnnouncementsError('');
-  
+
         getAnnouncementsByStudent(user._id)
           .then((res) => {
             setStudentAnnouncements(res.announcements || []);
@@ -102,9 +102,9 @@ const AnnouncementsPage = () => {
             setStudentAnnouncementsLoading(false);
           });
       }
-  
+
       // Optional cleanup
-      return () => {};
+      return () => { };
     }, [userRole, user?._id])
   );
 
@@ -181,60 +181,103 @@ const AnnouncementsPage = () => {
     <View style={{ flex: 1, padding: 16 }}>
       {userRole === 'teacher' ? (
         <>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Announcements</Text>
-            <Pressable
-              style={{ backgroundColor: '#4CAF50', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
-              onPress={toggleModal}
-            >
-              <Text style={{ color: 'white', marginRight: 4, fontSize: 16 }}>+</Text>
-              <Text style={{ color: 'white', fontSize: 16 }}>Add New</Text>
-            </Pressable>
-          </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Announcements</Text>
+              <Pressable
+                style={{ backgroundColor: '#4CAF50', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                onPress={toggleModal}
+              >
+                <Text style={{ color: 'white', marginRight: 4, fontSize: 16 }}>+</Text>
+                <Text style={{ color: 'white', fontSize: 16 }}>Add New</Text>
+              </Pressable>
+            </View>
 
-          {/* Announcements Section */}
-          <View style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, overflow: 'hidden' }}>
-            <Pressable style={{ flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#f0f0f0' }} onPress={toggleAnnouncements}>
-              <Text style={{ marginRight: 8 }}>{isAnnouncementsExpanded ? '▲' : '▼'}</Text>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Announcements ({announcements.length})</Text>
-            </Pressable>
+            {/* Announcements Section */}
+            <View style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, overflow: 'hidden' }}>
+              <Pressable style={{ flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#f0f0f0' }} onPress={toggleAnnouncements}>
+                <Text style={{ marginRight: 8 }}>{isAnnouncementsExpanded ? '▲' : '▼'}</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Announcements ({announcements.length})</Text>
+              </Pressable>
 
-            {isAnnouncementsExpanded && (
-              <View style={{ padding: 12 }}>
-                {/* Table Headers */}
-                <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: '#eee', paddingBottom: 8, marginBottom: 8 }}>
-                  <Text style={{ flex: 1.5, fontWeight: 'bold' }}>Date</Text>
-                  <Text style={{ flex: 1.5, fontWeight: 'bold' }}>Title</Text>
-                  <Text style={{ flex: 2, fontWeight: 'bold' }}>Message Summary</Text>
-                  <Text style={{ width: 30 }}></Text>
+              {isAnnouncementsExpanded && (
+                <View style={{ padding: 12 }}>
+                  {/* Table Headers */}
+                  <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: '#eee', paddingBottom: 8, marginBottom: 8 }}>
+                    <Text style={{ flex: 1.5, fontWeight: 'bold' }}>Date</Text>
+                    <Text style={{ flex: 1.5, fontWeight: 'bold' }}>Title</Text>
+                    <Text style={{ flex: 2, fontWeight: 'bold' }}>Message Summary</Text>
+                    <Text style={{ width: 30 }}></Text>
+                  </View>
+                  {announcementsLoading ? (
+                    <ActivityIndicator size="small" color="#4CAF50" style={{ marginTop: 16 }} />
+                  ) : announcementsError ? (
+                    <Text style={{ color: 'red', textAlign: 'center', marginTop: 16 }}>{announcementsError}</Text>
+                  ) : announcements.length === 0 ? (
+                    <Text style={{ textAlign: 'center', color: '#666', marginTop: 16 }}>No announcements found.</Text>
+                  ) : (
+                    announcements.map((a) => {
+                      const isExpanded = expandedAnnouncements[a._id] || false;
+                      return (
+                        <Pressable
+                          key={a._id}
+                          onPress={() => toggleExpand(a._id)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'flex-start', // Align to top for better look with multiline
+                            paddingVertical: 12,
+                            borderBottomWidth: 1,
+                            borderColor: '#f5f5f5',
+                            backgroundColor: isExpanded ? '#fafafa' : 'transparent'
+                          }}
+                        >
+                          <Text style={{ flex: 1.5, marginRight: 8, fontSize: 13, color: '#444' }}>
+                            {new Date(a.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </Text>
+                          <View style={{ flex: 1.5, marginRight: 8 }}>
+                            <Text
+                              style={{ color: '#7b61ff', fontWeight: '500', fontSize: 13 }}
+                              numberOfLines={isExpanded ? undefined : 2}
+                            >
+                              {a.title}
+                            </Text>
+                          </View>
+                          <View style={{ flex: 2, marginRight: 8 }}>
+                            <Text
+                              style={{ fontSize: 13, color: '#333', lineHeight: 18 }}
+                              numberOfLines={isExpanded ? undefined : 2}
+                              ellipsizeMode="tail"
+                            >
+                              {a.message}
+                            </Text>
+                            {isExpanded && (
+                              <Text style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
+                                Course: {a.course?.courseTitle || 'All'}
+                              </Text>
+                            )}
+                          </View>
+                          <Pressable
+                            style={{ width: 30, alignItems: 'center', paddingTop: 0 }}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleDeleteAnnouncement(a._id);
+                            }}
+                            disabled={deletingId === a._id}
+                          >
+                            {deletingId === a._id ? (
+                              <ActivityIndicator size="small" color="red" />
+                            ) : (
+                              <Text style={{ color: '#ff4444', fontSize: 16 }}>🗑️</Text>
+                            )}
+                          </Pressable>
+                        </Pressable>
+                      );
+                    })
+                  )}
                 </View>
-                {announcementsLoading ? (
-                  <ActivityIndicator size="small" color="#4CAF50" style={{ marginTop: 16 }} />
-                ) : announcementsError ? (
-                  <Text style={{ color: 'red', textAlign: 'center', marginTop: 16 }}>{announcementsError}</Text>
-                ) : announcements.length === 0 ? (
-                  <Text style={{ textAlign: 'center', color: '#666', marginTop: 16 }}>No announcements found.</Text>
-                ) : (
-                  announcements.map((a) => (
-                    <View key={a._id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#f5f5f5' }}>
-                    <Text style={{ flex: 1.5, marginRight: 2 }}>{new Date(a.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</Text>
-                    <View style={{ flex: 1.5, marginRight: 2 }}>
-                        <Text style={{ color: '#7b61ff', textDecorationLine: 'underline' }}>{a.title}</Text>
-                      </View>
-                      <Text style={{ flex: 2 }}>{a.message}</Text>
-                      <Pressable style={{ width: 30, alignItems: 'center' }} onPress={() => handleDeleteAnnouncement(a._id)} disabled={deletingId === a._id}>
-                        {deletingId === a._id ? (
-                          <ActivityIndicator size="small" color="red" />
-                        ) : (
-                          <Text style={{ color: 'red', fontSize: 18 }}>🗑️</Text>
-                        )}
-                      </Pressable>
-                    </View>
-                  ))
-                )}
-              </View>
-            )}
-          </View>
+              )}
+            </View>
+          </ScrollView>
 
           {/* Create New Announcement Modal */}
           <Modal
@@ -243,142 +286,142 @@ const AnnouncementsPage = () => {
             visible={isModalVisible}
             onRequestClose={toggleModal}
           >
-             <KeyboardAvoidingView
-            style={{ flex: 1 }}
-           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
+            <KeyboardAvoidingView
+              style={{ flex: 1 }}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
 
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-              <ScrollView style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: '90%', maxHeight: '70%' }}>
-                {/* <TouchableOpacity style={{ alignSelf: 'flex-end' }} onPress={toggleModal}>
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <ScrollView style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: '90%', maxHeight: '70%' }}>
+                  {/* <TouchableOpacity style={{ alignSelf: 'flex-end' }} onPress={toggleModal}>
                   <Text style={{ fontSize: 18, fontWeight: 'bold' }}>×</Text>
                 </TouchableOpacity> */}
-                <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>Create New Announcement</Text>
-                <Text style={{ color: '#666', marginBottom: 16 }}>Create a new announcement for your students.</Text>
+                  <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>Create New Announcement</Text>
+                  <Text style={{ color: '#666', marginBottom: 16 }}>Create a new announcement for your students.</Text>
 
-                {/* Announcement Title */}
-                <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Announcement Title</Text>
-                <TextInput
-                  style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: 10, marginBottom: 8 }}
-                  placeholder="Enter title"
-                  placeholderTextColor="#000"
-                  value={announcementTitle}
-                  onChangeText={setAnnouncementTitle}
-                  maxLength={100}
-                />
-                <Text style={{ textAlign: 'right', color: '#666', marginBottom: 16 }}>{announcementTitle?.length}/100 characters</Text>
+                  {/* Announcement Title */}
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Announcement Title</Text>
+                  <TextInput
+                    style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: 10, marginBottom: 8 }}
+                    placeholder="Enter title"
+                    placeholderTextColor="#000"
+                    value={announcementTitle}
+                    onChangeText={setAnnouncementTitle}
+                    maxLength={100}
+                  />
+                  <Text style={{ textAlign: 'right', color: '#666', marginBottom: 16 }}>{announcementTitle?.length}/100 characters</Text>
 
-                {/* Select Course (Dropdown) */}
-                <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Select Course</Text>
-                <DropDownPicker
-                  open={courseDropdownOpen}
-                  setOpen={setCourseDropdownOpen}
-                  value={selectedCourse}
-                  setValue={setSelectedCourse}
-                  items={courseOptions}
-                  setItems={setCourseOptions}
-                  placeholder={coursesLoading ? 'Loading courses...' : 'Select a course'}
-                  disabled={coursesLoading || courseOptions.length === 0}
-                  style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 4, marginBottom: 8 }}
-                  dropDownContainerStyle={{ borderWidth: 1, borderColor: '#ccc' }}
-                  zIndex={1000}
-                />
-                {coursesError ? (
-                  <Text style={{ color: 'red', marginBottom: 16 }}>{coursesError}</Text>
-                ) : courseOptions.length === 0 && !coursesLoading ? (
-                  <Text style={{ color: '#666', marginBottom: 16 }}>No courses available</Text>
-                ) : null}
+                  {/* Select Course (Dropdown) */}
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Select Course</Text>
+                  <DropDownPicker
+                    open={courseDropdownOpen}
+                    setOpen={setCourseDropdownOpen}
+                    value={selectedCourse}
+                    setValue={setSelectedCourse}
+                    items={courseOptions}
+                    setItems={setCourseOptions}
+                    placeholder={coursesLoading ? 'Loading courses...' : 'Select a course'}
+                    disabled={coursesLoading || courseOptions.length === 0}
+                    style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 4, marginBottom: 8 }}
+                    dropDownContainerStyle={{ borderWidth: 1, borderColor: '#ccc' }}
+                    zIndex={1000}
+                  />
+                  {coursesError ? (
+                    <Text style={{ color: 'red', marginBottom: 16 }}>{coursesError}</Text>
+                  ) : courseOptions.length === 0 && !coursesLoading ? (
+                    <Text style={{ color: '#666', marginBottom: 16 }}>No courses available</Text>
+                  ) : null}
 
-                {/* Announcement Message */}
-                <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Announcement Message</Text>
-                <TextInput
-                  style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: 10, height: 100, textAlignVertical: 'top', marginBottom: 8 }}
-                  placeholder="Enter message"
-                  placeholderTextColor="#000"
-                  value={announcementMessage}
-                  onChangeText={setAnnouncementMessage}
-                  multiline
-                  maxLength={500}
-                />
-                 <Text style={{ textAlign: 'right', color: '#666', marginBottom: 16 }}>{announcementMessage.length}/500 characters</Text>
+                  {/* Announcement Message */}
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 4 }}>Announcement Message</Text>
+                  <TextInput
+                    style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: 10, height: 100, textAlignVertical: 'top', marginBottom: 8 }}
+                    placeholder="Enter message"
+                    placeholderTextColor="#000"
+                    value={announcementMessage}
+                    onChangeText={setAnnouncementMessage}
+                    multiline
+                    maxLength={500}
+                  />
+                  <Text style={{ textAlign: 'right', color: '#666', marginBottom: 16 }}>{announcementMessage.length}/500 characters</Text>
 
-                {/* Buttons */}
-                <Pressable
-                  style={{ backgroundColor: '#4CAF50', padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 8 }}
-                  onPress={handleCreateAnnouncement}
-                  disabled={creatingAnnouncement}
-                >
-                  {creatingAnnouncement ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>Create</Text>
-                  )}
-                </Pressable>
-                <Pressable
-                  style={{ backgroundColor: '#ccc', padding: 12, borderRadius: 8, alignItems: 'center',marginBottom:100 }}
-                  onPress={toggleModal}
-                >
-                  <Text style={{ color: '#333', fontSize: 18, fontWeight: 'bold' }}>Cancel</Text>
-                </Pressable>
-              </ScrollView>
-            </View>
-          </KeyboardAvoidingView>
+                  {/* Buttons */}
+                  <Pressable
+                    style={{ backgroundColor: '#4CAF50', padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 8 }}
+                    onPress={handleCreateAnnouncement}
+                    disabled={creatingAnnouncement}
+                  >
+                    {creatingAnnouncement ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>Create</Text>
+                    )}
+                  </Pressable>
+                  <Pressable
+                    style={{ backgroundColor: '#ccc', padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 100 }}
+                    onPress={toggleModal}
+                  >
+                    <Text style={{ color: '#333', fontSize: 18, fontWeight: 'bold' }}>Cancel</Text>
+                  </Pressable>
+                </ScrollView>
+              </View>
+            </KeyboardAvoidingView>
 
           </Modal>
         </>
       ) : (
         <>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 24 }}>Announcements</Text>
-        {studentAnnouncementsLoading ? (
-          <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 32 }} />
-        ) : studentAnnouncementsError ? (
-          <Text style={{ color: 'red', textAlign: 'center', marginTop: 32 }}>{studentAnnouncementsError}</Text>
-        ) : studentAnnouncements.length === 0 ? (
-          <Text style={{ textAlign: 'center', color: '#666', marginTop: 32 }}>No announcements found.</Text>
-        ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
-          {studentAnnouncements.map((a) => {
-            const expanded = expandedAnnouncements[a._id] || false;
-            return (
-              <Pressable
-                key={a._id}
-                onPress={() => toggleExpand(a._id)}
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: 20,
-                  padding: 32,
-                  marginBottom: 24,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 8,
-                  elevation: 2,
-                  borderColor: '#e5e8ef',
-                  
-                }}
-              >
-                <View style={{ flexDirection: 'row',marginBottom: 8 }}>
-                  <View style={{flex:1}}>
-                    <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginBottom: 8 ,lineHeight: 22,}}>{a.title}</Text>
-                    <Text style={{ fontSize: 18, color: '#374151' }}><Text style={{ fontWeight: 'bold' }}>Course:</Text> {a.course?.courseTitle || '-'}</Text>
-                  </View>
-                  <View style={{  flexDirection: 'row', gap: 5 }}>
-                    <Text style={{ fontSize: 15, color: '#6b7280', marginRight: 8 }}>{new Date(a.createdAt).toLocaleDateString('en-GB')}</Text>
-                    <Text style={{ color: '#6b7280', fontSize: 15 }}>{expanded ? '▲' : '▼'}</Text>
-                  </View>
-                </View>
-                {expanded && (
-                  <View style={{ marginTop: 16 }}>
-                    <Text style={{ fontSize: 18, color: '#374151', marginBottom: 16 }}>{a.message}</Text>
-                    <Text style={{ fontSize: 15, color: '#374151' }}><Text style={{ fontWeight: 'bold' }}>Time:</Text> {new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-          </ScrollView>
-        )}
-      </>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 24 }}>Announcements</Text>
+          {studentAnnouncementsLoading ? (
+            <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 32 }} />
+          ) : studentAnnouncementsError ? (
+            <Text style={{ color: 'red', textAlign: 'center', marginTop: 32 }}>{studentAnnouncementsError}</Text>
+          ) : studentAnnouncements.length === 0 ? (
+            <Text style={{ textAlign: 'center', color: '#666', marginTop: 32 }}>No announcements found.</Text>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {studentAnnouncements.map((a) => {
+                const expanded = expandedAnnouncements[a._id] || false;
+                return (
+                  <Pressable
+                    key={a._id}
+                    onPress={() => toggleExpand(a._id)}
+                    style={{
+                      backgroundColor: 'white',
+                      borderRadius: 20,
+                      padding: 32,
+                      marginBottom: 24,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 8,
+                      elevation: 2,
+                      borderColor: '#e5e8ef',
+
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#111827', marginBottom: 8, lineHeight: 22, }}>{a.title}</Text>
+                        <Text style={{ fontSize: 18, color: '#374151' }}><Text style={{ fontWeight: 'bold' }}>Course:</Text> {a.course?.courseTitle || '-'}</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', gap: 5 }}>
+                        <Text style={{ fontSize: 15, color: '#6b7280', marginRight: 8 }}>{new Date(a.createdAt).toLocaleDateString('en-GB')}</Text>
+                        <Text style={{ color: '#6b7280', fontSize: 15 }}>{expanded ? '▲' : '▼'}</Text>
+                      </View>
+                    </View>
+                    {expanded && (
+                      <View style={{ marginTop: 16 }}>
+                        <Text style={{ fontSize: 18, color: '#374151', marginBottom: 16 }}>{a.message}</Text>
+                        <Text style={{ fontSize: 15, color: '#374151' }}><Text style={{ fontWeight: 'bold' }}>Time:</Text> {new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+        </>
       )}
     </View>
   );

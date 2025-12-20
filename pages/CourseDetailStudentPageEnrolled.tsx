@@ -45,6 +45,7 @@ const CourseDetailStudentPageEnrolled = () => {
   const [error, setError] = useState<string | null>(null);
   const [enrolledCourse, setEnrolledCourse] = useState<any>(null);
   const [segment, setSegment] = useState<'overview' | 'reviews' | 'syllabus'>('overview');
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const [rating, setRating] = useState(0);
   const [userRating, setUserRating] = useState(0);
   const [averageRating, setAverageRating] = useState(0);
@@ -315,7 +316,7 @@ const CourseDetailStudentPageEnrolled = () => {
   };
   return (
     <SafeAreaView
-    style={{flex:1,backgroundColor: '#fff'}}
+      style={{ flex: 1, backgroundColor: '#fff' }}
     >
       <ScrollView style={{ backgroundColor: '#fff' }}>
         {/* Banner */}
@@ -333,12 +334,21 @@ const CourseDetailStudentPageEnrolled = () => {
           {/* Overlay Box */}
           <View style={styles.bannerOverlayBox}>
             <Text style={styles.bannerTitle}>{courseDetails.courseTitle}</Text>
-            <Text style={styles.bannerDesc}>{courseDetails.courseDescription}</Text>
+            <Text style={styles.bannerDesc} numberOfLines={showFullDescription ? undefined : 10}>
+              {courseDetails.courseDescription}
+            </Text>
+            {courseDetails.courseDescription && courseDetails.courseDescription.length > 80 && (
+              <TouchableOpacity onPress={() => setShowFullDescription(!showFullDescription)}>
+                <Text style={{ color: '#10B144', fontWeight: 'bold', marginBottom: 8 }}>
+                  {showFullDescription ? 'Read Less' : 'Read More'}
+                </Text>
+              </TouchableOpacity>
+            )}
             <View style={styles.bannerTagsRow}>
-              <Text style={styles.bannerTagLabel}>Category </Text>
+              <Text style={styles.bannerTagLabel}>Topic </Text>
               <Text style={styles.bannerTag}>{courseDetails.category?.title}</Text>
-              <Text style={styles.bannerTagLabel}> Subcategory </Text>
-              <Text style={styles.bannerTag}>{courseDetails.subcategory?.title}</Text>
+              {courseDetails.subcategory?.title && <Text style={styles.bannerTagLabel}> SubTopic </Text>}
+              {courseDetails.subcategory?.title && <Text style={styles.bannerTag}>{courseDetails.subcategory?.title}</Text>}
               <Text style={styles.bannerTagLabel}> Language </Text>
               <Text style={styles.bannerTagBlue}>{courseDetails.language}</Text>
             </View>
@@ -502,9 +512,9 @@ const CourseDetailStudentPageEnrolled = () => {
                       <View key={c._id} style={styles.commentItem}>
                         <View style={styles.commentHeader}>
                           <View style={styles.commentAvatar}>
-                            {profileImg?
-                            <Image source={{uri:profileImg}}  style={styles.commentProfileImg}/>:
-                            <SimpleIcon name="account-circle" size={32} color="#888" />
+                            {profileImg ?
+                              <Image source={{ uri: profileImg }} style={styles.commentProfileImg} /> :
+                              <SimpleIcon name="account-circle" size={32} color="#888" />
                             }
                           </View>
                           <Text style={styles.commentUser}>{userName}</Text>
@@ -709,12 +719,12 @@ const CourseDetailStudentPageEnrolled = () => {
                         // setShowChaptersForQuarterModal(false)
                         setShowChaptersForQuarterModal(false);
                         (navigation as any).navigate("ChapterDetailsStudent", {
-                         chapterId: chapter._id,
-                         navigateBack:()=>{
-                           navigation.goBack()
-                           setShowChaptersForQuarterModal(true)
-                         }
-                       })
+                          chapterId: chapter._id,
+                          navigateBack: () => {
+                            navigation.goBack()
+                            setShowChaptersForQuarterModal(true)
+                          }
+                        })
                       }}
                     >
                       <Text
@@ -739,22 +749,19 @@ const CourseDetailStudentPageEnrolled = () => {
           </View>
         </View>
       </Modal>
-      </SafeAreaView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  bannerContainer: { position: 'relative', height: 180, margin: 16, borderRadius: 16, overflow: 'hidden' },
-  bannerImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  bannerContainer: { position: 'relative', minHeight: 180, margin: 16, borderRadius: 16, overflow: 'hidden', justifyContent: 'flex-end' },
+  bannerImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover' },
   bannerOverlayBox: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 12,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 16,
     padding: 18,
+    margin: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -845,7 +852,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  commentProfileImg:{
+  commentProfileImg: {
     width: 32,
     height: 32,
     borderRadius: 32,

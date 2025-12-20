@@ -12,7 +12,6 @@ import {
   TextInput,
   Platform,
   Linking,
-  TouchableWithoutFeedback,
   Switch,
   Keyboard,
   KeyboardAvoidingView,
@@ -22,7 +21,6 @@ import {
   useRoute,
   useNavigation,
   RouteProp,
-  useFocusEffect,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
@@ -32,7 +30,6 @@ import {
   deleteChapter,
   createAssessmentCategory,
   getAssessmentCategories,
-  createAssessment,
   deleteAssessment,
   editAssessment,
   getSubcategories,
@@ -118,6 +115,8 @@ interface Student {
   finalGrade: number
   letterGrade: string
   semesters: Semester[]
+  assessments: Assessment[]
+  hasSemesterStructure: boolean
 }
 
 interface GradebookData {
@@ -294,9 +293,7 @@ const CourseDetailsPage = () => {
   const [gradebookLoading, setGradebookLoading] = useState(false);
   const [gradebookData, setGradebookData] = useState<any>(null);
   const [gradebookError, setGradebookError] = useState<string | null>(null);
-  const [expandedGradebookStudent, setExpandedGradebookStudent] = useState<
-    string | null
-  >(null);
+
 
   const [averageRating, setAverageRating] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
@@ -397,7 +394,7 @@ const CourseDetailsPage = () => {
   const [showGPAManagementLoader, setShowGPAManagementLoader] = useState(false)
   const [gradeScale, setGradeScale] = useState([])
   const [GPA, setGPA] = useState([])
-  const [keyboardPadding,setKeyboardPadding] = useState(16)
+  const [keyboardPadding, setKeyboardPadding] = useState(16)
   const formatDateWithOrdinal = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getUTCDate();
@@ -624,7 +621,7 @@ const CourseDetailsPage = () => {
     try {
       setLoadingSemesterQuarters(true);
       const res = await getQuartersForSemester(semester._id);
-          // If the course's semester object already contains associated quarters,
+      // If the course's semester object already contains associated quarters,
       // filter the fetched quarters to only those that belong to this course.
       const fetchedQuarters: any[] = res.quarters || [];
       const assignedQuarterIds: string[] = Array.isArray(course?.quarter)
@@ -659,9 +656,9 @@ const CourseDetailsPage = () => {
       console.log(res)
       if (res.chapters && res.chapters.length > 0) {
         setChaptersForQuarter(res.chapters);
-        
+
       } else {
-        setChaptersMessage( "No chapters found.");
+        setChaptersMessage("No chapters found.");
       }
     } catch (error: any) {
       Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);
@@ -954,7 +951,7 @@ const CourseDetailsPage = () => {
             chapterDetails._id
           );
           setChapterDetails(response.chapter);
-          setSelectedAssessmentForModal((prev:any)=>response.chapter.chapter_assessments.find((assessment:any)=>assessment._id ===prev._id ))
+          setSelectedAssessmentForModal((prev: any) => response.chapter.chapter_assessments.find((assessment: any) => assessment._id === prev._id))
         } catch (error) {
           console.error("Error refreshing chapter details:", error);
         }
@@ -1140,7 +1137,7 @@ const CourseDetailsPage = () => {
       case "assessment":
         // Close any open modals and navigate to CreateAssessmentPage
         setShowChapterDetailsModal(false);
-        if (chapterDetails ) {
+        if (chapterDetails) {
           // Find semester ID from the quarter data
           const semesterId =
             selectedQuarter?.semester || course?.semester?.[0]?._id;
@@ -1149,7 +1146,7 @@ const CourseDetailsPage = () => {
             chapterId: chapterDetails._id,
             semesterId: semesterId || "",
             quarterId: selectedQuarterId,
-            
+
             refreshAssessments: () => { handleViewChapterDetails(chapterDetails._id) },
             navigateBack() {
               setShowChapterDetailsModal(true)
@@ -1162,13 +1159,13 @@ const CourseDetailsPage = () => {
         break;
       case "page":
         // Navigate to Chapter Pages view
-        console.log('helllo',chapterDetails,course?._id)
+        console.log('helllo', chapterDetails, course?._id)
         if (chapterDetails && course?._id) {
           setShowChapterDetailsModal(false);
           (navigation as any).navigate("ChapterPages", {
             courseId: course._id,
             chapterId: chapterDetails._id,
-            navigateBack:()=>{
+            navigateBack: () => {
               navigation.goBack()
               setShowChapterDetailsModal(true)
             }
@@ -1185,7 +1182,7 @@ const CourseDetailsPage = () => {
             courseId: course._id,
             semesterId: selectedQuarter?.semester || course?.semester?.[0]?._id,
             quarterId: selectedQuarterId || undefined,
-            navigateBack:()=>{
+            navigateBack: () => {
               navigation.goBack()
               setShowChapterDetailsModal(true)
             }
@@ -1204,7 +1201,7 @@ const CourseDetailsPage = () => {
       case "assessment":
         // Close any open modals and navigate to CreateAssessmentPage
         setShowChapterDetailsModal(false);
-        if (currentLessonForAssessment  || selectedQuarterId) {
+        if (currentLessonForAssessment || selectedQuarterId) {
           // Find semester ID from the quarter data
           const semesterId =
             selectedQuarter?.semester || course?.semester?.[0]?._id;
@@ -1716,8 +1713,8 @@ const CourseDetailsPage = () => {
       setChapterToDelete(null);
       Toast.show("Chapter deleted successfully.", Toast.LONG);
       course?.semesterbased ?
-      await refreshChaptersForQuarter(selectedQuarterId!):
-      await refreshChaptersForCourse(courseId)
+        await refreshChaptersForQuarter(selectedQuarterId!) :
+        await refreshChaptersForCourse(courseId)
     } catch (err: any) {
       setDeleteChapterError(err.message || "Failed to delete chapter.");
     } finally {
@@ -2415,8 +2412,8 @@ const CourseDetailsPage = () => {
                       setChapterTitle("");
                       setChapterDescription("");
                       course?.semesterbased ?
-                      await refreshChaptersForQuarter(selectedQuarterId!):
-                      await refreshChaptersForCourse(courseId)
+                        await refreshChaptersForQuarter(selectedQuarterId!) :
+                        await refreshChaptersForCourse(courseId)
                       setShowChaptersForQuarterModal(true);
                     } catch (err: any) {
                       console.log(err);
@@ -2469,7 +2466,8 @@ const CourseDetailsPage = () => {
         visible={showDeleteChapterModal}
         transparent={true}
         animationType="fade"
-        onRequestClose={() =>{ setShowDeleteChapterModal(false)
+        onRequestClose={() => {
+          setShowDeleteChapterModal(false)
           setShowChaptersForQuarterModal(true)
         }}
       >
@@ -2504,7 +2502,8 @@ const CourseDetailsPage = () => {
                   borderRadius: 12,
                   marginRight: 12,
                 }}
-                onPress={() => {setShowDeleteChapterModal(false)
+                onPress={() => {
+                  setShowDeleteChapterModal(false)
                   setShowChaptersForQuarterModal(true)
                 }}
                 disabled={deleteChapterLoading}
@@ -3005,10 +3004,10 @@ const CourseDetailsPage = () => {
             Last Updated: {course.updatedAt?.slice(0, 10)}
           </Text>
         </View>
-        <View style={{flexDirection:'row',alignItems:'center'}}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
 
-        <Text style={[styles.title,{flex:1}]}>{course.courseTitle?.toUpperCase()}</Text>
-        <Text style={{fontSize:22,color:'#10B144',lineHeight:26}}>${course?.price}</Text>
+          <Text style={[styles.title, { flex: 1 }]}>{course.courseTitle?.toUpperCase()}</Text>
+          <Text style={{ fontSize: 22, color: '#10B144', lineHeight: 26 }}>${course?.price}</Text>
         </View>
         <Text style={styles.chapterDetailsDescription}>
           {courseDescription}
@@ -3045,7 +3044,7 @@ const CourseDetailsPage = () => {
 
 
 
-        {course.semesterbased ? course.semester && course.semester.length > 0 ? (
+        {course.semesterbased ? (course.semester && course.semester.length > 0) ? (
           <View style={styles.semesterSection}>
             {course.semester.map((sem: any, index: number) => (
               <TouchableOpacity
@@ -3228,7 +3227,7 @@ const CourseDetailsPage = () => {
         onRequestClose={() => setShowGradingPeriodsModal(false)}
       >
         <View style={styles.gradingPeriodsModalOverlay}>
-          <View style={[styles.gradingPeriodsModalContent,{paddingTop:insets.top}]}>
+          <View style={[styles.gradingPeriodsModalContent, { paddingTop: insets.top }]}>
             <TouchableOpacity
               onPress={() => setShowGradingPeriodsModal(false)}
               style={styles.gradingPeriodsBackButton}
@@ -3285,7 +3284,7 @@ const CourseDetailsPage = () => {
                             ]}>
                               {semester.title}
                             </Text>
-                          
+
                           </View>
                           <View style={styles.gradingPeriodActions}>
                             <View style={styles.gradingPeriodSwitchContainer}>
@@ -3294,7 +3293,7 @@ const CourseDetailsPage = () => {
                                 onValueChange={() => handleToggleSemesterArchive(semester)}
                                 trackColor={{ false: '#d1d5db', true: '#10B144' }}
                                 thumbColor={isSemesterArchived ? '#fff' : '#fff'}
-                                style={{transform:[{scale:Platform.OS ==="ios"?0.6:1}]}}
+                                style={{ transform: [{ scale: Platform.OS === "ios" ? 0.6 : 1 }] }}
                               />
                               <Text style={[
                                 styles.gradingPeriodSwitchLabel,
@@ -3338,14 +3337,14 @@ const CourseDetailsPage = () => {
                               />
                             </TouchableOpacity>
                           </View>
-                          
+
                         </View>
                         <Text style={[
-                              styles.gradingPeriodDates,
-                              isSemesterArchived && styles.gradingPeriodTextDisabled
-                            ]}>
-                              {formatDateForInput(semester.startDate)} - {formatDateForInput(semester.endDate)}
-                            </Text>
+                          styles.gradingPeriodDates,
+                          isSemesterArchived && styles.gradingPeriodTextDisabled
+                        ]}>
+                          {formatDateForInput(semester.startDate)} - {formatDateForInput(semester.endDate)}
+                        </Text>
                         {semester.quarters && semester.quarters.length > 0 && (
                           <View style={styles.gradingPeriodQuarters}>
                             {semester.quarters.map((quarter: any) => {
@@ -3367,7 +3366,7 @@ const CourseDetailsPage = () => {
                                       ]}>
                                         {quarter.title}
                                       </Text>
-                                     
+
                                     </View>
                                     <View style={styles.gradingPeriodActions}>
                                       <View style={styles.gradingPeriodSwitchContainer}>
@@ -3377,7 +3376,7 @@ const CourseDetailsPage = () => {
                                           trackColor={{ false: '#d1d5db', true: '#10B144' }}
                                           thumbColor={isQuarterArchived ? '#fff' : '#fff'}
                                           disabled={isSemesterArchived}
-                                          style={{transform:[{scale:Platform.OS ==="ios"?0.6:1}]}}
+                                          style={{ transform: [{ scale: Platform.OS === "ios" ? 0.6 : 1 }] }}
                                         />
                                         <Text style={[
                                           styles.gradingPeriodSwitchLabel,
@@ -3403,12 +3402,12 @@ const CourseDetailsPage = () => {
                                     </View>
                                   </View>
                                   <Text style={[
-                                        styles.gradingPeriodDates,
-                                        {marginLeft:10,},
-                                        isDisabled && styles.gradingPeriodTextDisabled
-                                      ]}>
-                                        {formatDateForInput(quarter.startDate)} - {formatDateForInput(quarter.endDate)}
-                                      </Text>
+                                    styles.gradingPeriodDates,
+                                    { marginLeft: 10, },
+                                    isDisabled && styles.gradingPeriodTextDisabled
+                                  ]}>
+                                    {formatDateForInput(quarter.startDate)} - {formatDateForInput(quarter.endDate)}
+                                  </Text>
                                 </View>
                               );
                             })}
@@ -3429,8 +3428,10 @@ const CourseDetailsPage = () => {
         visible={showNewSemesterModal}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => { setShowNewSemesterModal(false)
-          setShowGradingPeriodsModal(true)}}
+        onRequestClose={() => {
+          setShowNewSemesterModal(false)
+          setShowGradingPeriodsModal(true)
+        }}
       >
         <View style={styles.semesterModalOverlay}>
           <View style={styles.semesterModalContent}>
@@ -3490,20 +3491,21 @@ const CourseDetailsPage = () => {
             )}
             <View style={styles.semesterModalContainer}>
 
-            <TouchableOpacity
-              style={styles.semesterModalButton}
-              onPress={handleCreateSemester}
-            >
-              <Text style={styles.semesterModalButtonText}>Create Semester</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.semesterModalButton}
-              onPress={() => {
-                setShowNewSemesterModal(false)
-              setShowGradingPeriodsModal(true)}}
-            >
-              <Text style={styles.semesterModalButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.semesterModalButton}
+                onPress={handleCreateSemester}
+              >
+                <Text style={styles.semesterModalButtonText}>Create Semester</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.semesterModalButton}
+                onPress={() => {
+                  setShowNewSemesterModal(false)
+                  setShowGradingPeriodsModal(true)
+                }}
+              >
+                <Text style={styles.semesterModalButtonText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
 
           </View>
@@ -3573,22 +3575,22 @@ const CourseDetailsPage = () => {
             )}
             <View style={styles.semesterModalContainer}>
 
-            <TouchableOpacity
-              style={styles.semesterModalButton}
-              onPress={handleEditSemester}
+              <TouchableOpacity
+                style={styles.semesterModalButton}
+                onPress={handleEditSemester}
               >
-              <Text style={styles.semesterModalButtonText}>Save Changes</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.semesterModalButton}
-              onPress={()=>{
-                setShowEditSemesterModal(false)
-                setShowGradingPeriodsModal(true)
-              }}
+                <Text style={styles.semesterModalButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.semesterModalButton}
+                onPress={() => {
+                  setShowEditSemesterModal(false)
+                  setShowGradingPeriodsModal(true)
+                }}
               >
-              <Text style={styles.semesterModalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-              </View>
+                <Text style={styles.semesterModalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -3598,8 +3600,10 @@ const CourseDetailsPage = () => {
         visible={showNewQuarterModal}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => {      setShowNewQuarterModal(false);
-          setShowGradingPeriodsModal(true)}}
+        onRequestClose={() => {
+          setShowNewQuarterModal(false);
+          setShowGradingPeriodsModal(true)
+        }}
       >
         <View style={styles.semesterModalOverlay}>
           <View style={styles.semesterModalContent}>
@@ -3659,21 +3663,22 @@ const CourseDetailsPage = () => {
             )}
             <View style={styles.semesterModalContainer}>
 
-            <TouchableOpacity
-              style={styles.semesterModalButton}
-              onPress={handleCreateQuarter}
+              <TouchableOpacity
+                style={styles.semesterModalButton}
+                onPress={handleCreateQuarter}
               >
-              <Text style={styles.semesterModalButtonText}>Create Quarter</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.semesterModalButton}
-              onPress={()=>{      setShowNewQuarterModal(false);
-                setShowGradingPeriodsModal(true)
-              }}
+                <Text style={styles.semesterModalButtonText}>Create Quarter</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.semesterModalButton}
+                onPress={() => {
+                  setShowNewQuarterModal(false);
+                  setShowGradingPeriodsModal(true)
+                }}
               >
-              <Text style={styles.semesterModalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-              </View>
+                <Text style={styles.semesterModalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -3741,20 +3746,22 @@ const CourseDetailsPage = () => {
             )}
             <View style={styles.semesterModalContainer}>
 
-            <TouchableOpacity
-              style={styles.semesterModalButton}
-              onPress={handleEditQuarter}
+              <TouchableOpacity
+                style={styles.semesterModalButton}
+                onPress={handleEditQuarter}
               >
-              <Text style={styles.semesterModalButtonText}>Save Changes</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.semesterModalButton}
-              onPress={()=>{setShowEditQuarterModal(false)
-                setShowGradingPeriodsModal(true)}}
+                <Text style={styles.semesterModalButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.semesterModalButton}
+                onPress={() => {
+                  setShowEditQuarterModal(false)
+                  setShowGradingPeriodsModal(true)
+                }}
               >
-              <Text style={styles.semesterModalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-              </View>
+                <Text style={styles.semesterModalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -4240,7 +4247,7 @@ const CourseDetailsPage = () => {
               onPress={() => openEditAssessmentModal(selectedAssessmentForModal)}
               style={styles.assessmentDetailsEditButton}
             >
-               <SimpleIcon name="pencil" size={28} color="#fff" />
+              <SimpleIcon name="pencil" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
 
@@ -4409,16 +4416,18 @@ const CourseDetailsPage = () => {
         visible={showEditAssessmentModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => {setShowEditAssessmentModal(false)
+        onRequestClose={() => {
+          setShowEditAssessmentModal(false)
           setShowAssessmentDetailsModal(true)
-       }}
+        }}
       >
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
-        <View style={[styles.assessmentDetailsHeader,{paddingTop:insets.top}]}>
+          <View style={[styles.assessmentDetailsHeader, { paddingTop: insets.top }]}>
             <TouchableOpacity
-            onPress={() => {setShowEditAssessmentModal(false)
-              setShowAssessmentDetailsModal(true)
-           }}
+              onPress={() => {
+                setShowEditAssessmentModal(false)
+                setShowAssessmentDetailsModal(true)
+              }}
               style={styles.assessmentDetailsBackButton}
             >
               <SimpleIcon name="arrow-back" size={24} color="#fff" />
@@ -4458,8 +4467,8 @@ const CourseDetailsPage = () => {
             >
               <Text style={styles.editAssessmentCategoryButtonText}>
                 {assessmentCategories.find(
-                   (c) => c.id === editAssessmentCategory
-                  )?.title || "Select Category"}
+                  (c) => c.id === editAssessmentCategory
+                )?.title || "Select Category"}
               </Text>
               <SimpleIcon
                 name={showEditCategoryMenu ? "chevron-up" : "chevron-down"}
@@ -4859,7 +4868,7 @@ const CourseDetailsPage = () => {
                             color: "#1E293B",
                           }}
                         >
-                          {student.finalGrade || 0}%
+                          {student.finalGrade ? `${student.finalGrade}%` : "---"}
                         </Text>
                         <View style={{ flex: 1, alignItems: "center" }}>
                           <View
@@ -4879,7 +4888,7 @@ const CourseDetailsPage = () => {
                                 fontSize: 14,
                               }}
                             >
-                              {student.letterGrade || "N/A"}
+                              {student.assessments?.length > 0 ? student.letterGrade : '---'}
                             </Text>
                           </View>
                         </View>
@@ -4891,7 +4900,7 @@ const CourseDetailsPage = () => {
                             color: "#1E293B",
                           }}
                         >
-                          {student.gpa || 0}
+                          {student.assessments?.length > 0 ? student.gpa : '---'}
                         </Text>
                       </TouchableOpacity>
 
@@ -4917,300 +4926,445 @@ const CourseDetailsPage = () => {
                           </Text>
 
                           {/* Semesters */}
-                          {student.semesters && student.semesters.length > 0 ? (
-                            student.semesters.map((semester: Semester) => (
-                              <View key={semester.semesterId} style={{ marginBottom: 8 }}>
-                                <TouchableOpacity
-                                  onPress={() => toggleSemester(semester.semesterId)}
-                                  style={{
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 12,
-                                    backgroundColor: "#fff",
-                                    borderRadius: 6,
-                                    borderWidth: 1,
-                                    borderColor: "#e5e7eb",
-                                  }}
-                                >
-                                  <Text
-                                    style={{
-                                      fontSize: 14,
-                                      marginRight: 8,
-                                      color: "#6b7280",
-                                      fontWeight: "bold",
-                                    }}
-                                  >
-                                    {expandedSemesters.has(semester.semesterId) ? "▼" : "▶"}
-                                  </Text>
-                                  <Text
-                                    style={{
-                                      flex: 1,
-                                      fontSize: 14,
-                                      fontWeight: "600",
-                                      color: "#374151",
-                                    }}
-                                  >
-                                    {semester.semesterTitle}
-                                  </Text>
-                                </TouchableOpacity>
+                          {student.hasSemesterStructure ? (
 
-                                {expandedSemesters.has(semester.semesterId) && (
-                                  <View
+                            student.semesters && student.semesters.length > 0 ? (
+                              student.semesters.map((semester: Semester) => (
+                                <View key={semester.semesterId} style={{ marginBottom: 8 }}>
+                                  <TouchableOpacity
+                                    onPress={() => toggleSemester(semester.semesterId)}
                                     style={{
-                                      marginTop: 8,
-                                      marginLeft: 12,
-                                      paddingLeft: 12,
-                                      borderLeftWidth: 2,
-                                      borderLeftColor: "#d1d5db",
+                                      flexDirection: "row",
+                                      alignItems: "center",
+                                      paddingVertical: 8,
+                                      paddingHorizontal: 12,
+                                      backgroundColor: "#fff",
+                                      borderRadius: 6,
+                                      borderWidth: 1,
+                                      borderColor: "#e5e7eb",
                                     }}
                                   >
-                                    {semester.quarters && semester.quarters.length > 0 ? (
-                                      semester.quarters.map((quarter: Quarter) => (
-                                        <View key={quarter.quarterId} style={{ marginBottom: 8 }}>
-                                          <TouchableOpacity
-                                            onPress={() => toggleQuarter(quarter.quarterId)}
-                                            style={{
-                                              flexDirection: "row",
-                                              alignItems: "center",
-                                              paddingVertical: 8,
-                                              paddingHorizontal: 12,
-                                              backgroundColor: "#f3f4f6",
-                                              borderRadius: 6,
-                                              borderWidth: 1,
-                                              borderColor: "#d1d5db",
-                                            }}
-                                          >
-                                            <Text
+                                    <Text
+                                      style={{
+                                        fontSize: 14,
+                                        marginRight: 8,
+                                        color: "#6b7280",
+                                        fontWeight: "bold",
+                                      }}
+                                    >
+                                      {expandedSemesters.has(semester.semesterId) ? "▼" : "▶"}
+                                    </Text>
+                                    <Text
+                                      style={{
+                                        flex: 1,
+                                        fontSize: 14,
+                                        fontWeight: "600",
+                                        color: "#374151",
+                                      }}
+                                    >
+                                      {semester.semesterTitle}
+                                    </Text>
+                                  </TouchableOpacity>
+
+                                  {expandedSemesters.has(semester.semesterId) && (
+                                    <View
+                                      style={{
+                                        marginTop: 8,
+                                        marginLeft: 12,
+                                        paddingLeft: 12,
+                                        borderLeftWidth: 2,
+                                        borderLeftColor: "#d1d5db",
+                                      }}
+                                    >
+                                      {semester.quarters && semester.quarters.length > 0 ? (
+                                        semester.quarters.map((quarter: Quarter) => (
+                                          <View key={quarter.quarterId} style={{ marginBottom: 8 }}>
+                                            <TouchableOpacity
+                                              onPress={() => toggleQuarter(quarter.quarterId)}
                                               style={{
-                                                fontSize: 13,
-                                                marginRight: 8,
-                                                color: "#6b7280",
-                                                fontWeight: "bold",
-                                              }}
-                                            >
-                                              {expandedQuarters.has(quarter.quarterId) ? "▼" : "▶"}
-                                            </Text>
-                                            <Text
-                                              style={{
-                                                flex: 1,
-                                                fontSize: 13,
-                                                fontWeight: "600",
-                                                color: "#374151",
-                                              }}
-                                            >
-                                              {quarter.quarterTitle}
-                                            </Text>
-                                            <Text
-                                              style={{
-                                                fontSize: 12,
-                                                color: "#6b7280",
-                                                marginRight: 8,
-                                              }}
-                                            >
-                                              {quarter.grade}%
-                                            </Text>
-                                            <View
-                                              style={{
-                                                backgroundColor: "#dbeafe",
-                                                borderColor: "#93c5fd",
+                                                flexDirection: "row",
+                                                alignItems: "center",
+                                                paddingVertical: 8,
+                                                paddingHorizontal: 12,
+                                                backgroundColor: "#f3f4f6",
+                                                borderRadius: 6,
                                                 borderWidth: 1,
-                                                borderRadius: 4,
-                                                paddingHorizontal: 6,
-                                                paddingVertical: 2,
-                                                marginRight: 8,
+                                                borderColor: "#d1d5db",
                                               }}
                                             >
                                               <Text
                                                 style={{
-                                                  color: "#1E293B",
+                                                  fontSize: 13,
+                                                  marginRight: 8,
+                                                  color: "#6b7280",
                                                   fontWeight: "bold",
-                                                  fontSize: 11,
                                                 }}
                                               >
-                                                {quarter.letterGrade}
+                                                {expandedQuarters.has(quarter.quarterId) ? "▼" : "▶"}
                                               </Text>
-                                            </View>
-                                            <Text
-                                              style={{
-                                                fontSize: 12,
-                                                color: "#6b7280",
-                                              }}
-                                            >
-                                              GPA: {quarter.gpa}
-                                            </Text>
-                                          </TouchableOpacity>
-
-                                          {expandedQuarters.has(quarter.quarterId) && (
-                                            <View
-                                              style={{
-                                                marginTop: 8,
-                                                marginLeft: 12,
-                                                paddingLeft: 12,
-                                                paddingVertical: 8,
-                                                backgroundColor: "#fff",
-                                                borderRadius: 6,
-                                                borderWidth: 1,
-                                                borderColor: "#e5e7eb",
-                                              }}
-                                            >
-                                              {/* Assessment Headers */}
+                                              <Text
+                                                style={{
+                                                  flex: 1,
+                                                  fontSize: 13,
+                                                  fontWeight: "600",
+                                                  color: "#374151",
+                                                }}
+                                              >
+                                                {quarter.quarterTitle}
+                                              </Text>
+                                              <Text
+                                                style={{
+                                                  fontSize: 12,
+                                                  color: "#6b7280",
+                                                  marginRight: 8,
+                                                }}
+                                              >
+                                                {quarter.grade}%
+                                              </Text>
                                               <View
                                                 style={{
-                                                  flexDirection: "row",
-                                                  paddingBottom: 8,
-                                                  marginBottom: 8,
-                                                  borderBottomWidth: 1,
-                                                  borderBottomColor: "#e5e7eb",
+                                                  backgroundColor: "#dbeafe",
+                                                  borderColor: "#93c5fd",
+                                                  borderWidth: 1,
+                                                  borderRadius: 4,
+                                                  paddingHorizontal: 6,
+                                                  paddingVertical: 2,
+                                                  marginRight: 8,
                                                 }}
                                               >
                                                 <Text
                                                   style={{
-                                                    flex: 2,
-                                                    fontSize: 12,
-                                                    fontWeight: "600",
-                                                    color: "#6b7280",
+                                                    color: "#1E293B",
+                                                    fontWeight: "bold",
+                                                    fontSize: 11,
                                                   }}
                                                 >
-                                                  Assessment
-                                                </Text>
-                                                <Text
-                                                  style={{
-                                                    flex: 1.5,
-                                                    fontSize: 12,
-                                                    fontWeight: "600",
-                                                    color: "#6b7280",
-                                                  }}
-                                                >
-                                                  Category
-                                                </Text>
-                                                <Text
-                                                  style={{
-                                                    flex: 1,
-                                                    fontSize: 12,
-                                                    fontWeight: "600",
-                                                    color: "#6b7280",
-                                                    textAlign: "center",
-                                                  }}
-                                                >
-                                                  Score
-                                                </Text>
-                                                <Text
-                                                  style={{
-                                                    flex: 1,
-                                                    fontSize: 12,
-                                                    fontWeight: "600",
-                                                    color: "#6b7280",
-                                                    textAlign: "center",
-                                                  }}
-                                                >
-                                                  %
+                                                  {quarter.letterGrade}
                                                 </Text>
                                               </View>
+                                              <Text
+                                                style={{
+                                                  fontSize: 12,
+                                                  color: "#6b7280",
+                                                }}
+                                              >
+                                                GPA: {quarter.gpa}
+                                              </Text>
+                                            </TouchableOpacity>
 
-                                              {/* Assessment Rows */}
-                                              {quarter.assessments && quarter.assessments.length > 0 ? (
-                                                quarter.assessments.map((assessment: Assessment) => (
-                                                  <View
-                                                    key={assessment.assessmentId}
-                                                    style={{
-                                                      flexDirection: "row",
-                                                      paddingVertical: 6,
-                                                      borderBottomWidth: 1,
-                                                      borderBottomColor: "#f3f4f6",
-                                                    }}
-                                                  >
-                                                    <Text
-                                                      style={{
-                                                        flex: 2,
-                                                        fontSize: 12,
-                                                        color: "#374151",
-                                                      }}
-                                                      numberOfLines={1}
-                                                    >
-                                                      {assessment.assessmentTitle}
-                                                    </Text>
-                                                    <Text
-                                                      style={{
-                                                        flex: 1.5,
-                                                        fontSize: 12,
-                                                        color: "#6b7280",
-                                                      }}
-                                                      numberOfLines={1}
-                                                    >
-                                                      {assessment.category}
-                                                    </Text>
-                                                    <Text
-                                                      style={{
-                                                        flex: 1,
-                                                        fontSize: 12,
-                                                        color: "#374151",
-                                                        textAlign: "center",
-                                                      }}
-                                                    >
-                                                      {assessment.studentPoints}/{assessment.maxPoints}
-                                                    </Text>
-                                                    <Text
-                                                      style={{
-                                                        flex: 1,
-                                                        fontSize: 12,
-                                                        color: "#374151",
-                                                        textAlign: "right",
-                                                        fontWeight: "600",
-                                                      }}
-                                                    >
-                                                      {assessment.maxPoints > 0
-                                                        ? (
-                                                          (assessment.studentPoints / assessment.maxPoints) *
-                                                          100
-                                                        ).toFixed(1)
-                                                        : 0}
-                                                      %
-                                                    </Text>
-                                                  </View>
-                                                ))
-                                              ) : (
-                                                <Text
+                                            {expandedQuarters.has(quarter.quarterId) && (
+                                              <View
+                                                style={{
+                                                  marginTop: 8,
+                                                  marginLeft: 12,
+                                                  paddingLeft: 12,
+                                                  paddingVertical: 8,
+                                                  backgroundColor: "#fff",
+                                                  borderRadius: 6,
+                                                  borderWidth: 1,
+                                                  borderColor: "#e5e7eb",
+                                                }}
+                                              >
+                                                {/* Assessment Headers */}
+                                                <View
                                                   style={{
-                                                    fontSize: 12,
-                                                    color: "#9ca3af",
-                                                    textAlign: "center",
-                                                    paddingVertical: 8,
+                                                    flexDirection: "row",
+                                                    paddingBottom: 8,
+                                                    marginBottom: 8,
+                                                    borderBottomWidth: 1,
+                                                    borderBottomColor: "#e5e7eb",
                                                   }}
                                                 >
-                                                  No assessments found.
-                                                </Text>
-                                              )}
-                                            </View>
-                                          )}
-                                        </View>
-                                      ))
-                                    ) : (
-                                      <Text
-                                        style={{
-                                          fontSize: 12,
-                                          color: "#9ca3af",
-                                          paddingVertical: 8,
-                                        }}
-                                      >
-                                        No quarters found.
-                                      </Text>
-                                    )}
-                                  </View>
-                                )}
-                              </View>
-                            ))
+                                                  <Text
+                                                    style={{
+                                                      flex: 2,
+                                                      fontSize: 12,
+                                                      fontWeight: "600",
+                                                      color: "#6b7280",
+                                                    }}
+                                                  >
+                                                    Assessment
+                                                  </Text>
+                                                  <Text
+                                                    style={{
+                                                      flex: 1.5,
+                                                      fontSize: 12,
+                                                      fontWeight: "600",
+                                                      color: "#6b7280",
+                                                    }}
+                                                  >
+                                                    Category
+                                                  </Text>
+                                                  <Text
+                                                    style={{
+                                                      flex: 1,
+                                                      fontSize: 12,
+                                                      fontWeight: "600",
+                                                      color: "#6b7280",
+                                                      textAlign: "center",
+                                                    }}
+                                                  >
+                                                    Score
+                                                  </Text>
+                                                  <Text
+                                                    style={{
+                                                      flex: 1,
+                                                      fontSize: 12,
+                                                      fontWeight: "600",
+                                                      color: "#6b7280",
+                                                      textAlign: "center",
+                                                    }}
+                                                  >
+                                                    %
+                                                  </Text>
+                                                </View>
+
+                                                {/* Assessment Rows */}
+                                                {quarter.assessments && quarter.assessments.length > 0 ? (
+                                                  quarter.assessments.map((assessment: Assessment) => (
+                                                    <View
+                                                      key={assessment.assessmentId}
+                                                      style={{
+                                                        flexDirection: "row",
+                                                        paddingVertical: 6,
+                                                        borderBottomWidth: 1,
+                                                        borderBottomColor: "#f3f4f6",
+                                                      }}
+                                                    >
+                                                      <Text
+                                                        style={{
+                                                          flex: 2,
+                                                          fontSize: 12,
+                                                          color: "#374151",
+                                                        }}
+                                                        numberOfLines={1}
+                                                      >
+                                                        {assessment.assessmentTitle}
+                                                      </Text>
+                                                      <Text
+                                                        style={{
+                                                          flex: 1.5,
+                                                          fontSize: 12,
+                                                          color: "#6b7280",
+                                                        }}
+                                                        numberOfLines={1}
+                                                      >
+                                                        {assessment.category}
+                                                      </Text>
+                                                      <Text
+                                                        style={{
+                                                          flex: 1,
+                                                          fontSize: 12,
+                                                          color: "#374151",
+                                                          textAlign: "center",
+                                                        }}
+                                                      >
+                                                        {assessment.studentPoints}/{assessment.maxPoints}
+                                                      </Text>
+                                                      <Text
+                                                        style={{
+                                                          flex: 1,
+                                                          fontSize: 12,
+                                                          color: "#374151",
+                                                          textAlign: "right",
+                                                          fontWeight: "600",
+                                                        }}
+                                                      >
+                                                        {assessment.maxPoints > 0
+                                                          ? (
+                                                            (assessment.studentPoints / assessment.maxPoints) *
+                                                            100
+                                                          ).toFixed(1)
+                                                          : 0}
+                                                        %
+                                                      </Text>
+                                                    </View>
+                                                  ))
+                                                ) : (
+                                                  <Text
+                                                    style={{
+                                                      fontSize: 12,
+                                                      color: "#9ca3af",
+                                                      textAlign: "center",
+                                                      paddingVertical: 8,
+                                                    }}
+                                                  >
+                                                    No assessments found.
+                                                  </Text>
+                                                )}
+                                              </View>
+                                            )}
+                                          </View>
+                                        ))
+                                      ) : (
+                                        <Text
+                                          style={{
+                                            fontSize: 12,
+                                            color: "#9ca3af",
+                                            paddingVertical: 8,
+                                          }}
+                                        >
+                                          No quarters found.
+                                        </Text>
+                                      )}
+                                    </View>
+                                  )}
+                                </View>
+                              ))
+                            ) : (
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  color: "#9ca3af",
+                                  paddingVertical: 8,
+                                }}
+                              >
+                                No semesters found.
+                              </Text>
+                            )
                           ) : (
-                            <Text
+                            <View
                               style={{
-                                fontSize: 12,
-                                color: "#9ca3af",
+                                marginTop: 8,
+                                marginLeft: 12,
+                                paddingLeft: 12,
                                 paddingVertical: 8,
+                                backgroundColor: "#fff",
+                                borderRadius: 6,
+                                borderWidth: 1,
+                                borderColor: "#e5e7eb",
                               }}
                             >
-                              No semesters found.
-                            </Text>
+                              {/* Assessment Headers */}
+                              <View
+                                style={{
+                                  flexDirection: "row",
+                                  paddingBottom: 8,
+                                  marginBottom: 8,
+                                  borderBottomWidth: 1,
+                                  borderBottomColor: "#e5e7eb",
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    flex: 2,
+                                    fontSize: 12,
+                                    fontWeight: "600",
+                                    color: "#6b7280",
+                                  }}
+                                >
+                                  Assessment
+                                </Text>
+                                <Text
+                                  style={{
+                                    flex: 1.5,
+                                    fontSize: 12,
+                                    fontWeight: "600",
+                                    color: "#6b7280",
+                                  }}
+                                >
+                                  Category
+                                </Text>
+                                <Text
+                                  style={{
+                                    flex: 1,
+                                    fontSize: 12,
+                                    fontWeight: "600",
+                                    color: "#6b7280",
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  Score
+                                </Text>
+                                <Text
+                                  style={{
+                                    flex: 1,
+                                    fontSize: 12,
+                                    fontWeight: "600",
+                                    color: "#6b7280",
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  %
+                                </Text>
+                              </View>
+
+                              {/* Assessment Rows */}
+                              {student.assessments && student.assessments.length > 0 ? (
+                                student.assessments.map((assessment: Assessment) => (
+                                  <View
+                                    key={assessment.assessmentId}
+                                    style={{
+                                      flexDirection: "row",
+                                      paddingVertical: 6,
+                                      borderBottomWidth: 1,
+                                      borderBottomColor: "#f3f4f6",
+                                    }}
+                                  >
+                                    <Text
+                                      style={{
+                                        flex: 2,
+                                        fontSize: 12,
+                                        color: "#374151",
+                                      }}
+                                      numberOfLines={1}
+                                    >
+                                      {assessment.assessmentTitle}
+                                    </Text>
+                                    <Text
+                                      style={{
+                                        flex: 1.5,
+                                        fontSize: 12,
+                                        color: "#6b7280",
+                                      }}
+                                      numberOfLines={1}
+                                    >
+                                      {assessment.category}
+                                    </Text>
+                                    <Text
+                                      style={{
+                                        flex: 1,
+                                        fontSize: 12,
+                                        color: "#374151",
+                                        textAlign: "center",
+                                      }}
+                                    >
+                                      {assessment.studentPoints}/{assessment.maxPoints}
+                                    </Text>
+                                    <Text
+                                      style={{
+                                        flex: 1,
+                                        fontSize: 12,
+                                        color: "#374151",
+                                        textAlign: "right",
+                                        fontWeight: "600",
+                                      }}
+                                    >
+                                      {assessment.maxPoints > 0
+                                        ? (
+                                          (assessment.studentPoints / assessment.maxPoints) *
+                                          100
+                                        ).toFixed(1)
+                                        : 0}
+                                      %
+                                    </Text>
+                                  </View>
+                                ))
+                              ) : (
+                                <Text
+                                  style={{
+                                    fontSize: 12,
+                                    color: "#9ca3af",
+                                    textAlign: "center",
+                                    paddingVertical: 8,
+                                  }}
+                                >
+                                  No assessments found.
+                                </Text>
+                              )}
+                            </View>
                           )}
+
                         </View>
                       )}
                     </View>
@@ -5251,182 +5405,82 @@ const CourseDetailsPage = () => {
         animationType="fade"
         onRequestClose={() => setShowEditCourseModal(false)}
       >
-       <KeyboardAvoidingView
+        <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View style={styles.modalOverlay}>
-            
+
+            <View
+              style={[styles.modalContent, { width: "95%", maxWidth: 420 }]}
+            >
               <View
-                style={[styles.modalContent, { width: "95%", maxWidth: 420 }]}
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 16,
+                }}
               >
-                <View
+                <Text
                   style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 16,
+                    fontSize: 22,
+                    fontWeight: "bold",
+                    flex: 1,
+                    textAlign: "center",
                   }}
                 >
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      fontWeight: "bold",
-                      flex: 1,
-                      textAlign: "center",
-                    }}
+                  Edit Course Info
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setShowEditCourseModal(false)}
+                  style={{ padding: 4 }}
+                >
+                  <SimpleIcon name="close" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView nestedScrollEnabled={true}>
+                <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                  Course Title
+                </Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={editCourseTitle}
+                  onChangeText={setEditCourseTitle}
+                  placeholder="Course Title"
+                />
+                <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                  Course Price
+                </Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={editCoursePrice}
+                  onChangeText={(text) => {
+                    // Only allow digits
+                    let numericValue = text.replace(/[^0-9]/g, '');
+
+                    // If it starts with 1–9 and length exceeds 4 → limit to 4 digits
+                    if (/^[1-9]/.test(numericValue) && numericValue.length > 4) {
+                      numericValue = '9999';
+                    }
+
+                    setEditCoursePrice(numericValue);
+                  }}
+                  placeholder="Course Price"
+                />
+                <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                  Sub Category
+                </Text>
+                {subcategoriesLoading ? (
+                  <View
+                    style={[
+                      styles.textInput,
+                      { justifyContent: "center", alignItems: "center" },
+                    ]}
                   >
-                    Edit Course Info
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowEditCourseModal(false)}
-                    style={{ padding: 4 }}
-                  >
-                    <SimpleIcon name="close" size={24} color="#666" />
-                  </TouchableOpacity>
-                </View>
-                <ScrollView nestedScrollEnabled={true}>
-                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
-                    Course Title
-                  </Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={editCourseTitle}
-                    onChangeText={setEditCourseTitle}
-                    placeholder="Course Title"
-                  />
-                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
-                    Course Price
-                  </Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={editCoursePrice}
-                    onChangeText={(text)=>{
-                          // Only allow digits
-          let numericValue = text.replace(/[^0-9]/g, '');
-
-          // If it starts with 1–9 and length exceeds 4 → limit to 4 digits
-          if (/^[1-9]/.test(numericValue) && numericValue.length > 4) {
-            numericValue = '9999';
-          }
-
-          setEditCoursePrice(numericValue);
-                    }}
-                    placeholder="Course Price"
-                  />
-                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
-                    Sub Category
-                  </Text>
-                  {subcategoriesLoading ? (
-                    <View
-                      style={[
-                        styles.textInput,
-                        { justifyContent: "center", alignItems: "center" },
-                      ]}
-                    >
-                      <ActivityIndicator size="small" color="#10B144" />
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={[
-                        styles.textInput,
-                        {
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        },
-                      ]}
-                      onPress={() => {
-                        // Toggle dropdown visibility
-                        setShowSubcategoryDropdown(!showSubcategoryDropdown);
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: editCourseSubcategory ? "#333" : "#999",
-                        }}
-                      >
-                        {editCourseSubcategory
-                          ? subcategories.find(
-                            (s) => s._id === editCourseSubcategory
-                          )?.title || "Select sub category"
-                          : "Select sub category"}
-                      </Text>
-                      <SimpleIcon name="chevron-down" size={16} color="#666" />
-                    </TouchableOpacity>
-                  )}
-
-                  {showSubcategoryDropdown && (
-                    <View
-                      style={{
-                        position: "absolute",
-                        top: 200,
-                        left: 16,
-                        right: 16,
-                        backgroundColor: "white",
-                        borderWidth: 1,
-                        borderColor: "#ddd",
-                        borderRadius: 8,
-                        maxHeight: 200,
-                        zIndex: 1000,
-                        elevation: 5,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.25,
-                        shadowRadius: 4,
-                      }}
-                    >
-                      <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
-                        {subcategories.map((subcategory) => (
-                          <TouchableOpacity
-                            key={subcategory._id}
-                            style={{
-                              padding: 12,
-                              borderBottomWidth: 1,
-                              borderBottomColor: "#eee",
-                              backgroundColor:
-                                editCourseSubcategory === subcategory._id
-                                  ? "#e3f2fd"
-                                  : "transparent",
-                            }}
-                            onPress={() => {
-                              setEditCourseSubcategory(subcategory._id);
-                              setShowSubcategoryDropdown(false);
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color:
-                                  editCourseSubcategory === subcategory._id
-                                    ? "#1976d2"
-                                    : "#333",
-                                fontWeight:
-                                  editCourseSubcategory === subcategory._id
-                                    ? "bold"
-                                    : "normal",
-                              }}
-                            >
-                              {subcategory.title}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                        {subcategories.length === 0 && (
-                          <Text
-                            style={{
-                              padding: 12,
-                              color: "#666",
-                              textAlign: "center",
-                            }}
-                          >
-                            No subcategories found
-                          </Text>
-                        )}
-                      </ScrollView>
-                    </View>
-                  )}
-                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
-                    Language
-                  </Text>
+                    <ActivityIndicator size="small" color="#10B144" />
+                  </View>
+                ) : (
                   <TouchableOpacity
                     style={[
                       styles.textInput,
@@ -5437,353 +5491,453 @@ const CourseDetailsPage = () => {
                       },
                     ]}
                     onPress={() => {
-                      setShowLanguageDropdown(!showLanguageDropdown);
+                      // Toggle dropdown visibility
+                      setShowSubcategoryDropdown(!showSubcategoryDropdown);
                     }}
                   >
                     <Text
-                      style={{ color: editCourseLanguage ? "#333" : "#999" }}
+                      style={{
+                        color: editCourseSubcategory ? "#333" : "#999",
+                      }}
                     >
-                      {editCourseLanguage || "Select language"}
+                      {editCourseSubcategory
+                        ? subcategories.find(
+                          (s) => s._id === editCourseSubcategory
+                        )?.title || "Select sub category"
+                        : "Select sub category"}
                     </Text>
                     <SimpleIcon name="chevron-down" size={16} color="#666" />
                   </TouchableOpacity>
+                )}
 
-                  {showLanguageDropdown && (
+                {showSubcategoryDropdown && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 200,
+                      left: 16,
+                      right: 16,
+                      backgroundColor: "white",
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      borderRadius: 8,
+                      maxHeight: 200,
+                      zIndex: 1000,
+                      elevation: 5,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 4,
+                    }}
+                  >
+                    <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
+                      {subcategories.map((subcategory) => (
+                        <TouchableOpacity
+                          key={subcategory._id}
+                          style={{
+                            padding: 12,
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#eee",
+                            backgroundColor:
+                              editCourseSubcategory === subcategory._id
+                                ? "#e3f2fd"
+                                : "transparent",
+                          }}
+                          onPress={() => {
+                            setEditCourseSubcategory(subcategory._id);
+                            setShowSubcategoryDropdown(false);
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color:
+                                editCourseSubcategory === subcategory._id
+                                  ? "#1976d2"
+                                  : "#333",
+                              fontWeight:
+                                editCourseSubcategory === subcategory._id
+                                  ? "bold"
+                                  : "normal",
+                            }}
+                          >
+                            {subcategory.title}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                      {subcategories.length === 0 && (
+                        <Text
+                          style={{
+                            padding: 12,
+                            color: "#666",
+                            textAlign: "center",
+                          }}
+                        >
+                          No subcategories found
+                        </Text>
+                      )}
+                    </ScrollView>
+                  </View>
+                )}
+                <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                  Language
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.textInput,
+                    {
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    },
+                  ]}
+                  onPress={() => {
+                    setShowLanguageDropdown(!showLanguageDropdown);
+                  }}
+                >
+                  <Text
+                    style={{ color: editCourseLanguage ? "#333" : "#999" }}
+                  >
+                    {editCourseLanguage || "Select language"}
+                  </Text>
+                  <SimpleIcon name="chevron-down" size={16} color="#666" />
+                </TouchableOpacity>
+
+                {showLanguageDropdown && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 280,
+                      left: 16,
+                      right: 16,
+                      backgroundColor: "white",
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      borderRadius: 8,
+                      maxHeight: 200,
+                      zIndex: 1000,
+                      elevation: 5,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 4,
+                    }}
+                  >
+                    <ScrollView style={{ maxHeight: 200 }}>
+                      {[
+                        "English",
+                        "Spanish",
+                        "French",
+                        "German",
+                        "Italian",
+                        "Portuguese",
+                        "Chinese",
+                        "Japanese",
+                        "Korean",
+                        "Arabic",
+                      ].map((language) => (
+                        <TouchableOpacity
+                          key={language}
+                          style={{
+                            padding: 12,
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#eee",
+                            backgroundColor:
+                              editCourseLanguage === language
+                                ? "#e3f2fd"
+                                : "transparent",
+                          }}
+                          onPress={() => {
+                            setEditCourseLanguage(language);
+                            setShowLanguageDropdown(false);
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color:
+                                editCourseLanguage === language
+                                  ? "#1976d2"
+                                  : "#333",
+                              fontWeight:
+                                editCourseLanguage === language
+                                  ? "bold"
+                                  : "normal",
+                            }}
+                          >
+                            {language}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+                <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+                  Course Description
+                </Text>
+                <TextInput
+                  style={[styles.textInput, { minHeight: 80 }]}
+                  value={editCourseDescription}
+                  onChangeText={setEditCourseDescription}
+                  placeholder="Course Description"
+                  multiline
+                />
+                {/* What you will teach in this course */}
+                <Text
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: 8,
+                    fontSize: 16,
+                  }}
+                >
+                  What you will teach in this course (max 12)
+                </Text>
+                {editTeachingPoints.map((point, index) => (
+                  <View key={index} style={{ marginBottom: 12 }}>
+                    <Text
+                      style={{ fontSize: 14, color: "#666", marginBottom: 4 }}
+                    >
+                      Entry {String(index + 1).padStart(2, "0")}
+                    </Text>
                     <View
                       style={{
-                        position: "absolute",
-                        top: 280,
-                        left: 16,
-                        right: 16,
-                        backgroundColor: "white",
-                        borderWidth: 1,
-                        borderColor: "#ddd",
-                        borderRadius: 8,
-                        maxHeight: 200,
-                        zIndex: 1000,
-                        elevation: 5,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.25,
-                        shadowRadius: 4,
+                        flexDirection: "row",
+                        alignItems: "flex-start",
                       }}
                     >
-                      <ScrollView style={{ maxHeight: 200 }}>
-                        {[
-                          "English",
-                          "Spanish",
-                          "French",
-                          "German",
-                          "Italian",
-                          "Portuguese",
-                          "Chinese",
-                          "Japanese",
-                          "Korean",
-                          "Arabic",
-                        ].map((language) => (
-                          <TouchableOpacity
-                            key={language}
-                            style={{
-                              padding: 12,
-                              borderBottomWidth: 1,
-                              borderBottomColor: "#eee",
-                              backgroundColor:
-                                editCourseLanguage === language
-                                  ? "#e3f2fd"
-                                  : "transparent",
-                            }}
-                            onPress={() => {
-                              setEditCourseLanguage(language);
-                              setShowLanguageDropdown(false);
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color:
-                                  editCourseLanguage === language
-                                    ? "#1976d2"
-                                    : "#333",
-                                fontWeight:
-                                  editCourseLanguage === language
-                                    ? "bold"
-                                    : "normal",
-                              }}
-                            >
-                              {language}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  )}
-                  <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
-                    Course Description
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, { minHeight: 80 }]}
-                    value={editCourseDescription}
-                    onChangeText={setEditCourseDescription}
-                    placeholder="Course Description"
-                    multiline
-                  />
-                  {/* What you will teach in this course */}
-                  <Text
-                    style={{
-                      fontWeight: "bold",
-                      marginBottom: 8,
-                      fontSize: 16,
-                    }}
-                  >
-                    What you will teach in this course (max 12)
-                  </Text>
-                  {editTeachingPoints.map((point, index) => (
-                    <View key={index} style={{ marginBottom: 12 }}>
-                      <Text
-                        style={{ fontSize: 14, color: "#666", marginBottom: 4 }}
-                      >
-                        Entry {String(index + 1).padStart(2, "0")}
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <View style={{ flex: 1, marginRight: 8 }}>
-                          <TextInput
-                            style={[styles.textInput, { minHeight: 40 }]}
-                            value={point}
-                            onChangeText={(text) => {
-                              const newPoints = [...editTeachingPoints];
-                              newPoints[index] = text;
-                              setEditTeachingPoints(newPoints);
-                            }}
-                            placeholder="What you will teach in this course..."
-                            multiline
-                          />
-                          <Text
-                            style={{
-                              fontSize: 12,
-                              color: "#999",
-                              marginTop: 4,
-                            }}
-                          >
-                            {120 - point.length} characters remaining
-                          </Text>
-                        </View>
-                        {editTeachingPoints.length > 1 && (
-                          <TouchableOpacity
-                            style={{
-                              backgroundColor: "#ff4444",
-                              paddingHorizontal: 12,
-                              paddingVertical: 8,
-                              borderRadius: 6,
-                              marginTop: 2,
-                            }}
-                            onPress={() => {
-                              const newPoints = editTeachingPoints.filter(
-                                (_, i) => i !== index
-                              );
-                              setEditTeachingPoints(newPoints);
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color: "white",
-                                fontSize: 12,
-                                fontWeight: "bold",
-                              }}
-                            >
-                              Remove
-                            </Text>
-                          </TouchableOpacity>
-                        )}
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <TextInput
+                          style={[styles.textInput, { minHeight: 40 }]}
+                          value={point}
+                          onChangeText={(text) => {
+                            const newPoints = [...editTeachingPoints];
+                            newPoints[index] = text;
+                            setEditTeachingPoints(newPoints);
+                          }}
+                          placeholder="What you will teach in this course..."
+                          multiline
+                        />
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: "#999",
+                            marginTop: 4,
+                          }}
+                        >
+                          {120 - point.length} characters remaining
+                        </Text>
                       </View>
-                    </View>
-                  ))}
-                  {editTeachingPoints.length < 12 && (
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: "#007AFF",
-                        paddingHorizontal: 16,
-                        paddingVertical: 10,
-                        borderRadius: 8,
-                        alignSelf: "flex-start",
-                        marginBottom: 16,
-                      }}
-                      onPress={() => {
-                        if (editTeachingPoints.length < 12) {
-                          setEditTeachingPoints([...editTeachingPoints, ""]);
-                        }
-                      }}
-                    >
-                      <Text style={{ color: "white", fontWeight: "bold" }}>
-                        + Add Teaching Point
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Course Requirements */}
-                  <Text
-                    style={{
-                      fontWeight: "bold",
-                      marginBottom: 8,
-                      fontSize: 16,
-                    }}
-                  >
-                    Course Requirements (max 12)
-                  </Text>
-                  {editRequirements.map((requirement, index) => (
-                    <View key={index} style={{ marginBottom: 12 }}>
-                      <Text
-                        style={{ fontSize: 14, color: "#666", marginBottom: 4 }}
-                      >
-                        Entry {String(index + 1).padStart(2, "0")}
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <View style={{ flex: 1, marginRight: 8 }}>
-                          <TextInput
-                            style={[styles.textInput, { minHeight: 40 }]}
-                            value={requirement}
-                            onChangeText={(text) => {
-                              const newRequirements = [...editRequirements];
-                              newRequirements[index] = text;
-                              setEditRequirements(newRequirements);
-                            }}
-                            placeholder="Course requirement..."
-                            multiline
-                          />
-                          <Text
-                            style={{
-                              fontSize: 12,
-                              color: "#999",
-                              marginTop: 4,
-                            }}
-                          >
-                            {120 - requirement.length} characters remaining
-                          </Text>
-                        </View>
-                        {editRequirements.length > 1 && (
-                          <TouchableOpacity
-                            style={{
-                              backgroundColor: "#ff4444",
-                              paddingHorizontal: 12,
-                              paddingVertical: 8,
-                              borderRadius: 6,
-                              marginTop: 2,
-                            }}
-                            onPress={() => {
-                              const newRequirements = editRequirements.filter(
-                                (_, i) => i !== index
-                              );
-                              setEditRequirements(newRequirements);
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color: "white",
-                                fontSize: 12,
-                                fontWeight: "bold",
-                              }}
-                            >
-                              Remove
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
-                  ))}
-                  {editRequirements.length < 12 && (
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: "#007AFF",
-                        paddingHorizontal: 16,
-                        paddingVertical: 10,
-                        borderRadius: 8,
-                        alignSelf: "flex-start",
-                        marginBottom: 16,
-                      }}
-                      onPress={() => {
-                        if (editRequirements.length < 12) {
-                          setEditRequirements([...editRequirements, ""]);
-                        }
-                      }}
-                    >
-                      <Text style={{ color: "white", fontWeight: "bold" }}>
-                        + Add Requirement
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  {editCourseError && (
-                    <Text style={{ color: "red", marginVertical: 8 }}>
-                      {editCourseError}
-                    </Text>
-                  )}
-                  <TouchableOpacity
-                    style={[
-                      styles.saveChangesButton,
-                      editCourseLoading && styles.disabledButton,
-                    ]}
-                    onPress={async () => {
-                      setEditCourseLoading(true);
-                      setEditCourseError(null);
-                      try {
-                        await editCourseBasics(course._id, {
-                          courseTitle: editCourseTitle,
-                          category: editCourseCategory,
-                          price:editCoursePrice,
-                          subcategory: editCourseSubcategory,
-                          language: editCourseLanguage,
-                          courseDescription: editCourseDescription,
-                          teachingPoints: JSON.stringify(editTeachingPoints),
-                          requirements: JSON.stringify(editRequirements),
-                        });
-
-                        getCourseDetails(courseId)
-                          .then((res) => {
-                            setCourse(res.course);
-                            Toast.show(
-                              "Course updated successfully",
-                              Toast.LONG
+                      {editTeachingPoints.length > 1 && (
+                        <TouchableOpacity
+                          style={{
+                            backgroundColor: "#ff4444",
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: 6,
+                            marginTop: 2,
+                          }}
+                          onPress={() => {
+                            const newPoints = editTeachingPoints.filter(
+                              (_, i) => i !== index
                             );
-                            setShowEditCourseModal(false);
-                            setLoading(true);
-                          })
-                          .catch(() =>
-                            setError("Failed to load course details.")
-                          )
-                          .finally(() => setLoading(false));
-                      } catch (err: any) {
-                        setEditCourseError(
-                          err.message || "Failed to update course"
-                        );
-                      } finally {
-                        setEditCourseLoading(false);
+                            setEditTeachingPoints(newPoints);
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "white",
+                              fontSize: 12,
+                              fontWeight: "bold",
+                            }}
+                          >
+                            Remove
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                ))}
+                {editTeachingPoints.length < 12 && (
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "#007AFF",
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                      alignSelf: "flex-start",
+                      marginBottom: 16,
+                    }}
+                    onPress={() => {
+                      if (editTeachingPoints.length < 12) {
+                        setEditTeachingPoints([...editTeachingPoints, ""]);
                       }
                     }}
-                    disabled={editCourseLoading}
                   >
-                    {editCourseLoading ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <Text style={styles.saveChangesButtonText}>
-                        Update Course Info
-                      </Text>
-                    )}
+                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                      + Add Teaching Point
+                    </Text>
                   </TouchableOpacity>
+                )}
+
+                {/* Course Requirements */}
+                <Text
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: 8,
+                    fontSize: 16,
+                  }}
+                >
+                  Course Requirements (max 12)
+                </Text>
+                {editRequirements.map((requirement, index) => (
+                  <View key={index} style={{ marginBottom: 12 }}>
+                    <Text
+                      style={{ fontSize: 14, color: "#666", marginBottom: 4 }}
+                    >
+                      Entry {String(index + 1).padStart(2, "0")}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <TextInput
+                          style={[styles.textInput, { minHeight: 40 }]}
+                          value={requirement}
+                          onChangeText={(text) => {
+                            const newRequirements = [...editRequirements];
+                            newRequirements[index] = text;
+                            setEditRequirements(newRequirements);
+                          }}
+                          placeholder="Course requirement..."
+                          multiline
+                        />
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: "#999",
+                            marginTop: 4,
+                          }}
+                        >
+                          {120 - requirement.length} characters remaining
+                        </Text>
+                      </View>
+                      {editRequirements.length > 1 && (
+                        <TouchableOpacity
+                          style={{
+                            backgroundColor: "#ff4444",
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: 6,
+                            marginTop: 2,
+                          }}
+                          onPress={() => {
+                            const newRequirements = editRequirements.filter(
+                              (_, i) => i !== index
+                            );
+                            setEditRequirements(newRequirements);
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "white",
+                              fontSize: 12,
+                              fontWeight: "bold",
+                            }}
+                          >
+                            Remove
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                ))}
+                {editRequirements.length < 12 && (
                   <TouchableOpacity
-                    style={styles.cancelProfileButton}
-                    onPress={() => setShowEditCourseModal(false)}
+                    style={{
+                      backgroundColor: "#007AFF",
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                      alignSelf: "flex-start",
+                      marginBottom: 16,
+                    }}
+                    onPress={() => {
+                      if (editRequirements.length < 12) {
+                        setEditRequirements([...editRequirements, ""]);
+                      }
+                    }}
                   >
-                    <Text style={styles.cancelProfileButtonText}>Cancel</Text>
+                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                      + Add Requirement
+                    </Text>
                   </TouchableOpacity>
-                </ScrollView>
-              </View>
+                )}
+                {editCourseError && (
+                  <Text style={{ color: "red", marginVertical: 8 }}>
+                    {editCourseError}
+                  </Text>
+                )}
+                <TouchableOpacity
+                  style={[
+                    styles.saveChangesButton,
+                    editCourseLoading && styles.disabledButton,
+                  ]}
+                  onPress={async () => {
+                    setEditCourseLoading(true);
+                    setEditCourseError(null);
+                    try {
+                      const res = await editCourseBasics(course._id, {
+                        courseTitle: editCourseTitle,
+                        category: editCourseCategory,
+                        price: editCoursePrice,
+                        subcategory: editCourseSubcategory,
+                        language: editCourseLanguage,
+                        courseDescription: editCourseDescription,
+                        teachingPoints: JSON.stringify(editTeachingPoints),
+                        requirements: JSON.stringify(editRequirements),
+                      });
+                      console.log(res)
+                      getCourseDetails(courseId)
+                        .then((res) => {
+                          setCourse(res.course);
+                          Toast.show(
+                            "Course updated successfully",
+                            Toast.LONG
+                          );
+                          setShowEditCourseModal(false);
+                          setLoading(true);
+                        })
+                        .catch(() =>
+                          setError("Failed to load course details.")
+                        )
+                        .finally(() => setLoading(false));
+                    } catch (err: any) {
+                      setEditCourseError(
+                        err.message || "Failed to update course"
+                      );
+                    } finally {
+                      setEditCourseLoading(false);
+                    }
+                  }}
+                  disabled={editCourseLoading}
+                >
+                  {editCourseLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.saveChangesButtonText}>
+                      Update Course Info
+                    </Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cancelProfileButton}
+                  onPress={() => setShowEditCourseModal(false)}
+                >
+                  <Text style={styles.cancelProfileButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -7414,7 +7568,7 @@ const styles = StyleSheet.create({
   },
   uploadedText: { color: "#888", fontSize: 12 },
   updatedText: { color: "#888", fontSize: 12 },
-  title: { fontSize: 26, fontWeight: "bold", color: "#222"},
+  title: { fontSize: 26, fontWeight: "bold", color: "#222" },
   subtitle: { fontSize: 16, color: "#666", marginBottom: 16 },
   infoCard: {
     backgroundColor: "#fdf6f0",
@@ -9771,9 +9925,9 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
   semesterModalContainer: {
-  flexDirection:'row',
-  justifyContent:'space-around',
-  alignItems:'center'
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center'
   },
   semesterModalButton: {
     backgroundColor: "#374151",
