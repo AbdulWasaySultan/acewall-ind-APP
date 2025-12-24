@@ -47,8 +47,8 @@ export interface UserData {
   profileImage?: string;
   isVarified: boolean;
   documents?: Documents;
-  role:'teacher'|'student'|string
-  
+  role: 'teacher' | 'student' | string
+
 }
 
 const AccountInformationPage = () => {
@@ -71,7 +71,7 @@ const AccountInformationPage = () => {
     mailingCity: '',
     mailingState: '',
     mailingZip: '',
-    role:'',
+    role: '',
     isVarified: false
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -151,7 +151,7 @@ const AccountInformationPage = () => {
           mailingZip: mailingAddress.zip,
           profileImage: response.user.profileImg?.url || undefined,
           isVarified: response.user.isVarified || false,
-          role:response.user.role,
+          role: response.user.role,
         });
         setProfileImageUri(response.user.profileImg?.url || null);
 
@@ -240,7 +240,7 @@ const AccountInformationPage = () => {
         mailingZip: mailingAddress.zip,
         profileImage: latestUserInfo.user.profileImg?.url || undefined,
         isVarified: latestUserInfo.user.isVarified || false,
-        role:latestUserInfo.user.role
+        role: latestUserInfo.user.role
       });
       setProfileImageUri(latestUserInfo.user.profileImg?.url || null);
       setIsImageChanged(false);
@@ -464,10 +464,12 @@ const AccountInformationPage = () => {
       }}>
 
         <Text style={styles.header}>Account Information</Text>
-        <View style={{ padding: 5, backgroundColor: userData.isVarified ? '#D1FAE5' : '#FEE2E2', borderRadius: 10 }}>
+        {userData?.role === "teacher" &&
+          <View style={{ padding: 5, backgroundColor: userData.isVarified ? '#D1FAE5' : '#FEE2E2', borderRadius: 10 }}>
 
-          <Text style={{ textAlign: 'right', color: userData?.isVarified ? '#065F46' : '#991B1B' }}>{userData.isVarified ? 'Verfied' : 'Not Verified'}</Text>
-        </View>
+            <Text style={{ textAlign: 'right', color: userData?.isVarified ? '#065F46' : '#991B1B' }}>{userData.isVarified ? 'Verfied' : 'Not Verified'}</Text>
+          </View>
+        }
 
       </View>
 
@@ -495,7 +497,7 @@ const AccountInformationPage = () => {
               <Text style={styles.avatarText}>👤</Text>
             </View>
           )}
-           <SimpleIcon name='edit' size={22} color={'#fff'} style={{ position: 'absolute', bottom: 20, right: 10 }} />
+          <SimpleIcon name='edit' size={22} color={'#fff'} style={{ position: 'absolute', bottom: 20, right: 10 }} />
         </TouchableOpacity>
         {isImageChanged && (
           <TouchableOpacity style={styles.imageSaveButton} onPress={handleSaveImage} disabled={isLoading}>
@@ -536,18 +538,18 @@ const AccountInformationPage = () => {
               onChangeText={(text) => setUserData({ ...userData, lastName: text })}
             />
           </View>
-          {userData?.role === "teacher"&&
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Bio</Text>
-            <TextInput
-              style={styles.textArea}
-              value={userData.Bio}
-              onChangeText={(text) => setUserData({ ...userData, Bio: text })}
-              multiline
-              numberOfLines={4}
-              placeholder="Write your bio here..."
-            />
-          </View>}
+          {userData?.role === "teacher" &&
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Bio</Text>
+              <TextInput
+                style={styles.textArea}
+                value={userData.Bio}
+                onChangeText={(text) => setUserData({ ...userData, Bio: text })}
+                multiline
+                numberOfLines={4}
+                placeholder="Write your bio here..."
+              />
+            </View>}
         </>
       ) : (
         <>
@@ -563,12 +565,12 @@ const AccountInformationPage = () => {
             <Text style={styles.infoLabel}>Last Name:</Text>
             <Text style={styles.infoValue}>{formatDisplayValue(userData.lastName)}</Text>
           </View>
-          {userData?.role ==="teacher"&&
-          <View style={[styles.infoRow,{ alignItems: 'flex-start' }]}>
-            <Text style={styles.infoLabel}>Bio:</Text>
-            <Text style={[styles.infoValue]}>{formatDisplayValue(userData.Bio)}</Text>
-          </View>
-            } 
+          {userData?.role === "teacher" &&
+            <View style={[styles.infoRow, { alignItems: 'flex-start' }]}>
+              <Text style={styles.infoLabel}>Bio:</Text>
+              <Text style={[styles.infoValue]}>{formatDisplayValue(userData.Bio)}</Text>
+            </View>
+          }
         </>
       )}
 
@@ -826,7 +828,7 @@ const AccountInformationPage = () => {
       )}
 
       {/* Uploaded Documents Section - Only show when edit mode is off */}
-      {!isEditMode && (
+      {!isEditMode && userData?.role === "teacher" && (
         <>
           <Text style={styles.sectionTitle}>Uploaded Documents</Text>
 
@@ -1236,7 +1238,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 12,
-    alignItems:'flex-end',
+    alignItems: 'flex-end',
   },
   categoryDropdownContainer: {
     flex: 1,

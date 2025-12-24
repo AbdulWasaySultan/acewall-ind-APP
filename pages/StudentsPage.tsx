@@ -23,6 +23,8 @@ const StudentsPage = () => {
   const [courseGradebook, setCourseGradebook] = useState<CourseGradebook | null>(null);
   const [loadingGradebook, setLoadingGradebook] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
+  const [isCourseExpanded, setIsCourseExpanded] = useState(true);
+  const [isAssessmentsExpanded, setIsAssessmentsExpanded] = useState(false);
 
   useEffect(() => {
     fetchStudents();
@@ -331,50 +333,138 @@ const StudentsPage = () => {
                     paddingBottom: 12,
                     marginBottom: 12
                   }}>
-                    <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 1, textAlign: 'left' }}>Course</Text>
-                    <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 1, textAlign: 'center' }}>Average</Text>
-                    <Text style={{ fontWeight: 'bold', fontSize: 16, flex: 1, textAlign: 'right' }}>Grade</Text>
+                    <Text style={{ fontWeight: '600', fontSize: 14, flex: 1.5, textAlign: 'left', color: '#6b7280' }}>Course</Text>
+                    <Text style={{ fontWeight: '600', fontSize: 14, flex: 1, textAlign: 'center', color: '#6b7280' }}>Average</Text>
+                    <Text style={{ fontWeight: '600', fontSize: 14, flex: 1, textAlign: 'right', color: '#6b7280' }}>Grade</Text>
                   </View>
 
-                  {/* Course Row */}
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingVertical: 8
-                  }}>
-                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={{ fontSize: 16, marginRight: 8 }}>▼</Text>
-                      <Text style={{ flex: 1, fontSize: 16 }}>{courseGradebook.courseName}</Text>
+                  {/* Course Row (Collapsible) */}
+                  <Pressable
+                    onPress={() => setIsCourseExpanded(!isCourseExpanded)}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingVertical: 12
+                    }}
+                  >
+                    <View style={{ flex: 1.5, flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ fontSize: 18, color: '#6b7280', marginRight: 8 }}>{isCourseExpanded ? '▾' : '▸'}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#111827' }}>{courseGradebook.courseName}</Text>
                     </View>
-                    <Text style={{ flex: 1, textAlign: 'center', fontSize: 16 }}>{courseGradebook.gpa.toFixed(2)}%</Text>
+                    <Text style={{ flex: 1, textAlign: 'center', fontSize: 15, color: '#374151' }}>{courseGradebook.grade.toFixed(2)}%</Text>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                       <View style={{
                         backgroundColor: '#fee2e2',
-                        borderColor: '#fecaca',
+                        borderColor: '#fee2e2',
                         borderWidth: 1,
-                        borderRadius: 6,
-                        paddingHorizontal: 8,
-                        paddingVertical: 4,
+                        borderRadius: 20,
+                        paddingHorizontal: 12,
+                        paddingVertical: 2,
                       }}>
                         <Text style={{
-                          color: '#dc2626',
-                          fontWeight: 'bold',
-                          fontSize: 14
+                          color: '#b91c1c',
+                          fontWeight: '500',
+                          fontSize: 12
                         }}>
                           {courseGradebook.letterGrade}
                         </Text>
                       </View>
                     </View>
-                  </View>
+                  </Pressable>
+
+                  {isCourseExpanded && (
+                    <View style={{ paddingLeft: 16, marginTop: 8 }}>
+                      {/* Course Assessments Row (Collapsible) */}
+                      <Pressable
+                        onPress={() => setIsAssessmentsExpanded(!isAssessmentsExpanded)}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingVertical: 12
+                        }}
+                      >
+                        <Text style={{ fontSize: 18, color: '#6b7280', marginRight: 8 }}>{isAssessmentsExpanded ? '▾' : '▸'}</Text>
+                        <Text style={{ fontSize: 18, fontWeight: '600', color: '#111827' }}>Course Assessments</Text>
+                        <Text style={{ fontSize: 16, color: '#9ca3af', marginLeft: 8 }}>
+                          ({courseGradebook.directAssessments.grade.toFixed(2)}% - {courseGradebook.directAssessments.letterGrade})
+                        </Text>
+                      </Pressable>
+
+                      {isAssessmentsExpanded && (
+                        <View style={{ marginTop: 8 }}>
+                          {/* Group assessments by category if needed, but here we just list them */}
+                          <View style={{ marginBottom: 16 }}>
+                            {/* Assuming we group by category name from the first assessment for now as per image "Test" */}
+                            <Text style={{ fontSize: 16, fontWeight: '600', color: '#374151', marginBottom: 12, marginTop: 8 }}>
+                              {courseGradebook.directAssessments.assessments[0]?.categoryName || 'Assessments'}
+                            </Text>
+
+                            {/* Assessment Table */}
+                            <View style={{
+                              backgroundColor: '#f9fafb',
+                              borderRadius: 12,
+                              borderWidth: 1,
+                              borderColor: '#f3f4f6',
+                              overflow: 'hidden'
+                            }}>
+                              {/* Sub-table Header */}
+                              <View style={{
+                                flexDirection: 'row',
+                                backgroundColor: '#f9fafb',
+                                paddingVertical: 12,
+                                paddingHorizontal: 12,
+                              }}>
+                                <Text style={{ flex: 2, fontSize: 12, fontWeight: '600', color: '#6b7280' }}>Assessment</Text>
+                                <Text style={{ flex: 1.5, fontSize: 12, fontWeight: '600', color: '#6b7280' }}>Category</Text>
+                                <Text style={{ flex: 1, fontSize: 12, fontWeight: '600', color: '#6b7280', textAlign: 'center' }}>Score</Text>
+                                <Text style={{ flex: 1.2, fontSize: 12, fontWeight: '600', color: '#6b7280', textAlign: 'center' }}>Max Points</Text>
+                                <Text style={{ flex: 1.5, fontSize: 12, fontWeight: '600', color: '#6b7280', textAlign: 'right' }}>Percentage</Text>
+                              </View>
+
+                              {/* Assessment Rows */}
+                              {courseGradebook.directAssessments.assessments.map((item, index) => (
+                                <View
+                                  key={item.assessmentId}
+                                  style={{
+                                    flexDirection: 'row',
+                                    paddingVertical: 16,
+                                    paddingHorizontal: 12,
+                                    backgroundColor: '#fff',
+                                    borderTopWidth: 1,
+                                    borderTopColor: '#f3f4f6'
+                                  }}
+                                >
+                                  <Text style={{ flex: 2, fontSize: 14, fontWeight: '600', color: '#111827' }}>{item.assessmentTitle}</Text>
+                                  <Text style={{ flex: 1.5, fontSize: 14, color: '#374151' }}>{item.categoryName}</Text>
+                                  <Text style={{ flex: 1, fontSize: 14, color: '#374151', textAlign: 'center' }}>{item.studentPoints}</Text>
+                                  <Text style={{ flex: 1.2, fontSize: 14, color: '#374151', textAlign: 'center' }}>{item.maxPoints}</Text>
+                                  <View style={{ flex: 1.5, alignItems: 'flex-end' }}>
+                                    <View style={{
+                                      backgroundColor: '#fee2e2',
+                                      paddingHorizontal: 10,
+                                      paddingVertical: 4,
+                                      borderRadius: 20
+                                    }}>
+                                      <Text style={{ fontSize: 12, color: '#b91c1c', fontWeight: '600' }}>
+                                        {((item.studentPoints / item.maxPoints) * 100).toFixed(1)}%
+                                      </Text>
+                                    </View>
+                                  </View>
+                                </View>
+                              ))}
+                            </View>
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                  )}
 
                   {/* No Assessments Message */}
                   {courseGradebook.totalAssessments === 0 && (
                     <View style={{
                       alignItems: 'center',
-                      paddingVertical: 20,
-                      borderTopWidth: 1,
-                      borderTopColor: '#f5f5f5',
+                      paddingVertical: 24,
                       marginTop: 12
                     }}>
                       <Text style={{

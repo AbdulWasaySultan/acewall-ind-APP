@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Keyboard,ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator } from 'react-native';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import SimpleIcon from '../components/SimpleIcon';
 import { getMessages, sendMessage } from '../services/message';
@@ -21,6 +21,7 @@ const ChatPage = () => {
     const [sending, setSending] = useState(false);
     const [newMessage, setNewMessage] = useState('');
     const [keyboardMargin, setKeyboardMargin] = useState(20);
+    const flatListRef = useRef<FlatList>(null);
 
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
@@ -47,7 +48,7 @@ const ChatPage = () => {
         try {
             const response = await getMessages(conversationId);
             if (response.messages) {
-                setMessages(response.messages.reverse()); // Reverse to show latest at the bottom
+                setMessages(response.messages); // Don't reverse, use natural order
             }
         } catch (error) {
             console.error("Failed to fetch messages:", error);
@@ -68,12 +69,12 @@ const ChatPage = () => {
         try {
             const response = await sendMessage(conversationId, newMessage);
             if (response.newMessage) {
-                setMessages(prevMessages => [response.newMessage, ...prevMessages]);
+                // setMessages(prevMessages => [response.newMessage, ...prevMessages,]); // Append to end
             }
             setNewMessage('');
         } catch (error) {
             console.error("Failed to send message:", error);
-        }finally {
+        } finally {
             setSending(false);
         }
     };
@@ -89,7 +90,7 @@ const ChatPage = () => {
 
     return (
         <View style={styles.container} >
-            <View style={[styles.header,{paddingTop:insets.top || 10}]}>
+            <View style={[styles.header, { paddingTop: insets.top || 10 }]}>
                 <View>
                     <Text style={styles.headerName}>{otherMemberName}</Text>
                 </View>
@@ -98,11 +99,14 @@ const ChatPage = () => {
                 </TouchableOpacity>
             </View>
             <FlatList
+                ref={flatListRef}
                 data={messages}
                 renderItem={renderItem}
+                inverted
                 keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.listContainer}
-                inverted // To keep the list scrolled to the bottom
+                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
             />
             <View style={[styles.inputContainer, { paddingBottom: keyboardMargin }]}>
                 <TextInput
@@ -113,7 +117,7 @@ const ChatPage = () => {
                     onChangeText={setNewMessage}
                     multiline
                 />
-                  <TouchableOpacity
+                <TouchableOpacity
                     style={[styles.sendButton, (sending || !newMessage.trim()) && styles.sendButtonDisabled]}
                     onPress={handleSendMessage}
                     disabled={sending || !newMessage.trim()}
@@ -125,7 +129,7 @@ const ChatPage = () => {
                     )}
                 </TouchableOpacity>
             </View>
-            </View>
+        </View>
     );
 };
 

@@ -25,12 +25,20 @@ export interface Student {
   courses: Course[];
 }
 
-export interface Assessment {
+export interface DirectAssessment {
   assessmentId: string;
   assessmentTitle: string;
-  category: string;
+  categoryId: string;
+  categoryName: string;
   maxPoints: number;
   studentPoints: number;
+  isDiscussion: boolean;
+}
+
+export interface DirectAssessments {
+  grade: number;
+  letterGrade: string;
+  assessments: DirectAssessment[];
 }
 
 export interface CourseGradebook {
@@ -38,19 +46,17 @@ export interface CourseGradebook {
   course: {
     _id: string;
     courseTitle: string;
-    thumbnail?: { url: string };
+    thumbnail?: { url: string; filename: string };
     courseDescription?: string;
   };
   courseName: string;
   grade: number;
-  gpa: number;
   letterGrade: string;
   totalAssessments: number;
   page: number;
   limit: number;
   totalPages: number;
-  semesters: any[];
-  assessments?: Assessment[];
+  directAssessments: DirectAssessments;
 }
 
 // Create axios instance with default config

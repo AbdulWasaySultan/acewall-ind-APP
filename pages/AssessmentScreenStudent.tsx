@@ -48,15 +48,15 @@ const AssessmentScreenStudent = () => {
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [answers, setAnswers] = useState<Record<string, string | File | null>>({})
   const [uploadedFiles, setUploadedFiles] = useState<any>(null)
-  const [submitAssessmentLoading,setSubmitAssessmentLoading] = useState(false)
+  const [submitAssessmentLoading, setSubmitAssessmentLoading] = useState(false)
   useEffect(() => {
-  
+
     const fetchAssessment = async () => {
-      try{
+      try {
         const response = await getStudentAssessmentDetails(assessmentId)
         console.log(response)
         setAssessment(response.assessment)
-      }catch(error){
+      } catch (error) {
         console.error("Error fetching assessment:", error)
       }
     }
@@ -73,18 +73,18 @@ const AssessmentScreenStudent = () => {
 
   const handleFileUpload = async (questionId: string) => {
     try {
-        const result = await pick({
-          type: [types.pdf],
-            copyTo: "cachesDirectory",
-            allowMultiSelection:false
-          });
-        setUploadedFiles(result[0])
-        setAnswers((prev) => ({
-          ...prev,
-          [questionId]: result[0].uri,
-        }))
+      const result = await pick({
+        type: [types.pdf],
+        copyTo: "cachesDirectory",
+        allowMultiSelection: false
+      });
+      setUploadedFiles(result[0])
+      setAnswers((prev) => ({
+        ...prev,
+        [questionId]: result[0].uri,
+      }))
     } catch (error) {
-   // console.error("Error picking document:", error)
+      // console.error("Error picking document:", error)
       // Alert.alert("Error", "Failed to pick document")
     }
   }
@@ -93,41 +93,41 @@ const AssessmentScreenStudent = () => {
     try {
       // Validate all questions are answered
       setSubmitAssessmentLoading(true)
-    const unansweredQuestions = assessment?.questions.filter((q) => !answers[q._id])
-    if (unansweredQuestions && unansweredQuestions.length > 0) {
-      Toast.show("Incomplete Assessment, Please answer all questions before submitting.",Toast.LONG)
-      return
-    }
-    if (assessment?.questions[0].type === "file") {
-      const question = assessment.questions[0];
-      console.log(question)
-      const file = uploadedFiles;
+      const unansweredQuestions = assessment?.questions.filter((q) => !answers[q._id])
+      if (unansweredQuestions && unansweredQuestions.length > 0) {
+        Toast.show("Incomplete Assessment, Please answer all questions before submitting.", Toast.LONG)
+        return
+      }
+      if (assessment?.questions[0].type === "file") {
+        const question = assessment.questions[0];
+        console.log(question)
+        const file = uploadedFiles;
 
-     
 
-      const res = await submitAssessment(
-        assessmentId,
-        assessment.title,
-        assessment.description,
-        assessment.dueDate.date,
-        [], // no answers for file-based
-        file, // single file
-        question._id // pass questionId separately
-      );
 
-      Toast.show(res.message || "Assessment submitted successfully!", Toast.LONG);
-      navigation.goBack();
-      return;
-    }
+        const res = await submitAssessment(
+          assessmentId,
+          assessment.title,
+          assessment.description,
+          assessment.dueDate.date,
+          [], // no answers for file-based
+          file, // single file
+          question._id // pass questionId separately
+        );
 
-   
+        Toast.show(res.message || "Assessment submitted successfully!", Toast.LONG);
+        navigation.goBack();
+        return;
+      }
 
-    // Submit assessment
+
+
+      // Submit assessment
       const questionsArray = Object.entries(answers).map(([questionId, answer]) => ({
         questionId,
         selectedAnswer: typeof answer === "string" ? answer : "",
       }))
-      
+
       const res = await submitAssessment(
         assessmentId,
         assessment?.title || "",
@@ -136,15 +136,15 @@ const AssessmentScreenStudent = () => {
         questionsArray,
         uploadedFiles
       )
-   
 
-      Toast.show(res.message ||"Assessment submitted successfully!",Toast.LONG)
+
+      Toast.show(res.message || "Assessment submitted successfully!", Toast.LONG)
       navigation.goBack()
     } catch (error: any) {
       console.error("Error submitting assessment:", error)
-      Toast.show(error.message || "Failed to submit assessment. Please try again.",Toast.LONG)
+      Toast.show(error.message || "Failed to submit assessment. Please try again.", Toast.LONG)
     }
-    finally{
+    finally {
       setSubmitAssessmentLoading(false)
     }
   }
@@ -220,7 +220,7 @@ const AssessmentScreenStudent = () => {
       {question.files && question.files.length > 0 && (
         <View style={styles.attachedFilesContainer}>
           {question.files.map((file, index) => (
-            <TouchableOpacity key={index} style={styles.attachedFileCard} onPress={()=>Linking.openURL(file.url)}>
+            <TouchableOpacity key={index} style={styles.attachedFileCard} onPress={() => Linking.openURL(file.url)}>
               <SimpleIcon name="description" size={24} color="#4285F4" />
               <Text style={styles.attachedFileName}>{file.filename}</Text>
             </TouchableOpacity>
@@ -228,13 +228,13 @@ const AssessmentScreenStudent = () => {
         </View>
       )}
 
-      <TouchableOpacity style={styles.filePickerButton} onPress={()=>
+      <TouchableOpacity style={styles.filePickerButton} onPress={() =>
 
-      
-          handleFileUpload(question._id)
+
+        handleFileUpload(question._id)
       }>
         <Text style={styles.filePickerText}>
-       Choose file: {uploadedFiles ? uploadedFiles.name : "No file chosen"}
+          Choose file: {uploadedFiles ? uploadedFiles.name : "No file chosen"}
         </Text>
       </TouchableOpacity>
     </View>
@@ -243,7 +243,7 @@ const AssessmentScreenStudent = () => {
   if (!assessment) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#10B144" />
+        <ActivityIndicator size={"large"} color="#10B144" />
       </View>
     )
   }
@@ -271,11 +271,11 @@ const AssessmentScreenStudent = () => {
 
           {/* Submit Button */}
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={submitAssessmentLoading}>
-            {submitAssessmentLoading?
-            
-          <ActivityIndicator size={'small'} color={'#fff'}/>:
-            <Text style={styles.submitButtonText}>Submit Assessment</Text>
-          }
+            {submitAssessmentLoading ?
+
+              <ActivityIndicator size={'small'} color={'#fff'} /> :
+              <Text style={styles.submitButtonText}>Submit Assessment</Text>
+            }
           </TouchableOpacity>
         </View>
       </ScrollView>
