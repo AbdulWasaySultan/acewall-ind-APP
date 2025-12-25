@@ -367,7 +367,7 @@ const StudentsPage = () => {
                           fontWeight: '500',
                           fontSize: 12
                         }}>
-                          {courseGradebook.letterGrade}
+                          {courseGradebook?.letterGrade}
                         </Text>
                       </View>
                     </View>
@@ -387,7 +387,7 @@ const StudentsPage = () => {
                         <Text style={{ fontSize: 18, color: '#6b7280', marginRight: 8 }}>{isAssessmentsExpanded ? '▾' : '▸'}</Text>
                         <Text style={{ fontSize: 18, fontWeight: '600', color: '#111827' }}>Course Assessments</Text>
                         <Text style={{ fontSize: 16, color: '#9ca3af', marginLeft: 8 }}>
-                          ({courseGradebook.directAssessments.grade.toFixed(2)}% - {courseGradebook.directAssessments.letterGrade})
+                          ({courseGradebook?.directAssessments?.grade?.toFixed(2)}% - {courseGradebook?.directAssessments?.letterGrade})
                         </Text>
                       </Pressable>
 
@@ -397,7 +397,7 @@ const StudentsPage = () => {
                           <View style={{ marginBottom: 16 }}>
                             {/* Assuming we group by category name from the first assessment for now as per image "Test" */}
                             <Text style={{ fontSize: 16, fontWeight: '600', color: '#374151', marginBottom: 12, marginTop: 8 }}>
-                              {courseGradebook.directAssessments.assessments[0]?.categoryName || 'Assessments'}
+                              {courseGradebook?.directAssessments?.assessments[0]?.categoryName || 'Assessments'}
                             </Text>
 
                             {/* Assessment Table */}
@@ -423,7 +423,7 @@ const StudentsPage = () => {
                               </View>
 
                               {/* Assessment Rows */}
-                              {courseGradebook.directAssessments.assessments.map((item, index) => (
+                              {courseGradebook?.directAssessments?.assessments.length > 0 && courseGradebook?.directAssessments?.assessments.map((item, index) => (
                                 <View
                                   key={item.assessmentId}
                                   style={{
