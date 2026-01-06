@@ -145,7 +145,11 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
         </View>
 
         <View style={styles.menu}>
-          {menuItems.map((item) => (
+          {menuItems.map((item) => {
+            if(user?.email === "testaccount@yopmail.com" && item.label === "Wallet"){
+              return;
+            }
+            return(
             <TouchableOpacity
               key={item.label}
               style={[styles.menuItem, active === item.label && styles.activeMenuItem]}
@@ -153,7 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
             >
               <Text style={[styles.menuText, active === item.label && styles.activeMenuText]}>{item.label}</Text>
             </TouchableOpacity>
-          ))}
+          )})}
         </View>
       </ScrollView>
 

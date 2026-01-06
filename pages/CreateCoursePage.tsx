@@ -7,6 +7,7 @@ import { createCourse, getCategories, getSubcategories, getSemesters, getQuarter
 import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import Toast from 'react-native-simple-toast';
+import { useUser } from '../contexts/UserContext';
 
 interface Category {
   _id: string;
@@ -66,7 +67,7 @@ const CreateCoursePage = () => {
   const [selectedCategoryTitle, setSelectedCategoryTitle] = useState('');
   const [semesterBased, setSemesterBased] = useState<any>();
   const [selectedSubcategoryTitle, setSelectedSubcategoryTitle] = useState('');
-
+  const {user} = useUser()
   // New state for semester and quarter
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [quarters, setQuarters] = useState<Quarter[]>([]);
@@ -153,9 +154,9 @@ const CreateCoursePage = () => {
     } else if (/^[.,\s]+$/.test(courseTitle) || /\.{3,}/.test(courseTitle) || /,{3,}/.test(courseTitle)) {
       newErrors.courseTitle = 'Course title contains invalid characters';
     }
-    if (!coursePrice) {
+    if (user?.email != "testaccount@yopmail.com" && !coursePrice) {
       newErrors.coursePrice = 'Course price is required';
-    } else if (!/^\d+$/.test(coursePrice)) {
+    } else if (user?.email != "testaccount@yopmail.com" && !/^\d+$/.test(coursePrice)) {
       newErrors.coursePrice = 'Course price must contain only numbers';
     }
     // Only validate category and subcategory if categories exist
@@ -470,6 +471,10 @@ const CreateCoursePage = () => {
       />
       {errors.courseTitle && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.courseTitle}</Text>}
       {/* Course Price */}
+      {
+        user?.email != "testaccount@yopmail.com" &&
+        <>
+      
       <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>Course Price</Text>
       <TextInput
         style={[
@@ -493,7 +498,10 @@ const CreateCoursePage = () => {
         }}
         maxLength={100}
       />
-      {errors.coursePrice && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.coursePrice}</Text>}
+        </>
+
+    }
+      {user?.email != "testaccount@yopmail.com" && errors.coursePrice && <Text style={{ color: 'red', marginBottom: 8 }}>{errors.coursePrice}</Text>}
 
       {/* Category Selection - Only show if categories exist */}
       {categories.length > 0 && (

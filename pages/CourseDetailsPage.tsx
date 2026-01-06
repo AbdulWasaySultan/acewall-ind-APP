@@ -82,6 +82,7 @@ import { getCourseGradebook } from "../services/gradebook";
 import { pick, types } from "@react-native-documents/picker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import GPAModal from "../components/GPAModal";
+import { useUser } from "../contexts/UserContext";
 
 const fallbackImage = require("../assets/jpg.jpg");
 interface Assessment {
@@ -253,6 +254,7 @@ const CourseDetailsPage = () => {
   const [chaptersForSelectedQuarter, setChaptersForSelectedQuarter] = useState<
     any[]
   >([]);
+  const {user} = useUser()
   const [
     loadingChaptersForSelectedQuarter,
     setLoadingChaptersForSelectedQuarter,
@@ -3007,7 +3009,9 @@ const CourseDetailsPage = () => {
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
 
           <Text style={[styles.title, { flex: 1 }]}>{course.courseTitle?.toUpperCase()}</Text>
+          {user?.email != "testaccount@yopmail.com" &&
           <Text style={{ fontSize: 22, color: '#10B144', lineHeight: 26 }}>${course?.price}</Text>
+          }
         </View>
         <Text style={styles.chapterDetailsDescription}>
           {courseDescription}
