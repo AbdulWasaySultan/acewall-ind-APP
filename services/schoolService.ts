@@ -565,4 +565,37 @@ export const deleteDocument = async (documentId: string, category: string) => {
     }
     throw error;
   }
-}; 
+};
+
+// Delete User Account
+export const deleteUserAccount = async () => {
+  try {
+    const baseUrl = await getStoredBaseUrl();
+    if (!baseUrl) {
+      throw new Error('No base URL configured. Please select a school first.');
+    }
+
+    const response = await axios.delete(`${baseUrl}/api/auth/deleteUserwithData`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Delete user account error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      if (error.response?.status === 404) {
+        throw new Error('User delete service not found. Please check your school configuration.');
+      }
+      throw new Error(error.response?.data?.message || 'Failed to delete user account');
+    }
+    throw error;
+  }
+};

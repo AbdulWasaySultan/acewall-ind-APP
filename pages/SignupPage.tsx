@@ -92,7 +92,7 @@ const SignupPage = () => {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
-    const requiredFields = ['email', 'role', 'firstName', 'lastName', 'phone', 'homeAddressLine1', 'homeCity', 'homeState', 'homeZip', 'password', 'confirmPassword'];
+    const requiredFields = ['email', 'role', 'firstName', 'lastName', 'password', 'confirmPassword'];
     requiredFields.forEach(field => {
       if (!formData[field as keyof typeof formData]) {
         newErrors[field] = 'This field is required';
@@ -139,9 +139,6 @@ const SignupPage = () => {
         firstName: formData.firstName,
         middleName: formData.middleName,
         lastName: formData.lastName,
-        phone: formData.phone,
-        homeAddress: homeAddress,
-        mailingAddress: mailingAddress,
         password: formData.password,
         confirmPassword: formData.confirmPassword
       };
@@ -264,7 +261,7 @@ const SignupPage = () => {
               {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
             </View>
 
-            <View style={styles.fieldContainer}>
+            {/* <View style={styles.fieldContainer}>
               <Text style={styles.label}>Phone Number *</Text>
               <View style={styles.phoneContainer}>
                 <TouchableOpacity 
@@ -313,10 +310,10 @@ const SignupPage = () => {
               )}
               
               {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
-            </View>
+            </View> */}
 
             {/* Home Address Section */}
-            <View style={styles.addressSection}>
+            {/* <View style={styles.addressSection}>
               <Text style={styles.sectionTitle}>Home Address *</Text>
               
               <View style={styles.fieldContainer}>
@@ -379,10 +376,10 @@ const SignupPage = () => {
                 />
                 {errors.homeZip && <Text style={styles.errorText}>{errors.homeZip}</Text>}
               </View>
-            </View>
+            </View> */}
 
             {/* Mailing Address Section */}
-            <View style={styles.addressSection}>
+            {/* <View style={styles.addressSection}>
               <Text style={styles.sectionTitle}>Mailing Address (if different)</Text>
               
               <View style={styles.fieldContainer}>
@@ -441,7 +438,7 @@ const SignupPage = () => {
                   onChangeText={(text) => setFormData({ ...formData, mailingZip: text })}
                 />
               </View>
-            </View>
+            </View> */}
 
             <View style={styles.fieldContainer}>
               <Text style={styles.label}>Password</Text>

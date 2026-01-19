@@ -3,7 +3,8 @@ import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIn
 import { launchImageLibrary, ImagePickerResponse, ImageLibraryOptions } from 'react-native-image-picker';
 import Toast from 'react-native-simple-toast';
 import { pick } from '@react-native-documents/picker';
-import { getUserInfo, uploadProfileImage, updateUserProfile, UpdateUserProfileData, uploadDocument, deleteDocument } from '../services/schoolService';
+import { getUserInfo, uploadProfileImage, updateUserProfile, UpdateUserProfileData, uploadDocument, deleteDocument, deleteUserAccount } from '../services/schoolService';
+import { useAuth } from '../contexts/AuthContext';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useUser } from '../contexts/UserContext';
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -101,6 +102,8 @@ const AccountInformationPage = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, setUser } = useUser();
+  const { logout } = useAuth();
+  const [showAccountDeleteModal, setShowAccountDeleteModal] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -422,6 +425,21 @@ const AccountInformationPage = () => {
       console.error('Error opening document:', err);
       Toast.show('Failed to open document', Toast.LONG);
     });
+  };
+
+  const handleConfirmAccountDelete = async () => {
+    setIsLoading(true);
+    try {
+      await deleteUserAccount();
+      Toast.show('Account deleted successfully', Toast.LONG);
+      setShowAccountDeleteModal(false);
+      await logout();
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      Toast.show(error.message || 'Failed to delete account', Toast.LONG);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleCategory = (categoryKey: string) => {
@@ -963,6 +981,16 @@ const AccountInformationPage = () => {
                 </View>
               );
             })}
+            {/* Delete Account Button */}
+            <View style={{ marginTop: 20, marginBottom: 40 }}>
+              <TouchableOpacity
+                style={styles.deleteAccountButton}
+                onPress={() => setShowAccountDeleteModal(true)}
+                disabled={isLoading}
+              >
+                <Text style={styles.deleteAccountButtonText}>Delete Account</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </>
       )}
@@ -1013,6 +1041,43 @@ const AccountInformationPage = () => {
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <Text style={styles.deleteModalDeleteText}>Delete</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Account Delete Confirmation Modal */}
+      <Modal
+        visible={showAccountDeleteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAccountDeleteModal(false)}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={styles.deleteModalContent}>
+            <Text style={styles.deleteModalTitle}>Delete Account</Text>
+            <Text style={styles.deleteModalMessage}>
+              Are you sure you want to delete your account? This action is <Text style={styles.deleteModalBold}>permanent</Text> and cannot be undone. All your data will be deleted.
+            </Text>
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={styles.deleteModalCancelButton}
+                onPress={() => setShowAccountDeleteModal(false)}
+                disabled={isLoading}
+              >
+                <Text style={styles.deleteModalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteModalDeleteButton}
+                onPress={handleConfirmAccountDelete}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.deleteModalDeleteText}>Delete Account</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -1480,6 +1545,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: '600',
+  },
+  deleteAccountButton: {
+    backgroundColor: '#f44336',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteAccountButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

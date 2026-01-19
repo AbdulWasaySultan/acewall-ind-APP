@@ -1,4 +1,4 @@
-package com.speakyourmenu
+package com.acewallscholarsindep
 
 import android.app.Application
 import com.facebook.react.PackageList
