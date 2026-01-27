@@ -38,7 +38,7 @@ export const getOverallGradeReport = async () => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.get('/api/gradebook/getOverallGradeReport');
+    const response = await api.get('/api/gradebook/getStudentGradebooksFormatted');
     return response.data;
   } catch (error: any) {
     if (error.response) {
