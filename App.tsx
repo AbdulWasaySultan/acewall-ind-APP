@@ -4,7 +4,6 @@
  *
  * @format
  */
-
 import React, { useState, useEffect } from 'react';
 import {StatusBar, useColorScheme, View, ActivityIndicator, KeyboardAvoidingView, Platform} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';

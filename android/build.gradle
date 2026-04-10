@@ -5,46 +5,38 @@ buildscript {
         compileSdkVersion = 35
         targetSdkVersion = 35
         ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.0.21"
+
+        // ⚠️ IMPORTANT: Use stable Kotlin (NOT 2.0.x)
+        kotlinVersion = "1.9.0"
     }
+
     repositories {
-        google {
-            content {
-                includeGroupByRegex "com\\.android.*"
-                includeGroupByRegex "com\\.google.*"
-                includeGroupByRegex "androidx.*"
-            }
-        }
+        google()
         mavenCentral()
-        maven { url "https://jcenter.bintray.com/" }
-        maven { url "https://repo1.maven.org/maven2/" }
-        maven { url "https://maven.aliyun.com/repository/public" }
-        maven { url "https://maven.aliyun.com/repository/google" }
-        maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
     }
+
     dependencies {
-        classpath("com.android.tools.build:gradle")
-        classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        //  Explicit versions (VERY IMPORTANT)
+        classpath("com.android.tools.build:gradle:8.1.1")
+        classpath("com.facebook.react:react-native-gradle-plugin:0.9.11")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
 }
 
-allprojects {
+subprojects {
     repositories {
-        google {
-            content {
-                includeGroupByRegex "com\\.android.*"
-                includeGroupByRegex "com\\.google.*"
-                includeGroupByRegex "androidx.*"
-            }
-        }
+        google()
         mavenCentral()
-        maven { url "https://jcenter.bintray.com/" }
-        maven { url "https://repo1.maven.org/maven2/" }
-        maven { url "https://maven.aliyun.com/repository/public" }
-        maven { url "https://maven.aliyun.com/repository/google" }
-        maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
+    }
+
+    //  FIX: Force compatible AndroidX versions (prevents SDK 36 error)
+    configurations.all {
+        resolutionStrategy {
+            force "androidx.core:core:1.12.0"
+            force "androidx.core:core-ktx:1.12.0"
+        }
     }
 }
 
+//  Required for RN 0.79+
 apply plugin: "com.facebook.react.rootproject"

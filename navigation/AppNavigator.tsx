@@ -40,6 +40,8 @@ import DiscussionStudent from '../pages/DiscussionStudent';
 import CoursePagesStudent from '../pages/CoursePagesStudent';
 import MoreCoursesPage from '../pages/MoreCourses';
 import WalletPage from '../pages/WalletPage';
+import SpillTheTeaPage from '../pages/SpillTheTeaPage';
+import SpillTheTeaProfilePage from '../pages/Spilltheteaprofilepage';
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -51,19 +53,20 @@ export type RootStackParamList = {
   Main: undefined;
   StudentProfile: { studentId: string };
   AccountInformation: undefined;
-  EditCredentials: {userData: UserData};
+  EditCredentials: { userData: UserData };
   CourseDetails: { courseId: string };
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;
   CourseDetailStudentPageEnrolled: { enrollmentId: string };
-  ChapterDetailsStudent: { chapterId: string,navigateBack?:()=>void };
+  ChapterDetailsStudent: { chapterId: string, navigateBack?: () => void };
   Chat: undefined;
   ResetPassword: { email: string };
-  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string, refreshAssessments: () => void ,navigateBack?:()=>void };
+  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string, refreshAssessments: () => void, navigateBack?: () => void };
   ChapterPages: { courseId: string; chapterId: string };
-  ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string,navigateBack?:()=>void };
+  ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string, navigateBack?: () => void };
   AssessmentScreenStudent: { assessmentId: string };
   DiscussionStudent: { discussionId: string }
+  SpillTheTeaProfile:             undefined; 
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -131,6 +134,7 @@ const DrawerNavigator = () => {
             'CreateCourse': 'Create Course',
             'Assessments': userRole === 'student' ? 'My Assessments' : 'Assessments',
             'Announcements': 'Announcements',
+            'spillTheTea': 'Spill the Tea',
             'Messages': 'Messages',
             'Students': 'Students',
             'Gradebook': 'Gradebook',
@@ -150,7 +154,7 @@ const DrawerNavigator = () => {
       <Drawer.Screen name="Dashboard" component={DashboardPage} />
       <Drawer.Screen name="MyCourses" component={MyCoursesPage} options={{ title: 'My Courses' }} />
       {userRole === 'student' && (
-      <Drawer.Screen name="MoreCourses" component={MoreCoursesPage} options={{ title: 'More Courses' }} />)}
+        <Drawer.Screen name="MoreCourses" component={MoreCoursesPage} options={{ title: 'More Courses' }} />)}
       {userRole !== 'student' && (
         <>
           <Drawer.Screen name="CreateCourse" component={CreateCoursePage} options={{ title: 'Create Course' }} />
@@ -175,6 +179,7 @@ const DrawerNavigator = () => {
         />
       )}
       <Drawer.Screen name="Announcements" component={AnnouncementsPage} />
+      <Drawer.Screen name="spillTheTea" component={SpillTheTeaPage} options={{ title: 'Spill the Tea' }} />
       <Drawer.Screen name="Messages" component={MessagesPage} />
       {userRole === 'student' && (
         <Drawer.Screen name="Gradebook" component={GradebookPage} />
@@ -262,65 +267,70 @@ const AppNavigator = () => {
           </>
         ) : (
           <>
-          <Stack.Screen
-            name="Main"
-            component={DrawerNavigator}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="CourseDetails"
-            component={CourseDetailsPage}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="CourseDetailStudentPage"
-            component={CourseDetailStudentPage}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="AssessmentScreenStudent"
-            component={AssessmentScreenStudent}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="CourseDetailStudentPageEnrolled"
-            component={CourseDetailStudentPageEnrolled}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ChapterDetailsStudent"
-            component={ChapterDetailsStudent}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="Chat" component={ChatPage} options={{ headerShown: false }} />
-          <Stack.Screen
-            name="EditCredentials"
-            component={EditCredentialsPage}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="CreateAssessment"
-            component={CreateAssessmentPage}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ChapterPages"
-            component={ChapterPagesPage}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="ChapterDiscussions"
-            component={ChapterDiscussionsPage}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="DiscussionStudent"
-            component={DiscussionStudent}
-            options={{ headerShown: false }}
-          />
-        </>
+            <Stack.Screen
+              name="Main"
+              component={DrawerNavigator}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="CourseDetails"
+              component={CourseDetailsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="CourseDetailStudentPage"
+              component={CourseDetailStudentPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="AssessmentScreenStudent"
+              component={AssessmentScreenStudent}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="CourseDetailStudentPageEnrolled"
+              component={CourseDetailStudentPageEnrolled}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ChapterDetailsStudent"
+              component={ChapterDetailsStudent}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name="Chat" component={ChatPage} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="EditCredentials"
+              component={EditCredentialsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="CreateAssessment"
+              component={CreateAssessmentPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ChapterPages"
+              component={ChapterPagesPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ChapterDiscussions"
+              component={ChapterDiscussionsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="DiscussionStudent"
+              component={DiscussionStudent}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="SpillTheTeaProfile"
+              component={SpillTheTeaProfilePage}
+              options={{ headerShown: false }}
+            />
+          </>
         )}
-     
+
       </Stack.Navigator>
     </NavigationContainer>
   );
