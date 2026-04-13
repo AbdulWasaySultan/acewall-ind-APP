@@ -3,6 +3,7 @@ import { getStoredBaseUrl } from './storage';
 // API Configuration
 export const getApiUrl = async (): Promise<string> => {
   const baseUrl = await getStoredBaseUrl();
+  console.log('Retrieved base URL from storage:', baseUrl);
   if (!baseUrl) {
     throw new Error('No base URL configured. Please select a school first.');
   }

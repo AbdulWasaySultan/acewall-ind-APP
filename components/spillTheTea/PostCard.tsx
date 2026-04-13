@@ -9,6 +9,11 @@ import { COLORS } from './mnt/user-data/outputs/SpillTheTea/constants';
 
 
 
+
+// Fix 2 — strip HTML helper
+const stripHtml = (html: string) =>
+  html?.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() ?? '';
+
 interface PostCardProps {
   post:           Post;
   currentUserId:  string;
@@ -17,10 +22,9 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onLike, onCommentPress }) => {
-  const isLiked      = post.likes.includes(currentUserId);
-  const commentCount = post.comments.length;
-
-
+  const isLiked      = (post.likes    ?? []).includes(currentUserId);
+  const commentCount = (post.comments ?? []).length;
+  const plainText    = stripHtml(post.text); //  use text not content
 
   return (
     <View style={styles.container}>
@@ -39,8 +43,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onLike, onComm
         </View>
       </View>
 
-      {/* Content */}
-      <Text style={styles.content}>{post.content}</Text>
+      {/*  show plain text instead of raw HTML */}
+      <Text style={styles.content}>{plainText}</Text>
       <View style={styles.divider} />
 
       {/* Actions */}
@@ -48,7 +52,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onLike, onComm
         <TouchableOpacity style={styles.actionBtn} onPress={() => onLike(post._id)}>
           <Text>👍</Text>
           <Text style={[styles.actionText, isLiked && styles.actionTextLiked]}>
-            Like ({post.likes.length})
+            Like ({(post.likes ?? []).length})
           </Text>
         </TouchableOpacity>
 

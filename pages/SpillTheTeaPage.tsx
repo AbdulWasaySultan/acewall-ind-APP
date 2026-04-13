@@ -14,7 +14,24 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
-// ── Types ──
+
+
+// ── API ──────────────────────────────────────────────────────────────────────
+import {
+    fetchAllPosts,
+    likePost,
+    addComment,
+    createSocialPost,
+} from '../services/socialPosts';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPER — normalize post from API (ensures likes/comments always arrays)
+// ─────────────────────────────────────────────────────────────────────────────
+const normalizePost = (p: any): Post => ({
+    ...p,
+    likes: p.likes ?? [],
+    comments: p.comments ?? [],
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SPILL THE TEA PAGE
@@ -23,9 +40,14 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 const SpillTheTeaPage: React.FC = () => {
 
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    // ── State ──
+
+    // ── State ─────────────────────────────────────────────────────────────────
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [commentsOpen, setCommentsOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
@@ -33,36 +55,84 @@ const SpillTheTeaPage: React.FC = () => {
     // TODO: replace with useAuth()
     const currentUserId = 'CURRENT_USER_ID';
 
-    // ── Fetch posts ──
-    const fetchPosts = useCallback(async () => {
-        setLoading(true);
+    // ─────────────────────────────────────────────────────────────────────────
+    // API — Fetch posts (initial load + pull-to-refresh)
+    // Response: { currentPage, totalPages, totalPosts, limit, posts: [] }
+    // ─────────────────────────────────────────────────────────────────────────
+    const fetchPosts = useCallback(async (isRefresh = false) => {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
+
         try {
-            // Replace with real API call:
-            // const { data } = await api.get('/spill-the-tea/posts');
-            // setPosts(data.posts);
-            setPosts(MOCK_POSTS);
-        } catch {
-            Alert.alert('Error', 'Failed to load posts.');
+            const data = await fetchAllPosts(1, 10);
+            setPosts((data.posts ?? []).map(normalizePost));
+            setPage(1);
+            setTotalPages(data.totalPages ?? 1);
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to load posts.');
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     }, []);
 
     useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
-    // ── Toggle like (optimistic) ──
-    const handleLike = (postId: string) => {
-        setPosts((prev) =>
-            prev.map((p) =>
-                p._id === postId ? { ...p, likes: toggleLike(p.likes, currentUserId) } : p
-            )
-        );
-        //  Replace with real API call:
-        // api.post(`/spill-the-tea/posts/${postId}/like`);
+    // ─────────────────────────────────────────────────────────────────────────
+    // API — Load more posts (pagination on scroll)
+    // ─────────────────────────────────────────────────────────────────────────
+    const loadMorePosts = async () => {
+        if (loadingMore || page >= totalPages) return; // no more pages
+
+        setLoadingMore(true);
+        try {
+            const nextPage = page + 1;
+            const data = await fetchAllPosts(nextPage, 10);
+            setPosts((prev) => [
+                ...prev,
+                ...(data.posts ?? []).map(normalizePost),
+            ]);
+            setPage(nextPage);
+            setTotalPages(data.totalPages ?? 1);
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to load more posts.');
+        } finally {
+            setLoadingMore(false);
+        }
     };
 
-    // ── Add comment (optimistic) ──
-    const handleAddComment = (postId: string, text: string) => {
+    // ─────────────────────────────────────────────────────────────────────────
+    // API — Like / Unlike (optimistic update + auto-revert on failure)
+    // ─────────────────────────────────────────────────────────────────────────
+    const handleLike = async (postId: string) => {
+        // Step 1: Update UI immediately
+        setPosts((prev) =>
+            prev.map((p) =>
+                p._id === postId
+                    ? { ...p, likes: toggleLike(p.likes ?? [], currentUserId) }
+                    : p
+            )
+        );
+        try {
+            // Step 2: Call API → /api/postlike/like/:postId
+            await likePost(postId);
+        } catch (error: any) {
+            // Step 3: Revert on failure
+            setPosts((prev) =>
+                prev.map((p) =>
+                    p._id === postId
+                        ? { ...p, likes: toggleLike(p.likes ?? [], currentUserId) }
+                        : p
+                )
+            );
+            Alert.alert('Error', error.message || 'Failed to update like.');
+        }
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // API — Add Comment (optimistic update)
+    // ─────────────────────────────────────────────────────────────────────────
+    const handleAddComment = async (postId: string, text: string) => {
         const newComment: Comment = {
             _id: Date.now().toString(),
             content: text,
@@ -70,33 +140,51 @@ const SpillTheTeaPage: React.FC = () => {
             createdAt: new Date().toISOString(),
         };
 
-        const addCommentTo = (p: Post) => ({ ...p, comments: [...p.comments, newComment] });
+        const addCommentTo = (p: Post): Post => ({
+            ...p,
+            comments: [...(p.comments ?? []), newComment],
+        });
 
+        // Step 1: Update feed + modal immediately
         setPosts((prev) => prev.map((p) => p._id === postId ? addCommentTo(p) : p));
         setSelectedPost((prev) => prev?._id === postId ? addCommentTo(prev) : prev);
 
-        //  Replace with real API call:
-        // api.post(`/spill-the-tea/posts/${postId}/comments`, { content: text });
+        try {
+            // Step 2: Call API → /api/postComment/sendComment/:postId
+            await addComment(postId, text);
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to send comment.');
+        }
     };
 
-    // ── Create post (optimistic) ──
-    const handleCreatePost = (content: string) => {
-        const newPost: Post = {
-            _id: Date.now().toString(),
-            content,
+    // ─────────────────────────────────────────────────────────────────────────
+    // API — Create Post (optimistic update with temp post)
+    // ─────────────────────────────────────────────────────────────────────────
+    const handleCreatePost = async (text: string, image?: any) => {
+        const tempId = `temp_${Date.now()}`;
+        const tempPost: Post = {
+            _id: tempId,
+            text,                // ← was content
+            assets: [],
+            postType: 'public',
             author: { _id: currentUserId, firstName: 'You', lastName: '', role: 'student' },
             likes: [],
             comments: [],
             createdAt: new Date().toISOString(),
         };
+        setPosts((prev) => [tempPost, ...prev]);
 
-        setPosts((prev) => [newPost, ...prev]);
-
-        //  Replace with real API call:
-        // api.post('/spill-the-tea/posts', { content });
+        try {
+            const response = await createSocialPost(text, image); // ← pass text
+            const created = normalizePost(response.post ?? response);
+            setPosts((prev) => prev.map((p) => p._id === tempId ? created : p));
+        } catch (error: any) {
+            setPosts((prev) => prev.filter((p) => p._id !== tempId));
+            Alert.alert('Error', error.message || 'Failed to create post.');
+        }
     };
 
-    // ── Open comments for a specific post ──
+    // ── Open comments for a post ──────────────────────────────────────────────
     const openComments = (post: Post) => {
         setSelectedPost(post);
         setCommentsOpen(true);
@@ -105,7 +193,6 @@ const SpillTheTeaPage: React.FC = () => {
     // ─────────────────────────────────────────────────────────────────────────
     // RENDER
     // ─────────────────────────────────────────────────────────────────────────
-
     return (
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
@@ -132,15 +219,41 @@ const SpillTheTeaPage: React.FC = () => {
 
             {/* ── Feed ── */}
             {loading ? (
-                <ActivityIndicator style={styles.loader} size="large" color={COLORS.primary} />
+                <ActivityIndicator
+                    style={styles.loader}
+                    size="large"
+                    color={COLORS.primary}
+                />
             ) : (
                 <FlatList
                     data={posts}
                     keyExtractor={(p) => p._id}
                     contentContainerStyle={styles.feed}
-                    ListEmptyComponent={
-                        <Text style={styles.emptyText}>No posts yet. Spill the tea! ☕</Text>
+
+                    // Pull-to-refresh
+                    refreshing={refreshing}
+                    onRefresh={() => fetchPosts(true)}
+
+                    // Infinite scroll pagination
+                    onEndReached={loadMorePosts}
+                    onEndReachedThreshold={0.3}
+
+                    // Spinner at bottom while loading more
+                    ListFooterComponent={
+                        loadingMore
+                            ? <ActivityIndicator
+                                style={styles.loadMoreSpinner}
+                                color={COLORS.primary}
+                            />
+                            : null
                     }
+
+                    ListEmptyComponent={
+                        <Text style={styles.emptyText}>
+                            No posts yet. Spill the tea! ☕
+                        </Text>
+                    }
+
                     renderItem={({ item }) => (
                         <PostCard
                             post={item}
@@ -152,7 +265,7 @@ const SpillTheTeaPage: React.FC = () => {
                 />
             )}
 
-            {/* ── Comments Modal ── */}
+            {/* ── Comments Bottom Sheet ── */}
             <CommentsModal
                 visible={commentsOpen}
                 post={selectedPost}
@@ -160,12 +273,15 @@ const SpillTheTeaPage: React.FC = () => {
                 onAddComment={handleAddComment}
             />
 
-            {/* ── Create Post Modal ── */}
+            {/* ── Create Post Bottom Sheet ── */}
             <CreatePostModal
                 visible={createOpen}
                 onClose={() => setCreateOpen(false)}
-                onSubmit={({ content, target, media }) => handleCreatePost(content)}
+                onSubmit={({ content, media }) =>
+                    handleCreatePost(content, media?.[0] ?? null)
+                }
             />
+
         </SafeAreaView>
     );
 };
@@ -176,10 +292,14 @@ const SpillTheTeaPage: React.FC = () => {
 
 const styles = StyleSheet.create({
     safe: { flex: 1, backgroundColor: COLORS.background },
+
     header: {
         backgroundColor: COLORS.primary,
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 16, paddingVertical: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
     },
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     headerIcon: { fontSize: 20 },
@@ -187,6 +307,7 @@ const styles = StyleSheet.create({
     headerActions: { flexDirection: 'row', gap: 10 },
     feed: { padding: 16, paddingTop: 20 },
     loader: { marginTop: 80 },
+    loadMoreSpinner: { marginVertical: 16 },
     emptyText: { textAlign: 'center', color: COLORS.textMid, fontSize: 15, marginTop: 80 },
 });
 

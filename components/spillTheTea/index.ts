@@ -13,11 +13,14 @@ export interface Comment {
   createdAt: string;
 }
 
+
 export interface Post {
-  _id: string;
-  content: string;
-  author: Author;
-  likes: string[];
-  comments: Comment[];
+  _id:       string;
+  text:      string;       
+  assets:    { url: string }[];  
+  author:    Author;
+  postType:  string;      
+  likes:     string[];
+  comments:  Comment[];
   createdAt: string;
 }
