@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View, Text, StyleSheet, FlatList, SafeAreaView,
     StatusBar, ActivityIndicator, Alert,
+    ViewToken,
 } from 'react-native';
 import { Comment, Post } from '../components/spillTheTea';
 import { COLORS, MOCK_POSTS } from '../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/constants';
@@ -16,84 +17,155 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 
 
 
+
+
 // ── API ──────────────────────────────────────────────────────────────────────
 import {
     fetchAllPosts,
     likePost,
     addComment,
     createSocialPost,
+    getLikeCount,
+    getCommentCount,
 } from '../services/socialPosts';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HELPER — normalize post from API (ensures likes/comments always arrays)
+// HELPERS (outside component — stable references)
 // ─────────────────────────────────────────────────────────────────────────────
 const normalizePost = (p: any): Post => ({
     ...p,
-    likes: p.likes ?? [],
-    comments: p.comments ?? [],
+    likes:        p.likes        ?? [],
+    comments:     p.comments     ?? [],
+    assets:       p.assets       ?? [],
+    totalLikes:   p.totalLikes   ?? 0,
+    userReaction: p.userReaction ?? null,
 });
+
+const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 50 };
+
+// Fire and forget — fetch like counts without blocking UI
+const attachLikeCounts = (
+    posts: Post[],
+    updatePost: (id: string, d: { totalLikes: number; userReaction: string | null }) => void
+) => {
+    Promise.allSettled(
+        posts.map(async (post) => {
+            try {
+                const d = await getLikeCount(post._id);
+                updatePost(post._id, {
+                    totalLikes:   d.totalLikes   ?? 0,
+                    userReaction: d.userReaction ?? null,
+                });
+            } catch { /* fail silently */ }
+        })
+    );
+};
+const attachCommentCounts = (
+    posts: Post[],
+    updatePost: (id: string, d: { totalComments: number }) => void
+) => {
+    Promise.allSettled(
+        posts.map(async (post) => {
+            try {
+                const d = await getCommentCount(post._id);
+                updatePost(post._id, {
+                    totalComments: d.totalComments ?? 0,
+                });
+            } catch { /* fail silently */ }
+        })
+    );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SPILL THE TEA PAGE
 // ─────────────────────────────────────────────────────────────────────────────
-
 const SpillTheTeaPage: React.FC = () => {
 
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-    // ── State ─────────────────────────────────────────────────────────────────
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [posts,        setPosts]        = useState<Post[]>([]);
+    const [loading,      setLoading]      = useState(true);
+    const [refreshing,   setRefreshing]   = useState(false);
+    const [loadingMore,  setLoadingMore]  = useState(false);
+    const [page,         setPage]         = useState(1);
+    const [totalPages,   setTotalPages]   = useState(1);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [commentsOpen, setCommentsOpen] = useState(false);
-    const [createOpen, setCreateOpen] = useState(false);
+    const [createOpen,   setCreateOpen]   = useState(false);
+    const [visibleIds,   setVisibleIds]   = useState<Set<string>>(new Set());
 
     // TODO: replace with useAuth()
     const currentUserId = 'CURRENT_USER_ID';
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // API — Fetch posts (initial load + pull-to-refresh)
-    // Response: { currentPage, totalPages, totalPosts, limit, posts: [] }
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Update single post like data ──────────────────────────────────────────
+    const updatePostLike = useCallback((
+        postId: string,
+        data: { totalLikes: number; userReaction: string | null }
+    ) => {
+        setPosts((prev) =>
+            prev.map((p) => p._id === postId ? { ...p, ...data } : p)
+        );
+    }, []);
+
+    const updatePostComment = useCallback((
+        postId: string,
+        data: { totalComments: number }
+    ) => {
+        setPosts((prev) =>
+            prev.map((p) => p._id === postId ? { ...p, ...data } : p)
+        );
+    }, []);
+    
+
+    // ── Viewability ───────────────────────────────────────────────────────────
+    const onViewableItemsChanged = useRef(
+        ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+            setVisibleIds(new Set(viewableItems.map((v) => v.item._id as string)));
+        }
+    ).current;
+
+    // ── Fetch posts ───────────────────────────────────────────────────────────
     const fetchPosts = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true);
-        else setLoading(true);
+        else           setLoading(true);
 
         try {
-            const data = await fetchAllPosts(1, 10);
-            setPosts((data.posts ?? []).map(normalizePost));
+            const data     = await fetchAllPosts(1, 10);
+            const rawPosts = (data.posts ?? []).map(normalizePost);
+
+            // Show posts immediately
+            setPosts(rawPosts);
             setPage(1);
             setTotalPages(data.totalPages ?? 1);
+
+            // Like counts in background
+            attachLikeCounts(rawPosts, updatePostLike);
+            attachCommentCounts(rawPosts, updatePostComment); 
+
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to load posts.');
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, []);
+    }, [updatePostLike]);
 
-    useEffect(() => { fetchPosts(); }, [fetchPosts]);
+    // Run on mount
+    React.useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // API — Load more posts (pagination on scroll)
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Load more ─────────────────────────────────────────────────────────────
     const loadMorePosts = async () => {
-        if (loadingMore || page >= totalPages) return; // no more pages
-
+        if (loadingMore || page >= totalPages) return;
         setLoadingMore(true);
         try {
             const nextPage = page + 1;
-            const data = await fetchAllPosts(nextPage, 10);
-            setPosts((prev) => [
-                ...prev,
-                ...(data.posts ?? []).map(normalizePost),
-            ]);
+            const data     = await fetchAllPosts(nextPage, 10);
+            const rawPosts = (data.posts ?? []).map(normalizePost);
+            setPosts((prev) => [...prev, ...rawPosts]);
             setPage(nextPage);
             setTotalPages(data.totalPages ?? 1);
+            attachLikeCounts(rawPosts, updatePostLike);
+            attachCommentCounts(rawPosts, updatePostComment); 
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to load more posts.');
         } finally {
@@ -101,11 +173,8 @@ const SpillTheTeaPage: React.FC = () => {
         }
     };
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // API — Like / Unlike (optimistic update + auto-revert on failure)
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Like / Unlike ─────────────────────────────────────────────────────────
     const handleLike = async (postId: string) => {
-        // Step 1: Update UI immediately
         setPosts((prev) =>
             prev.map((p) =>
                 p._id === postId
@@ -114,10 +183,15 @@ const SpillTheTeaPage: React.FC = () => {
             )
         );
         try {
-            // Step 2: Call API → /api/postlike/like/:postId
-            await likePost(postId);
+            const response = await likePost(postId);
+            setPosts((prev) =>
+                prev.map((p) =>
+                    p._id === postId
+                        ? { ...p, totalLikes: response.totalLikes, userReaction: response.userReaction }
+                        : p
+                )
+            );
         } catch (error: any) {
-            // Step 3: Revert on failure
             setPosts((prev) =>
                 prev.map((p) =>
                     p._id === postId
@@ -129,54 +203,48 @@ const SpillTheTeaPage: React.FC = () => {
         }
     };
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // API — Add Comment (optimistic update)
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Add Comment ───────────────────────────────────────────────────────────
     const handleAddComment = async (postId: string, text: string) => {
         const newComment: Comment = {
-            _id: Date.now().toString(),
-            content: text,
-            author: { _id: currentUserId, firstName: 'You', lastName: '' },
+            _id:       Date.now().toString(),
+            content:   text,
+            author:    { _id: currentUserId, firstName: 'You', lastName: '' },
             createdAt: new Date().toISOString(),
         };
-
         const addCommentTo = (p: Post): Post => ({
             ...p,
-            comments: [...(p.comments ?? []), newComment],
+            comments:      [...(p.comments ?? []), newComment],
+            totalComments: (p.totalComments ?? p.comments?.length ?? 0) + 1, 
         });
-
-        // Step 1: Update feed + modal immediately
-        setPosts((prev) => prev.map((p) => p._id === postId ? addCommentTo(p) : p));
+        setPosts((prev)        => prev.map((p) => p._id === postId ? addCommentTo(p) : p));
         setSelectedPost((prev) => prev?._id === postId ? addCommentTo(prev) : prev);
-
         try {
-            // Step 2: Call API → /api/postComment/sendComment/:postId
             await addComment(postId, text);
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to send comment.');
         }
     };
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // API — Create Post (optimistic update with temp post)
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Create Post ───────────────────────────────────────────────────────────
     const handleCreatePost = async (text: string, image?: any) => {
-        const tempId = `temp_${Date.now()}`;
+        const tempId   = `temp_${Date.now()}`;
         const tempPost: Post = {
-            _id: tempId,
-            text,                // ← was content
-            assets: [],
-            postType: 'public',
-            author: { _id: currentUserId, firstName: 'You', lastName: '', role: 'student' },
-            likes: [],
-            comments: [],
-            createdAt: new Date().toISOString(),
+            _id:          tempId,
+            text,
+            assets:       [],
+            totalComments: 0,
+            postType:     'public',
+            author:       { _id: currentUserId, firstName: 'You', lastName: '', role: 'student' },
+            likes:        [],
+            comments:     [],
+            totalLikes:   0,
+            userReaction: null,
+            createdAt:    new Date().toISOString(),
         };
         setPosts((prev) => [tempPost, ...prev]);
-
         try {
-            const response = await createSocialPost(text, image); // ← pass text
-            const created = normalizePost(response.post ?? response);
+            const response = await createSocialPost(text, image);
+            const created  = normalizePost(response.post ?? response);
             setPosts((prev) => prev.map((p) => p._id === tempId ? created : p));
         } catch (error: any) {
             setPosts((prev) => prev.filter((p) => p._id !== tempId));
@@ -184,7 +252,6 @@ const SpillTheTeaPage: React.FC = () => {
         }
     };
 
-    // ── Open comments for a post ──────────────────────────────────────────────
     const openComments = (post: Post) => {
         setSelectedPost(post);
         setCommentsOpen(true);
@@ -197,7 +264,7 @@ const SpillTheTeaPage: React.FC = () => {
         <SafeAreaView style={styles.safe}>
             <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
 
-            {/* ── Header ── */}
+            {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <Text style={styles.headerIcon}>☕</Text>
@@ -217,47 +284,38 @@ const SpillTheTeaPage: React.FC = () => {
                 </View>
             </View>
 
-            {/* ── Feed ── */}
+            {/* Feed */}
             {loading ? (
-                <ActivityIndicator
-                    style={styles.loader}
-                    size="large"
-                    color={COLORS.primary}
-                />
+                <ActivityIndicator style={styles.loader} size="large" color={COLORS.primary} />
             ) : (
                 <FlatList
                     data={posts}
                     keyExtractor={(p) => p._id}
                     contentContainerStyle={styles.feed}
-
-                    // Pull-to-refresh
+                    showsVerticalScrollIndicator={false}
                     refreshing={refreshing}
                     onRefresh={() => fetchPosts(true)}
-
-                    // Infinite scroll pagination
                     onEndReached={loadMorePosts}
                     onEndReachedThreshold={0.3}
-
-                    // Spinner at bottom while loading more
+                    onViewableItemsChanged={onViewableItemsChanged}
+                    viewabilityConfig={VIEWABILITY_CONFIG}
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={5}
+                    windowSize={7}
+                    initialNumToRender={4}
                     ListFooterComponent={
                         loadingMore
-                            ? <ActivityIndicator
-                                style={styles.loadMoreSpinner}
-                                color={COLORS.primary}
-                            />
+                            ? <ActivityIndicator style={styles.loadMoreSpinner} color={COLORS.primary} />
                             : null
                     }
-
                     ListEmptyComponent={
-                        <Text style={styles.emptyText}>
-                            No posts yet. Spill the tea! ☕
-                        </Text>
+                        <Text style={styles.emptyText}>No posts yet. Spill the tea! ☕</Text>
                     }
-
                     renderItem={({ item }) => (
                         <PostCard
                             post={item}
                             currentUserId={currentUserId}
+                            isVisible={visibleIds.has(item._id)}
                             onLike={handleLike}
                             onCommentPress={openComments}
                         />
@@ -265,7 +323,7 @@ const SpillTheTeaPage: React.FC = () => {
                 />
             )}
 
-            {/* ── Comments Bottom Sheet ── */}
+            {/* Comments Modal */}
             <CommentsModal
                 visible={commentsOpen}
                 post={selectedPost}
@@ -273,7 +331,7 @@ const SpillTheTeaPage: React.FC = () => {
                 onAddComment={handleAddComment}
             />
 
-            {/* ── Create Post Bottom Sheet ── */}
+            {/* Create Post Modal */}
             <CreatePostModal
                 visible={createOpen}
                 onClose={() => setCreateOpen(false)}
@@ -281,7 +339,6 @@ const SpillTheTeaPage: React.FC = () => {
                     handleCreatePost(content, media?.[0] ?? null)
                 }
             />
-
         </SafeAreaView>
     );
 };
@@ -289,26 +346,24 @@ const SpillTheTeaPage: React.FC = () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // STYLES
 // ─────────────────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
     safe: { flex: 1, backgroundColor: COLORS.background },
-
     header: {
-        backgroundColor: COLORS.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        backgroundColor:   COLORS.primary,
+        flexDirection:     'row',
+        alignItems:        'center',
+        justifyContent:    'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 14,
+        paddingVertical:   14,
     },
-    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    headerIcon: { fontSize: 20 },
-    headerTitle: { color: COLORS.white, fontSize: 20, fontWeight: '800', letterSpacing: 0.3 },
-    headerActions: { flexDirection: 'row', gap: 10 },
-    feed: { padding: 16, paddingTop: 20 },
-    loader: { marginTop: 80 },
+    headerLeft:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    headerIcon:      { fontSize: 20 },
+    headerTitle:     { color: COLORS.white, fontSize: 20, fontWeight: '800', letterSpacing: 0.3 },
+    headerActions:   { flexDirection: 'row', gap: 10 },
+    feed:            { padding: 16, paddingTop: 20 },
+    loader:          { marginTop: 80 },
     loadMoreSpinner: { marginVertical: 16 },
-    emptyText: { textAlign: 'center', color: COLORS.textMid, fontSize: 15, marginTop: 80 },
+    emptyText:       { textAlign: 'center', color: COLORS.textMid, fontSize: 15, marginTop: 80 },
 });
 
 export default SpillTheTeaPage;

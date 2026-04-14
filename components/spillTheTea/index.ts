@@ -14,13 +14,24 @@ export interface Comment {
 }
 
 
+export interface Asset {
+  _id:      string;
+  url:      string;
+  fileName: string;
+  type:     string;   // "image/png" | "video/mp4" etc.
+}
+
 export interface Post {
-  _id:       string;
-  text:      string;       
-  assets:    { url: string }[];  
-  author:    Author;
-  postType:  string;      
-  likes:     string[];
-  comments:  Comment[];
-  createdAt: string;
+  totalComments: number | undefined;
+  _id:          string;
+  text:         string;
+  assets:       Asset[];
+  author:       Author;
+  postType:     string;
+  likes:        string[];
+  comments:     Comment[];
+  createdAt:    string;
+  // ── From like API response ──
+  totalLikes?:   number;        // ← real count from server
+  userReaction?: string | null; // ← 'like' | null
 }
