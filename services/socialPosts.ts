@@ -3,20 +3,20 @@ import { createApiInstance, addAuthInterceptor } from './course';
 
 
 //------------- create post ----------------------------
-// ✅ Add postType parameter
-export const createSocialPost = async (text: string, assets?: any[], postType = 'public') => {
-  console.log('Creating post with text:', text, assets, postType);
+//  Add postType parameter
+export const createSocialPost = async (text: string, assets?: any[]) => {
+  console.log('Creating post with text:', text, assets);
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
 
     const formData = new FormData();
-    formData.append('text', text);
-    formData.append('postType', postType);  // ✅ add this
+    formData.append('text', text);  // ← was 'content'
 
+    // ── Supports multiple assets (images or videos) ──
     if (assets && assets.length > 0) {
       assets.forEach((asset) => {
-        formData.append('assets', {
+        formData.append('assets', {   // ← was 'image'
           uri:  asset.uri,
           type: asset.type  || 'image/jpeg',
           name: asset.name  || asset.fileName || `asset_${Date.now()}`,
@@ -25,7 +25,7 @@ export const createSocialPost = async (text: string, assets?: any[], postType = 
     }
 
     console.log('FormData prepared:', formData);
-    const response = await api.post('/api/posts/create', formData, {  // ✅ fix URL space
+    const response = await api.post('/api/posts/ ', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     console.log('Post created:', response.data);
@@ -40,7 +40,7 @@ export const createSocialPost = async (text: string, assets?: any[], postType = 
       throw new Error('Error setting up the request');
     }
   }
-};
+}
 
 
 //------------- fetch posts --------------------------------
