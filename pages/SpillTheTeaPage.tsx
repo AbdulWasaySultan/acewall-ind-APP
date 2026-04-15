@@ -5,7 +5,7 @@ import {
     ViewToken,
 } from 'react-native';
 import { Comment, Post } from '../components/spillTheTea';
-import { COLORS, MOCK_POSTS } from '../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/constants';
+import { COLORS} from '../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/constants';
 import { toggleLike } from '../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/helpers';
 import HeaderButton from '../components/spillTheTea/HeaderButton';
 import PostCard from '../components/spillTheTea/PostCard';
@@ -14,11 +14,7 @@ import CreatePostModal from '../components/spillTheTea/CreatePostModal';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-
-
-
-
-
+import { useFocusEffect } from '@react-navigation/native';
 // ── API ──────────────────────────────────────────────────────────────────────
 import {
     fetchAllPosts,
@@ -28,20 +24,37 @@ import {
     getLikeCount,
     getCommentCount,
 } from '../services/socialPosts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HELPERS (outside component — stable references)
+// HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 const normalizePost = (p: any): Post => ({
     ...p,
-    likes:        p.likes        ?? [],
-    comments:     p.comments     ?? [],
-    assets:       p.assets       ?? [],
-    totalLikes:   p.totalLikes   ?? 0,
-    userReaction: p.userReaction ?? null,
+    likes:         p.likes         ?? [],
+    comments:      p.comments      ?? [],
+    assets:        p.assets        ?? [],
+    totalLikes:    p.totalLikes    ?? 0,
+    totalComments: p.totalComments ?? 0,
+    userReaction:  p.userReaction  ?? null,
 });
 
 const VIEWABILITY_CONFIG = { itemVisiblePercentThreshold: 50 };
+
+// Decode JWT — get full user object from token
+const getUserFromToken = async (): Promise<{
+    _id: string; firstName: string; lastName: string; role: string;
+    profileImg?: { url: string };
+} | null> => {
+    try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) return null;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.user ?? null;
+    } catch {
+        return null;
+    }
+};
 
 // Fire and forget — fetch like counts without blocking UI
 const attachLikeCounts = (
@@ -60,6 +73,7 @@ const attachLikeCounts = (
         })
     );
 };
+
 const attachCommentCounts = (
     posts: Post[],
     updatePost: (id: string, d: { totalComments: number }) => void
@@ -68,9 +82,7 @@ const attachCommentCounts = (
         posts.map(async (post) => {
             try {
                 const d = await getCommentCount(post._id);
-                updatePost(post._id, {
-                    totalComments: d.totalComments ?? 0,
-                });
+                updatePost(post._id, { totalComments: d.totalComments ?? 0 });
             } catch { /* fail silently */ }
         })
     );
@@ -93,29 +105,30 @@ const SpillTheTeaPage: React.FC = () => {
     const [commentsOpen, setCommentsOpen] = useState(false);
     const [createOpen,   setCreateOpen]   = useState(false);
     const [visibleIds,   setVisibleIds]   = useState<Set<string>>(new Set());
+    const [currentUserId, setCurrentUserId] = useState<string>('');
 
-    // TODO: replace with useAuth()
-    const currentUserId = 'CURRENT_USER_ID';
 
-    // ── Update single post like data ──────────────────────────────────────────
+
+    useEffect(() => {
+        getUserFromToken().then((user) => {
+            if (user?._id) setCurrentUserId(user._id);
+        });
+    }, []);
+
+    // ── Update single post like/comment data ──────────────────────────────────
     const updatePostLike = useCallback((
         postId: string,
         data: { totalLikes: number; userReaction: string | null }
     ) => {
-        setPosts((prev) =>
-            prev.map((p) => p._id === postId ? { ...p, ...data } : p)
-        );
+        setPosts((prev) => prev.map((p) => p._id === postId ? { ...p, ...data } : p));
     }, []);
 
     const updatePostComment = useCallback((
         postId: string,
         data: { totalComments: number }
     ) => {
-        setPosts((prev) =>
-            prev.map((p) => p._id === postId ? { ...p, ...data } : p)
-        );
+        setPosts((prev) => prev.map((p) => p._id === postId ? { ...p, ...data } : p));
     }, []);
-    
 
     // ── Viewability ───────────────────────────────────────────────────────────
     const onViewableItemsChanged = useRef(
@@ -138,9 +151,9 @@ const SpillTheTeaPage: React.FC = () => {
             setPage(1);
             setTotalPages(data.totalPages ?? 1);
 
-            // Like counts in background
+            // Like & comment counts in background
             attachLikeCounts(rawPosts, updatePostLike);
-            attachCommentCounts(rawPosts, updatePostComment); 
+            attachCommentCounts(rawPosts, updatePostComment);
 
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to load posts.');
@@ -148,10 +161,14 @@ const SpillTheTeaPage: React.FC = () => {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [updatePostLike]);
+    }, [updatePostLike, updatePostComment]);
 
-    // Run on mount
-    React.useEffect(() => { fetchPosts(); }, [fetchPosts]);
+    // ── Refetch on screen focus (e.g. back from profile after delete) ─────────
+    useFocusEffect(
+        useCallback(() => {
+            fetchPosts();
+        }, [fetchPosts])
+    );
 
     // ── Load more ─────────────────────────────────────────────────────────────
     const loadMorePosts = async () => {
@@ -165,7 +182,7 @@ const SpillTheTeaPage: React.FC = () => {
             setPage(nextPage);
             setTotalPages(data.totalPages ?? 1);
             attachLikeCounts(rawPosts, updatePostLike);
-            attachCommentCounts(rawPosts, updatePostComment); 
+            attachCommentCounts(rawPosts, updatePostComment);
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to load more posts.');
         } finally {
@@ -214,7 +231,7 @@ const SpillTheTeaPage: React.FC = () => {
         const addCommentTo = (p: Post): Post => ({
             ...p,
             comments:      [...(p.comments ?? []), newComment],
-            totalComments: (p.totalComments ?? p.comments?.length ?? 0) + 1, 
+            totalComments: (p.totalComments ?? p.comments?.length ?? 0) + 1,
         });
         setPosts((prev)        => prev.map((p) => p._id === postId ? addCommentTo(p) : p));
         setSelectedPost((prev) => prev?._id === postId ? addCommentTo(prev) : prev);
@@ -226,26 +243,47 @@ const SpillTheTeaPage: React.FC = () => {
     };
 
     // ── Create Post ───────────────────────────────────────────────────────────
-    const handleCreatePost = async (text: string, image?: any) => {
-        const tempId   = `temp_${Date.now()}`;
+    const handleCreatePost = async (text: string, assets?: any[], postType: string = 'public') => {
+        const tempId = `temp_${Date.now()}`;
+
+        //  Get real user from JWT token so name shows correctly
+        const user = await getUserFromToken();
+
         const tempPost: Post = {
-            _id:          tempId,
+            _id: tempId,
             text,
-            assets:       [],
+            assets: [],
             totalComments: 0,
-            postType:     'public',
-            author:       { _id: currentUserId, firstName: 'You', lastName: '', role: 'student' },
-            likes:        [],
-            comments:     [],
-            totalLikes:   0,
+            postType: postType,
+            author: {
+                _id: user?._id ?? currentUserId,
+                firstName: user?.firstName ?? 'You',
+                lastName: user?.lastName ?? '',
+                role: user?.role ?? 'student',
+                profileImg: user?.profileImg,
+            },
+            likes: [],
+            comments: [],
+            totalLikes: 0,
             userReaction: null,
-            createdAt:    new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            content: ''
         };
+
         setPosts((prev) => [tempPost, ...prev]);
         try {
-            const response = await createSocialPost(text, image);
+            const response = await createSocialPost(text, assets, postType);
             const created  = normalizePost(response.post ?? response);
-            setPosts((prev) => prev.map((p) => p._id === tempId ? created : p));
+        
+            // If server returned incomplete author, keep the real author from temp post
+            const finalPost = {
+                ...created,
+                author: created.author?.firstName
+                    ? created.author   // server returned full author — use it
+                    : tempPost.author, // server returned partial — keep temp author
+            };
+        
+            setPosts((prev) => prev.map((p) => p._id === tempId ? finalPost : p));
         } catch (error: any) {
             setPosts((prev) => prev.filter((p) => p._id !== tempId));
             Alert.alert('Error', error.message || 'Failed to create post.');
@@ -335,8 +373,8 @@ const SpillTheTeaPage: React.FC = () => {
             <CreatePostModal
                 visible={createOpen}
                 onClose={() => setCreateOpen(false)}
-                onSubmit={({ content, media }) =>
-                    handleCreatePost(content, media?.[0] ?? null)
+                onSubmit={({ content, target, media }) =>
+                    handleCreatePost(content, media ?? [], target)
                 }
             />
         </SafeAreaView>

@@ -2,20 +2,21 @@ import { createApiInstance, addAuthInterceptor } from './course';
 
 
 
-//========== create post ==========================
-export const createSocialPost = async (text: string, assets?: any[]) => {
-  console.log('Creating post with text:', text, assets);
+//------------- create post ----------------------------
+// ✅ Add postType parameter
+export const createSocialPost = async (text: string, assets?: any[], postType = 'public') => {
+  console.log('Creating post with text:', text, assets, postType);
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
 
     const formData = new FormData();
-    formData.append('text', text);  // ← was 'content'
+    formData.append('text', text);
+    formData.append('postType', postType);  // ✅ add this
 
-    // ── Supports multiple assets (images or videos) ──
     if (assets && assets.length > 0) {
       assets.forEach((asset) => {
-        formData.append('assets', {   // ← was 'image'
+        formData.append('assets', {
           uri:  asset.uri,
           type: asset.type  || 'image/jpeg',
           name: asset.name  || asset.fileName || `asset_${Date.now()}`,
@@ -24,7 +25,7 @@ export const createSocialPost = async (text: string, assets?: any[]) => {
     }
 
     console.log('FormData prepared:', formData);
-    const response = await api.post('posts/', formData, {
+    const response = await api.post('/api/posts/create', formData, {  // ✅ fix URL space
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     console.log('Post created:', response.data);
@@ -42,7 +43,7 @@ export const createSocialPost = async (text: string, assets?: any[]) => {
 };
 
 
-//=========== fetch posts ==========================
+//------------- fetch posts --------------------------------
 export const fetchAllPosts = async (page = 1, limit = 10) => {
     try {
       const api = await createApiInstance();
@@ -58,7 +59,7 @@ export const fetchAllPosts = async (page = 1, limit = 10) => {
   };
 
 
-  //=========== fetch posts ==========================
+  //------------- fetch posts --------------------------------
 
 export const likePost = async (postId: string) => {
   console.log("postId:",postId)
@@ -76,7 +77,7 @@ export const likePost = async (postId: string) => {
 };
 
 
-//=========== check if post is liked ==========================
+//-------------------------check if post is liked ----------------------------------------
 export const isPostLiked = async (postId: string) => {
   try {
     const api = await createApiInstance();
@@ -91,7 +92,7 @@ export const isPostLiked = async (postId: string) => {
     else throw new Error('Error setting up the request');
   }
 };
-//=========== add comment to post ==========================
+//-------------------------add comment to post ----------------------------------------
 export const addComment = async (postId: string, text: string) => {
     try {
       const api = await createApiInstance();
@@ -107,7 +108,7 @@ export const addComment = async (postId: string, text: string) => {
   };
 
 
-  //=========== get comments for a post ==========================
+  //-------------------------get comments for a post ----------------------------------------
 export const getPostComments = async (postId: string) => {
   try {
     const api = await createApiInstance();
@@ -151,3 +152,33 @@ export const getCommentCount = async (postId: string) => {
   }
 };
 
+//----------------- get specific user posts --------------
+export const getUserPosts = async (userId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/posts/specificUserPosts/${userId}`);
+    console.log(`Usersssssss ${userId} posts:`, response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response) throw new Error(error.response.data.message || 'Failed to fetch user posts');
+    else if (error.request) throw new Error('No response from server.');
+    else throw new Error('Error setting up the request');
+  }
+};
+
+
+//----------------- delete post --------------
+export const deletePost = async (postId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.delete(`/api/posts/deletePost/${postId}`);
+    console.log(`Post ${postId} deleted:`, response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response) throw new Error(error.response.data.message || 'Failed to delete post');
+    else if (error.request) throw new Error('No response from server.');
+    else throw new Error('Error setting up the request');
+  }
+};

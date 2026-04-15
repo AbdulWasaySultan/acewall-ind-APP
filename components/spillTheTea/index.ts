@@ -22,6 +22,7 @@ export interface Asset {
 }
 
 export interface Post {
+  content: string;
   totalComments: number | undefined;
   _id:          string;
   text:         string;
