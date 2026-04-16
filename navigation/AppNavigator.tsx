@@ -42,6 +42,7 @@ import MoreCoursesPage from '../pages/MoreCourses';
 import WalletPage from '../pages/WalletPage';
 import SpillTheTeaPage from '../pages/SpillTheTeaPage';
 import SpillTheTeaProfilePage from '../pages/Spilltheteaprofilepage';
+import AIAssistantScreen from '../pages/AIAssistantScreen';
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -66,7 +67,8 @@ export type RootStackParamList = {
   ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string, navigateBack?: () => void };
   AssessmentScreenStudent: { assessmentId: string };
   DiscussionStudent: { discussionId: string }
-  SpillTheTeaProfile:             undefined; 
+  SpillTheTeaProfile: undefined;
+  AIAssistant: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -135,6 +137,7 @@ const DrawerNavigator = () => {
             'Assessments': userRole === 'student' ? 'My Assessments' : 'Assessments',
             'Announcements': 'Announcements',
             'spillTheTea': 'Spill the Tea',
+            'AIAssistant': 'AI Educational Assistant',
             'Messages': 'Messages',
             'Students': 'Students',
             'Gradebook': 'Gradebook',
@@ -181,6 +184,8 @@ const DrawerNavigator = () => {
       <Drawer.Screen name="Announcements" component={AnnouncementsPage} />
       <Drawer.Screen name="spillTheTea" component={SpillTheTeaPage} options={{ title: 'Spill the Tea' }} />
       <Drawer.Screen name="Messages" component={MessagesPage} />
+      <Drawer.Screen name="AIAssistant"  component={AIAssistantScreen} options={{ title: 'AI Educational Assistant' }}
+      />
       {userRole === 'student' && (
         <Drawer.Screen name="Gradebook" component={GradebookPage} />
       )}

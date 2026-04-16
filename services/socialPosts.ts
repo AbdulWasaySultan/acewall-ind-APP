@@ -4,28 +4,72 @@ import { createApiInstance, addAuthInterceptor } from './course';
 
 //------------- create post ----------------------------
 //  Add postType parameter
-export const createSocialPost = async (text: string, assets?: any[]) => {
-  console.log('Creating post with text:', text, assets);
+export const createSocialPost = async (
+  text: string,
+  assets?: any[],
+  postType: string = 'public',
+  courseId?: string
+) => {
+  console.log('Creating post:', { text, assets, postType, courseId });
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
 
     const formData = new FormData();
-    formData.append('text', text);  // ← was 'content'
+    formData.append('text', text);
+    formData.append('postType', postType);
 
-    // ── Supports multiple assets (images or videos) ──
+    if (postType === 'course' && courseId) {
+      formData.append('courseId', courseId);
+    }
+
+    // ── Multiple assets — images AND videos ──
     if (assets && assets.length > 0) {
       assets.forEach((asset) => {
-        formData.append('assets', {   // ← was 'image'
+
+        //  Detect mime type from extension or use provided type
+        const getMimeType = (asset: any): string => {
+          if (asset.type) {
+            // react-native-image-picker gives 'photo' or 'video' — convert to mime
+            if (asset.type === 'video') return 'video/mp4';
+            if (asset.type === 'photo') return 'image/jpeg';
+            // already a proper mime type like 'image/jpeg' or 'video/mp4'
+            if (asset.type.includes('/')) return asset.type;
+          }
+          // fallback — detect from file extension
+          const name = asset.name || asset.fileName || asset.uri || '';
+          const ext  = name.split('.').pop()?.toLowerCase();
+          const mimeMap: Record<string, string> = {
+            mp4:  'video/mp4',
+            mov:  'video/quicktime',
+            avi:  'video/x-msvideo',
+            mkv:  'video/x-matroska',
+            jpg:  'image/jpeg',
+            jpeg: 'image/jpeg',
+            png:  'image/png',
+            gif:  'image/gif',
+            webp: 'image/webp',
+          };
+          return mimeMap[ext ?? ''] ?? 'application/octet-stream';
+        };
+
+        const mimeType = getMimeType(asset);
+        const fileName = asset.name
+          || asset.fileName
+          || `asset_${Date.now()}.${mimeType.split('/')[1]}`;
+
+        formData.append('assets', {
           uri:  asset.uri,
-          type: asset.type  || 'image/jpeg',
-          name: asset.name  || asset.fileName || `asset_${Date.now()}`,
+          type: mimeType,   //  correct mime type for image or video
+          name: fileName,
         } as any);
+
+        console.log(`Asset appended: ${fileName} (${mimeType})`);
       });
     }
 
     console.log('FormData prepared:', formData);
-    const response = await api.post('/api/posts/ ', formData, {
+    const response = await api.post('/api/posts/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     console.log('Post created:', response.data);
@@ -40,8 +84,7 @@ export const createSocialPost = async (text: string, assets?: any[]) => {
       throw new Error('Error setting up the request');
     }
   }
-}
-
+};
 
 //------------- fetch posts --------------------------------
 export const fetchAllPosts = async (page = 1, limit = 10) => {

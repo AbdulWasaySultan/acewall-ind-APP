@@ -1,0 +1,179 @@
+import React, { useRef, useEffect, useState } from 'react';
+import {
+    View, FlatList, Text,
+    StyleSheet, SafeAreaView, StatusBar,
+    KeyboardAvoidingView, Platform,
+    TouchableOpacity
+} from 'react-native';
+
+import { Message } from '../components/aiAssistant/types';
+import useChat from '../components/aiAssistant/hooks/useChat';
+import TypingIndicator from '../components/aiAssistant/TypingIndicator';
+import ChatMessage from '../components/aiAssistant/ChatMessage';
+import QuickReplies from '../components/aiAssistant/QuickReplies';
+import ChatInput from '../components/aiAssistant/ChatInput';
+import DifficultySelector, { DifficultyLevel } from '../components/aiAssistant/DifficultySelector';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WELCOME MESSAGE
+// ─────────────────────────────────────────────────────────────────────────────
+const WELCOME: Message = {
+    id: 'welcome',
+    role: 'assistant',
+    content: "Hello! I am Acewall Scholars EduMentor, your AI educational assistant. How can I help you today?",
+    timestamp: new Date(),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+const AIChatbotScreen: React.FC = () => {
+    const flatListRef = useRef<FlatList>(null);
+
+    // ── Add useState for visibility ──
+    const [showDifficulty, setShowDifficulty] = useState(false);
+    // ── Difficulty state ───────────────────────────────────────────────────────
+    const [difficulty, setDifficulty] = useState<DifficultyLevel>('Medium');
+
+    // ── useChat — pass difficulty as context to API ────────────────────────────
+    const {
+        messages, isTyping, quickReplies,
+        error, sendMessage, clearChat,
+    } = useChat({
+        sessionType: 'educational',
+        difficulty,
+    });
+
+    // ── Auto-scroll ────────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (messages.length > 0 || isTyping) {
+            setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+            }, 100);
+        }
+    }, [messages, isTyping]);
+
+    const allMessages: (Message | 'typing')[] = [
+        WELCOME,
+        ...messages,
+        ...(isTyping ? (['typing'] as const) : []),
+    ];
+
+    return (
+        <SafeAreaView style={styles.safe}>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
+            <KeyboardAvoidingView
+                style={{ flex: 1, position: 'relative' }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+            >
+                {/* Message list */}
+                <FlatList
+                    ref={flatListRef}
+                    data={allMessages}
+                    keyExtractor={(item) =>
+                        item === 'typing' ? 'typing' : (item as Message).id
+                    }
+                    contentContainerStyle={styles.messageList}
+                    showsVerticalScrollIndicator={false}
+                    style={{ flex: 1 }}
+                    renderItem={({ item }) => {
+                        if (item === 'typing') return <TypingIndicator />;
+                        return <ChatMessage message={item as Message} />;
+                    }}
+                    ListFooterComponent={
+                        error ? (
+                            <View style={styles.errorBox}>
+                                <Text style={styles.errorText}>⚠ {error}</Text>
+                            </View>
+                        ) : null
+                    }
+                />
+
+                {/* ── Difficulty selector ── */}
+                <View style={{ position: 'relative' }}>
+
+                    {/* Toggle button — blue circle with chevron */}
+                    <TouchableOpacity
+                        style={styles.difficultyToggleBtn}
+                        onPress={() => setShowDifficulty((prev) => !prev)}
+                        activeOpacity={0.85}
+                    >
+                        <Text style={styles.difficultyToggleIcon}>
+                            {showDifficulty ? '>' : '<'}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Collapsible difficulty panel */}
+                    {showDifficulty && (
+                        <DifficultySelector
+                            value={difficulty}
+                            onChange={(level) => setDifficulty(level)}
+                        />
+                    )}
+
+                </View>
+
+                {/* Quick reply chips */}
+                <QuickReplies
+                    replies={quickReplies}
+                    onSelect={sendMessage}
+                />
+
+                {/* Text input */}
+                <ChatInput
+                    onSend={sendMessage}
+                    disabled={isTyping}
+                    placeholder="Ask any question or request to generate a file..."
+                />
+
+
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
+};
+
+const styles = StyleSheet.create({
+    safe: { flex: 1, backgroundColor: '#fff' },
+    messageList: {
+        paddingHorizontal: 16,
+        paddingTop: 20,
+        paddingBottom: 8,
+        flexGrow: 1,
+    },
+    errorBox: {
+        backgroundColor: '#fef2f2',
+        borderRadius: 10,
+        padding: 12,
+        marginHorizontal: 16,
+        marginBottom: 8,
+    },
+    errorText: { color: '#dc2626', fontSize: 13 },
+    difficultyToggleBtn: {
+        position: 'absolute',
+        right: 20,
+        top: -30,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#3B82F6',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 6,
+    },
+    difficultyToggleIcon: {
+        color: '#fff',
+        fontSize: 20,
+        opacity: 0.8,
+        fontWeight: '700',
+        lineHeight: 24,
+    },
+});
+
+export default AIChatbotScreen;

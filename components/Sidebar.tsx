@@ -50,6 +50,7 @@ const teacherMenuItems = [
   { label: 'Announcements', icon: require('../assets/jpg.jpg') },
   { label: 'Spill the Tea', icon: require('../assets/jpg.jpg') },
   { label: 'Messages', icon: require('../assets/jpg.jpg') },
+  { label: 'AI Assistant',        icon: require('../assets/jpg.jpg') },
   { label: 'Students', icon: require('../assets/jpg.jpg') },
   { label: 'Discussions', icon: require('../assets/jpg.jpg') },
   { label: 'Support', icon: require('../assets/jpg.jpg') },
@@ -65,6 +66,7 @@ const studentMenuItems = [
   { label: 'Announcements', icon: require('../assets/jpg.jpg') },
   { label: 'Spill the Tea', icon: require('../assets/jpg.jpg') },
   { label: 'Messages', icon: require('../assets/jpg.jpg') },
+  { label: 'AI Assistant',        icon: require('../assets/jpg.jpg') },
   { label: 'Gradebook', icon: require('../assets/jpg.jpg') },
   { label: 'Discussions', icon: require('../assets/jpg.jpg') },
   // { label: 'Pages', icon: require('../assets/jpg.jpg') },
@@ -118,6 +120,9 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
     }
     if (label === 'Spill the Tea') {
       screenName = 'spillTheTea';  
+    }
+    if (label === 'AI Assistant') {
+      screenName = 'AIAssistant';
     }
     navigation.navigate(screenName);
     navigation.closeDrawer();

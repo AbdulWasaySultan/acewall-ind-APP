@@ -272,7 +272,7 @@ const SpillTheTeaPage: React.FC = () => {
 
         setPosts((prev) => [tempPost, ...prev]);
         try {
-            const response = await createSocialPost(text, assets);
+            const response = await createSocialPost(text, assets, postType);
             const created  = normalizePost(response.post ?? response);
         
             // If server returned incomplete author, keep the real author from temp post
