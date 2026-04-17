@@ -1,6 +1,7 @@
 // ChatInput.tsx
 // Layout: [TextInput + 📎] [➤ Send]
 // Attach button opens native file browser — shows images + PDFs + docs
+// Uses copyTo:'cachesDirectory' to fix Android content:// URI issue
 
 import React, { useState } from 'react';
 import {
@@ -51,9 +52,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const canSend = (text.trim().length > 0 || !!attachedFile) && !disabled;
 
-  // ── Attach — opens native file browser directly (images + PDFs + docs) ───
+  // ── Attach — copies to cache so server can read the file ─────────────────
   const handleAttach = async () => {
     try {
+      // ✅ copyTo:'cachesDirectory' copies content:// to a real file:// path
       const [result] = await pick({
         type: [
           types.pdf,
@@ -63,17 +65,23 @@ const ChatInput: React.FC<ChatInputProps> = ({
           types.plainText,
         ],
         allowMultiSelection: false,
-      });
+        copyTo:              'cachesDirectory',
+      }) as any;
+
+      console.log('=== PICKED FILE ===');
+      console.log('original uri: ', result.uri);
+      console.log('fileCopyUri:  ', (result as any).fileCopyUri);
+      console.log('name:         ', result.name);
+      console.log('type:         ', result.type);
 
       setAttachedFile({
-        uri:  result.uri,
+        uri:  (result as any).fileCopyUri ?? result.uri, // ✅ real path
         name: result.name ?? `file_${Date.now()}`,
         type: result.type ?? 'application/octet-stream',
         size: result.size ?? undefined,
       });
 
     } catch (e: any) {
-      // User cancelled — silent
       if (e?.code === 'DOCUMENT_PICKER_CANCELED' || e?.message?.includes('cancel')) return;
       Alert.alert('Error', 'Failed to pick file.');
     }
@@ -169,12 +177,11 @@ const styles = StyleSheet.create({
     backgroundColor:   '#fff',
     paddingHorizontal: 16,
     paddingVertical:   12,
-    paddingBottom:     Platform.OS === 'ios' ? 28 : 12,
+    paddingBottom:     Platform.OS === 'ios' ? 40 : 25,
     borderTopWidth:    1,
     borderTopColor:    '#f0f0f0',
   },
 
-  // File preview chip shown above input
   filePreview: {
     flexDirection:     'row',
     alignItems:        'center',

@@ -29,7 +29,20 @@ const MediaPicker: React.FC<Props> = ({ onAdd }) => {
           Alert.alert('Error', res.errorMessage ?? 'Could not open media library.');
           return;
         }
-        res.assets?.forEach((asset) => onAdd(toMediaFile(asset, mediaType)));
+        res.assets?.forEach((asset: Asset) => {
+          if (!asset.uri) return;
+  
+          //  Fix Android video URI — use originalPath if available
+          const uri = asset.originalPath
+            ? `file://${asset.originalPath}`  // ← real file path for videos
+            : asset.uri;
+  
+          onAdd({
+            uri,
+            type: mediaType,
+            name: asset.fileName ?? `${mediaType}_${Date.now()}`,
+          });
+        });
       }
     );
   };
