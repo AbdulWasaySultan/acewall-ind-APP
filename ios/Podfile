@@ -1,47 +1,94 @@
+# require Pod::Executable.execute_command('node', ['-p',
+#   'require.resolve(
+#     "react-native/scripts/react_native_pods.rb",
+#     {paths: [process.argv[1]]},
+#   )', __dir__]).strip
+
+# platform :ios, '13.0'
+
+# prepare_react_native_project!
+
+# #  Force stable linking mode
+# use_frameworks! :linkage => :static if ENV['USE_FRAMEWORKS']
+
+# target 'SpeakYourMenu' do
+#   config = use_native_modules!
+
+#   use_react_native!(
+#     :path => config[:reactNativePath],
+#     :app_path => "#{Pod::Config.instance.installation_root}/..",
+
+#     # 🔥 CRITICAL STABILITY FLAGS (RN 0.79)
+#     :hermes_enabled => true,
+#     :fabric_enabled => false,
+#     :new_arch_enabled => false
+#   )
+
+#   #  DO NOT manually add vector icons pod (causes crashes in RN 0.79)
+#   # pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
+
+#   post_install do |installer|
+
+#     react_native_post_install(
+#       installer,
+#       config[:reactNativePath],
+#       :mac_catalyst_enabled => false
+#     )
+
+#     #  Fix Xcode 15 / CocoaPods instability
+#     installer.pods_project.targets.each do |target|
+#       target.build_configurations.each do |config|
+#         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+#         config.build_settings['DEAD_CODE_STRIPPING'] = 'YES'
+#         config.build_settings['ENABLE_BITCODE'] = 'NO'
+#       end
+#     end
+#   end
+# end
+
+
+
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, '13.0'
+# Upgrade global platform to 15.1 to satisfy React-RuntimeHermes 0.79.x requirements
+platform :ios, '15.1'
 
 prepare_react_native_project!
 
-#  Force stable linking mode
 use_frameworks! :linkage => :static if ENV['USE_FRAMEWORKS']
 
 target 'SpeakYourMenu' do
+  # Match the target definition to the updated deployment standard
+  current_target_definition.set_platform(:ios, '15.1')
+
   config = use_native_modules!
 
   use_react_native!(
     :path => config[:reactNativePath],
     :app_path => "#{Pod::Config.instance.installation_root}/..",
-
-    # 🔥 CRITICAL STABILITY FLAGS (RN 0.79)
     :hermes_enabled => true,
     :fabric_enabled => false,
     :new_arch_enabled => false
   )
 
-  #  DO NOT manually add vector icons pod (causes crashes in RN 0.79)
-  # pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
-
   post_install do |installer|
-
-    react_native_post_install(
-      installer,
-      config[:reactNativePath],
-      :mac_catalyst_enabled => false
-    )
-
-    #  Fix Xcode 15 / CocoaPods instability
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+        # Enforce the updated minimum version across all third-party modules
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
         config.build_settings['DEAD_CODE_STRIPPING'] = 'YES'
         config.build_settings['ENABLE_BITCODE'] = 'NO'
       end
     end
+    
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )    
   end
 end

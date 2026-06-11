@@ -7,6 +7,7 @@ const createApiInstance = async () => {
   if (!baseUrl) {
     throw new Error('No base URL configured. Please select a school first.');
   }
+  //not a request just 
   const instance = axios.create({
     baseURL: `${baseUrl}/api`,
     headers: { 'Content-Type': 'application/json' },

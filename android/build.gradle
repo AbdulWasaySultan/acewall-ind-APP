@@ -5,31 +5,26 @@ buildscript {
         compileSdkVersion = 35
         targetSdkVersion = 35
         ndkVersion = "27.1.12297006"
-
-        // ⚠️ IMPORTANT: Use stable Kotlin (NOT 2.0.x)
-        kotlinVersion = "1.9.0"
+        kotlinVersion = "2.0.21"
     }
-
     repositories {
         google()
         mavenCentral()
     }
-
     dependencies {
-        //  Explicit versions (VERY IMPORTANT)
-        classpath("com.android.tools.build:gradle:8.1.1")
-        classpath("com.facebook.react:react-native-gradle-plugin:0.9.11")
+        classpath("com.android.tools.build:gradle:8.8.2")
+        classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
 }
 
-subprojects {
+allprojects {
     repositories {
         google()
         mavenCentral()
     }
 
-    //  FIX: Force compatible AndroidX versions (prevents SDK 36 error)
+    // FIX: Force compatible AndroidX versions (prevents SDK 36 error)
     configurations.all {
         resolutionStrategy {
             force "androidx.core:core:1.12.0"
@@ -38,5 +33,4 @@ subprojects {
     }
 }
 
-//  Required for RN 0.79+
 apply plugin: "com.facebook.react.rootproject"
