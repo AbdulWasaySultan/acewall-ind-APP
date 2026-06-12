@@ -1,4 +1,5 @@
-import { Author } from '../types';
+
+import { Author } from '../../../../..';
 import { DATE_FORMAT_OPTIONS } from '../constants';
 
 export const formatDate = (iso: string) =>

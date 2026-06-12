@@ -1,115 +1,223 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, FlatList, StyleSheet,
   SafeAreaView, StatusBar, TouchableOpacity,
   ActivityIndicator, Alert,
 } from 'react-native';
-import MaterialIcons from '@react-native-vector-icons/material-icons';
-import { useNavigation } from '@react-navigation/native';           
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'; 
-import { RootStackParamList } from '../navigation/AppNavigator';    
+import AsyncStorage    from '@react-native-async-storage/async-storage';
+import MaterialIcons   from '@react-native-vector-icons/material-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList }  from '../navigation/AppNavigator';
 
-import ProfileHeader     from '../components/spillTheTea/ProfileHeader';
-import ProfilePostCard   from '../components/spillTheTea/Profilepostcard';
+import ProfileHeader   from '../components/spillTheTea/ProfileHeader';
+import ProfilePostCard from '../components/spillTheTea/Profilepostcard';
 import { Author, Post } from '../components/spillTheTea';
+
+
+// ── API ───────────────────────────────────────────────────────────────────────
+import {
+  getUserPosts,
+  likePost,
+  getLikeCount,
+  getCommentCount,
+  deletePost,
+} from '../services/socialPosts';
 import { toggleLike } from '../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/helpers';
 
-// ── Typed icon wrapper ──
+// ── Icon wrapper ──────────────────────────────────────────────────────────────
 const Icon: React.FC<{ name: string; size: number; color: string }> = ({ name, size, color }) => (
   <MaterialIcons name={name as any} size={size} color={color} />
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK — replace with real API + useAuth()
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Normalize post ────────────────────────────────────────────────────────────
+const normalizePost = (p: any): Post => ({
+  ...p,
+  likes:         p.likes         ?? [],
+  comments:      p.comments      ?? [],
+  assets:        p.assets        ?? [],
+  totalLikes:    p.totalLikes    ?? 0,
+  totalComments: p.totalComments ?? 0,
+  userReaction:  p.userReaction  ?? null,
+});
 
-const MOCK_CURRENT_USER: Author & { email: string } = {
-  _id:        'u1',
-  firstName:  'acewallscholars',
-  lastName:   'Student',
-  role:       'student',
-  email:      'acewallglobalindustries@gmail.com',
-  profileImg: undefined,
+// ── Decode JWT ────────────────────────────────────────────────────────────────
+const getUserIdFromToken = async (): Promise<string | null> => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.user?._id ?? payload._id ?? null;
+  } catch (e) {
+    console.warn('Failed to decode token:', e);
+    return null;
+  }
 };
 
-const MOCK_MY_POSTS: Post[] = [
-  {
-    _id:       '1',
-    content:   'Hi, this is amazing post',
-    author:    MOCK_CURRENT_USER,
-    likes:     ['u2'],
-    comments:  [],
-    createdAt: new Date('2026-04-10T22:59:49').toISOString(),
-  },
-];
+// ─────────────────────────────────────────────────────────────────────────────
+// BACKGROUND HELPERS — same pattern as SpillTheTeaPage
+// ─────────────────────────────────────────────────────────────────────────────
+const attachLikeCounts = (
+  posts: Post[],
+  updatePost: (id: string, d: { totalLikes: number; userReaction: string | null }) => void
+) => {
+  Promise.allSettled(
+    posts.map(async (post) => {
+      try {
+        const d = await getLikeCount(post._id);
+        updatePost(post._id, {
+          totalLikes:   d.totalLikes   ?? 0,
+          userReaction: d.userReaction ?? null,
+        });
+      } catch { /* fail silently */ }
+    })
+  );
+};
+
+const attachCommentCounts = (
+  posts: Post[],
+  updatePost: (id: string, d: { totalComments: number }) => void
+) => {
+  Promise.allSettled(
+    posts.map(async (post) => {
+      try {
+        const d = await getCommentCount(post._id);
+        updatePost(post._id, { totalComments: d.totalComments ?? 0 });
+      } catch { /* fail silently */ }
+    })
+  );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
+// COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
+const SpillTheTeaProfilePage: React.FC = () => {
 
-const SpillTheTeaProfilePage: React.FC = () => {                    //no Props needed
-
-  //useNavigation hook — works regardless of how screen is registered
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  // ── State ──
-  const [user,    setUser]    = useState<Author & { email?: string } | null>(null);
-  const [posts,   setPosts]   = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [user,          setUser]          = useState<Author & { email?: string } | null>(null);
+  const [posts,         setPosts]         = useState<Post[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [refreshing,    setRefreshing]    = useState(false);
 
-  // TODO: replace with useAuth()
-  const currentUserId = 'u1';
+  // ── Update helpers — same as SpillTheTeaPage ─────────────────────────────
+  const updatePostLike = useCallback((
+    postId: string,
+    data: { totalLikes: number; userReaction: string | null }
+  ) => {
+    setPosts((prev) => prev.map((p) => p._id === postId ? { ...p, ...data } : p));
+  }, []);
 
-  // ── Fetch user profile & their posts ──
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const updatePostComment = useCallback((
+    postId: string,
+    data: { totalComments: number }
+  ) => {
+    setPosts((prev) => prev.map((p) => p._id === postId ? { ...p, ...data } : p));
+  }, []);
+
+  // ── Step 1: Get userId from JWT token ─────────────────────────────────────
+  useEffect(() => {
+    getUserIdFromToken().then((id) => {
+      console.log('currentUserId from token:', id);
+      setCurrentUserId(id);
+    });
+  }, []);
+
+  // ── Step 2: Fetch posts + like/comment counts in background ──────────────
+  const fetchData = useCallback(async (isRefresh = false) => {
+    if (!currentUserId) return;
+    if (isRefresh) setRefreshing(true);
+    else           setLoading(true);
+
     try {
-      //Replace with real API:
-      // const { data } = await api.get('/spill-the-tea/my-posts');
-      // setUser(data.user);
-      // setPosts(data.posts);
-      setUser(MOCK_CURRENT_USER);
-      setPosts(MOCK_MY_POSTS);
-    } catch {
-      Alert.alert('Error', 'Failed to load profile.');
+      const data     = await getUserPosts(currentUserId);
+      const rawPosts = (data.posts ?? data ?? []).map(normalizePost);
+      const userInfo = data.user ?? rawPosts[0]?.author ?? null;
+
+      // ✅ Show posts immediately
+      setUser(userInfo);
+      setPosts(rawPosts);
+
+      // ✅ Like & comment counts in background — same as SpillTheTeaPage
+      attachLikeCounts(rawPosts, updatePostLike);
+      attachCommentCounts(rawPosts, updatePostComment);
+
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to load profile.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, []);
+  }, [currentUserId, updatePostLike, updatePostComment]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // ── Delete post ──
-  const handleDelete = async (postId: string) => {
-    setPosts((prev) => prev.filter((p) => p._id !== postId));
-    //Replace with real API:
-    // await api.delete(`/spill-the-tea/posts/${postId}`);
+  // ── Delete post ────────────────────────────────────────────────────────────
+  const handleDelete = (postId: string) => {
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            // Optimistic — remove from UI immediately
+            setPosts((prev) => prev.filter((p) => p._id !== postId));
+            try {
+              await deletePost(postId);
+            } catch (error: any) {
+              // Revert on failure
+              fetchData();
+              Alert.alert('Error', error.message || 'Failed to delete post.');
+            }
+          },
+        },
+      ]
+    );
   };
-
-  // ── Like / unlike post ──
-  const handleLike = (postId: string) => {
+  // ── Like / Unlike — same as SpillTheTeaPage ───────────────────────────────
+  const handleLike = async (postId: string) => {
+    if (!currentUserId) return;
     setPosts((prev) =>
       prev.map((p) =>
-        p._id === postId ? { ...p, likes: toggleLike(p.likes, currentUserId) } : p
+        p._id === postId
+          ? { ...p, likes: toggleLike(p.likes ?? [], currentUserId) }
+          : p
       )
     );
-    //Replace with real API:
-    // api.post(`/spill-the-tea/posts/${postId}/like`);
+    try {
+      const response = await likePost(postId);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p._id === postId
+            ? { ...p, totalLikes: response.totalLikes, userReaction: response.userReaction }
+            : p
+        )
+      );
+    } catch (error: any) {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p._id === postId
+            ? { ...p, likes: toggleLike(p.likes ?? [], currentUserId) }
+            : p
+        )
+      );
+      Alert.alert('Error', error.message || 'Failed to update like.');
+    }
   };
 
   // ─────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
-
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-      {/* ── Back button ── */}
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => navigation.goBack()}   //now works
-      >
+      {/* Back */}
+      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
         <Icon name="arrow-back" size={18} color="#fff" />
       </TouchableOpacity>
 
@@ -120,11 +228,15 @@ const SpillTheTeaProfilePage: React.FC = () => {                    //no Props n
           data={posts}
           keyExtractor={(p) => p._id}
           contentContainerStyle={styles.feed}
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={() => fetchData(true)}
           ListHeaderComponent={
-            user ?
-            <View style={{ marginBottom: 20 }}>
-            <ProfileHeader user={user} postCount={posts.length} />
-            </View> : null
+            user ? (
+              <View style={{ marginBottom: 20 }}>
+                <ProfileHeader user={user} postCount={posts.length} />
+              </View>
+            ) : null
           }
           ListEmptyComponent={
             <View style={styles.emptyBox}>
@@ -134,33 +246,26 @@ const SpillTheTeaProfilePage: React.FC = () => {                    //no Props n
           renderItem={({ item }) => (
             <ProfilePostCard
               post={item}
-              currentUserId={currentUserId}
+              currentUserId={currentUserId ?? ''}
               onDelete={handleDelete}
               onLike={handleLike}
             />
           )}
         />
       )}
-
     </SafeAreaView>
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: 'white', paddingTop:40 },
+  safe:      { flex: 1, backgroundColor: 'white', paddingTop: 40 },
   backBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     alignSelf: 'flex-start', backgroundColor: '#10B144',
-    margin: 20, padding:15,
-    borderRadius: 100,
+    margin: 20, padding: 15, borderRadius: 100,
   },
-  backText:  { color: '#fff', fontWeight: '700', fontSize: 14 },
   loader:    { marginTop: 80 },
-  feed:      { paddingHorizontal: 16, paddingBottom: 30, },
+  feed:      { paddingHorizontal: 16, paddingBottom: 30 },
   emptyBox:  { alignItems: 'center', marginTop: 60 },
   emptyText: { fontSize: 15, color: '#888' },
 });
