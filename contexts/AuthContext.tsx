@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getStoredBaseUrl } from '../utils/storage';
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check authentication and landing page status on app start
     const checkAuth = async () => {
       try {
+        //this block is getting all the values of the respected keys from locals torage asynchronously (calling them all at a time)
         const [auth, landing, userDataString] = await Promise.all([
           AsyncStorage.getItem('isAuthenticated'),
           AsyncStorage.getItem('hasSeenLanding'),
@@ -30,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // AsyncStorage.getItem('selectedBaseUrl'),
         ]);
         const baseUrl = "https://api.acewallscholarslearningonline.org"
+        // const basurl = getStoredBaseUrl(); // wasay edition
         setIsAuthenticated(auth === 'true');
         
         // Show landing page only if baseUrl is not saved

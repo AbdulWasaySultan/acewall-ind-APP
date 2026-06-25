@@ -1,8 +1,7 @@
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getStoredBaseUrl } from '../utils/storage';
+// gradebookService.ts
+import { getApiInstance } from "./apiInstance";
 
-// Types
+// Types...
 export interface Course {
   _id: string;
   courseTitle: string;
@@ -59,54 +58,56 @@ export interface CourseGradebook {
   directAssessments: DirectAssessments;
 }
 
-// Create axios instance with default config
-const createApiInstance = async () => {
-  const baseUrl = await getStoredBaseUrl();
-  if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
-  }
-  return axios.create({
-    baseURL: baseUrl,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  });
-};
+// Error handler
+const handleApiError = (error: any, defaultMessage: string) => {
+  console.error(`${defaultMessage}:`, error);
 
-// Add request interceptor for authentication if needed
-const addAuthInterceptor = (api: any) => {
-  api.interceptors.request.use(
-    async (config: any) => {
-      try {
-        // Get token from AsyncStorage
-        const token = await AsyncStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      } catch (error) {
-        console.error('Error getting token:', error);
-        return config;
-      }
-    },
-    (error: any) => {
-      return Promise.reject(error);
-    }
-  );
-  return api;
+  if (error.response) {
+    throw new Error(error.response.data?.message || defaultMessage);
+  } else if (error.request) {
+    throw new Error(
+      "No response from server. Please check your internet connection."
+    );
+  } else {
+    throw new Error(`Error: ${error.message}`);
+  }
 };
 
 export const getAllStudentsWithCourses = async (): Promise<Student[]> => {
-  const api = await createApiInstance();
-  addAuthInterceptor(api);
-  const response = await api.get('/api/course/getallCoursesforTeacher');
-  return response.data.students;
+  try {
+    const api = await getApiInstance(); // Interceptor already handles auth
+    const response = await api.get("/course/getallCoursesforTeacher");
+
+    // Validate response
+    if (!response.data?.students) {
+      throw new Error("Invalid response format");
+    }
+
+    return response.data.students;
+  } catch (error) {
+    handleApiError(error, "Failed to fetch students with courses");
+    return []; // This line won't execute due to throw, but keeps TypeScript happy
+  }
 };
 
-export const getCourseGradebook = async (studentId: string, courseId: string): Promise<CourseGradebook> => {
-  const api = await createApiInstance();
-  addAuthInterceptor(api);
-  const response = await api.get(`/api/gradebook/getGradebook/${studentId}/${courseId}`);
-  return response.data;
-}; 
+export const getCourseGradebook = async (
+  studentId: string,
+  courseId: string
+): Promise<CourseGradebook> => {
+  try {
+    const api = await getApiInstance(); // Interceptor already handles auth
+    const response = await api.get(
+      `/gradebook/getGradebook/${studentId}/${courseId}`
+    );
+
+    // Validate response
+    if (!response.data) {
+      throw new Error("Invalid response format");
+    }
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Failed to fetch course gradebook");
+    throw error; // Re-throw for component-level handling
+  }
+};

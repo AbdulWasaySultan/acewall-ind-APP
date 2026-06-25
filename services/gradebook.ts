@@ -1,20 +1,21 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getStoredBaseUrl } from '../utils/storage';
+import {getApiInstance} from '../services/apiInstance';
 
-const createApiInstance = async () => {
-  const baseUrl = await getStoredBaseUrl();
-  if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
-  }
-  return axios.create({
-    baseURL: baseUrl,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  });
-};
+// const createApiInstance = async () => {
+//   const baseUrl = await getStoredBaseUrl();
+//   if (!baseUrl) {
+//     throw new Error('No base URL configured. Please select a school first.');
+//   }
+//   return axios.create({
+//     baseURL: baseUrl,
+//     headers: {
+//       'Content-Type': 'application/json',
+//       'Accept': 'application/json',
+//     },
+//   });
+// };
 
 const addAuthInterceptor = (api: any) => {
   api.interceptors.request.use(
@@ -36,7 +37,7 @@ const addAuthInterceptor = (api: any) => {
 
 export const getOverallGradeReport = async () => {
   try {
-    const api = await createApiInstance();
+    const api = await getApiInstance();
     addAuthInterceptor(api);
     const response = await api.get('/api/gradebook/getStudentGradebooksFormatted');
     return response.data;
@@ -54,7 +55,7 @@ export const getOverallGradeReport = async () => {
 // Fetch gradebook for a specific course
 export const getCourseGradebook = async (courseId: string) => {
   try {
-    const api = await createApiInstance();
+    const api = await getApiInstance();
     addAuthInterceptor(api);
     const response = await api.get(`/api/gradebook/course/${courseId}`);
     return response.data;

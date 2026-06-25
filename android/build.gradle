@@ -24,11 +24,12 @@ allprojects {
         mavenCentral()
     }
 
-    // FIX: Force compatible AndroidX versions (prevents SDK 36 error)
     configurations.all {
         resolutionStrategy {
             force "androidx.core:core:1.13.1"
             force "androidx.core:core-ktx:1.13.1"
+            // Force compliance for underlying annotation processors
+            force "androidx.annotation:annotation:1.8.0" 
         }
     }
 }

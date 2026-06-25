@@ -1,40 +1,34 @@
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getStoredBaseUrl } from '../utils/storage';
+import { getApiInstance } from "./apiInstance";
 
-const createApiInstance = async () => {
-  const baseUrl = await getStoredBaseUrl();
-  if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+// Send a comment to a course
+export const sendComment = async (courseId: string, comment: string) => {
+  try {
+    const api = await getApiInstance();
+    // addAuthInterceptor(api);
+
+    // ✅ Correct: No duplicate /api/
+    const response = await api.post(`/comment/sendComment/${courseId}`, {
+      text: comment,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.log("Error sending comment:", error);
+    throw new Error(error.response?.data?.message || "Failed to send comment");
   }
-  const instance = axios.create({
-    baseURL: `${baseUrl}/api`,
-    headers: { 'Content-Type': 'application/json' },
-  });
-
-  instance.interceptors.request.use(
-    async (config) => {
-      const token = await AsyncStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
-    }
-  );
-  return instance;
 };
 
+// Get all comments for a course
 export const getComments = async (courseId: string) => {
-  const api = await createApiInstance();
-  const response = await api.get(`/comment/${courseId}`);
-  return response.data;
-};
-
-export const sendComment = async (courseId: string, text: string) => {
-  const api = await createApiInstance();
-  const response = await api.post(`/comment/sendComment/${courseId}`, { text });
-  return response.data;
+  try {
+    const api = await getApiInstance();
+    // addAuthInterceptor(api);
+    // ✅ Correct: No duplicate /api/
+    const response = await api.get(`/comment/${courseId}`);
+    return response.data;
+  } catch (error: any) {
+    console.log("Error fetching comments:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch comments"
+    );
+  }
 };

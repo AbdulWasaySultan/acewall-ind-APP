@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
-import { DrawerContentComponentProps } from '@react-navigation/drawer';
-import { useAuth } from '../contexts/AuthContext';
-import { useUser } from '../contexts/UserContext';
-import { useFocusEffect } from '@react-navigation/native';
-import { getUserInfo } from '../services/schoolService';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from "react-native";
+import { DrawerContentComponentProps } from "@react-navigation/drawer";
+import { useAuth } from "../contexts/AuthContext";
+import { useUser } from "../contexts/UserContext";
+import { useFocusEffect } from "@react-navigation/native";
+import { getUserInfo } from "../services/schoolService";
 
 interface UserData {
   _id: string;
@@ -38,46 +45,52 @@ interface SidebarProps {
     homeAddress?: string;
     mailingAddress?: string;
   };
-  navigation: DrawerContentComponentProps['navigation'];
+  navigation: DrawerContentComponentProps["navigation"];
   onLogout: () => Promise<void>;
 }
 
 const teacherMenuItems = [
-  { label: 'Dashboard', icon: require('../assets/jpg.jpg') },
-  { label: 'My Courses', icon: require('../assets/jpg.jpg') },
-  { label: 'Create Course', icon: require('../assets/jpg.jpg') },
-  { label: 'Assessments', icon: require('../assets/jpg.jpg') },
-  { label: 'Announcements', icon: require('../assets/jpg.jpg') },
-  { label: 'Spill the Tea', icon: require('../assets/jpg.jpg') },
-  { label: 'Messages', icon: require('../assets/jpg.jpg') },
-  { label: 'AI Assistant',        icon: require('../assets/jpg.jpg') },
-  { label: 'Students', icon: require('../assets/jpg.jpg') },
-  { label: 'Discussions', icon: require('../assets/jpg.jpg') },
-  { label: 'Support', icon: require('../assets/jpg.jpg') },
-  { label: 'Wallet', icon: require('../assets/jpg.jpg') },
-  { label: 'Account Information', icon: require('../assets/jpg.jpg') },
+  { label: "Dashboard", icon: require("../assets/jpg.jpg") },
+  { label: "My Courses", icon: require("../assets/jpg.jpg") },
+  { label: "Create Course", icon: require("../assets/jpg.jpg") },
+  { label: "Assessments", icon: require("../assets/jpg.jpg") },
+  { label: "Announcements", icon: require("../assets/jpg.jpg") },
+  { label: "Spill the Tea", icon: require("../assets/jpg.jpg") },
+  { label: "Messages", icon: require("../assets/jpg.jpg") },
+  { label: "AI Assistant", icon: require("../assets/jpg.jpg") },
+  { label: "Students", icon: require("../assets/jpg.jpg") },
+  { label: "Discussions", icon: require("../assets/jpg.jpg") },
+  { label: "Support", icon: require("../assets/jpg.jpg") },
+  { label: "Wallet", icon: require("../assets/jpg.jpg") },
+  { label: "Account Information", icon: require("../assets/jpg.jpg") },
 ];
 
 const studentMenuItems = [
-  { label: 'Dashboard', icon: require('../assets/jpg.jpg') },
-  { label: 'My Courses', icon: require('../assets/jpg.jpg') },
-  { label: 'More Courses', icon: require('../assets/jpg.jpg') },
-  { label: 'My Assessments', icon: require('../assets/jpg.jpg') },
-  { label: 'Announcements', icon: require('../assets/jpg.jpg') },
-  { label: 'Spill the Tea', icon: require('../assets/jpg.jpg') },
-  { label: 'Messages', icon: require('../assets/jpg.jpg') },
-  { label: 'AI Assistant',        icon: require('../assets/jpg.jpg') },
-  { label: 'Gradebook', icon: require('../assets/jpg.jpg') },
-  { label: 'Discussions', icon: require('../assets/jpg.jpg') },
+  { label: "Dashboard", icon: require("../assets/jpg.jpg") },
+  { label: "My Courses", icon: require("../assets/jpg.jpg") },
+  { label: "More Courses", icon: require("../assets/jpg.jpg") },
+  { label: "My Assessments", icon: require("../assets/jpg.jpg") },
+  { label: "Announcements", icon: require("../assets/jpg.jpg") },
+  { label: "Spill the Tea", icon: require("../assets/jpg.jpg") },
+  { label: "Messages", icon: require("../assets/jpg.jpg") },
+  { label: "AI Assistant", icon: require("../assets/jpg.jpg") },
+  { label: "Gradebook", icon: require("../assets/jpg.jpg") },
+  { label: "Discussions", icon: require("../assets/jpg.jpg") },
   // { label: 'Pages', icon: require('../assets/jpg.jpg') },
-  { label: 'Account Information', icon: require('../assets/jpg.jpg') },
+  { label: "Account Information", icon: require("../assets/jpg.jpg") },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  active,
+  onSelect,
+  navigation,
+  onLogout,
+}) => {
   const { userRole } = useAuth();
   const { user, setUser } = useUser();
 
-  const menuItems = userRole === 'student' ? studentMenuItems : teacherMenuItems;
+  const menuItems =
+    userRole === "student" ? studentMenuItems : teacherMenuItems;
 
   // Fetch latest user info whenever sidebar is focused
   useFocusEffect(
@@ -85,11 +98,12 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
       const fetchLatestUserInfo = async () => {
         try {
           const response = await getUserInfo();
+          console.log("Latest user info fetched in sidebar:", response);
           if (response && response.user) {
             setUser(response.user);
           }
         } catch (error) {
-          console.error('Error fetching latest user info in sidebar:', error);
+          console.error("Error fetching latest user info in sidebar:", error);
           // Don't show error to user as this is a background update
         }
       };
@@ -100,38 +114,41 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
 
   const handleNavigation = (label: string) => {
     onSelect(label);
-    let screenName = label.replace(/ /g, '');
-    if (label === 'My Assessments') {
-      screenName = 'Assessments';
-    } else if (label === 'My Courses') {
-      screenName = 'MyCourses';
+    let screenName = label.replace(/ /g, "");
+    if (label === "My Assessments") {
+      screenName = "Assessments";
+    } else if (label === "My Courses") {
+      screenName = "MyCourses";
+    } else if (label === "More Courses") {
+      screenName = "MoreCourses";
     }
-    else if (label === 'More Courses') {
-      screenName = 'MoreCourses';
+    if (label === "Discussions") {
+      screenName = "Discussions";
     }
-    if (label === 'Discussions') {
-      screenName = 'Discussions';
+    if (label === "Support") {
+      screenName = "Support";
     }
-    if (label === 'Support') {
-      screenName = 'Support';
+    if (label === "Account Information") {
+      screenName = "AccountInformation";
     }
-    if (label === 'Account Information') {
-      screenName = 'AccountInformation';
+    if (label === "Spill the Tea") {
+      screenName = "spillTheTea";
     }
-    if (label === 'Spill the Tea') {
-      screenName = 'spillTheTea';  
-    }
-    if (label === 'AI Assistant') {
-      screenName = 'AIAssistant';
+    if (label === "AI Assistant") {
+      screenName = "AIAssistant";
     }
     navigation.navigate(screenName);
     navigation.closeDrawer();
   };
 
   const getFullName = (userObj: any) => {
-    if (!userObj) return 'No Name';
-    const parts = [userObj.firstName, userObj.middleName, userObj.lastName].filter(Boolean);
-    return parts.join(' ') || 'No Name';
+    if (!userObj) return "No Name";
+    const parts = [
+      userObj.firstName,
+      userObj.middleName,
+      userObj.lastName,
+    ].filter(Boolean);
+    return parts.join(" ") || "No Name";
   };
 
   return (
@@ -143,31 +160,62 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
         bounces={true}
       >
         <View style={styles.header}>
-          <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Image
+            source={require("../assets/logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <View style={styles.userSection}>
-            <TouchableOpacity onPress={() => handleNavigation('Account Information')}>
-              <Image source={user && user.profileImg && user.profileImg.url ? { uri: user.profileImg.url } : require('../assets/placeholder.png')} style={styles.avatar} />
+            <TouchableOpacity
+              onPress={() => handleNavigation("Account Information")}
+            >
+              <Image
+                source={
+                  user && user.profileImg && user.profileImg.url
+                    ? { uri: user.profileImg.url }
+                    : require("../assets/placeholder.png")
+                }
+                style={styles.avatar}
+              />
             </TouchableOpacity>
             <Text style={styles.username}>{getFullName(user)}</Text>
-            <Text style={styles.email}>{user?.email || 'No Email'}</Text>
-            <Text style={styles.role}>{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''}</Text>
+            <Text style={styles.email}>{user?.email || "No Email"}</Text>
+            <Text style={styles.role}>
+              {user?.role
+                ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                : ""}
+            </Text>
           </View>
         </View>
 
         <View style={styles.menu}>
           {menuItems.map((item) => {
-            if(user?.email === "testaccount@yopmail.com" && item.label === "Wallet"){
+            if (
+              user?.email === "testaccount@yopmail.com" &&
+              item.label === "Wallet"
+            ) {
               return;
             }
-            return(
-            <TouchableOpacity
-              key={item.label}
-              style={[styles.menuItem, active === item.label && styles.activeMenuItem]}
-              onPress={() => handleNavigation(item.label)}
-            >
-              <Text style={[styles.menuText, active === item.label && styles.activeMenuText]}>{item.label}</Text>
-            </TouchableOpacity>
-          )})}
+            return (
+              <TouchableOpacity
+                key={item.label}
+                style={[
+                  styles.menuItem,
+                  active === item.label && styles.activeMenuItem,
+                ]}
+                onPress={() => handleNavigation(item.label)}
+              >
+                <Text
+                  style={[
+                    styles.menuText,
+                    active === item.label && styles.activeMenuText,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -184,7 +232,7 @@ const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogou
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   scrollContainer: {
     flex: 1,
@@ -193,7 +241,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: 40,
     paddingBottom: 20,
   },
@@ -203,64 +251,64 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   userSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   avatar: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     marginBottom: 8,
   },
   username: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
     marginBottom: 2,
   },
   email: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
     marginBottom: 8,
   },
   menu: {
-    width: '100%',
+    width: "100%",
     paddingHorizontal: 24,
     paddingBottom: 20,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: 12,
     borderRadius: 16,
     marginBottom: 6,
   },
   activeMenuItem: {
-    backgroundColor: '#10B144',
+    backgroundColor: "#10B144",
   },
   menuText: {
     fontSize: 18,
-    color: '#10B144',
+    color: "#10B144",
     marginLeft: 8,
   },
   activeMenuText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
   logoutButton: {
     margin: 16,
-    backgroundColor: '#ff4444',
+    backgroundColor: "#ff4444",
   },
   logoutText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
   role: {
-    color: '#666',
+    color: "#666",
     fontSize: 14,
     marginTop: 4,
   },
 });
 
-export default Sidebar; 
+export default Sidebar;

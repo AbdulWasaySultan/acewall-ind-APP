@@ -1,16 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Modal, DevSettings, Linking, Alert } from 'react-native';
-import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
-import SimpleIcon from '../components/SimpleIcon';
-import { getChaptersByQuarter, getChaptersForCourses, getQuartersForSemester, getStudentEnrolledCourseDetails, unenrollFromCourse } from '../services/course';
-import { isCourseRated, getCourseRating, createRating } from '../services/rating';
-import { getComments, sendComment } from '../services/comment';
-import { createConversation } from '../services/conversation';
-import ConversationsModal from '../components/ConversationsModal';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
+  DevSettings,
+  Linking,
+  Alert,
+} from "react-native";
+import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
+import SimpleIcon from "../components/SimpleIcon";
+import {
+  getChaptersByQuarter,
+  getChaptersForCourses,
+  getQuartersForSemester,
+  getStudentEnrolledCourseDetails,
+  unenrollFromCourse,
+} from "../services/course";
+import {
+  isCourseRated,
+  getCourseRating,
+  createRating,
+} from "../services/rating";
+import { getComments, sendComment } from "../services/comment";
+import { createConversation } from "../services/conversation";
+import ConversationsModal from "../components/ConversationsModal";
 import Toast from "react-native-simple-toast";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
 // Type for navigation param
-const avatarPlaceholder = require('../assets/placeholder.png');
+const avatarPlaceholder = require("../assets/placeholder.png");
 interface Params {
   enrollmentId: string;
   courseId: string;
@@ -44,20 +69,23 @@ const CourseDetailStudentPageEnrolled = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enrolledCourse, setEnrolledCourse] = useState<any>(null);
-  const [segment, setSegment] = useState<'overview' | 'reviews' | 'syllabus'>('overview');
+  const [segment, setSegment] = useState<"overview" | "reviews" | "syllabus">(
+    "overview"
+  );
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [rating, setRating] = useState(0);
   const [userRating, setUserRating] = useState(0);
   const [averageRating, setAverageRating] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [comments, setComments] = useState<any[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
-  const [isConversationsModalVisible, setIsConversationsModalVisible] = useState(false);
+  const [isConversationsModalVisible, setIsConversationsModalVisible] =
+    useState(false);
   const [isUnenrollModalVisible, setIsUnenrollModalVisible] = useState(false);
-  const [unenrollConfirmationText, setUnenrollConfirmationText] = useState('');
+  const [unenrollConfirmationText, setUnenrollConfirmationText] = useState("");
   const [isUnenrolling, setIsUnenrolling] = useState(false);
 
   const [semesterQuarters, setSemesterQuarters] = useState<any[]>([]);
@@ -75,7 +103,7 @@ const CourseDetailStudentPageEnrolled = () => {
   const navigation = useNavigation();
 
   const refreshChaptersForQuarter = async (quarterId: string) => {
-    console.log(courseId)
+    console.log(courseId);
     setLoadingChaptersForQuarter(true);
     setChaptersForQuarter([]);
     setChaptersMessage("");
@@ -108,7 +136,7 @@ const CourseDetailStudentPageEnrolled = () => {
         const data = await getStudentEnrolledCourseDetails(enrollmentId);
         setEnrolledCourse(data || null);
       } catch (err) {
-        setError('Failed to load course details.');
+        setError("Failed to load course details.");
       } finally {
         setLoading(false);
       }
@@ -118,7 +146,7 @@ const CourseDetailStudentPageEnrolled = () => {
 
   useEffect(() => {
     const fetchReviews = async () => {
-      if (segment === 'reviews' && enrolledCourse?.course) {
+      if (segment === "reviews" && enrolledCourse?.course) {
         setReviewsLoading(true);
         try {
           const courseId = enrolledCourse.course;
@@ -146,19 +174,22 @@ const CourseDetailStudentPageEnrolled = () => {
             console.warn("Failed to get overall rating:", ratingRes.reason);
           }
 
-          if (commentsRes.status === "fulfilled" && commentsRes.value?.comments) {
+          if (
+            commentsRes.status === "fulfilled" &&
+            commentsRes.value?.comments
+          ) {
             console.log("Comments response:", commentsRes.value);
             setComments(commentsRes.value.comments);
           } else if (commentsRes.status === "rejected") {
             console.warn("Failed to get comments:", commentsRes.reason);
           }
-
         } catch (err) {
           console.error("Unexpected error while loading reviews:", err);
         } finally {
           setReviewsLoading(false);
         }
       }
+      console.log(`ksfnkjsfnnksjksbvkjbjksbkjsb`);
     };
 
     fetchReviews();
@@ -172,7 +203,7 @@ const CourseDetailStudentPageEnrolled = () => {
 
     try {
       const response = await createRating(enrolledCourse.course, newRating);
-      console.log(response)
+      console.log(response);
       if (response.newRating) {
         setUserRating(response.newRating.star);
         // Refetch average rating to show updated average
@@ -183,7 +214,10 @@ const CourseDetailStudentPageEnrolled = () => {
         }
       }
     } catch (error: any) {
-      Toast.show(error?.response?.data?.message || "Failed to submit rating.", Toast.LONG);
+      Toast.show(
+        error?.response?.data?.message || "Failed to submit rating.",
+        Toast.LONG
+      );
       setRating(userRating > 0 ? userRating : 0); // Revert optimistic update on failure
       // Optionally show error to user
     } finally {
@@ -198,11 +232,11 @@ const CourseDetailStudentPageEnrolled = () => {
     try {
       const response = await sendComment(enrolledCourse.course, comment.trim());
       if (response.comment) {
-        setComments(prevComments => [response.comment, ...prevComments]);
-        setComment('');
+        setComments((prevComments) => [response.comment, ...prevComments]);
+        setComment("");
       }
     } catch (error) {
-      console.error('Failed to post comment:', error);
+      console.error("Failed to post comment:", error);
       // Optionally, show an error message to the user
     } finally {
       setIsSubmitting(false);
@@ -210,16 +244,16 @@ const CourseDetailStudentPageEnrolled = () => {
   };
 
   const handleUnenroll = async () => {
-    if (unenrollConfirmationText.toLowerCase() === 'unenroll') {
-      console.log('Unenrolling...');
+    if (unenrollConfirmationText.toLowerCase() === "unenroll") {
+      console.log("Unenrolling...");
       setIsUnenrolling(true);
       try {
         await unenrollFromCourse(enrollmentId, enrolledCourse.course);
         setIsUnenrollModalVisible(false);
-        setUnenrollConfirmationText(''); // Reset input
+        setUnenrollConfirmationText(""); // Reset input
         DevSettings.reload(); // Reload the app
       } catch (err) {
-        console.error('Failed to unenroll:', err);
+        console.error("Failed to unenroll:", err);
         // Optionally, show an error message to the user
       } finally {
         setIsUnenrolling(false);
@@ -233,52 +267,65 @@ const CourseDetailStudentPageEnrolled = () => {
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert('Error', 'Cannot open this URL. Please check if you have a browser installed.');
+        Alert.alert(
+          "Error",
+          "Cannot open this URL. Please check if you have a browser installed."
+        );
       }
     } catch (error) {
-      console.error('Error opening syllabus:', error);
-      Alert.alert('Error', 'Failed to open syllabus. Please try again.');
+      console.error("Error opening syllabus:", error);
+      Alert.alert("Error", "Failed to open syllabus. Please try again.");
     }
   };
 
   const handleMessageTeacher = async () => {
     if (!teacherId) {
-      Alert.alert('Error', 'Teacher information not available.');
+      Alert.alert("Error", "Teacher information not available.");
       return;
     }
 
     try {
-      console.log('Creating conversation with teacher:', teacherId);
+      console.log("Creating conversation with teacher:", teacherId);
       const response = await createConversation(teacherId);
-      console.log('Conversation response:', response);
+      console.log("Conversation response:", response);
 
       // Navigate to messages page with the conversation ID
       if (response.conversation && response.conversation._id) {
-        (navigation as any).navigate('Main', {
-          screen: 'Messages',
+        (navigation as any).navigate("Main", {
+          screen: "Messages",
           params: {
             conversationId: response.conversation._id,
-            teacherName: teacher
-          }
+            teacherName: teacher,
+          },
         });
       } else {
-        Alert.alert('Error', 'Failed to create conversation.');
+        Alert.alert("Error", "Failed to create conversation.");
       }
     } catch (error) {
-      console.error('Error creating conversation:', error);
-      Alert.alert('Error', 'Failed to start conversation. Please try again.');
+      console.error("Error creating conversation:", error);
+      Alert.alert("Error", "Failed to start conversation. Please try again.");
     }
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color="#10B144" /></View>;
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#10B144" />
+      </View>
+    );
   }
   if (error || !enrolledCourse) {
-    return <View style={styles.center}><Text>{error || 'No data found.'}</Text></View>;
+    return (
+      <View style={styles.center}>
+        <Text>{error || "No data found."}</Text>
+      </View>
+    );
   }
 
   const { courseDetails } = enrolledCourse;
-  const teacher = courseDetails?.createdby ? `${courseDetails.createdby.firstName} ${courseDetails.createdby.middleName} ${courseDetails.createdby.lastName}`.trim() : 'Unknown';
+  const teacher = courseDetails?.createdby
+    ? `${courseDetails.createdby.firstName} ${courseDetails.createdby.middleName} ${courseDetails.createdby.lastName}`.trim()
+    : "Unknown";
   const teacherId = courseDetails?.createdby?._id;
   const handleSemesterPress = async (semester: any) => {
     setShowQuartersModal(true);
@@ -315,10 +362,8 @@ const CourseDetailStudentPageEnrolled = () => {
     }
   };
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: '#fff' }}
-    >
-      <ScrollView style={{ backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <ScrollView style={{ backgroundColor: "#fff" }}>
         {/* Banner */}
         <TouchableOpacity
           style={styles.closeSimpleIcon}
@@ -328,27 +373,50 @@ const CourseDetailStudentPageEnrolled = () => {
           <Text style={styles.closeSimpleIconText}>×</Text>
         </TouchableOpacity>
         <View style={styles.bannerContainer}>
-          <Image source={{ uri: courseDetails.thumbnail?.url }} style={styles.bannerImage} />
+          <Image
+            source={{ uri: courseDetails.thumbnail?.url }}
+            style={styles.bannerImage}
+          />
           {/* Close SimpleIcon */}
 
           {/* Overlay Box */}
           <View style={styles.bannerOverlayBox}>
             <Text style={styles.bannerTitle}>{courseDetails.courseTitle}</Text>
-            <Text style={styles.bannerDesc} numberOfLines={showFullDescription ? undefined : 10}>
+            <Text
+              style={styles.bannerDesc}
+              numberOfLines={showFullDescription ? undefined : 10}
+            >
               {courseDetails.courseDescription}
             </Text>
-            {courseDetails.courseDescription && courseDetails.courseDescription.length > 80 && (
-              <TouchableOpacity onPress={() => setShowFullDescription(!showFullDescription)}>
-                <Text style={{ color: '#10B144', fontWeight: 'bold', marginBottom: 8 }}>
-                  {showFullDescription ? 'Read Less' : 'Read More'}
-                </Text>
-              </TouchableOpacity>
-            )}
+            {courseDetails.courseDescription &&
+              courseDetails.courseDescription.length > 80 && (
+                <TouchableOpacity
+                  onPress={() => setShowFullDescription(!showFullDescription)}
+                >
+                  <Text
+                    style={{
+                      color: "#10B144",
+                      fontWeight: "bold",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {showFullDescription ? "Read Less" : "Read More"}
+                  </Text>
+                </TouchableOpacity>
+              )}
             <View style={styles.bannerTagsRow}>
               <Text style={styles.bannerTagLabel}>Topic </Text>
-              <Text style={styles.bannerTag}>{courseDetails.category?.title}</Text>
-              {courseDetails.subcategory?.title && <Text style={styles.bannerTagLabel}> SubTopic </Text>}
-              {courseDetails.subcategory?.title && <Text style={styles.bannerTag}>{courseDetails.subcategory?.title}</Text>}
+              <Text style={styles.bannerTag}>
+                {courseDetails.category?.title}
+              </Text>
+              {courseDetails.subcategory?.title && (
+                <Text style={styles.bannerTagLabel}> SubTopic </Text>
+              )}
+              {courseDetails.subcategory?.title && (
+                <Text style={styles.bannerTag}>
+                  {courseDetails.subcategory?.title}
+                </Text>
+              )}
               <Text style={styles.bannerTagLabel}> Language </Text>
               <Text style={styles.bannerTagBlue}>{courseDetails.language}</Text>
             </View>
@@ -366,53 +434,82 @@ const CourseDetailStudentPageEnrolled = () => {
             style={styles.instructorAvatar}
           />
           <Text style={styles.teacherName}>{teacher}</Text>
-          <TouchableOpacity style={styles.messageBtn} onPress={handleMessageTeacher}>
+          <TouchableOpacity
+            style={styles.messageBtn}
+            onPress={handleMessageTeacher}
+          >
             <Text style={styles.messageBtnText}>Message</Text>
           </TouchableOpacity>
         </View>
 
         {/* Semester Information */}
-        {courseDetails.semesterbased ? courseDetails.semester && courseDetails.semester.length > 0 && courseDetails.semester.map((sem: any) => (
-          <TouchableOpacity
-            key={sem._id}
-            style={styles.semesterCard}
-            onPress={() => handleSemesterPress(sem)}
-          >
-            <Text style={styles.semesterTitle}>Semester: {sem.title}</Text>
-            <Text style={styles.semesterDate}>
-              {new Date(sem.startDate).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })} - {new Date(sem.endDate).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </Text>
-          </TouchableOpacity>
-        )) :
+        {courseDetails.semesterbased ? (
+          courseDetails.semester &&
+          courseDetails.semester.length > 0 &&
+          courseDetails.semester.map((sem: any) => (
+            <TouchableOpacity
+              key={sem._id}
+              style={styles.semesterCard}
+              onPress={() => handleSemesterPress(sem)}
+            >
+              <Text style={styles.semesterTitle}>Semester: {sem.title}</Text>
+              <Text style={styles.semesterDate}>
+                {new Date(sem.startDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}{" "}
+                -{" "}
+                {new Date(sem.endDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </Text>
+            </TouchableOpacity>
+          ))
+        ) : (
           <TouchableOpacity
             style={styles.semesterCard}
             onPress={handleChapterPress}
           >
             <Text style={styles.semesterTitle}>Course Chapters</Text>
-
-          </TouchableOpacity>}
+          </TouchableOpacity>
+        )}
 
         {/* Segments */}
         <View style={styles.segmentRow}>
           <TouchableOpacity
-            style={[styles.segmentBtn, segment === 'overview' && styles.segmentBtnActive]}
-            onPress={() => setSegment('overview')}
+            style={[
+              styles.segmentBtn,
+              segment === "overview" && styles.segmentBtnActive,
+            ]}
+            onPress={() => setSegment("overview")}
           >
-            <Text style={[styles.segmentBtnText, segment === 'overview' && styles.segmentBtnTextActive]}>Overview</Text>
+            <Text
+              style={[
+                styles.segmentBtnText,
+                segment === "overview" && styles.segmentBtnTextActive,
+              ]}
+            >
+              Overview
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.segmentBtn, segment === 'reviews' && styles.segmentBtnActive]}
-            onPress={() => setSegment('reviews')}
+            style={[
+              styles.segmentBtn,
+              segment === "reviews" && styles.segmentBtnActive,
+            ]}
+            onPress={() => setSegment("reviews")}
           >
-            <Text style={[styles.segmentBtnText, segment === 'reviews' && styles.segmentBtnTextActive]}>Reviews</Text>
+            <Text
+              style={[
+                styles.segmentBtnText,
+                segment === "reviews" && styles.segmentBtnTextActive,
+              ]}
+            >
+              Reviews
+            </Text>
           </TouchableOpacity>
           {/* <TouchableOpacity
             style={[styles.segmentBtn, segment === 'syllabus' && styles.segmentBtnActive]}
@@ -423,66 +520,128 @@ const CourseDetailStudentPageEnrolled = () => {
         </View>
 
         {/* Segment Content */}
-        {segment === 'overview' && (
+        {segment === "overview" && (
           <View style={styles.segmentContent}>
             <Text style={styles.sectionTitle}>What You'll Learn</Text>
-            {courseDetails.teachingPoints && courseDetails.teachingPoints.length > 0 ? (
+            {courseDetails.teachingPoints &&
+            courseDetails.teachingPoints.length > 0 ? (
               courseDetails.teachingPoints.map((point: string, idx: number) => (
                 <View key={idx} style={styles.checkRow}>
-                  <SimpleIcon name="check-circle" size={22} color="#43a047" style={{ marginRight: 8 }} />
+                  <SimpleIcon
+                    name="check-circle"
+                    size={22}
+                    color="#43a047"
+                    style={{ marginRight: 8 }}
+                  />
                   <Text style={styles.checkText}>{point}</Text>
                 </View>
               ))
-            ) : <Text style={styles.sectionSubtitle}>No teaching points.</Text>}
+            ) : (
+              <Text style={styles.sectionSubtitle}>No teaching points.</Text>
+            )}
 
             <Text style={styles.sectionTitle}>Requirements</Text>
-            {courseDetails.requirements && courseDetails.requirements.length > 0 ? (
+            {courseDetails.requirements &&
+            courseDetails.requirements.length > 0 ? (
               courseDetails.requirements.map((req: string, idx: number) => (
                 <View key={idx} style={styles.checkRow}>
-                  <SimpleIcon name="check-circle" size={22} color="#43a047" style={{ marginRight: 8 }} />
+                  <SimpleIcon
+                    name="check-circle"
+                    size={22}
+                    color="#43a047"
+                    style={{ marginRight: 8 }}
+                  />
                   <Text style={styles.checkText}>{req}</Text>
                 </View>
               ))
-            ) : <Text style={styles.sectionSubtitle}>No requirements.</Text>}
+            ) : (
+              <Text style={styles.sectionSubtitle}>No requirements.</Text>
+            )}
 
-            <TouchableOpacity style={styles.unenrollBtn} onPress={() => setIsUnenrollModalVisible(true)}>
+            <TouchableOpacity
+              style={styles.unenrollBtn}
+              onPress={() => setIsUnenrollModalVisible(true)}
+            >
               <Text style={styles.unenrollBtnText}>Unenroll</Text>
             </TouchableOpacity>
           </View>
         )}
-        {segment === 'reviews' && (
+        {segment === "reviews" && (
           <View style={styles.segmentContent}>
             {reviewsLoading ? (
               <ActivityIndicator size="large" color="#10B144" />
             ) : (
               <>
-                <Text style={styles.sectionTitle}>Rate this course {userRating}</Text>
+                <Text style={styles.sectionTitle}>
+                  Rate this course {userRating}
+                </Text>
                 {userRating > 0 ? (
                   <View style={styles.starsRow}>
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <Text key={i} style={[styles.star, { color: i <= userRating ? '#FFD700' : '#E0E0E0' }]}>★</Text>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Text
+                        key={i}
+                        style={[
+                          styles.star,
+                          { color: i <= userRating ? "#FFD700" : "#E0E0E0" },
+                        ]}
+                      >
+                        ★
+                      </Text>
                     ))}
-                    <Text style={styles.rateText}>{`You rated this course ${userRating} star${userRating > 1 ? 's' : ''}`}</Text>
+                    <Text
+                      style={styles.rateText}
+                    >{`You rated this course ${userRating} star${
+                      userRating > 1 ? "s" : ""
+                    }`}</Text>
                   </View>
                 ) : (
                   <View style={styles.starsRow}>
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <TouchableOpacity key={i} onPress={() => handleRateCourse(i)} disabled={isSubmittingRating}>
-                        <Text style={[styles.star, { color: i <= rating ? '#FFD700' : '#E0E0E0' }]}>★</Text>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => handleRateCourse(i)}
+                        disabled={isSubmittingRating}
+                      >
+                        <Text
+                          style={[
+                            styles.star,
+                            { color: i <= rating ? "#FFD700" : "#E0E0E0" },
+                          ]}
+                        >
+                          ★
+                        </Text>
                       </TouchableOpacity>
                     ))}
-                    <Text style={styles.rateText}>{rating > 0 ? `You rated this course ${rating} star${rating > 1 ? 's' : ''}` : 'Click to rate'}</Text>
+                    <Text style={styles.rateText}>
+                      {rating > 0
+                        ? `You rated this course ${rating} star${
+                            rating > 1 ? "s" : ""
+                          }`
+                        : "Click to rate"}
+                    </Text>
                   </View>
                 )}
 
                 <View style={styles.starsRow}>
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <Text key={i} style={[styles.star, { color: i <= averageRating ? '#FFD700' : '#E0E0E0' }]}>★</Text>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Text
+                      key={i}
+                      style={[
+                        styles.star,
+                        { color: i <= averageRating ? "#FFD700" : "#E0E0E0" },
+                      ]}
+                    >
+                      ★
+                    </Text>
                   ))}
-                  <Text style={styles.rateText}>{averageRating.toFixed(1)} ({ratingCount} ratings)</Text>
+                  <Text style={styles.rateText}>
+                    {averageRating.toFixed(1)} ({ratingCount} ratings)
+                  </Text>
                 </View>
 
-                <Text style={styles.sectionTitle}>Comments ({comments.length})</Text>
+                <Text style={styles.sectionTitle}>
+                  Comments ({comments.length})
+                </Text>
                 <View style={styles.commentBox}>
                   <TextInput
                     style={styles.commentInput}
@@ -493,7 +652,11 @@ const CourseDetailStudentPageEnrolled = () => {
                     multiline
                   />
                   <TouchableOpacity
-                    style={[styles.postBtn, (!comment.trim() || isSubmitting) && styles.postBtnDisabled]}
+                    style={[
+                      styles.postBtn,
+                      (!comment.trim() || isSubmitting) &&
+                        styles.postBtnDisabled,
+                    ]}
                     disabled={!comment.trim() || isSubmitting}
                     onPress={handlePostComment}
                   >
@@ -504,33 +667,54 @@ const CourseDetailStudentPageEnrolled = () => {
                 {comments.length > 0 ? (
                   comments.map((c: any) => {
                     const date = new Date(c.createdAt);
-                    const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-                    const userName = c.createdby ? `${c.createdby.firstName} ${c.createdby.lastName}` : (c.user?.firstName || 'User');
+                    const formattedDate = `${date
+                      .getDate()
+                      .toString()
+                      .padStart(2, "0")}/${(date.getMonth() + 1)
+                      .toString()
+                      .padStart(2, "0")}/${date.getFullYear()}`;
+                    const userName = c.createdby
+                      ? `${c.createdby.firstName} ${c.createdby.lastName}`
+                      : c.user?.firstName || "User";
                     const userRole = c.createdby?.role;
-                    const profileImg = c.createdby?.profileImg?.url
+                    const profileImg = c.createdby?.profileImg?.url;
                     return (
                       <View key={c._id} style={styles.commentItem}>
                         <View style={styles.commentHeader}>
                           <View style={styles.commentAvatar}>
-                            {profileImg ?
-                              <Image source={{ uri: profileImg }} style={styles.commentProfileImg} /> :
-                              <SimpleIcon name="account-circle" size={32} color="#888" />
-                            }
+                            {profileImg ? (
+                              <Image
+                                source={{ uri: profileImg }}
+                                style={styles.commentProfileImg}
+                              />
+                            ) : (
+                              <SimpleIcon
+                                name="account-circle"
+                                size={32}
+                                color="#888"
+                              />
+                            )}
                           </View>
                           <Text style={styles.commentUser}>{userName}</Text>
                           {userRole && (
                             <View style={styles.roleBadge}>
-                              <Text style={styles.roleText}>{userRole.toUpperCase()}</Text>
+                              <Text style={styles.roleText}>
+                                {userRole.toUpperCase()}
+                              </Text>
                             </View>
                           )}
-                          <Text style={styles.commentDate}>{formattedDate}</Text>
+                          <Text style={styles.commentDate}>
+                            {formattedDate}
+                          </Text>
                         </View>
                         <Text style={styles.commentText}>{c.text}</Text>
                       </View>
                     );
                   })
                 ) : (
-                  <Text style={styles.noComments}>No comments yet. Be the first to comment!</Text>
+                  <Text style={styles.noComments}>
+                    No comments yet. Be the first to comment!
+                  </Text>
                 )}
               </>
             )}
@@ -590,7 +774,9 @@ const CourseDetailStudentPageEnrolled = () => {
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>Confirm Unenrollment</Text>
             <Text style={styles.modalDescription}>
-              To confirm, type <Text style={{ fontWeight: 'bold' }}>unenroll</Text> below. This action cannot be undone.
+              To confirm, type{" "}
+              <Text style={{ fontWeight: "bold" }}>unenroll</Text> below. This
+              action cannot be undone.
             </Text>
             <TextInput
               style={styles.modalInput}
@@ -604,9 +790,14 @@ const CourseDetailStudentPageEnrolled = () => {
               style={[
                 styles.modalButton,
                 styles.unenrollModalButton,
-                (unenrollConfirmationText.toLowerCase() !== 'unenroll' || isUnenrolling) && styles.modalButtonDisabled
+                (unenrollConfirmationText.toLowerCase() !== "unenroll" ||
+                  isUnenrolling) &&
+                  styles.modalButtonDisabled,
               ]}
-              disabled={unenrollConfirmationText.toLowerCase() !== 'unenroll' || isUnenrolling}
+              disabled={
+                unenrollConfirmationText.toLowerCase() !== "unenroll" ||
+                isUnenrolling
+              }
               onPress={handleUnenroll}
             >
               {isUnenrolling ? (
@@ -620,7 +811,7 @@ const CourseDetailStudentPageEnrolled = () => {
               disabled={isUnenrolling}
               onPress={() => {
                 setIsUnenrollModalVisible(false);
-                setUnenrollConfirmationText('');
+                setUnenrollConfirmationText("");
                 setIsUnenrolling(false);
               }}
             >
@@ -696,10 +887,6 @@ const CourseDetailStudentPageEnrolled = () => {
           </View>
 
           <View style={styles.chaptersContent}>
-
-
-
-
             {loadingChaptersForQuarter ? (
               <ActivityIndicator
                 style={{ marginTop: 20 }}
@@ -709,9 +896,8 @@ const CourseDetailStudentPageEnrolled = () => {
             ) : chaptersForQuarter.length > 0 ? (
               <ScrollView>
                 {chaptersForQuarter.map((chapter, index) => {
-                  console.log(chapter)
+                  console.log(chapter);
                   return (
-
                     <TouchableOpacity
                       key={chapter._id}
                       style={styles.quarterCard}
@@ -721,10 +907,10 @@ const CourseDetailStudentPageEnrolled = () => {
                         (navigation as any).navigate("ChapterDetailsStudent", {
                           chapterId: chapter._id,
                           navigateBack: () => {
-                            navigation.goBack()
-                            setShowChaptersForQuarterModal(true)
-                          }
-                        })
+                            navigation.goBack();
+                            setShowChaptersForQuarterModal(true);
+                          },
+                        });
                       }}
                     >
                       <Text
@@ -734,8 +920,6 @@ const CourseDetailStudentPageEnrolled = () => {
                         {chapter?.description}
                       </Text>
                     </TouchableOpacity>
-
-
                   );
                 })}
               </ScrollView>
@@ -754,32 +938,44 @@ const CourseDetailStudentPageEnrolled = () => {
 };
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  bannerContainer: { position: 'relative', minHeight: 180, margin: 16, borderRadius: 16, overflow: 'hidden', justifyContent: 'flex-end' },
-  bannerImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover' },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  bannerContainer: {
+    position: "relative",
+    minHeight: 180,
+    margin: 16,
+    borderRadius: 16,
+    overflow: "hidden",
+    justifyContent: "flex-end",
+  },
+  bannerImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
   bannerOverlayBox: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: "rgba(255,255,255,0.9)",
     borderRadius: 16,
     padding: 18,
     margin: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
   closeSimpleIcon: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 10,
     zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: "rgba(255,255,255,0.85)",
     borderRadius: 16,
     width: 32,
     height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -787,70 +983,168 @@ const styles = StyleSheet.create({
   },
   closeSimpleIconText: {
     fontSize: 22,
-    color: '#222',
-    fontWeight: 'bold',
+    color: "#222",
+    fontWeight: "bold",
     lineHeight: 28,
-    textAlign: 'center',
+    textAlign: "center",
   },
-  bannerTitle: { fontSize: 28, fontWeight: 'bold', color: '#111', marginBottom: 4 },
-  bannerDesc: { fontSize: 16, color: '#222', marginBottom: 8 },
-  bannerTagsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 },
-  bannerTagLabel: { fontWeight: 'bold', color: '#222', fontSize: 15 },
-  bannerTag: { backgroundColor: '#D1FADF', color: '#111', borderRadius: 8, paddingHorizontal: 8, marginHorizontal: 2, fontSize: 15 },
-  bannerTagBlue: { backgroundColor: '#E0EDFF', color: '#111', borderRadius: 8, paddingHorizontal: 8, marginHorizontal: 2, fontSize: 15 },
-  teacherRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 8, marginBottom: 8 },
+  bannerTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 4,
+  },
+  bannerDesc: { fontSize: 16, color: "#222", marginBottom: 8 },
+  bannerTagsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginBottom: 4,
+  },
+  bannerTagLabel: { fontWeight: "bold", color: "#222", fontSize: 15 },
+  bannerTag: {
+    backgroundColor: "#D1FADF",
+    color: "#111",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    marginHorizontal: 2,
+    fontSize: 15,
+  },
+  bannerTagBlue: {
+    backgroundColor: "#E0EDFF",
+    color: "#111",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    marginHorizontal: 2,
+    fontSize: 15,
+  },
+  teacherRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+  },
   teacherAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  teacherName: { fontWeight: 'bold', fontSize: 18, color: '#222', flex: 1, marginLeft: 12 },
-  messageBtn: { backgroundColor: '#10B144', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  messageBtnText: { color: '#fff', fontWeight: 'bold' },
-  segmentRow: { flexDirection: 'row', marginHorizontal: 16, marginTop: 12, marginBottom: 8, backgroundColor: '#F5F6F7', borderRadius: 10 },
-  segmentBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 10 },
-  segmentBtnActive: { backgroundColor: '#fff', elevation: 2 },
-  segmentBtnText: { fontSize: 17, color: '#222', fontWeight: '500' },
-  segmentBtnTextActive: { color: '#10B144', fontWeight: 'bold' },
+  teacherName: {
+    fontWeight: "bold",
+    fontSize: 18,
+    color: "#222",
+    flex: 1,
+    marginLeft: 12,
+  },
+  messageBtn: {
+    backgroundColor: "#10B144",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  messageBtnText: { color: "#fff", fontWeight: "bold" },
+  segmentRow: {
+    flexDirection: "row",
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    backgroundColor: "#F5F6F7",
+    borderRadius: 10,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  segmentBtnActive: { backgroundColor: "#fff", elevation: 2 },
+  segmentBtnText: { fontSize: 17, color: "#222", fontWeight: "500" },
+  segmentBtnTextActive: { color: "#10B144", fontWeight: "bold" },
   segmentContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 32 },
-  sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#111', marginBottom: 8, marginTop: 12 },
-  sectionSubtitle: { fontSize: 16, color: '#888', marginBottom: 8 },
-  checkRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  checkSimpleIcon: { fontSize: 18, color: '#10B144', marginRight: 8 },
-  checkText: { fontSize: 16, color: '#222' },
-  unenrollBtn: { backgroundColor: '#FF6347', borderRadius: 8, paddingHorizontal: 20, paddingVertical: 10, marginTop: 18, alignSelf: 'center', width: "90%", justifyContent: "center" },
-  unenrollBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16, textAlign: "center" },
-  starsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  star: { fontSize: 28, color: '#FFD700', marginRight: 2 },
-  rateText: { fontSize: 16, color: '#888', marginLeft: 8 },
-  commentBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F6F7', borderRadius: 8, padding: 8, marginTop: 8 },
-  commentInput: { flex: 1, color: '#222', fontSize: 16, maxHeight: 100, textAlignVertical: 'top', padding: 4 },
-  postBtn: { backgroundColor: '#10B144', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8, marginLeft: 8 },
-  postBtnDisabled: { backgroundColor: '#E0E0E0' },
-  postBtnText: { color: '#fff', fontWeight: 'bold' },
-  noComments: { color: '#888', fontSize: 15, textAlign: 'center', marginTop: 32 },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  sectionSubtitle: { fontSize: 16, color: "#888", marginBottom: 8 },
+  checkRow: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  checkSimpleIcon: { fontSize: 18, color: "#10B144", marginRight: 8 },
+  checkText: { fontSize: 16, color: "#222" },
+  unenrollBtn: {
+    backgroundColor: "#FF6347",
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    marginTop: 18,
+    alignSelf: "center",
+    width: "90%",
+    justifyContent: "center",
+  },
+  unenrollBtnText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  starsRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  star: { fontSize: 28, color: "#FFD700", marginRight: 2 },
+  rateText: { fontSize: 16, color: "#888", marginLeft: 8 },
+  commentBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F6F7",
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 8,
+  },
+  commentInput: {
+    flex: 1,
+    color: "#222",
+    fontSize: 16,
+    maxHeight: 100,
+    textAlignVertical: "top",
+    padding: 4,
+  },
+  postBtn: {
+    backgroundColor: "#10B144",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginLeft: 8,
+  },
+  postBtnDisabled: { backgroundColor: "#E0E0E0" },
+  postBtnText: { color: "#fff", fontWeight: "bold" },
+  noComments: {
+    color: "#888",
+    fontSize: 15,
+    textAlign: "center",
+    marginTop: 32,
+  },
   commentItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   commentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 6,
   },
   commentAvatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   commentProfileImg: {
     width: 32,
@@ -858,71 +1152,71 @@ const styles = StyleSheet.create({
     borderRadius: 32,
   },
   commentUser: {
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     fontSize: 16,
     marginRight: 8,
   },
   roleBadge: {
-    backgroundColor: '#10B144',
+    backgroundColor: "#10B144",
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   roleText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 12,
   },
   commentDate: {
     fontSize: 14,
-    color: '#888',
-    marginLeft: 'auto',
+    color: "#888",
+    marginLeft: "auto",
   },
   commentText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     paddingLeft: 40, // Aligns with the text, not the avatar
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   modalView: {
-    width: '90%',
-    backgroundColor: 'white',
+    width: "90%",
+    backgroundColor: "white",
     borderRadius: 16,
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5
+    elevation: 5,
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalDescription: {
     fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
+    color: "#555",
+    textAlign: "center",
     marginBottom: 20,
     lineHeight: 22,
   },
   modalInput: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    borderColor: '#10B144',
+    borderColor: "#10B144",
     borderWidth: 2,
     borderRadius: 8,
     paddingHorizontal: 16,
@@ -930,41 +1224,41 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalButton: {
-    width: '100%',
+    width: "100%",
     height: 50,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 10,
   },
   unenrollModalButton: {
-    backgroundColor: '#FF6347',
+    backgroundColor: "#FF6347",
   },
   modalButtonDisabled: {
-    backgroundColor: '#FFB3A1',
+    backgroundColor: "#FFB3A1",
   },
   unenrollModalButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 16,
   },
   cancelButton: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
   },
   cancelButtonText: {
-    color: '#111',
-    fontWeight: 'bold',
+    color: "#111",
+    fontWeight: "bold",
     fontSize: 16,
   },
   semesterCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -972,25 +1266,25 @@ const styles = StyleSheet.create({
   },
   semesterTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     marginBottom: 4,
   },
   semesterDate: {
     fontSize: 14,
-    color: '#888',
+    color: "#888",
   },
   syllabusContainer: {
     marginTop: 8,
   },
   syllabusCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -1002,28 +1296,28 @@ const styles = StyleSheet.create({
   },
   syllabusTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     marginBottom: 2,
   },
   syllabusSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 4,
   },
   syllabusDate: {
     fontSize: 12,
-    color: '#888',
+    color: "#888",
   },
   downloadButton: {
-    backgroundColor: '#10B144',
+    backgroundColor: "#10B144",
     borderRadius: 8,
     padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   tabContentCentered: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 32,
   },
   quartersModalContainer: {
@@ -1141,4 +1435,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CourseDetailStudentPageEnrolled; 
+export default CourseDetailStudentPageEnrolled;

@@ -93,7 +93,14 @@ export const fetchAllPosts = async (page = 1, limit = 10) => {
       addAuthInterceptor(api);
       const response = await api.get(`/api/posts/getPosts?page=${page}&limit=${limit}`);
       console.log('Fetched posts:', response.data);
-      return response.data;
+      // return response.data;
+  return {
+      posts: response.data.posts || response.data || [],
+      totalPages: response.data.totalPages || 1,
+      currentPage: response.data.currentPage || page,
+      totalPosts: response.data.totalPosts || 0
+    };
+
     } catch (error: any) {
       if (error.response) throw new Error(error.response.data.message || 'Failed to fetch posts');
       else if (error.request) throw new Error('No response from server.');

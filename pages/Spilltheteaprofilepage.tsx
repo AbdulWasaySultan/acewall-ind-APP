@@ -1,19 +1,24 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from "react";
 import {
-  View, Text, FlatList, StyleSheet,
-  SafeAreaView, StatusBar, TouchableOpacity,
-  ActivityIndicator, Alert,
-} from 'react-native';
-import AsyncStorage    from '@react-native-async-storage/async-storage';
-import MaterialIcons   from '@react-native-vector-icons/material-icons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList }  from '../navigation/AppNavigator';
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import MaterialIcons from "@react-native-vector-icons/material-icons";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
 
-import ProfileHeader   from '../components/spillTheTea/ProfileHeader';
-import ProfilePostCard from '../components/spillTheTea/Profilepostcard';
-import { Author, Post } from '../components/spillTheTea';
-
+import ProfileHeader from "../components/spillTheTea/ProfileHeader";
+import ProfilePostCard from "../components/spillTheTea/Profilepostcard";
+import { Author, Post } from "../components/spillTheTea";
 
 // ── API ───────────────────────────────────────────────────────────────────────
 import {
@@ -22,34 +27,37 @@ import {
   getLikeCount,
   getCommentCount,
   deletePost,
-} from '../services/socialPosts';
-import { toggleLike } from '../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/helpers';
+} from "../services/socialPosts";
+import { toggleLike } from "../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/helpers";
 
 // ── Icon wrapper ──────────────────────────────────────────────────────────────
-const Icon: React.FC<{ name: string; size: number; color: string }> = ({ name, size, color }) => (
-  <MaterialIcons name={name as any} size={size} color={color} />
-);
+const Icon: React.FC<{ name: string; size: number; color: string }> = ({
+  name,
+  size,
+  color,
+}) => <MaterialIcons name={name as any} size={size} color={color} />;
 
 // ── Normalize post ────────────────────────────────────────────────────────────
 const normalizePost = (p: any): Post => ({
   ...p,
-  likes:         p.likes         ?? [],
-  comments:      p.comments      ?? [],
-  assets:        p.assets        ?? [],
-  totalLikes:    p.totalLikes    ?? 0,
+  likes: p.likes ?? [],
+  comments: p.comments ?? [],
+  assets: p.assets ?? [],
+  totalLikes: p.totalLikes ?? 0,
   totalComments: p.totalComments ?? 0,
-  userReaction:  p.userReaction  ?? null,
+  userReaction: p.userReaction ?? null,
 });
 
 // ── Decode JWT ────────────────────────────────────────────────────────────────
 const getUserIdFromToken = async (): Promise<string | null> => {
   try {
-    const token = await AsyncStorage.getItem('token');
+    const token = await AsyncStorage.getItem("token");
     if (!token) return null;
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    console.log("userid:", payload.user?._id ?? payload._id ?? null);
     return payload.user?._id ?? payload._id ?? null;
   } catch (e) {
-    console.warn('Failed to decode token:', e);
+    console.warn("Failed to decode token:", e);
     return null;
   }
 };
@@ -59,17 +67,22 @@ const getUserIdFromToken = async (): Promise<string | null> => {
 // ─────────────────────────────────────────────────────────────────────────────
 const attachLikeCounts = (
   posts: Post[],
-  updatePost: (id: string, d: { totalLikes: number; userReaction: string | null }) => void
+  updatePost: (
+    id: string,
+    d: { totalLikes: number; userReaction: string | null }
+  ) => void
 ) => {
   Promise.allSettled(
     posts.map(async (post) => {
       try {
         const d = await getLikeCount(post._id);
         updatePost(post._id, {
-          totalLikes:   d.totalLikes   ?? 0,
+          totalLikes: d.totalLikes ?? 0,
           userReaction: d.userReaction ?? null,
         });
-      } catch { /* fail silently */ }
+      } catch {
+        /* fail silently */
+      }
     })
   );
 };
@@ -83,7 +96,9 @@ const attachCommentCounts = (
       try {
         const d = await getCommentCount(post._id);
         updatePost(post._id, { totalComments: d.totalComments ?? 0 });
-      } catch { /* fail silently */ }
+      } catch {
+        /* fail silently */
+      }
     })
   );
 };
@@ -92,91 +107,98 @@ const attachCommentCounts = (
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const SpillTheTeaProfilePage: React.FC = () => {
-
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [user,          setUser]          = useState<Author & { email?: string } | null>(null);
-  const [posts,         setPosts]         = useState<Post[]>([]);
-  const [loading,       setLoading]       = useState(true);
-  const [refreshing,    setRefreshing]    = useState(false);
+  const [user, setUser] = useState<(Author & { email?: string }) | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // ── Update helpers — same as SpillTheTeaPage ─────────────────────────────
-  const updatePostLike = useCallback((
-    postId: string,
-    data: { totalLikes: number; userReaction: string | null }
-  ) => {
-    setPosts((prev) => prev.map((p) => p._id === postId ? { ...p, ...data } : p));
-  }, []);
+  const updatePostLike = useCallback(
+    (
+      postId: string,
+      data: { totalLikes: number; userReaction: string | null }
+    ) => {
+      setPosts((prev) =>
+        prev.map((p) => (p._id === postId ? { ...p, ...data } : p))
+      );
+    },
+    []
+  );
 
-  const updatePostComment = useCallback((
-    postId: string,
-    data: { totalComments: number }
-  ) => {
-    setPosts((prev) => prev.map((p) => p._id === postId ? { ...p, ...data } : p));
-  }, []);
+  const updatePostComment = useCallback(
+    (postId: string, data: { totalComments: number }) => {
+      setPosts((prev) =>
+        prev.map((p) => (p._id === postId ? { ...p, ...data } : p))
+      );
+    },
+    []
+  );
 
   // ── Step 1: Get userId from JWT token ─────────────────────────────────────
   useEffect(() => {
     getUserIdFromToken().then((id) => {
-      console.log('currentUserId from token:', id);
+      console.log("currentUserId from token:", id);
       setCurrentUserId(id);
     });
   }, []);
 
   // ── Step 2: Fetch posts + like/comment counts in background ──────────────
-  const fetchData = useCallback(async (isRefresh = false) => {
-    if (!currentUserId) return;
-    if (isRefresh) setRefreshing(true);
-    else           setLoading(true);
+  const fetchData = useCallback(
+    async (isRefresh = false) => {
+      if (!currentUserId) return;
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
 
-    try {
-      const data     = await getUserPosts(currentUserId);
-      const rawPosts = (data.posts ?? data ?? []).map(normalizePost);
-      const userInfo = data.user ?? rawPosts[0]?.author ?? null;
+      try {
+        const data = await getUserPosts(currentUserId);
+        const rawPosts = (data.posts ?? data ?? []).map(normalizePost);
+        const userInfo = data.user ?? rawPosts[0]?.author ?? null;
 
-      // ✅ Show posts immediately
-      setUser(userInfo);
-      setPosts(rawPosts);
+        // ✅ Show posts immediately
+        setUser(userInfo);
+        setPosts(rawPosts);
 
-      // ✅ Like & comment counts in background — same as SpillTheTeaPage
-      attachLikeCounts(rawPosts, updatePostLike);
-      attachCommentCounts(rawPosts, updatePostComment);
+        // ✅ Like & comment counts in background — same as SpillTheTeaPage
+        attachLikeCounts(rawPosts, updatePostLike);
+        attachCommentCounts(rawPosts, updatePostComment);
+      } catch (error: any) {
+        Alert.alert("Error", error.message || "Failed to load profile.");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [currentUserId, updatePostLike, updatePostComment]
+  );
 
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to load profile.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [currentUserId, updatePostLike, updatePostComment]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // ── Delete post ────────────────────────────────────────────────────────────
   const handleDelete = (postId: string) => {
-    Alert.alert(
-      'Delete Post',
-      'Are you sure you want to delete this post?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            // Optimistic — remove from UI immediately
-            setPosts((prev) => prev.filter((p) => p._id !== postId));
-            try {
-              await deletePost(postId);
-            } catch (error: any) {
-              // Revert on failure
-              fetchData();
-              Alert.alert('Error', error.message || 'Failed to delete post.');
-            }
-          },
+    Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          // Optimistic — remove from UI immediately
+          setPosts((prev) => prev.filter((p) => p._id !== postId));
+          try {
+            await deletePost(postId);
+          } catch (error: any) {
+            // Revert on failure
+            fetchData();
+            Alert.alert("Error", error.message || "Failed to delete post.");
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
   // ── Like / Unlike — same as SpillTheTeaPage ───────────────────────────────
   const handleLike = async (postId: string) => {
@@ -193,7 +215,11 @@ const SpillTheTeaProfilePage: React.FC = () => {
       setPosts((prev) =>
         prev.map((p) =>
           p._id === postId
-            ? { ...p, totalLikes: response.totalLikes, userReaction: response.userReaction }
+            ? {
+                ...p,
+                totalLikes: response.totalLikes,
+                userReaction: response.userReaction,
+              }
             : p
         )
       );
@@ -205,7 +231,7 @@ const SpillTheTeaProfilePage: React.FC = () => {
             : p
         )
       );
-      Alert.alert('Error', error.message || 'Failed to update like.');
+      Alert.alert("Error", error.message || "Failed to update like.");
     }
   };
 
@@ -217,7 +243,10 @@ const SpillTheTeaProfilePage: React.FC = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* Back */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => navigation.goBack()}
+      >
         <Icon name="arrow-back" size={18} color="#fff" />
       </TouchableOpacity>
 
@@ -246,7 +275,7 @@ const SpillTheTeaProfilePage: React.FC = () => {
           renderItem={({ item }) => (
             <ProfilePostCard
               post={item}
-              currentUserId={currentUserId ?? ''}
+              currentUserId={currentUserId ?? ""}
               onDelete={handleDelete}
               onLike={handleLike}
             />
@@ -258,16 +287,21 @@ const SpillTheTeaProfilePage: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  safe:      { flex: 1, backgroundColor: 'white', paddingTop: 40 },
+  safe: { flex: 1, backgroundColor: "white", paddingTop: 40 },
   backBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    alignSelf: 'flex-start', backgroundColor: '#10B144',
-    margin: 20, padding: 15, borderRadius: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    backgroundColor: "#10B144",
+    margin: 20,
+    padding: 15,
+    borderRadius: 100,
   },
-  loader:    { marginTop: 80 },
-  feed:      { paddingHorizontal: 16, paddingBottom: 30 },
-  emptyBox:  { alignItems: 'center', marginTop: 60 },
-  emptyText: { fontSize: 15, color: '#888' },
+  loader: { marginTop: 80 },
+  feed: { paddingHorizontal: 16, paddingBottom: 30 },
+  emptyBox: { alignItems: "center", marginTop: 60 },
+  emptyText: { fontSize: 15, color: "#888" },
 });
 
 export default SpillTheTeaProfilePage;

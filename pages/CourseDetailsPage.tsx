@@ -15,13 +15,10 @@ import {
   Switch,
   Keyboard,
   KeyboardAvoidingView,
+  FlatList,
 } from "react-native";
 import GradeScaleModal from "../components/GradeScaleModal";
-import {
-  useRoute,
-  useNavigation,
-  RouteProp,
-} from "@react-navigation/native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
   getCourseDetails,
@@ -63,14 +60,13 @@ import {
   createQuarter,
   updateQuarter,
   toggleQuarterArchive,
-  createApiInstance,
-  addAuthInterceptor,
 } from "../services/course";
 import {
   getCourseRating,
   isCourseRated,
   createRating,
 } from "../services/rating";
+import { getApiInstance } from "../services/apiInstance";
 import { getComments, sendComment } from "../services/comment";
 import { deletePage } from "../services/page";
 import SimpleIcon from "../components/SimpleIcon";
@@ -80,52 +76,60 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import Toast from "react-native-simple-toast";
 import { getCourseGradebook } from "../services/gradebook";
 import { pick, types } from "@react-native-documents/picker";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import GPAModal from "../components/GPAModal";
 import { useUser } from "../contexts/UserContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useRef } from "react";
+import { useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { ImageProps } from "react-native";
 
-const fallbackImage = require("../assets/jpg.jpg");
+const fallbackImage = require("../assets/star.png");
 interface Assessment {
-  assessmentId: string
-  assessmentTitle: string
-  category: string
-  maxPoints: number
-  studentPoints: number
-  isDiscussion: boolean
+  assessmentId: string;
+  assessmentTitle: string;
+  category: string;
+  maxPoints: number;
+  studentPoints: number;
+  isDiscussion: boolean;
 }
 
 interface Quarter {
-  quarterId: string
-  quarterTitle: string
-  grade: number
-  gpa: number
-  letterGrade: string
-  assessments: Assessment[]
+  quarterId: string;
+  quarterTitle: string;
+  grade: number;
+  gpa: number;
+  letterGrade: string;
+  assessments: Assessment[];
 }
 
 interface Semester {
-  semesterId: string
-  semesterTitle: string
-  quarters: Quarter[]
+  semesterId: string;
+  semesterTitle: string;
+  quarters: Quarter[];
 }
 
 interface Student {
-  studentId: string
-  studentName: string
-  gpa: number
-  finalGrade: number
-  letterGrade: string
-  semesters: Semester[]
-  assessments: Assessment[]
-  hasSemesterStructure: boolean
+  studentId: string;
+  studentName: string;
+  gpa: number;
+  finalGrade: number;
+  letterGrade: string;
+  semesters: Semester[];
+  assessments: Assessment[];
+  hasSemesterStructure: boolean;
 }
 
 interface GradebookData {
-  courseId: string
-  total: number
-  page: number
-  limit: number
-  gradebook: Student[]
+  courseId: string;
+  total: number;
+  page: number;
+  limit: number;
+  gradebook: Student[];
 }
 export interface GradeScaleItem {
   _id: string;
@@ -217,7 +221,8 @@ const CourseDetailsPage = () => {
   const [showNewQuarterModal, setShowNewQuarterModal] = useState(false);
   const [showEditSemesterModal, setShowEditSemesterModal] = useState(false);
   const [showEditQuarterModal, setShowEditQuarterModal] = useState(false);
-  const [selectedSemesterForQuarter, setSelectedSemesterForQuarter] = useState<any>(null);
+  const [selectedSemesterForQuarter, setSelectedSemesterForQuarter] =
+    useState<any>(null);
   const [editingSemester, setEditingSemester] = useState<any>(null);
   const [editingQuarter, setEditingQuarter] = useState<any>(null);
   const [semesterTitle, setSemesterTitle] = useState("");
@@ -226,8 +231,12 @@ const CourseDetailsPage = () => {
   const [quarterTitle, setQuarterTitle] = useState("");
   const [quarterStartDate, setQuarterStartDate] = useState("");
   const [quarterEndDate, setQuarterEndDate] = useState("");
-  const [showSemesterDatePicker, setShowSemesterDatePicker] = useState<'start' | 'end' | null>(null);
-  const [showQuarterDatePicker, setShowQuarterDatePicker] = useState<'start' | 'end' | null>(null);
+  const [showSemesterDatePicker, setShowSemesterDatePicker] = useState<
+    "start" | "end" | null
+  >(null);
+  const [showQuarterDatePicker, setShowQuarterDatePicker] = useState<
+    "start" | "end" | null
+  >(null);
   const [quarters, setQuarters] = useState<any[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<any>(null);
   const [selectedQuarter, setSelectedQuarter] = useState<any>(null);
@@ -254,7 +263,6 @@ const CourseDetailsPage = () => {
   const [chaptersForSelectedQuarter, setChaptersForSelectedQuarter] = useState<
     any[]
   >([]);
-  const {user} = useUser()
   const [
     loadingChaptersForSelectedQuarter,
     setLoadingChaptersForSelectedQuarter,
@@ -270,8 +278,9 @@ const CourseDetailsPage = () => {
     useState(false);
   const [selectedAssessmentForModal, setSelectedAssessmentForModal] =
     useState<any>(null);
-  const [expandedMcq, setExpandedMcq] = useState<{ [key: number]: boolean }>({ 0: true, });
-
+  const [expandedMcq, setExpandedMcq] = useState<{ [key: number]: boolean }>({
+    0: true,
+  });
 
   // Edit assessment modal states
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
@@ -283,12 +292,14 @@ const CourseDetailsPage = () => {
   const [editAssessmentDueDate, setEditAssessmentDueDate] =
     useState<Date | null>(null);
 
-
   const [showEditCategoryMenu, setShowEditCategoryMenu] = useState(false);
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
   const [showEditTimePicker, setShowEditTimePicker] = useState(false);
   const [tempEditDate, setTempEditDate] = useState<Date | null>(null);
-  const [editQuarterDates, setEditQuarterDates] = useState<{ startDate: string, endDate: string } | null>(null);
+  const [editQuarterDates, setEditQuarterDates] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
   const [editQuarterId, setEditQuarterId] = useState<string | null>(null);
 
   const [showGradebookModal, setShowGradebookModal] = useState(false);
@@ -296,9 +307,10 @@ const CourseDetailsPage = () => {
   const [gradebookData, setGradebookData] = useState<any>(null);
   const [gradebookError, setGradebookError] = useState<string | null>(null);
 
-
   const [averageRating, setAverageRating] = useState(0);
+  const [ratingStars, setRatingStars] = useState(0);
   const [ratingCount, setRatingCount] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [comments, setComments] = useState<any[]>([]);
   const [comment, setComment] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -376,27 +388,47 @@ const CourseDetailsPage = () => {
 
   // Dropdown and new modal states
   const [showPlusDropdown, setShowPlusDropdown] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+  const plusButtonRef = useRef<any>(null);
+
   const [showLessonsPlusDropdown, setShowLessonsPlusDropdown] = useState(false);
   const [currentLessonForAssessment, setCurrentLessonForAssessment] =
     useState<any>(null);
   const [showAddAssessmentModal, setShowAddAssessmentModal] = useState(false);
   const [showAddPageModal, setShowAddPageModal] = useState(false);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
-  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set())
-  const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set())
-  const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(new Set())
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
+    new Set()
+  );
+  const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(
+    new Set()
+  );
+  const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(
+    new Set()
+  );
   const [showMore, setShowMore] = useState(false);
-  const isLong = course?.courseDescription && course.courseDescription.length > 500;
-  const courseDescription = course?.courseDescription && (showMore
-    ? course.courseDescription
-    : course.courseDescription.slice(0, 500) + (isLong ? "..." : ""))
-  const [showGradeScaleManagement, setShowGradeScaleManagement] = useState(false)
-  const [showGradeScaleManagementLoader, setShowGradeScaleManagementLoader] = useState(false)
-  const [showGPAManagement, setShowGPAManagement] = useState(false)
-  const [showGPAManagementLoader, setShowGPAManagementLoader] = useState(false)
-  const [gradeScale, setGradeScale] = useState([])
-  const [GPA, setGPA] = useState([])
-  const [keyboardPadding, setKeyboardPadding] = useState(16)
+  const isLong =
+    course?.courseDescription && course.courseDescription.length > 500;
+  const courseDescription =
+    course?.courseDescription &&
+    (showMore
+      ? course.courseDescription
+      : course.courseDescription.slice(0, 500) + (isLong ? "..." : ""));
+  const [showGradeScaleManagement, setShowGradeScaleManagement] =
+    useState(false);
+  const [showGradeScaleManagementLoader, setShowGradeScaleManagementLoader] =
+    useState(false);
+  const [showGPAManagement, setShowGPAManagement] = useState(false);
+  const [showGPAManagementLoader, setShowGPAManagementLoader] = useState(false);
+  const [gradeScale, setGradeScale] = useState([]);
+  const [GPA, setGPA] = useState([]);
+  const [keyboardPadding, setKeyboardPadding] = useState(16);
+  const [selectedStars, setSelectedStars] = useState(0);
+  const [isSubmittingRating, setIsSubmittingRating] = useState<boolean>();
+
+  const { userRole } = useAuth();
+  const { user, setUser } = useUser();
+
   const formatDateWithOrdinal = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getUTCDate();
@@ -420,15 +452,69 @@ const CourseDetailsPage = () => {
     };
     return `${month} ${day}${getOrdinal(day)}, ${year}`;
   };
+
+  const star = require("../assets/emptyStar.png");
+  const filledStar = require("../assets/star-yellow.png");
+
+  const stars = [
+    { id: 1, image: star, filledImage: filledStar },
+    { id: 2, image: star, filledImage: filledStar },
+    { id: 3, image: star, filledImage: filledStar },
+    { id: 4, image: star, filledImage: filledStar },
+    { id: 5, image: star, filledImage: filledStar },
+  ];
+
+  const renderStars = ({
+    item,
+  }: {
+    item: { id: number; image: ImageProps; filledImage: ImageProps };
+  }) => {
+    return (
+      <TouchableOpacity
+        style={styles.starTouchable}
+        onPress={() => setSelectedStars(item.id)}
+      >
+        <Image
+          source={item.id <= selectedStars ? item.filledImage : item.image}
+          style={styles.star}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+    );
+  };
+
+  const handleSubmitRating = async () => {
+    if (selectedStars === 0) {
+      Toast.show("Please select a rating", Toast.SHORT);
+      return;
+    }
+
+    setIsSubmittingRating(true);
+    try {
+      await createRating(course._id, selectedStars);
+      Toast.show("Rating submitted successfully!", Toast.SHORT);
+
+      // Reset form
+      setSelectedStars(0);
+
+      // Refresh ratings
+      setRefreshKey((prev) => prev + 1);
+    } catch (err: any) {
+      Toast.show(err.message || "Failed to submit rating", Toast.LONG);
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
+      "keyboardDidShow",
       () => {
         setKeyboardPadding(17);
       }
     );
     const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
+      "keyboardDidHide",
       () => {
         setKeyboardPadding(16);
       }
@@ -461,8 +547,8 @@ const CourseDetailsPage = () => {
     console.log("Fetching course details for:", courseId);
     getCourseDetails(courseId)
       .then((res) => {
-        console.log(res, 'Course details')
-        setCourse(res.course)
+        console.log(res, "Course details");
+        setCourse(res.course);
       })
       .catch(() => setError("Failed to load course details."))
       .finally(() => setLoading(false));
@@ -477,7 +563,7 @@ const CourseDetailsPage = () => {
           const res = await getSemesters();
           setAllSemesters(res.semesters || []);
         } catch (error: any) {
-          console.error(error)
+          console.error("Failed to set semesters", error);
           Toast.show(error.message || "Failed to fetch semesters.", Toast.LONG);
         } finally {
           setLoadingSemesters(false);
@@ -498,15 +584,18 @@ const CourseDetailsPage = () => {
       .then((res) => setCourse(res.course))
       .catch(() => setError("Failed to load course details."))
       .finally(() => setLoading(false));
-  }
+  };
   const fetchGradingPeriods = async () => {
     setLoadingGradingPeriods(true);
     try {
       const res = await getSemestersOfCourse(courseId);
       setGradingPeriods(res.semesters || []);
     } catch (error: any) {
-      console.error(error);
-      Toast.show(error.message || "Failed to fetch grading periods.", Toast.LONG);
+      console.error("failed to  to set gradingperiods", error);
+      Toast.show(
+        error.message || "Failed to fetch grading periods.",
+        Toast.LONG
+      );
     } finally {
       setLoadingGradingPeriods(false);
     }
@@ -514,49 +603,89 @@ const CourseDetailsPage = () => {
 
   useEffect(() => {
     if (course?._id) {
+      console.log(
+        "🔄 Fetching id for course:",
+        course._id,
+        "refreshKey:",
+        refreshKey
+      );
       fetchRatingAndComments();
     }
-  }, [course?._id]);
+  }, [course?._id, refreshKey]); // ✅ refreshKey triggers re-fetch
 
   // Refresh chapter details when returning to the page (e.g., after creating an assessment)
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     if (chapterDetails?._id) {
-  //       handleViewChapterDetails(chapterDetails._id);
-  //     }
-  //   }, [])
-  // );
+  useFocusEffect(
+    useCallback(() => {
+      if (chapterDetails?._id) {
+        handleViewChapterDetails(chapterDetails._id);
+      }
+    }, [])
+  );
 
   const fetchRatingAndComments = async () => {
     setCommentsLoading(true);
     try {
+      console.log("📥 Fetching rating and comments for course:", course._id);
+
       const ratingRes = await getCourseRating(course._id);
+      const ratingStarsCount = ratingRes?.averageStar || 0;
       if (ratingRes) {
         setAverageRating(ratingRes.averageStar || 0);
         setRatingCount(ratingRes.count || 0);
+        setRatingStars(ratingStarsCount);
       }
+
       const commentsRes = await getComments(course._id);
+      console.log("📥 Full comments response:", commentsRes);
+
       if (commentsRes && commentsRes.comments) {
         setComments(commentsRes.comments);
+      } else {
+        setComments([]);
       }
-    } catch (err) {
-      // Optionally handle error
+    } catch (err: any) {
+      console.log("Error fetching comments:", err);
+      // Don't show toast for fetch errors - just log them
     } finally {
       setCommentsLoading(false);
     }
   };
 
   const handlePostComment = async () => {
-    if (!comment.trim()) return;
+    if (!comment.trim()) {
+      Toast.show("Please enter a comment", Toast.SHORT);
+      return;
+    }
+
     setIsSubmittingComment(true);
     try {
+      console.log("📤 Posting comment for course:", course._id);
       const response = await sendComment(course._id, comment.trim());
-      if (response.comment) {
-        setComments((prev) => [response.comment, ...prev]);
+      console.log("✅ Response:", response);
+
+      // Handle different response structures
+      const newComment = response.comment || response.data || response;
+
+      if (newComment && newComment._id) {
+        // Add to UI immediately
+        setComments((prev) => [newComment, ...prev]);
         setComment("");
+
+        // Trigger re-fetch to sync with server
+        setRefreshKey((prev) => prev + 1);
+
+        Toast.show("Comment posted!", Toast.SHORT);
+        fetchRatingAndComments(); // Refresh comments after posting
+      } else {
+        // Even if response structure is unexpected, try to refresh anyway
+        setRefreshKey((prev) => prev + 1);
+        Toast.show("Failed to post comment", Toast.SHORT);
       }
-    } catch (err) {
-      // Optionally handle error
+    } catch (err: any) {
+      console.error("Error posting comment:", err);
+      const errorMessage =
+        err.message || "Failed to post comment. Please try again.";
+      Toast.show(errorMessage, Toast.LONG);
     } finally {
       setIsSubmittingComment(false);
     }
@@ -621,6 +750,7 @@ const CourseDetailsPage = () => {
   const handleSemesterPress = async (semester: any) => {
     setShowQuartersModal(true);
     try {
+      console.log("hi confirmed this is the sem button");
       setLoadingSemesterQuarters(true);
       const res = await getQuartersForSemester(semester._id);
       // If the course's semester object already contains associated quarters,
@@ -628,13 +758,16 @@ const CourseDetailsPage = () => {
       const fetchedQuarters: any[] = res.quarters || [];
       const assignedQuarterIds: string[] = Array.isArray(course?.quarter)
         ? course.quarter
-          .map((q: any) => q?._id || q?.quarterId || q?.quarter || q)
-          .filter(Boolean)
+            .map((q: any) => q?._id || q?.quarterId || q?.quarter || q)
+            .filter(Boolean)
         : [];
       console.log(course?.quarter, assignedQuarterIds);
-      const quartersToShow = assignedQuarterIds.length > 0
-        ? fetchedQuarters.filter((q: any) => assignedQuarterIds.includes(q._id))
-        : fetchedQuarters;
+      const quartersToShow =
+        assignedQuarterIds.length > 0
+          ? fetchedQuarters.filter((q: any) =>
+              assignedQuarterIds.includes(q._id)
+            )
+          : fetchedQuarters;
       console.log(quartersToShow);
 
       setSemesterQuarters(quartersToShow);
@@ -655,10 +788,9 @@ const CourseDetailsPage = () => {
     setChaptersMessage("");
     try {
       const res = await getChaptersForCourses(courseId);
-      console.log(res)
+      console.log(res);
       if (res.chapters && res.chapters.length > 0) {
         setChaptersForQuarter(res.chapters);
-
       } else {
         setChaptersMessage("No chapters found.");
       }
@@ -917,12 +1049,19 @@ const CourseDetailsPage = () => {
     }
     if (editAssessmentDueDate && editQuarterDates) {
       const dueDateTimestamp = editAssessmentDueDate.getTime();
-      const quarterStartTimestamp = new Date(editQuarterDates.startDate).getTime();
+      const quarterStartTimestamp = new Date(
+        editQuarterDates.startDate
+      ).getTime();
       const quarterEndTimestamp = new Date(editQuarterDates.endDate).getTime();
 
-      if (dueDateTimestamp < quarterStartTimestamp || dueDateTimestamp > quarterEndTimestamp) {
+      if (
+        dueDateTimestamp < quarterStartTimestamp ||
+        dueDateTimestamp > quarterEndTimestamp
+      ) {
         Toast.show(
-          `Due date must be between ${formatDate(new Date(editQuarterDates.startDate))} and ${formatDate(new Date(editQuarterDates.endDate))}`,
+          `Due date must be between ${formatDate(
+            new Date(editQuarterDates.startDate)
+          )} and ${formatDate(new Date(editQuarterDates.endDate))}`,
           Toast.LONG
         );
         return;
@@ -943,7 +1082,7 @@ const CourseDetailsPage = () => {
 
       // Close modals and refresh data
       setShowEditAssessmentModal(false);
-      setShowAssessmentDetailsModal(true)
+      setShowAssessmentDetailsModal(true);
       // setShowAssessmentDetailsModal(false);
 
       // Refresh chapter details if we're in the chapter details modal
@@ -953,7 +1092,11 @@ const CourseDetailsPage = () => {
             chapterDetails._id
           );
           setChapterDetails(response.chapter);
-          setSelectedAssessmentForModal((prev: any) => response.chapter.chapter_assessments.find((assessment: any) => assessment._id === prev._id))
+          setSelectedAssessmentForModal((prev: any) =>
+            response.chapter.chapter_assessments.find(
+              (assessment: any) => assessment._id === prev._id
+            )
+          );
         } catch (error) {
           console.error("Error refreshing chapter details:", error);
         }
@@ -972,15 +1115,16 @@ const CourseDetailsPage = () => {
 
   const fetchQuarterDatesForEdit = async (quarterId: string) => {
     try {
-      const api = await createApiInstance();
-      addAuthInterceptor(api);
-      const response = await api.get(`/api/quarter/getDatesofQuarter/${quarterId}`);
+      const api = await getApiInstance();
+      const response = await api.get(
+        `/api/quarter/getDatesofQuarter/${quarterId}`
+      );
       setEditQuarterDates({
         startDate: response.data.startDate,
-        endDate: response.data.endDate
+        endDate: response.data.endDate,
       });
     } catch (error) {
-      console.error('Error fetching quarter dates:', error);
+      console.error("Error fetching quarter dates:", error);
       // Don't show error toast as this is not critical
     }
   };
@@ -1012,16 +1156,17 @@ const CourseDetailsPage = () => {
         }))
       );
     } catch (error) {
-      console.error('Error fetching assessment categories:', error);
+      console.error("Error fetching assessment categories:", error);
     }
 
     // Get quarter ID and fetch quarter dates
-    const quarterId = assessment.quarter || chapterDetails?.quarter || selectedQuarterId;
+    const quarterId =
+      assessment.quarter || chapterDetails?.quarter || selectedQuarterId;
     if (quarterId) {
       setEditQuarterId(quarterId);
       await fetchQuarterDatesForEdit(quarterId);
     }
-    setShowAssessmentDetailsModal(false)
+    setShowAssessmentDetailsModal(false);
     setShowEditAssessmentModal(true);
   };
 
@@ -1121,7 +1266,26 @@ const CourseDetailsPage = () => {
 
   // Dropdown handlers
   const handlePlusButtonPress = () => {
-    setShowPlusDropdown(!showPlusDropdown);
+    // setShowPlusDropdown(!showPlusDropdown);
+
+    //ai code for remembering the coordinates of the plus button and showing the dropdown there
+    if (!showPlusDropdown && plusButtonRef.current) {
+      plusButtonRef.current.measure(
+        (
+          fx: number,
+          fy: number,
+          width: number,
+          height: number,
+          px: number,
+          py: number
+        ) => {
+          setDropdownPosition({ x: px, y: py + height });
+          setShowPlusDropdown(true);
+        }
+      );
+    } else {
+      setShowPlusDropdown(false);
+    }
   };
 
   const handleLessonsPlusButtonPress = (lesson: any) => {
@@ -1147,12 +1311,14 @@ const CourseDetailsPage = () => {
             courseId: courseId,
             chapterId: chapterDetails._id,
             semesterId: semesterId || "",
-            quarterId: selectedQuarterId,
+            quarterId: selectedQuarterId || "",
 
-            refreshAssessments: () => { handleViewChapterDetails(chapterDetails._id) },
+            refreshAssessments: () => {
+              handleViewChapterDetails(chapterDetails._id);
+            },
             navigateBack() {
-              setShowChapterDetailsModal(true)
-              navigation.goBack()
+              setShowChapterDetailsModal(true);
+              navigation.goBack();
             },
           });
         } else {
@@ -1161,16 +1327,16 @@ const CourseDetailsPage = () => {
         break;
       case "page":
         // Navigate to Chapter Pages view
-        console.log('helllo', chapterDetails, course?._id)
+        console.log("helllo", chapterDetails, course?._id);
         if (chapterDetails && course?._id) {
           setShowChapterDetailsModal(false);
           (navigation as any).navigate("ChapterPages", {
             courseId: course._id,
             chapterId: chapterDetails._id,
             navigateBack: () => {
-              navigation.goBack()
-              setShowChapterDetailsModal(true)
-            }
+              navigation.goBack();
+              setShowChapterDetailsModal(true);
+            },
           });
         } else {
           Toast.show("Please open a chapter first", Toast.LONG);
@@ -1185,9 +1351,9 @@ const CourseDetailsPage = () => {
             semesterId: selectedQuarter?.semester || course?.semester?.[0]?._id,
             quarterId: selectedQuarterId || undefined,
             navigateBack: () => {
-              navigation.goBack()
-              setShowChapterDetailsModal(true)
-            }
+              navigation.goBack();
+              setShowChapterDetailsModal(true);
+            },
           });
         } else {
           Toast.show("Please open a chapter first", Toast.LONG);
@@ -1213,10 +1379,12 @@ const CourseDetailsPage = () => {
             lessonId: currentLessonForAssessment._id, // Pass lesson ID instead of chapter ID
             semesterId: semesterId || "",
             quarterId: selectedQuarterId,
-            refreshAssessments: () => { handleViewChapterDetails(chapterDetails._id) },
+            refreshAssessments: () => {
+              handleViewChapterDetails(chapterDetails._id);
+            },
             navigateBack() {
-              setShowChapterDetailsModal(true)
-              navigation.goBack()
+              setShowChapterDetailsModal(true);
+              navigation.goBack();
             },
           });
         } else {
@@ -1231,8 +1399,8 @@ const CourseDetailsPage = () => {
             chapterId: chapterDetails._id,
             lessonId: currentLessonForAssessment._id,
             navigateBack() {
-              setShowChapterDetailsModal(true)
-              navigation.goBack()
+              setShowChapterDetailsModal(true);
+              navigation.goBack();
             },
           });
         } else {
@@ -1249,8 +1417,8 @@ const CourseDetailsPage = () => {
             quarterId: selectedQuarterId || undefined,
             lessonId: currentLessonForAssessment._id,
             navigateBack() {
-              setShowChapterDetailsModal(true)
-              navigation.goBack()
+              setShowChapterDetailsModal(true);
+              navigation.goBack();
             },
           });
         } else {
@@ -1341,8 +1509,8 @@ const CourseDetailsPage = () => {
         ]);
       }
     } catch (error) {
-      // console.error("Error picking file:", error);
-      // Toast.show("Error picking file", Toast.LONG);
+      console.error("Error picking file:", error);
+      Toast.show("Error picking file", Toast.LONG);
     }
   };
 
@@ -1711,12 +1879,12 @@ const CourseDetailsPage = () => {
     try {
       await deleteChapter(chapterToDelete._id);
       setShowDeleteChapterModal(false);
-      setShowChaptersForQuarterModal(true)
+      setShowChaptersForQuarterModal(true);
       setChapterToDelete(null);
       Toast.show("Chapter deleted successfully.", Toast.LONG);
-      course?.semesterbased ?
-        await refreshChaptersForQuarter(selectedQuarterId!) :
-        await refreshChaptersForCourse(courseId)
+      course?.semesterbased
+        ? await refreshChaptersForQuarter(selectedQuarterId!)
+        : await refreshChaptersForCourse(courseId);
     } catch (err: any) {
       setDeleteChapterError(err.message || "Failed to delete chapter.");
     } finally {
@@ -1797,36 +1965,31 @@ const CourseDetailsPage = () => {
     });
   };
   const loadGradeScale = async () => {
-    setShowGradeScaleManagement(true)
-    setShowGradeScaleManagementLoader(true)
+    setShowGradeScaleManagement(true);
+    setShowGradeScaleManagementLoader(true);
     try {
-      const res = await getGradeScale(courseId)
+      const res = await getGradeScale(courseId);
 
-      setGradeScale(res)
+      setGradeScale(res);
     } catch (err: any) {
-      Toast.show(err?.message || 'Failed to get gradeScale', Toast.LONG)
+      Toast.show(err?.message || "Failed to get gradeScale", Toast.LONG);
+    } finally {
+      setShowGradeScaleManagementLoader(false);
     }
-    finally {
-      setShowGradeScaleManagementLoader(false)
-
-    }
-  }
-
-
+  };
 
   const loadGPA = async () => {
-    setShowGPAManagement(true)
-    setShowGPAManagementLoader(true)
+    setShowGPAManagement(true);
+    setShowGPAManagementLoader(true);
     try {
-      const res = await getGPA(courseId)
-      setGPA(res)
+      const res = await getGPA(courseId);
+      setGPA(res);
     } catch (err: any) {
-      Toast.show(err?.message || 'Failed to get GPA', Toast.LONG)
+      Toast.show(err?.message || "Failed to get GPA", Toast.LONG);
+    } finally {
+      setShowGPAManagementLoader(false);
     }
-    finally {
-      setShowGPAManagementLoader(false)
-    }
-  }
+  };
   const uploadThumbnail = async (thumbnail: any) => {
     setThumbnailUploading(true);
     setThumbnailError(null);
@@ -1852,47 +2015,47 @@ const CourseDetailsPage = () => {
     }
   };
   const toggleStudent = (studentId: string) => {
-    const newSet = new Set(expandedStudents)
+    const newSet = new Set(expandedStudents);
     if (newSet.has(studentId)) {
-      newSet.delete(studentId)
+      newSet.delete(studentId);
     } else {
-      newSet.add(studentId)
+      newSet.add(studentId);
     }
-    setExpandedStudents(newSet)
-  }
+    setExpandedStudents(newSet);
+  };
 
   const toggleSemester = (semesterId: string) => {
-    const newSet = new Set(expandedSemesters)
+    const newSet = new Set(expandedSemesters);
     if (newSet.has(semesterId)) {
-      newSet.delete(semesterId)
+      newSet.delete(semesterId);
     } else {
-      newSet.add(semesterId)
+      newSet.add(semesterId);
     }
-    setExpandedSemesters(newSet)
-  }
+    setExpandedSemesters(newSet);
+  };
 
   const toggleQuarter = (quarterId: string) => {
-    const newSet = new Set(expandedQuarters)
+    const newSet = new Set(expandedQuarters);
     if (newSet.has(quarterId)) {
-      newSet.delete(quarterId)
+      newSet.delete(quarterId);
     } else {
-      newSet.add(quarterId)
+      newSet.add(quarterId);
     }
-    setExpandedQuarters(newSet)
-  }
+    setExpandedQuarters(newSet);
+  };
 
   // Format date for input (dd/mm/yyyy)
   const formatDateForInput = (dateString: string) => {
     const date = new Date(dateString);
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     const year = date.getUTCFullYear();
     return `${day}/${month}/${year}`;
   };
 
   // Parse date from dd/mm/yyyy to ISO string
   const parseDateFromInput = (dateString: string) => {
-    const [day, month, year] = dateString.split('/');
+    const [day, month, year] = dateString.split("/");
     const date = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
     return date.toISOString();
   };
@@ -1900,8 +2063,8 @@ const CourseDetailsPage = () => {
   // Get last semester end date
   const getLastSemesterEndDate = () => {
     if (gradingPeriods.length === 0) return null;
-    const sortedSemesters = [...gradingPeriods].sort((a, b) =>
-      new Date(b.endDate).getTime() - new Date(a.endDate).getTime()
+    const sortedSemesters = [...gradingPeriods].sort(
+      (a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime()
     );
     return sortedSemesters[0].endDate;
   };
@@ -1921,7 +2084,10 @@ const CourseDetailsPage = () => {
       const startDate = new Date(parseDateFromInput(semesterStartDate));
       const lastEnd = new Date(lastEndDate);
       if (startDate <= lastEnd) {
-        Toast.show("New semester must start after the last semester ends", Toast.LONG);
+        Toast.show(
+          "New semester must start after the last semester ends",
+          Toast.LONG
+        );
         return;
       }
     }
@@ -1941,13 +2107,13 @@ const CourseDetailsPage = () => {
         parseDateFromInput(semesterEndDate)
       );
       Toast.show("Semester created successfully", Toast.LONG);
-      setShowNewSemesterModal(false)
-      setShowGradingPeriodsModal(true)
+      setShowNewSemesterModal(false);
+      setShowGradingPeriodsModal(true);
       setSemesterTitle("");
       setSemesterStartDate("");
       setSemesterEndDate("");
       fetchGradingPeriods();
-      fetchCourseDetails()
+      fetchCourseDetails();
     } catch (error: any) {
       Toast.show(error.message || "Failed to create semester", Toast.LONG);
     }
@@ -1979,14 +2145,14 @@ const CourseDetailsPage = () => {
         parseDateFromInput(semesterEndDate)
       );
       Toast.show("Semester updated successfully", Toast.LONG);
-      setShowEditSemesterModal(false)
-      setShowGradingPeriodsModal(true)
+      setShowEditSemesterModal(false);
+      setShowGradingPeriodsModal(true);
       setEditingSemester(null);
       setSemesterTitle("");
       setSemesterStartDate("");
       setSemesterEndDate("");
       fetchGradingPeriods();
-      fetchCourseDetails()
+      fetchCourseDetails();
     } catch (error: any) {
       Toast.show(error.message || "Failed to update semester", Toast.LONG);
     }
@@ -2008,7 +2174,10 @@ const CourseDetailsPage = () => {
     const quarterEnd = new Date(parseDateFromInput(quarterEndDate));
 
     if (quarterStart < semesterStart || quarterEnd > semesterEnd) {
-      Toast.show("Quarter dates must be within the semester duration", Toast.LONG);
+      Toast.show(
+        "Quarter dates must be within the semester duration",
+        Toast.LONG
+      );
       return;
     }
 
@@ -2026,13 +2195,13 @@ const CourseDetailsPage = () => {
       );
       Toast.show("Quarter created successfully", Toast.LONG);
       setShowNewQuarterModal(false);
-      setShowGradingPeriodsModal(true)
+      setShowGradingPeriodsModal(true);
       setSelectedSemesterForQuarter(null);
       setQuarterTitle("");
       setQuarterStartDate("");
       setQuarterEndDate("");
       fetchGradingPeriods();
-      fetchCourseDetails()
+      fetchCourseDetails();
     } catch (error: any) {
       Toast.show(error.message || "Failed to create quarter", Toast.LONG);
     }
@@ -2048,7 +2217,7 @@ const CourseDetailsPage = () => {
       return;
     }
 
-    const semester = gradingPeriods.find(s =>
+    const semester = gradingPeriods.find((s) =>
       s.quarters?.some((q: any) => q._id === editingQuarter._id)
     );
     if (!semester) return;
@@ -2059,7 +2228,10 @@ const CourseDetailsPage = () => {
     const quarterEnd = new Date(parseDateFromInput(quarterEndDate));
 
     if (quarterStart < semesterStart || quarterEnd > semesterEnd) {
-      Toast.show("Quarter dates must be within the semester duration", Toast.LONG);
+      Toast.show(
+        "Quarter dates must be within the semester duration",
+        Toast.LONG
+      );
       return;
     }
 
@@ -2069,7 +2241,7 @@ const CourseDetailsPage = () => {
     }
 
     try {
-      console.log(editingQuarter)
+      console.log(editingQuarter);
       await updateQuarter(
         editingQuarter._id,
         courseId,
@@ -2079,14 +2251,14 @@ const CourseDetailsPage = () => {
         parseDateFromInput(quarterEndDate)
       );
       Toast.show("Quarter updated successfully", Toast.LONG);
-      setShowEditQuarterModal(false)
-      setShowGradingPeriodsModal(true)
+      setShowEditQuarterModal(false);
+      setShowGradingPeriodsModal(true);
       setEditingQuarter(null);
       setQuarterTitle("");
       setQuarterStartDate("");
       setQuarterEndDate("");
       fetchGradingPeriods();
-      fetchCourseDetails()
+      fetchCourseDetails();
     } catch (error: any) {
       Toast.show(error.message || "Failed to update quarter", Toast.LONG);
     }
@@ -2100,7 +2272,7 @@ const CourseDetailsPage = () => {
         Toast.LONG
       );
       fetchGradingPeriods();
-      fetchCourseDetails()
+      fetchCourseDetails();
     } catch (error: any) {
       Toast.show(error.message || "Failed to update semester", Toast.LONG);
     }
@@ -2114,7 +2286,7 @@ const CourseDetailsPage = () => {
         Toast.LONG
       );
       fetchGradingPeriods();
-      fetchCourseDetails()
+      fetchCourseDetails();
     } catch (error: any) {
       Toast.show(error.message || "Failed to update quarter", Toast.LONG);
     }
@@ -2125,7 +2297,7 @@ const CourseDetailsPage = () => {
     setSemesterTitle(semester.title);
     setSemesterStartDate(formatDateForInput(semester.startDate));
     setSemesterEndDate(formatDateForInput(semester.endDate));
-    setShowGradingPeriodsModal(false)
+    setShowGradingPeriodsModal(false);
     setShowEditSemesterModal(true);
   };
 
@@ -2135,7 +2307,7 @@ const CourseDetailsPage = () => {
     setQuarterStartDate(formatDateForInput(quarter.startDate));
     setQuarterEndDate(formatDateForInput(quarter.endDate));
     setShowEditQuarterModal(true);
-    setShowGradingPeriodsModal(false)
+    setShowGradingPeriodsModal(false);
   };
 
   const openNewQuarterModal = (semester: any) => {
@@ -2144,7 +2316,7 @@ const CourseDetailsPage = () => {
     setQuarterStartDate("");
     setQuarterEndDate("");
     setShowNewQuarterModal(true);
-    setShowGradingPeriodsModal(false)
+    setShowGradingPeriodsModal(false);
   };
   if (loading) {
     return (
@@ -2163,13 +2335,13 @@ const CourseDetailsPage = () => {
   }
 
   return (
-    <View
-      style={{ flex: 1, backgroundColor: "#fff", }}
-    // activeOpacity={1}
-    // onPress={() => {
-    //   setShowPlusDropdown(false);
-    //   setShowLessonsPlusDropdown(false);
-    // }}
+    <TouchableOpacity
+      style={{ flex: 1, backgroundColor: "#fff" }}
+      activeOpacity={1}
+      onPress={() => {
+        setShowPlusDropdown(false);
+        setShowLessonsPlusDropdown(false);
+      }}
     >
       <View
         style={{
@@ -2413,9 +2585,9 @@ const CourseDetailsPage = () => {
                       setShowCreateChapterModal(false);
                       setChapterTitle("");
                       setChapterDescription("");
-                      course?.semesterbased ?
-                        await refreshChaptersForQuarter(selectedQuarterId!) :
-                        await refreshChaptersForCourse(courseId)
+                      course?.semesterbased
+                        ? await refreshChaptersForQuarter(selectedQuarterId!)
+                        : await refreshChaptersForCourse(courseId);
                       setShowChaptersForQuarterModal(true);
                     } catch (err: any) {
                       console.log(err);
@@ -2469,8 +2641,8 @@ const CourseDetailsPage = () => {
         transparent={true}
         animationType="fade"
         onRequestClose={() => {
-          setShowDeleteChapterModal(false)
-          setShowChaptersForQuarterModal(true)
+          setShowDeleteChapterModal(false);
+          setShowChaptersForQuarterModal(true);
         }}
       >
         <View style={styles.modalOverlay}>
@@ -2505,8 +2677,8 @@ const CourseDetailsPage = () => {
                   marginRight: 12,
                 }}
                 onPress={() => {
-                  setShowDeleteChapterModal(false)
-                  setShowChaptersForQuarterModal(true)
+                  setShowDeleteChapterModal(false);
+                  setShowChaptersForQuarterModal(true);
                 }}
                 disabled={deleteChapterLoading}
               >
@@ -2802,7 +2974,7 @@ const CourseDetailsPage = () => {
                     console.error("Error creating category:", error);
                     Toast.show(
                       error.message ||
-                      "Failed to create assessment category. Please try again.",
+                        "Failed to create assessment category. Please try again.",
                       Toast.LONG
                     );
                   } finally {
@@ -2903,7 +3075,7 @@ const CourseDetailsPage = () => {
               Manage GPA
             </Text>
           </TouchableOpacity>
-          {course.semesterbased &&
+          {course.semesterbased && (
             <TouchableOpacity
               onPress={() => setShowGradingPeriodsModal(true)}
               style={[
@@ -2919,8 +3091,7 @@ const CourseDetailsPage = () => {
                 Manage semesters & Quarters
               </Text>
             </TouchableOpacity>
-          }
-
+          )}
 
           <TouchableOpacity
             onPress={async () => {
@@ -2944,7 +3115,7 @@ const CourseDetailsPage = () => {
           <TouchableOpacity
             onPress={async () => {
               setEditCourseTitle(course.courseTitle || "");
-              course?.price && setEditCoursePrice(course?.price.toString())
+              course?.price && setEditCoursePrice(course?.price.toString());
               setEditCourseCategory(course.category?._id || "");
               setEditCourseSubcategory(course.subcategory?._id || "");
               setEditCourseLanguage(course.language || "");
@@ -3006,19 +3177,22 @@ const CourseDetailsPage = () => {
             Last Updated: {course.updatedAt?.slice(0, 10)}
           </Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-
-          <Text style={[styles.title, { flex: 1 }]}>{course.courseTitle?.toUpperCase()}</Text>
-          {user?.email != "testaccount@yopmail.com" &&
-          <Text style={{ fontSize: 22, color: '#10B144', lineHeight: 26 }}>${course?.price}</Text>
-          }
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={[styles.title, { flex: 1 }]}>
+            {course.courseTitle?.toUpperCase()}
+          </Text>
+          {user?.email != "testaccount@yopmail.com" && (
+            <Text style={{ fontSize: 22, color: "#10B144", lineHeight: 26 }}>
+              ${course?.price}
+            </Text>
+          )}
         </View>
         <Text style={styles.chapterDetailsDescription}>
           {courseDescription}
           {isLong && (
             <Text
               onPress={() => setShowMore(!showMore)}
-              style={{ color: '#10B144', marginTop: 5, fontWeight: '600' }}
+              style={{ color: "#10B144", marginTop: 5, fontWeight: "600" }}
             >
               {showMore ? " Read Less" : "Read More"}
             </Text>
@@ -3046,31 +3220,32 @@ const CourseDetailsPage = () => {
           </Text>
         </View>
 
-
-
-        {course.semesterbased ? (course.semester && course.semester.length > 0) ? (
-          <View style={styles.semesterSection}>
-            {course.semester.map((sem: any, index: number) => (
-              <TouchableOpacity
-                key={sem._id}
-                style={styles.semesterCard}
-                onPress={() => handleSemesterPress(sem)}
-              >
-                <Text style={styles.semesterTitle}>{`Semester ${index + 1}: ${sem.title
+        {course.semesterbased ? (
+          course.semester && course.semester.length > 0 ? (
+            <View style={styles.semesterSection}>
+              {course.semester.map((sem: any, index: number) => (
+                <TouchableOpacity
+                  key={sem._id}
+                  style={styles.semesterCard}
+                  onPress={() => handleSemesterPress(sem)}
+                >
+                  <Text style={styles.semesterTitle}>{`Semester ${index + 1}: ${
+                    sem.title
                   }`}</Text>
-                <Text style={styles.semesterDates}>
-                  {formatDateWithOrdinal(sem.startDate)} -{" "}
-                  {formatDateWithOrdinal(sem.endDate)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.semesterCard}>
-
-            <Text style={styles.semesterTitle}>No semesters found for this course.</Text>
-          </View>
-
+                  <Text style={styles.semesterDates}>
+                    {formatDateWithOrdinal(sem.startDate)} -{" "}
+                    {formatDateWithOrdinal(sem.endDate)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.semesterCard}>
+              <Text style={styles.semesterTitle}>
+                No semesters found for this course.
+              </Text>
+            </View>
+          )
         ) : (
           <View style={styles.semesterSection}>
             <TouchableOpacity
@@ -3078,35 +3253,76 @@ const CourseDetailsPage = () => {
               onPress={handleChapterPress}
             >
               <Text style={styles.semesterTitle}>Course Chapters</Text>
-              <Text style={styles.semesterDates}>
-                Chapters
-              </Text>
+              <Text style={styles.semesterDates}>Chapters</Text>
             </TouchableOpacity>
           </View>
         )}
 
+        {/* Rating Section */}
         <View style={styles.section}>
           <Text style={styles.ratingSectionTitle}>Overall Course Rating</Text>
           <View style={styles.ratingCard}>
+            {/* .toFixed(1) is used to round of ratings to the specified here(1) decimal place  */}
             <Text style={styles.ratingNumber}>{averageRating.toFixed(1)}</Text>
             <View style={styles.ratingStarsRow}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <SimpleIcon
+                <Image
                   key={i}
-                  name={
-                    i <= Math.round(averageRating) ? "star" : "star-outline"
-                  }
-                  size={28}
-                  color={i <= Math.round(averageRating) ? "#FFD700" : "#E0E0E0"}
-                  style={{ marginRight: 2 }}
+                  source={require("../assets/star.png")}
+                  style={{
+                    marginRight: 2,
+                    width: 18,
+                    height: 18,
+                    // tintColor:
+                    //   i < Math.round(averageRating) ? "#10B144" : "#ccc",
+                  }}
                 />
               ))}
             </View>
             <Text style={styles.ratingCountText}>
-              {ratingCount === 1 ? "(1 Rating)" : `(${ratingCount} Ratings)`}
+              {`(${ratingCount} Ratings)`}
             </Text>
           </View>
         </View>
+
+        {/* Rating Toggle Section */}
+
+        {/* {userRole === "student" ? (
+          <View style={styles.section}>
+            <Text style={styles.ratingSectionTitle}>Write A Review</Text>
+            <View style={styles.ratingCard}>
+              <FlatList
+                data={stars}
+                keyExtractor={(item, index) => index.toString()}
+                horizontal={true}
+                scrollEnabled={false}
+                showsHorizontalScrollIndicator={false}
+                renderItem={renderStars}
+              />
+              <Text
+                style={styles.ratingCountText}
+              >{`${selectedStars} Stars`}</Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  (selectedStars === 0 || isSubmittingRating) &&
+                    styles.disabledButton,
+                ]}
+                onPress={handleSubmitRating}
+                disabled={selectedStars === 0 || isSubmittingRating}
+              >
+                <Text style={styles.submitButtonText}>
+                  {isSubmittingRating ? "Submitting..." : "Post Review"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View></View>
+        )} */}
+
+        {/* Comment Section */}
         <View style={styles.section}>
           <Text style={styles.commentsSectionTitle}>
             Comments ({comments.length})
@@ -3125,7 +3341,7 @@ const CourseDetailsPage = () => {
                 style={[
                   styles.postCommentButton,
                   (!comment.trim() || isSubmittingComment) &&
-                  styles.postCommentButtonDisabled,
+                    styles.postCommentButtonDisabled,
                 ]}
                 disabled={!comment.trim() || isSubmittingComment}
                 onPress={handlePostComment}
@@ -3149,8 +3365,8 @@ const CourseDetailsPage = () => {
                 .getDate()
                 .toString()
                 .padStart(2, "0")}/${(date.getMonth() + 1)
-                  .toString()
-                  .padStart(2, "0")}/${date.getFullYear()}`;
+                .toString()
+                .padStart(2, "0")}/${date.getFullYear()}`;
               const userName = c.createdby
                 ? `${c.createdby.firstName} ${c.createdby.lastName}`
                 : c.user?.firstName || "User";
@@ -3231,7 +3447,12 @@ const CourseDetailsPage = () => {
         onRequestClose={() => setShowGradingPeriodsModal(false)}
       >
         <View style={styles.gradingPeriodsModalOverlay}>
-          <View style={[styles.gradingPeriodsModalContent, { paddingTop: insets.top }]}>
+          <View
+            style={[
+              styles.gradingPeriodsModalContent,
+              { paddingTop: insets.top },
+            ]}
+          >
             <TouchableOpacity
               onPress={() => setShowGradingPeriodsModal(false)}
               style={styles.gradingPeriodsBackButton}
@@ -3250,12 +3471,14 @@ const CourseDetailsPage = () => {
                   setSemesterStartDate("");
                   setSemesterEndDate("");
                   setShowNewSemesterModal(true);
-                  setShowGradingPeriodsModal(false)
+                  setShowGradingPeriodsModal(false);
                 }}
                 style={styles.gradingPeriodsCreateButton}
               >
                 <SimpleIcon name="add" size={20} color="#fff" />
-                <Text style={styles.gradingPeriodsCreateText}>Create Semester</Text>
+                <Text style={styles.gradingPeriodsCreateText}>
+                  Create Semester
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -3277,39 +3500,57 @@ const CourseDetailsPage = () => {
                         key={semester._id}
                         style={[
                           styles.gradingPeriodItem,
-                          isSemesterArchived && styles.gradingPeriodItemDisabled
+                          isSemesterArchived &&
+                            styles.gradingPeriodItemDisabled,
                         ]}
                       >
                         <View style={styles.gradingPeriodRow}>
                           <View style={styles.gradingPeriodInfo}>
-                            <Text style={[
-                              styles.gradingPeriodTitleText,
-                              isSemesterArchived && styles.gradingPeriodTextDisabled
-                            ]}>
+                            <Text
+                              style={[
+                                styles.gradingPeriodTitleText,
+                                isSemesterArchived &&
+                                  styles.gradingPeriodTextDisabled,
+                              ]}
+                            >
                               {semester.title}
                             </Text>
-
                           </View>
                           <View style={styles.gradingPeriodActions}>
                             <View style={styles.gradingPeriodSwitchContainer}>
                               <Switch
                                 value={isSemesterArchived}
-                                onValueChange={() => handleToggleSemesterArchive(semester)}
-                                trackColor={{ false: '#d1d5db', true: '#10B144' }}
-                                thumbColor={isSemesterArchived ? '#fff' : '#fff'}
-                                style={{ transform: [{ scale: Platform.OS === "ios" ? 0.6 : 1 }] }}
+                                onValueChange={() =>
+                                  handleToggleSemesterArchive(semester)
+                                }
+                                trackColor={{
+                                  false: "#d1d5db",
+                                  true: "#10B144",
+                                }}
+                                thumbColor={
+                                  isSemesterArchived ? "#fff" : "#fff"
+                                }
+                                style={{
+                                  transform: [
+                                    { scale: Platform.OS === "ios" ? 0.6 : 1 },
+                                  ],
+                                }}
                               />
-                              <Text style={[
-                                styles.gradingPeriodSwitchLabel,
-                                isSemesterArchived && styles.gradingPeriodTextDisabled
-                              ]}>
+                              <Text
+                                style={[
+                                  styles.gradingPeriodSwitchLabel,
+                                  isSemesterArchived &&
+                                    styles.gradingPeriodTextDisabled,
+                                ]}
+                              >
                                 {isSemesterArchived ? "Archived" : "Unarchived"}
                               </Text>
                             </View>
                             <TouchableOpacity
                               style={[
                                 styles.gradingPeriodAddButton,
-                                isSemesterArchived && styles.gradingPeriodButtonDisabled
+                                isSemesterArchived &&
+                                  styles.gradingPeriodButtonDisabled,
                               ]}
                               onPress={() => openNewQuarterModal(semester)}
                               disabled={isSemesterArchived}
@@ -3317,19 +3558,25 @@ const CourseDetailsPage = () => {
                               <SimpleIcon
                                 name="add"
                                 size={16}
-                                color={isSemesterArchived ? "#9ca3af" : "#10B144"}
+                                color={
+                                  isSemesterArchived ? "#9ca3af" : "#10B144"
+                                }
                               />
-                              <Text style={[
-                                styles.gradingPeriodAddButtonText,
-                                isSemesterArchived && styles.gradingPeriodTextDisabled
-                              ]}>
+                              <Text
+                                style={[
+                                  styles.gradingPeriodAddButtonText,
+                                  isSemesterArchived &&
+                                    styles.gradingPeriodTextDisabled,
+                                ]}
+                              >
                                 Quarter
                               </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                               style={[
                                 styles.gradingPeriodEditButton,
-                                isSemesterArchived && styles.gradingPeriodButtonDisabled
+                                isSemesterArchived &&
+                                  styles.gradingPeriodButtonDisabled,
                               ]}
                               onPress={() => openEditSemesterModal(semester)}
                               disabled={isSemesterArchived}
@@ -3341,60 +3588,91 @@ const CourseDetailsPage = () => {
                               />
                             </TouchableOpacity>
                           </View>
-
                         </View>
-                        <Text style={[
-                          styles.gradingPeriodDates,
-                          isSemesterArchived && styles.gradingPeriodTextDisabled
-                        ]}>
-                          {formatDateForInput(semester.startDate)} - {formatDateForInput(semester.endDate)}
+                        <Text
+                          style={[
+                            styles.gradingPeriodDates,
+                            isSemesterArchived &&
+                              styles.gradingPeriodTextDisabled,
+                          ]}
+                        >
+                          {formatDateForInput(semester.startDate)} -{" "}
+                          {formatDateForInput(semester.endDate)}
                         </Text>
                         {semester.quarters && semester.quarters.length > 0 && (
                           <View style={styles.gradingPeriodQuarters}>
                             {semester.quarters.map((quarter: any) => {
                               const isQuarterArchived = quarter.isArchived;
-                              const isDisabled = isSemesterArchived || isQuarterArchived;
+                              const isDisabled =
+                                isSemesterArchived || isQuarterArchived;
                               return (
                                 <View
                                   key={quarter._id}
                                   style={[
                                     styles.gradingPeriodQuarterItem,
-                                    isDisabled && styles.gradingPeriodItemDisabled
+                                    isDisabled &&
+                                      styles.gradingPeriodItemDisabled,
                                   ]}
                                 >
                                   <View style={styles.gradingPeriodRow}>
                                     <View style={styles.gradingPeriodInfo}>
-                                      <Text style={[
-                                        styles.gradingPeriodQuarterTitle,
-                                        isDisabled && styles.gradingPeriodTextDisabled
-                                      ]}>
+                                      <Text
+                                        style={[
+                                          styles.gradingPeriodQuarterTitle,
+                                          isDisabled &&
+                                            styles.gradingPeriodTextDisabled,
+                                        ]}
+                                      >
                                         {quarter.title}
                                       </Text>
-
                                     </View>
                                     <View style={styles.gradingPeriodActions}>
-                                      <View style={styles.gradingPeriodSwitchContainer}>
+                                      <View
+                                        style={
+                                          styles.gradingPeriodSwitchContainer
+                                        }
+                                      >
                                         <Switch
                                           value={isQuarterArchived}
-                                          onValueChange={() => handleToggleQuarterArchive(quarter)}
-                                          trackColor={{ false: '#d1d5db', true: '#10B144' }}
-                                          thumbColor={isQuarterArchived ? '#fff' : '#fff'}
+                                          onValueChange={() =>
+                                            handleToggleQuarterArchive(quarter)
+                                          }
+                                          trackColor={{
+                                            false: "#d1d5db",
+                                            true: "#10B144",
+                                          }}
+                                          thumbColor={
+                                            isQuarterArchived ? "#fff" : "#fff"
+                                          }
                                           disabled={isSemesterArchived}
-                                          style={{ transform: [{ scale: Platform.OS === "ios" ? 0.6 : 1 }] }}
+                                          style={{
+                                            transform: [
+                                              {
+                                                scale:
+                                                  Platform.OS === "ios"
+                                                    ? 0.6
+                                                    : 1,
+                                              },
+                                            ],
+                                          }}
                                         />
-                                        <Text style={[
-                                          styles.gradingPeriodSwitchLabel,
-                                          isDisabled && styles.gradingPeriodTextDisabled
-                                        ]}>
-                                          {isQuarterArchived ? "Archived" : "Unarchived"}
+                                        <Text
+                                          style={[
+                                            styles.gradingPeriodSwitchLabel,
+                                            isDisabled &&
+                                              styles.gradingPeriodTextDisabled,
+                                          ]}
+                                        >
+                                          {isQuarterArchived
+                                            ? "Archived"
+                                            : "Unarchived"}
                                         </Text>
                                       </View>
                                       <TouchableOpacity
-                                        style={[
-                                          styles.gradingPeriodEditButton,
-
-                                        ]}
-                                        onPress={() => openEditQuarterModal(quarter)}
+                                        style={[styles.gradingPeriodEditButton]}
+                                        onPress={() =>
+                                          openEditQuarterModal(quarter)
+                                        }
                                         disabled={isDisabled}
                                       >
                                         <SimpleIcon
@@ -3405,12 +3683,16 @@ const CourseDetailsPage = () => {
                                       </TouchableOpacity>
                                     </View>
                                   </View>
-                                  <Text style={[
-                                    styles.gradingPeriodDates,
-                                    { marginLeft: 10, },
-                                    isDisabled && styles.gradingPeriodTextDisabled
-                                  ]}>
-                                    {formatDateForInput(quarter.startDate)} - {formatDateForInput(quarter.endDate)}
+                                  <Text
+                                    style={[
+                                      styles.gradingPeriodDates,
+                                      { marginLeft: 10 },
+                                      isDisabled &&
+                                        styles.gradingPeriodTextDisabled,
+                                    ]}
+                                  >
+                                    {formatDateForInput(quarter.startDate)} -{" "}
+                                    {formatDateForInput(quarter.endDate)}
                                   </Text>
                                 </View>
                               );
@@ -3433,8 +3715,8 @@ const CourseDetailsPage = () => {
         transparent={true}
         animationType="fade"
         onRequestClose={() => {
-          setShowNewSemesterModal(false)
-          setShowGradingPeriodsModal(true)
+          setShowNewSemesterModal(false);
+          setShowGradingPeriodsModal(true);
         }}
       >
         <View style={styles.semesterModalOverlay}>
@@ -3442,7 +3724,8 @@ const CourseDetailsPage = () => {
             <Text style={styles.semesterModalTitle}>New Semester</Text>
             {getLastSemesterEndDate() && (
               <Text style={styles.semesterModalInfo}>
-                Last semester ends on: {formatDateForInput(getLastSemesterEndDate()!)}
+                Last semester ends on:{" "}
+                {formatDateForInput(getLastSemesterEndDate()!)}
               </Text>
             )}
             <TextInput
@@ -3453,36 +3736,58 @@ const CourseDetailsPage = () => {
             />
             <TouchableOpacity
               style={styles.semesterModalInput}
-              onPress={() => setShowSemesterDatePicker('start')}
+              onPress={() => setShowSemesterDatePicker("start")}
             >
-              <Text style={semesterStartDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+              <Text
+                style={
+                  semesterStartDate
+                    ? styles.semesterModalInputText
+                    : styles.semesterModalPlaceholder
+                }
+              >
                 {semesterStartDate || "dd/mm/yyyy"}
               </Text>
             </TouchableOpacity>
-            {showSemesterDatePicker === 'start' && (
+            {showSemesterDatePicker === "start" && (
               <DateTimePicker
-                value={semesterStartDate ? new Date(parseDateFromInput(semesterStartDate)) : new Date()}
+                value={
+                  semesterStartDate
+                    ? new Date(parseDateFromInput(semesterStartDate))
+                    : new Date()
+                }
                 mode="date"
                 display="default"
                 onChange={(event, date) => {
                   setShowSemesterDatePicker(null);
                   if (date) {
-                    setSemesterStartDate(formatDateForInput(date.toISOString()));
+                    setSemesterStartDate(
+                      formatDateForInput(date.toISOString())
+                    );
                   }
                 }}
               />
             )}
             <TouchableOpacity
               style={styles.semesterModalInput}
-              onPress={() => setShowSemesterDatePicker('end')}
+              onPress={() => setShowSemesterDatePicker("end")}
             >
-              <Text style={semesterEndDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+              <Text
+                style={
+                  semesterEndDate
+                    ? styles.semesterModalInputText
+                    : styles.semesterModalPlaceholder
+                }
+              >
                 {semesterEndDate || "dd/mm/yyyy"}
               </Text>
             </TouchableOpacity>
-            {showSemesterDatePicker === 'end' && (
+            {showSemesterDatePicker === "end" && (
               <DateTimePicker
-                value={semesterEndDate ? new Date(parseDateFromInput(semesterEndDate)) : new Date()}
+                value={
+                  semesterEndDate
+                    ? new Date(parseDateFromInput(semesterEndDate))
+                    : new Date()
+                }
                 mode="date"
                 display="default"
                 onChange={(event, date) => {
@@ -3494,24 +3799,24 @@ const CourseDetailsPage = () => {
               />
             )}
             <View style={styles.semesterModalContainer}>
-
               <TouchableOpacity
                 style={styles.semesterModalButton}
                 onPress={handleCreateSemester}
               >
-                <Text style={styles.semesterModalButtonText}>Create Semester</Text>
+                <Text style={styles.semesterModalButtonText}>
+                  Create Semester
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.semesterModalButton}
                 onPress={() => {
-                  setShowNewSemesterModal(false)
-                  setShowGradingPeriodsModal(true)
+                  setShowNewSemesterModal(false);
+                  setShowGradingPeriodsModal(true);
                 }}
               >
                 <Text style={styles.semesterModalButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
-
           </View>
         </View>
       </Modal>
@@ -3522,51 +3827,76 @@ const CourseDetailsPage = () => {
         transparent={true}
         animationType="fade"
         onRequestClose={() => {
-          setShowEditSemesterModal(false)
-          setShowGradingPeriodsModal(true)
+          setShowEditSemesterModal(false);
+          setShowGradingPeriodsModal(true);
         }}
       >
         <View style={styles.semesterModalOverlay}>
           <View style={styles.semesterModalContent}>
             <Text style={styles.semesterModalTitle}>Edit Semester</Text>
             <TextInput
-              style={[styles.semesterModalInput, { backgroundColor: '#f0f0f0' }]}
+              style={[
+                styles.semesterModalInput,
+                { backgroundColor: "#f0f0f0" },
+              ]}
               placeholder="Semester Title"
               value={semesterTitle}
               onChangeText={setSemesterTitle}
             />
             <TouchableOpacity
               style={styles.semesterModalInput}
-              onPress={() => setShowSemesterDatePicker('start')}
+              onPress={() => setShowSemesterDatePicker("start")}
             >
-              <Text style={semesterStartDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+              <Text
+                style={
+                  semesterStartDate
+                    ? styles.semesterModalInputText
+                    : styles.semesterModalPlaceholder
+                }
+              >
                 {semesterStartDate || "dd/mm/yyyy"}
               </Text>
             </TouchableOpacity>
-            {showSemesterDatePicker === 'start' && (
+            {showSemesterDatePicker === "start" && (
               <DateTimePicker
-                value={semesterStartDate ? new Date(parseDateFromInput(semesterStartDate)) : new Date()}
+                value={
+                  semesterStartDate
+                    ? new Date(parseDateFromInput(semesterStartDate))
+                    : new Date()
+                }
                 mode="date"
                 display="default"
                 onChange={(event, date) => {
                   setShowSemesterDatePicker(null);
                   if (date) {
-                    setSemesterStartDate(formatDateForInput(date.toISOString()));
+                    setSemesterStartDate(
+                      formatDateForInput(date.toISOString())
+                    );
                   }
                 }}
               />
             )}
             <TouchableOpacity
               style={styles.semesterModalInput}
-              onPress={() => setShowSemesterDatePicker('end')}
+              onPress={() => setShowSemesterDatePicker("end")}
             >
-              <Text style={semesterEndDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+              <Text
+                style={
+                  semesterEndDate
+                    ? styles.semesterModalInputText
+                    : styles.semesterModalPlaceholder
+                }
+              >
                 {semesterEndDate || "dd/mm/yyyy"}
               </Text>
             </TouchableOpacity>
-            {showSemesterDatePicker === 'end' && (
+            {showSemesterDatePicker === "end" && (
               <DateTimePicker
-                value={semesterEndDate ? new Date(parseDateFromInput(semesterEndDate)) : new Date()}
+                value={
+                  semesterEndDate
+                    ? new Date(parseDateFromInput(semesterEndDate))
+                    : new Date()
+                }
                 mode="date"
                 display="default"
                 onChange={(event, date) => {
@@ -3578,7 +3908,6 @@ const CourseDetailsPage = () => {
               />
             )}
             <View style={styles.semesterModalContainer}>
-
               <TouchableOpacity
                 style={styles.semesterModalButton}
                 onPress={handleEditSemester}
@@ -3588,8 +3917,8 @@ const CourseDetailsPage = () => {
               <TouchableOpacity
                 style={styles.semesterModalButton}
                 onPress={() => {
-                  setShowEditSemesterModal(false)
-                  setShowGradingPeriodsModal(true)
+                  setShowEditSemesterModal(false);
+                  setShowGradingPeriodsModal(true);
                 }}
               >
                 <Text style={styles.semesterModalButtonText}>Cancel</Text>
@@ -3606,7 +3935,7 @@ const CourseDetailsPage = () => {
         animationType="fade"
         onRequestClose={() => {
           setShowNewQuarterModal(false);
-          setShowGradingPeriodsModal(true)
+          setShowGradingPeriodsModal(true);
         }}
       >
         <View style={styles.semesterModalOverlay}>
@@ -3614,7 +3943,9 @@ const CourseDetailsPage = () => {
             <Text style={styles.semesterModalTitle}>New Quarter</Text>
             {selectedSemesterForQuarter && (
               <Text style={styles.semesterModalInfo}>
-                Semester duration: {formatDateForInput(selectedSemesterForQuarter.startDate)} - {formatDateForInput(selectedSemesterForQuarter.endDate)}
+                Semester duration:{" "}
+                {formatDateForInput(selectedSemesterForQuarter.startDate)} -{" "}
+                {formatDateForInput(selectedSemesterForQuarter.endDate)}
               </Text>
             )}
             <TextInput
@@ -3625,15 +3956,25 @@ const CourseDetailsPage = () => {
             />
             <TouchableOpacity
               style={styles.semesterModalInput}
-              onPress={() => setShowQuarterDatePicker('start')}
+              onPress={() => setShowQuarterDatePicker("start")}
             >
-              <Text style={quarterStartDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+              <Text
+                style={
+                  quarterStartDate
+                    ? styles.semesterModalInputText
+                    : styles.semesterModalPlaceholder
+                }
+              >
                 {quarterStartDate || "dd/mm/yyyy"}
               </Text>
             </TouchableOpacity>
-            {showQuarterDatePicker === 'start' && (
+            {showQuarterDatePicker === "start" && (
               <DateTimePicker
-                value={quarterStartDate ? new Date(parseDateFromInput(quarterStartDate)) : new Date()}
+                value={
+                  quarterStartDate
+                    ? new Date(parseDateFromInput(quarterStartDate))
+                    : new Date()
+                }
                 mode="date"
                 display="default"
                 onChange={(event, date) => {
@@ -3646,15 +3987,25 @@ const CourseDetailsPage = () => {
             )}
             <TouchableOpacity
               style={styles.semesterModalInput}
-              onPress={() => setShowQuarterDatePicker('end')}
+              onPress={() => setShowQuarterDatePicker("end")}
             >
-              <Text style={quarterEndDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+              <Text
+                style={
+                  quarterEndDate
+                    ? styles.semesterModalInputText
+                    : styles.semesterModalPlaceholder
+                }
+              >
                 {quarterEndDate || "dd/mm/yyyy"}
               </Text>
             </TouchableOpacity>
-            {showQuarterDatePicker === 'end' && (
+            {showQuarterDatePicker === "end" && (
               <DateTimePicker
-                value={quarterEndDate ? new Date(parseDateFromInput(quarterEndDate)) : new Date()}
+                value={
+                  quarterEndDate
+                    ? new Date(parseDateFromInput(quarterEndDate))
+                    : new Date()
+                }
                 mode="date"
                 display="default"
                 onChange={(event, date) => {
@@ -3666,18 +4017,19 @@ const CourseDetailsPage = () => {
               />
             )}
             <View style={styles.semesterModalContainer}>
-
               <TouchableOpacity
                 style={styles.semesterModalButton}
                 onPress={handleCreateQuarter}
               >
-                <Text style={styles.semesterModalButtonText}>Create Quarter</Text>
+                <Text style={styles.semesterModalButtonText}>
+                  Create Quarter
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.semesterModalButton}
                 onPress={() => {
                   setShowNewQuarterModal(false);
-                  setShowGradingPeriodsModal(true)
+                  setShowGradingPeriodsModal(true);
                 }}
               >
                 <Text style={styles.semesterModalButtonText}>Cancel</Text>
@@ -3693,30 +4045,43 @@ const CourseDetailsPage = () => {
         transparent={true}
         animationType="fade"
         onRequestClose={() => {
-          setShowEditQuarterModal(false)
-          setShowGradingPeriodsModal(true)
+          setShowEditQuarterModal(false);
+          setShowGradingPeriodsModal(true);
         }}
       >
         <View style={styles.semesterModalOverlay}>
           <View style={styles.semesterModalContent}>
             <Text style={styles.semesterModalTitle}>Edit Quarter</Text>
             <TextInput
-              style={[styles.semesterModalInput, { backgroundColor: '#f0f0f0' }]}
+              style={[
+                styles.semesterModalInput,
+                { backgroundColor: "#f0f0f0" },
+              ]}
               placeholder="Quarter Title"
               value={quarterTitle}
               onChangeText={setQuarterTitle}
             />
             <TouchableOpacity
               style={styles.semesterModalInput}
-              onPress={() => setShowQuarterDatePicker('start')}
+              onPress={() => setShowQuarterDatePicker("start")}
             >
-              <Text style={quarterStartDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+              <Text
+                style={
+                  quarterStartDate
+                    ? styles.semesterModalInputText
+                    : styles.semesterModalPlaceholder
+                }
+              >
                 {quarterStartDate || "dd/mm/yyyy"}
               </Text>
             </TouchableOpacity>
-            {showQuarterDatePicker === 'start' && (
+            {showQuarterDatePicker === "start" && (
               <DateTimePicker
-                value={quarterStartDate ? new Date(parseDateFromInput(quarterStartDate)) : new Date()}
+                value={
+                  quarterStartDate
+                    ? new Date(parseDateFromInput(quarterStartDate))
+                    : new Date()
+                }
                 mode="date"
                 display="default"
                 onChange={(event, date) => {
@@ -3729,15 +4094,25 @@ const CourseDetailsPage = () => {
             )}
             <TouchableOpacity
               style={styles.semesterModalInput}
-              onPress={() => setShowQuarterDatePicker('end')}
+              onPress={() => setShowQuarterDatePicker("end")}
             >
-              <Text style={quarterEndDate ? styles.semesterModalInputText : styles.semesterModalPlaceholder}>
+              <Text
+                style={
+                  quarterEndDate
+                    ? styles.semesterModalInputText
+                    : styles.semesterModalPlaceholder
+                }
+              >
                 {quarterEndDate || "dd/mm/yyyy"}
               </Text>
             </TouchableOpacity>
-            {showQuarterDatePicker === 'end' && (
+            {showQuarterDatePicker === "end" && (
               <DateTimePicker
-                value={quarterEndDate ? new Date(parseDateFromInput(quarterEndDate)) : new Date()}
+                value={
+                  quarterEndDate
+                    ? new Date(parseDateFromInput(quarterEndDate))
+                    : new Date()
+                }
                 mode="date"
                 display="default"
                 onChange={(event, date) => {
@@ -3749,7 +4124,6 @@ const CourseDetailsPage = () => {
               />
             )}
             <View style={styles.semesterModalContainer}>
-
               <TouchableOpacity
                 style={styles.semesterModalButton}
                 onPress={handleEditQuarter}
@@ -3759,8 +4133,8 @@ const CourseDetailsPage = () => {
               <TouchableOpacity
                 style={styles.semesterModalButton}
                 onPress={() => {
-                  setShowEditQuarterModal(false)
-                  setShowGradingPeriodsModal(true)
+                  setShowEditQuarterModal(false);
+                  setShowGradingPeriodsModal(true);
                 }}
               >
                 <Text style={styles.semesterModalButtonText}>Cancel</Text>
@@ -3837,11 +4211,7 @@ const CourseDetailsPage = () => {
                         <TouchableOpacity
                           onPress={() => handleDeleteCategory(cat)}
                         >
-                          <SimpleIcon
-                            name="trash"
-                            size={24}
-                            color="#ef4444"
-                          />
+                          <SimpleIcon name="trash" size={24} color="#ef4444" />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -4029,11 +4399,7 @@ const CourseDetailsPage = () => {
                       {q.title}
                     </Text>
                     {isExisting && (
-                      <SimpleIcon
-                        name="check-circle"
-                        size={22}
-                        color="black"
-                      />
+                      <SimpleIcon name="check-circle" size={22} color="black" />
                     )}
                   </TouchableOpacity>
                 );
@@ -4094,8 +4460,7 @@ const CourseDetailsPage = () => {
         animationType="slide"
         onRequestClose={() => {
           setShowChaptersForQuarterModal(false);
-          course?.semesterbased &&
-            setShowQuartersModal(true);
+          course?.semesterbased && setShowQuartersModal(true);
         }}
       >
         <View style={styles.chaptersModalContainer}>
@@ -4104,8 +4469,7 @@ const CourseDetailsPage = () => {
             <TouchableOpacity
               onPress={() => {
                 setShowChaptersForQuarterModal(false);
-                course?.semesterbased &&
-                  setShowQuartersModal(true);
+                course?.semesterbased && setShowQuartersModal(true);
               }}
             >
               <SimpleIcon name="close" size={32} color="#333" />
@@ -4157,16 +4521,12 @@ const CourseDetailsPage = () => {
                         <TouchableOpacity
                           onPress={() => {
                             setChapterToDelete(chapter);
-                            setShowChaptersForQuarterModal(false)
+                            setShowChaptersForQuarterModal(false);
                             setShowDeleteChapterModal(true);
                           }}
                           style={styles.chapterDeleteButton}
                         >
-                          <SimpleIcon
-                            name="trash"
-                            size={20}
-                            color="#ef4444"
-                          />
+                          <SimpleIcon name="trash" size={20} color="#ef4444" />
                         </TouchableOpacity>
                       </View>
 
@@ -4179,11 +4539,7 @@ const CourseDetailsPage = () => {
 
                       <View style={styles.chapterCardStats}>
                         <View style={styles.chapterStatItem}>
-                          <SimpleIcon
-                            name="menu-book"
-                            size={16}
-                            color="#666"
-                          />
+                          <SimpleIcon name="menu-book" size={16} color="#666" />
                           <Text style={styles.chapterStatText}>
                             {chapter.lessons ? chapter.lessons.length : 0}{" "}
                             Lessons
@@ -4235,7 +4591,9 @@ const CourseDetailsPage = () => {
       >
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
           {/* Header */}
-          <View style={[styles.assessmentDetailsHeader, { paddingTop: insets.top }]}>
+          <View
+            style={[styles.assessmentDetailsHeader, { paddingTop: insets.top }]}
+          >
             <TouchableOpacity
               onPress={() => {
                 setShowAssessmentDetailsModal(false);
@@ -4248,7 +4606,9 @@ const CourseDetailsPage = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => openEditAssessmentModal(selectedAssessmentForModal)}
+              onPress={() =>
+                openEditAssessmentModal(selectedAssessmentForModal)
+              }
               style={styles.assessmentDetailsEditButton}
             >
               <SimpleIcon name="pencil" size={28} color="#fff" />
@@ -4265,7 +4625,8 @@ const CourseDetailsPage = () => {
                   </Text>
                   <View style={styles.assessmentDetailsCategoryBadge}>
                     <Text style={styles.assessmentDetailsCategoryText}>
-                      {selectedAssessmentForModal.category?.name || "No Category"}
+                      {selectedAssessmentForModal.category?.name ||
+                        "No Category"}
                     </Text>
                   </View>
                 </View>
@@ -4274,7 +4635,9 @@ const CourseDetailsPage = () => {
                 <View style={styles.assessmentDetailsDueDateContainer}>
                   <Text style={styles.assessmentDetailsDueDateLabel}>
                     Due date:{" "}
-                    {new Date(selectedAssessmentForModal.dueDate?.date).toLocaleDateString("en-US", {
+                    {new Date(
+                      selectedAssessmentForModal.dueDate?.date
+                    ).toLocaleDateString("en-US", {
                       weekday: "short",
                       month: "short",
                       day: "numeric",
@@ -4299,114 +4662,168 @@ const CourseDetailsPage = () => {
                     Questions
                   </Text>
 
-                  {selectedAssessmentForModal.questions.map((question: any, index: number) => (
-                    <View key={question._id} style={{ marginBottom: 16 }}>
-                      <TouchableOpacity
-                        style={styles.assessmentDetailsMcqHeader}
-                        onPress={() =>
-                          setExpandedMcq((prev: any) => ({
-                            ...prev,
-                            [index]: !prev[index],
-                          }))
-                        }
-                      >
-                        <Text style={styles.assessmentDetailsMcqTitle}>
-                          {question.type.toUpperCase()}
-                        </Text>
-                        <SimpleIcon
-                          name={expandedMcq?.[index] ? "chevron-up" : "chevron-down"}
-                          size={20}
-                          color="#000"
-                        />
-                      </TouchableOpacity>
-
-                      {expandedMcq?.[index] && (
-                        <View style={styles.assessmentDetailsQuestionCard}>
-                          {/* Common Question Text */}
-                          <Text style={styles.assessmentDetailsQuestionLabel}>Question:</Text>
-                          <Text style={styles.assessmentDetailsQuestionText}>
-                            {question.question.replace(/<[^>]*>/g, "")}
+                  {selectedAssessmentForModal.questions.map(
+                    (question: any, index: number) => (
+                      <View key={question._id} style={{ marginBottom: 16 }}>
+                        <TouchableOpacity
+                          style={styles.assessmentDetailsMcqHeader}
+                          onPress={() =>
+                            setExpandedMcq((prev: any) => ({
+                              ...prev,
+                              [index]: !prev[index],
+                            }))
+                          }
+                        >
+                          <Text style={styles.assessmentDetailsMcqTitle}>
+                            {question.type.toUpperCase()}
                           </Text>
+                          <SimpleIcon
+                            name={
+                              expandedMcq?.[index]
+                                ? "chevron-up"
+                                : "chevron-down"
+                            }
+                            size={20}
+                            color="#000"
+                          />
+                        </TouchableOpacity>
 
-                          {/* Render Based on Type */}
-                          {question.type === "mcq" && (
-                            <>
-                              {question.options.map((option: string, optionIndex: number) => (
-                                <View key={optionIndex} style={styles.assessmentDetailsOptionContainer}>
-                                  <Text style={styles.assessmentDetailsBulletPoint}>•</Text>
+                        {expandedMcq?.[index] && (
+                          <View style={styles.assessmentDetailsQuestionCard}>
+                            {/* Common Question Text */}
+                            <Text style={styles.assessmentDetailsQuestionLabel}>
+                              Question:
+                            </Text>
+                            <Text style={styles.assessmentDetailsQuestionText}>
+                              {question.question.replace(/<[^>]*>/g, "")}
+                            </Text>
+
+                            {/* Render Based on Type */}
+                            {question.type === "mcq" && (
+                              <>
+                                {question.options.map(
+                                  (option: string, optionIndex: number) => (
+                                    <View
+                                      key={optionIndex}
+                                      style={
+                                        styles.assessmentDetailsOptionContainer
+                                      }
+                                    >
+                                      <Text
+                                        style={
+                                          styles.assessmentDetailsBulletPoint
+                                        }
+                                      >
+                                        •
+                                      </Text>
+                                      <Text
+                                        style={[
+                                          styles.assessmentDetailsOptionText,
+                                          option === question.correctAnswer &&
+                                            styles.assessmentDetailsCorrectOption,
+                                        ]}
+                                      >
+                                        {option}
+                                      </Text>
+                                      {option === question.correctAnswer && (
+                                        <Text
+                                          style={
+                                            styles.assessmentDetailsCorrectLabel
+                                          }
+                                        >
+                                          Correct
+                                        </Text>
+                                      )}
+                                    </View>
+                                  )
+                                )}
+                              </>
+                            )}
+
+                            {question.type === "truefalse" && (
+                              <View style={{ marginTop: 8 }}>
+                                <Text
+                                  style={styles.assessmentDetailsQuestionLabel}
+                                >
+                                  Answer:
+                                </Text>
+                                <Text
+                                  style={[
+                                    styles.assessmentDetailsOptionText,
+                                    question.correctAnswer === "true"
+                                      ? styles.assessmentDetailsCorrectOption
+                                      : styles.assessmentDetailsWrongOption,
+                                  ]}
+                                >
+                                  {question.correctAnswer === "true"
+                                    ? "True"
+                                    : "False"}
+                                </Text>
+                              </View>
+                            )}
+
+                            {question.type === "qa" && (
+                              <View style={{ marginTop: 8 }}>
+                                <Text
+                                  style={styles.assessmentDetailsQuestionLabel}
+                                >
+                                  Answer:
+                                </Text>
+                                <Text
+                                  style={styles.assessmentDetailsOptionText}
+                                >
+                                  {question.correctAnswer || "—"}
+                                </Text>
+                              </View>
+                            )}
+
+                            {question.type === "file" &&
+                              question.files.length > 0 && (
+                                <View style={{ marginTop: 10 }}>
                                   <Text
-                                    style={[
-                                      styles.assessmentDetailsOptionText,
-                                      option === question.correctAnswer &&
-                                      styles.assessmentDetailsCorrectOption,
-                                    ]}
+                                    style={
+                                      styles.assessmentDetailsQuestionLabel
+                                    }
                                   >
-                                    {option}
+                                    File:
                                   </Text>
-                                  {option === question.correctAnswer && (
-                                    <Text style={styles.assessmentDetailsCorrectLabel}>Correct</Text>
+                                  {question.files.map(
+                                    (file: any, fIndex: number) => (
+                                      <TouchableOpacity
+                                        key={fIndex}
+                                        onPress={() =>
+                                          Linking.openURL(file.url)
+                                        }
+                                        style={{
+                                          flexDirection: "row",
+                                          alignItems: "center",
+                                          marginTop: 6,
+                                        }}
+                                      >
+                                        <SimpleIcon
+                                          name="description"
+                                          size={18}
+                                          color="#007BFF"
+                                        />
+                                        <Text
+                                          style={{
+                                            color: "#007BFF",
+                                            textDecorationLine: "underline",
+                                            marginLeft: 6,
+                                          }}
+                                        >
+                                          {file.filename}
+                                        </Text>
+                                      </TouchableOpacity>
+                                    )
                                   )}
                                 </View>
-                              ))}
-                            </>
-                          )}
-
-                          {question.type === "truefalse" && (
-                            <View style={{ marginTop: 8 }}>
-                              <Text style={styles.assessmentDetailsQuestionLabel}>Answer:</Text>
-                              <Text
-                                style={[
-                                  styles.assessmentDetailsOptionText,
-                                  question.correctAnswer === "true"
-                                    ? styles.assessmentDetailsCorrectOption
-                                    : styles.assessmentDetailsWrongOption,
-                                ]}
-                              >
-                                {question.correctAnswer === "true" ? "True" : "False"}
-                              </Text>
-                            </View>
-                          )}
-
-                          {question.type === "qa" && (
-                            <View style={{ marginTop: 8 }}>
-                              <Text style={styles.assessmentDetailsQuestionLabel}>Answer:</Text>
-                              <Text style={styles.assessmentDetailsOptionText}>
-                                {question.correctAnswer || "—"}
-                              </Text>
-                            </View>
-                          )}
-
-                          {question.type === "file" && question.files.length > 0 && (
-                            <View style={{ marginTop: 10 }}>
-                              <Text style={styles.assessmentDetailsQuestionLabel}>File:</Text>
-                              {question.files.map((file: any, fIndex: number) => (
-                                <TouchableOpacity
-                                  key={fIndex}
-                                  onPress={() => Linking.openURL(file.url)}
-                                  style={{
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    marginTop: 6,
-                                  }}
-                                >
-                                  <SimpleIcon name="description" size={18} color="#007BFF" />
-                                  <Text
-                                    style={{
-                                      color: "#007BFF",
-                                      textDecorationLine: "underline",
-                                      marginLeft: 6,
-                                    }}
-                                  >
-                                    {file.filename}
-                                  </Text>
-                                </TouchableOpacity>
-                              ))}
-                            </View>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  ))}
+                              )}
+                          </View>
+                        )}
+                      </View>
+                    )
+                  )}
                 </View>
               </>
             )}
@@ -4414,23 +4831,24 @@ const CourseDetailsPage = () => {
         </View>
       </Modal>
 
-
       {/* Edit Assessment Modal */}
       <Modal
         visible={showEditAssessmentModal}
         transparent={false}
         animationType="slide"
         onRequestClose={() => {
-          setShowEditAssessmentModal(false)
-          setShowAssessmentDetailsModal(true)
+          setShowEditAssessmentModal(false);
+          setShowAssessmentDetailsModal(true);
         }}
       >
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
-          <View style={[styles.assessmentDetailsHeader, { paddingTop: insets.top }]}>
+          <View
+            style={[styles.assessmentDetailsHeader, { paddingTop: insets.top }]}
+          >
             <TouchableOpacity
               onPress={() => {
-                setShowEditAssessmentModal(false)
-                setShowAssessmentDetailsModal(true)
+                setShowEditAssessmentModal(false);
+                setShowAssessmentDetailsModal(true);
               }}
               style={styles.assessmentDetailsBackButton}
             >
@@ -4493,7 +4911,8 @@ const CourseDetailsPage = () => {
                       }}
                       style={[
                         styles.editCategoryDropdownItem,
-                        editAssessmentCategory === c.id && styles.editCategoryDropdownItemActive
+                        editAssessmentCategory === c.id &&
+                          styles.editCategoryDropdownItemActive,
                       ]}
                     >
                       <Text style={{ color: "#111" }}>{c.title}</Text>
@@ -4510,7 +4929,10 @@ const CourseDetailsPage = () => {
             >
               <Text style={{ color: editAssessmentDueDate ? "#000" : "#999" }}>
                 {editAssessmentDueDate
-                  ? `${editAssessmentDueDate.toLocaleDateString()} at ${editAssessmentDueDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+                  ? `${editAssessmentDueDate.toLocaleDateString()} at ${editAssessmentDueDate.toLocaleTimeString(
+                      "en-US",
+                      { hour: "2-digit", minute: "2-digit" }
+                    )}`
                   : "Select due date"}
               </Text>
             </TouchableOpacity>
@@ -4534,12 +4956,12 @@ const CourseDetailsPage = () => {
           </ScrollView>
           {showEditDatePicker && (
             <>
-              {Platform.OS === 'ios' && (
+              {Platform.OS === "ios" && (
                 <TouchableOpacity
                   style={{
-                    alignSelf: 'flex-end',
+                    alignSelf: "flex-end",
                     marginTop: 10,
-                    marginRight: 15
+                    marginRight: 15,
                   }}
                   onPress={() => {
                     setShowEditDatePicker(false);
@@ -4550,9 +4972,9 @@ const CourseDetailsPage = () => {
                 >
                   <Text
                     style={{
-                      color: '#007AFF',
+                      color: "#007AFF",
                       fontSize: 18,
-                      fontWeight: '600'
+                      fontWeight: "600",
                     }}
                   >
                     Done
@@ -4562,12 +4984,12 @@ const CourseDetailsPage = () => {
               <DateTimePicker
                 value={editAssessmentDueDate || new Date()}
                 mode="date"
-                style={{ alignSelf: 'center' }}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                style={{ alignSelf: "center" }}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
                 onChange={(event, selectedDate) => {
-                  if (Platform.OS === 'android') {
+                  if (Platform.OS === "android") {
                     setShowEditDatePicker(false);
-                    if (event.type === 'set' && selectedDate) {
+                    if (event.type === "set" && selectedDate) {
                       setTempEditDate(selectedDate);
                       setTimeout(() => setShowEditTimePicker(true), 200);
                     } else {
@@ -4586,12 +5008,12 @@ const CourseDetailsPage = () => {
 
           {showEditTimePicker && (
             <>
-              {Platform.OS === 'ios' && (
+              {Platform.OS === "ios" && (
                 <TouchableOpacity
                   style={{
-                    alignSelf: 'flex-end',
+                    alignSelf: "flex-end",
                     marginTop: 10,
-                    marginRight: 15
+                    marginRight: 15,
                   }}
                   onPress={() => {
                     setShowEditTimePicker(false);
@@ -4602,9 +5024,9 @@ const CourseDetailsPage = () => {
                 >
                   <Text
                     style={{
-                      color: '#007AFF',
+                      color: "#007AFF",
                       fontSize: 18,
-                      fontWeight: '600'
+                      fontWeight: "600",
                     }}
                   >
                     Done
@@ -4614,12 +5036,12 @@ const CourseDetailsPage = () => {
               <DateTimePicker
                 value={tempEditDate || new Date()}
                 mode="time"
-                style={{ alignSelf: 'center' }}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                style={{ alignSelf: "center" }}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
                 onChange={(event, selectedTime) => {
-                  if (Platform.OS === 'android') {
+                  if (Platform.OS === "android") {
                     setShowEditTimePicker(false);
-                    if (event.type === 'set' && selectedTime && tempEditDate) {
+                    if (event.type === "set" && selectedTime && tempEditDate) {
                       const combined = new Date(tempEditDate);
                       combined.setHours(selectedTime.getHours());
                       combined.setMinutes(selectedTime.getMinutes());
@@ -4743,9 +5165,17 @@ const CourseDetailsPage = () => {
             </TouchableOpacity>
           </View>
           {gradebookLoading ? (
-            <ActivityIndicator size="large" color="#10B144" style={{ marginVertical: 40 }} />
+            <ActivityIndicator
+              size="large"
+              color="#10B144"
+              style={{ marginVertical: 40 }}
+            />
           ) : gradebookError ? (
-            <Text style={{ color: "red", textAlign: "center", marginVertical: 20 }}>{gradebookError}</Text>
+            <Text
+              style={{ color: "red", textAlign: "center", marginVertical: 20 }}
+            >
+              {gradebookError}
+            </Text>
           ) : gradebookData ? (
             <ScrollView contentContainerStyle={{ padding: 16 }}>
               <View
@@ -4822,7 +5252,8 @@ const CourseDetailsPage = () => {
                 </View>
 
                 {/* Student Rows */}
-                {gradebookData.gradebook && gradebookData.gradebook.length > 0 ? (
+                {gradebookData.gradebook &&
+                gradebookData.gradebook.length > 0 ? (
                   gradebookData.gradebook.map((student: Student) => (
                     <View key={student.studentId}>
                       <TouchableOpacity
@@ -4851,7 +5282,9 @@ const CourseDetailsPage = () => {
                               fontWeight: "bold",
                             }}
                           >
-                            {expandedStudents.has(student.studentId) ? "▼" : "▶"}
+                            {expandedStudents.has(student.studentId)
+                              ? "▼"
+                              : "▶"}
                           </Text>
                           <Text
                             style={{
@@ -4872,7 +5305,9 @@ const CourseDetailsPage = () => {
                             color: "#1E293B",
                           }}
                         >
-                          {student.finalGrade ? `${student.finalGrade}%` : "---"}
+                          {student.finalGrade
+                            ? `${student.finalGrade}%`
+                            : "---"}
                         </Text>
                         <View style={{ flex: 1, alignItems: "center" }}>
                           <View
@@ -4892,7 +5327,9 @@ const CourseDetailsPage = () => {
                                 fontSize: 14,
                               }}
                             >
-                              {student.assessments?.length > 0 ? student.letterGrade : '---'}
+                              {student.assessments?.length > 0
+                                ? student.letterGrade
+                                : "---"}
                             </Text>
                           </View>
                         </View>
@@ -4904,7 +5341,9 @@ const CourseDetailsPage = () => {
                             color: "#1E293B",
                           }}
                         >
-                          {student.assessments?.length > 0 ? student.gpa : '---'}
+                          {student.assessments?.length > 0
+                            ? student.gpa
+                            : "---"}
                         </Text>
                       </TouchableOpacity>
 
@@ -4931,12 +5370,17 @@ const CourseDetailsPage = () => {
 
                           {/* Semesters */}
                           {student.hasSemesterStructure ? (
-
-                            student.semesters && student.semesters.length > 0 ? (
+                            student.semesters &&
+                            student.semesters.length > 0 ? (
                               student.semesters.map((semester: Semester) => (
-                                <View key={semester.semesterId} style={{ marginBottom: 8 }}>
+                                <View
+                                  key={semester.semesterId}
+                                  style={{ marginBottom: 8 }}
+                                >
                                   <TouchableOpacity
-                                    onPress={() => toggleSemester(semester.semesterId)}
+                                    onPress={() =>
+                                      toggleSemester(semester.semesterId)
+                                    }
                                     style={{
                                       flexDirection: "row",
                                       alignItems: "center",
@@ -4956,7 +5400,11 @@ const CourseDetailsPage = () => {
                                         fontWeight: "bold",
                                       }}
                                     >
-                                      {expandedSemesters.has(semester.semesterId) ? "▼" : "▶"}
+                                      {expandedSemesters.has(
+                                        semester.semesterId
+                                      )
+                                        ? "▼"
+                                        : "▶"}
                                     </Text>
                                     <Text
                                       style={{
@@ -4970,7 +5418,9 @@ const CourseDetailsPage = () => {
                                     </Text>
                                   </TouchableOpacity>
 
-                                  {expandedSemesters.has(semester.semesterId) && (
+                                  {expandedSemesters.has(
+                                    semester.semesterId
+                                  ) && (
                                     <View
                                       style={{
                                         marginTop: 8,
@@ -4980,226 +5430,267 @@ const CourseDetailsPage = () => {
                                         borderLeftColor: "#d1d5db",
                                       }}
                                     >
-                                      {semester.quarters && semester.quarters.length > 0 ? (
-                                        semester.quarters.map((quarter: Quarter) => (
-                                          <View key={quarter.quarterId} style={{ marginBottom: 8 }}>
-                                            <TouchableOpacity
-                                              onPress={() => toggleQuarter(quarter.quarterId)}
-                                              style={{
-                                                flexDirection: "row",
-                                                alignItems: "center",
-                                                paddingVertical: 8,
-                                                paddingHorizontal: 12,
-                                                backgroundColor: "#f3f4f6",
-                                                borderRadius: 6,
-                                                borderWidth: 1,
-                                                borderColor: "#d1d5db",
-                                              }}
+                                      {semester.quarters &&
+                                      semester.quarters.length > 0 ? (
+                                        semester.quarters.map(
+                                          (quarter: Quarter) => (
+                                            <View
+                                              key={quarter.quarterId}
+                                              style={{ marginBottom: 8 }}
                                             >
-                                              <Text
+                                              <TouchableOpacity
+                                                onPress={() =>
+                                                  toggleQuarter(
+                                                    quarter.quarterId
+                                                  )
+                                                }
                                                 style={{
-                                                  fontSize: 13,
-                                                  marginRight: 8,
-                                                  color: "#6b7280",
-                                                  fontWeight: "bold",
-                                                }}
-                                              >
-                                                {expandedQuarters.has(quarter.quarterId) ? "▼" : "▶"}
-                                              </Text>
-                                              <Text
-                                                style={{
-                                                  flex: 1,
-                                                  fontSize: 13,
-                                                  fontWeight: "600",
-                                                  color: "#374151",
-                                                }}
-                                              >
-                                                {quarter.quarterTitle}
-                                              </Text>
-                                              <Text
-                                                style={{
-                                                  fontSize: 12,
-                                                  color: "#6b7280",
-                                                  marginRight: 8,
-                                                }}
-                                              >
-                                                {quarter.grade}%
-                                              </Text>
-                                              <View
-                                                style={{
-                                                  backgroundColor: "#dbeafe",
-                                                  borderColor: "#93c5fd",
+                                                  flexDirection: "row",
+                                                  alignItems: "center",
+                                                  paddingVertical: 8,
+                                                  paddingHorizontal: 12,
+                                                  backgroundColor: "#f3f4f6",
+                                                  borderRadius: 6,
                                                   borderWidth: 1,
-                                                  borderRadius: 4,
-                                                  paddingHorizontal: 6,
-                                                  paddingVertical: 2,
-                                                  marginRight: 8,
+                                                  borderColor: "#d1d5db",
                                                 }}
                                               >
                                                 <Text
                                                   style={{
-                                                    color: "#1E293B",
+                                                    fontSize: 13,
+                                                    marginRight: 8,
+                                                    color: "#6b7280",
                                                     fontWeight: "bold",
-                                                    fontSize: 11,
                                                   }}
                                                 >
-                                                  {quarter.letterGrade}
+                                                  {expandedQuarters.has(
+                                                    quarter.quarterId
+                                                  )
+                                                    ? "▼"
+                                                    : "▶"}
                                                 </Text>
-                                              </View>
-                                              <Text
-                                                style={{
-                                                  fontSize: 12,
-                                                  color: "#6b7280",
-                                                }}
-                                              >
-                                                GPA: {quarter.gpa}
-                                              </Text>
-                                            </TouchableOpacity>
-
-                                            {expandedQuarters.has(quarter.quarterId) && (
-                                              <View
-                                                style={{
-                                                  marginTop: 8,
-                                                  marginLeft: 12,
-                                                  paddingLeft: 12,
-                                                  paddingVertical: 8,
-                                                  backgroundColor: "#fff",
-                                                  borderRadius: 6,
-                                                  borderWidth: 1,
-                                                  borderColor: "#e5e7eb",
-                                                }}
-                                              >
-                                                {/* Assessment Headers */}
+                                                <Text
+                                                  style={{
+                                                    flex: 1,
+                                                    fontSize: 13,
+                                                    fontWeight: "600",
+                                                    color: "#374151",
+                                                  }}
+                                                >
+                                                  {quarter.quarterTitle}
+                                                </Text>
+                                                <Text
+                                                  style={{
+                                                    fontSize: 12,
+                                                    color: "#6b7280",
+                                                    marginRight: 8,
+                                                  }}
+                                                >
+                                                  {quarter.grade}%
+                                                </Text>
                                                 <View
                                                   style={{
-                                                    flexDirection: "row",
-                                                    paddingBottom: 8,
-                                                    marginBottom: 8,
-                                                    borderBottomWidth: 1,
-                                                    borderBottomColor: "#e5e7eb",
+                                                    backgroundColor: "#dbeafe",
+                                                    borderColor: "#93c5fd",
+                                                    borderWidth: 1,
+                                                    borderRadius: 4,
+                                                    paddingHorizontal: 6,
+                                                    paddingVertical: 2,
+                                                    marginRight: 8,
                                                   }}
                                                 >
                                                   <Text
                                                     style={{
-                                                      flex: 2,
-                                                      fontSize: 12,
-                                                      fontWeight: "600",
-                                                      color: "#6b7280",
+                                                      color: "#1E293B",
+                                                      fontWeight: "bold",
+                                                      fontSize: 11,
                                                     }}
                                                   >
-                                                    Assessment
-                                                  </Text>
-                                                  <Text
-                                                    style={{
-                                                      flex: 1.5,
-                                                      fontSize: 12,
-                                                      fontWeight: "600",
-                                                      color: "#6b7280",
-                                                    }}
-                                                  >
-                                                    Category
-                                                  </Text>
-                                                  <Text
-                                                    style={{
-                                                      flex: 1,
-                                                      fontSize: 12,
-                                                      fontWeight: "600",
-                                                      color: "#6b7280",
-                                                      textAlign: "center",
-                                                    }}
-                                                  >
-                                                    Score
-                                                  </Text>
-                                                  <Text
-                                                    style={{
-                                                      flex: 1,
-                                                      fontSize: 12,
-                                                      fontWeight: "600",
-                                                      color: "#6b7280",
-                                                      textAlign: "center",
-                                                    }}
-                                                  >
-                                                    %
+                                                    {quarter.letterGrade}
                                                   </Text>
                                                 </View>
+                                                <Text
+                                                  style={{
+                                                    fontSize: 12,
+                                                    color: "#6b7280",
+                                                  }}
+                                                >
+                                                  GPA: {quarter.gpa}
+                                                </Text>
+                                              </TouchableOpacity>
 
-                                                {/* Assessment Rows */}
-                                                {quarter.assessments && quarter.assessments.length > 0 ? (
-                                                  quarter.assessments.map((assessment: Assessment) => (
-                                                    <View
-                                                      key={assessment.assessmentId}
-                                                      style={{
-                                                        flexDirection: "row",
-                                                        paddingVertical: 6,
-                                                        borderBottomWidth: 1,
-                                                        borderBottomColor: "#f3f4f6",
-                                                      }}
-                                                    >
-                                                      <Text
-                                                        style={{
-                                                          flex: 2,
-                                                          fontSize: 12,
-                                                          color: "#374151",
-                                                        }}
-                                                        numberOfLines={1}
-                                                      >
-                                                        {assessment.assessmentTitle}
-                                                      </Text>
-                                                      <Text
-                                                        style={{
-                                                          flex: 1.5,
-                                                          fontSize: 12,
-                                                          color: "#6b7280",
-                                                        }}
-                                                        numberOfLines={1}
-                                                      >
-                                                        {assessment.category}
-                                                      </Text>
-                                                      <Text
-                                                        style={{
-                                                          flex: 1,
-                                                          fontSize: 12,
-                                                          color: "#374151",
-                                                          textAlign: "center",
-                                                        }}
-                                                      >
-                                                        {assessment.studentPoints}/{assessment.maxPoints}
-                                                      </Text>
-                                                      <Text
-                                                        style={{
-                                                          flex: 1,
-                                                          fontSize: 12,
-                                                          color: "#374151",
-                                                          textAlign: "right",
-                                                          fontWeight: "600",
-                                                        }}
-                                                      >
-                                                        {assessment.maxPoints > 0
-                                                          ? (
-                                                            (assessment.studentPoints / assessment.maxPoints) *
-                                                            100
-                                                          ).toFixed(1)
-                                                          : 0}
-                                                        %
-                                                      </Text>
-                                                    </View>
-                                                  ))
-                                                ) : (
-                                                  <Text
+                                              {expandedQuarters.has(
+                                                quarter.quarterId
+                                              ) && (
+                                                <View
+                                                  style={{
+                                                    marginTop: 8,
+                                                    marginLeft: 12,
+                                                    paddingLeft: 12,
+                                                    paddingVertical: 8,
+                                                    backgroundColor: "#fff",
+                                                    borderRadius: 6,
+                                                    borderWidth: 1,
+                                                    borderColor: "#e5e7eb",
+                                                  }}
+                                                >
+                                                  {/* Assessment Headers */}
+                                                  <View
                                                     style={{
-                                                      fontSize: 12,
-                                                      color: "#9ca3af",
-                                                      textAlign: "center",
-                                                      paddingVertical: 8,
+                                                      flexDirection: "row",
+                                                      paddingBottom: 8,
+                                                      marginBottom: 8,
+                                                      borderBottomWidth: 1,
+                                                      borderBottomColor:
+                                                        "#e5e7eb",
                                                     }}
                                                   >
-                                                    No assessments found.
-                                                  </Text>
-                                                )}
-                                              </View>
-                                            )}
-                                          </View>
-                                        ))
+                                                    <Text
+                                                      style={{
+                                                        flex: 2,
+                                                        fontSize: 12,
+                                                        fontWeight: "600",
+                                                        color: "#6b7280",
+                                                      }}
+                                                    >
+                                                      Assessment
+                                                    </Text>
+                                                    <Text
+                                                      style={{
+                                                        flex: 1.5,
+                                                        fontSize: 12,
+                                                        fontWeight: "600",
+                                                        color: "#6b7280",
+                                                      }}
+                                                    >
+                                                      Category
+                                                    </Text>
+                                                    <Text
+                                                      style={{
+                                                        flex: 1,
+                                                        fontSize: 12,
+                                                        fontWeight: "600",
+                                                        color: "#6b7280",
+                                                        textAlign: "center",
+                                                      }}
+                                                    >
+                                                      Score
+                                                    </Text>
+                                                    <Text
+                                                      style={{
+                                                        flex: 1,
+                                                        fontSize: 12,
+                                                        fontWeight: "600",
+                                                        color: "#6b7280",
+                                                        textAlign: "center",
+                                                      }}
+                                                    >
+                                                      %
+                                                    </Text>
+                                                  </View>
+
+                                                  {/* Assessment Rows */}
+                                                  {quarter.assessments &&
+                                                  quarter.assessments.length >
+                                                    0 ? (
+                                                    quarter.assessments.map(
+                                                      (
+                                                        assessment: Assessment
+                                                      ) => (
+                                                        <View
+                                                          key={
+                                                            assessment.assessmentId
+                                                          }
+                                                          style={{
+                                                            flexDirection:
+                                                              "row",
+                                                            paddingVertical: 6,
+                                                            borderBottomWidth: 1,
+                                                            borderBottomColor:
+                                                              "#f3f4f6",
+                                                          }}
+                                                        >
+                                                          <Text
+                                                            style={{
+                                                              flex: 2,
+                                                              fontSize: 12,
+                                                              color: "#374151",
+                                                            }}
+                                                            numberOfLines={1}
+                                                          >
+                                                            {
+                                                              assessment.assessmentTitle
+                                                            }
+                                                          </Text>
+                                                          <Text
+                                                            style={{
+                                                              flex: 1.5,
+                                                              fontSize: 12,
+                                                              color: "#6b7280",
+                                                            }}
+                                                            numberOfLines={1}
+                                                          >
+                                                            {
+                                                              assessment.category
+                                                            }
+                                                          </Text>
+                                                          <Text
+                                                            style={{
+                                                              flex: 1,
+                                                              fontSize: 12,
+                                                              color: "#374151",
+                                                              textAlign:
+                                                                "center",
+                                                            }}
+                                                          >
+                                                            {
+                                                              assessment.studentPoints
+                                                            }
+                                                            /
+                                                            {
+                                                              assessment.maxPoints
+                                                            }
+                                                          </Text>
+                                                          <Text
+                                                            style={{
+                                                              flex: 1,
+                                                              fontSize: 12,
+                                                              color: "#374151",
+                                                              textAlign:
+                                                                "right",
+                                                              fontWeight: "600",
+                                                            }}
+                                                          >
+                                                            {assessment.maxPoints >
+                                                            0
+                                                              ? (
+                                                                  (assessment.studentPoints /
+                                                                    assessment.maxPoints) *
+                                                                  100
+                                                                ).toFixed(1)
+                                                              : 0}
+                                                            %
+                                                          </Text>
+                                                        </View>
+                                                      )
+                                                    )
+                                                  ) : (
+                                                    <Text
+                                                      style={{
+                                                        fontSize: 12,
+                                                        color: "#9ca3af",
+                                                        textAlign: "center",
+                                                        paddingVertical: 8,
+                                                      }}
+                                                    >
+                                                      No assessments found.
+                                                    </Text>
+                                                  )}
+                                                </View>
+                                              )}
+                                            </View>
+                                          )
+                                        )
                                       ) : (
                                         <Text
                                           style={{
@@ -5294,66 +5785,71 @@ const CourseDetailsPage = () => {
                               </View>
 
                               {/* Assessment Rows */}
-                              {student.assessments && student.assessments.length > 0 ? (
-                                student.assessments.map((assessment: Assessment) => (
-                                  <View
-                                    key={assessment.assessmentId}
-                                    style={{
-                                      flexDirection: "row",
-                                      paddingVertical: 6,
-                                      borderBottomWidth: 1,
-                                      borderBottomColor: "#f3f4f6",
-                                    }}
-                                  >
-                                    <Text
+                              {student.assessments &&
+                              student.assessments.length > 0 ? (
+                                student.assessments.map(
+                                  (assessment: Assessment) => (
+                                    <View
+                                      key={assessment.assessmentId}
                                       style={{
-                                        flex: 2,
-                                        fontSize: 12,
-                                        color: "#374151",
-                                      }}
-                                      numberOfLines={1}
-                                    >
-                                      {assessment.assessmentTitle}
-                                    </Text>
-                                    <Text
-                                      style={{
-                                        flex: 1.5,
-                                        fontSize: 12,
-                                        color: "#6b7280",
-                                      }}
-                                      numberOfLines={1}
-                                    >
-                                      {assessment.category}
-                                    </Text>
-                                    <Text
-                                      style={{
-                                        flex: 1,
-                                        fontSize: 12,
-                                        color: "#374151",
-                                        textAlign: "center",
+                                        flexDirection: "row",
+                                        paddingVertical: 6,
+                                        borderBottomWidth: 1,
+                                        borderBottomColor: "#f3f4f6",
                                       }}
                                     >
-                                      {assessment.studentPoints}/{assessment.maxPoints}
-                                    </Text>
-                                    <Text
-                                      style={{
-                                        flex: 1,
-                                        fontSize: 12,
-                                        color: "#374151",
-                                        textAlign: "right",
-                                        fontWeight: "600",
-                                      }}
-                                    >
-                                      {assessment.maxPoints > 0
-                                        ? (
-                                          (assessment.studentPoints / assessment.maxPoints) *
-                                          100
-                                        ).toFixed(1)
-                                        : 0}
-                                      %
-                                    </Text>
-                                  </View>
-                                ))
+                                      <Text
+                                        style={{
+                                          flex: 2,
+                                          fontSize: 12,
+                                          color: "#374151",
+                                        }}
+                                        numberOfLines={1}
+                                      >
+                                        {assessment.assessmentTitle}
+                                      </Text>
+                                      <Text
+                                        style={{
+                                          flex: 1.5,
+                                          fontSize: 12,
+                                          color: "#6b7280",
+                                        }}
+                                        numberOfLines={1}
+                                      >
+                                        {assessment.category}
+                                      </Text>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          fontSize: 12,
+                                          color: "#374151",
+                                          textAlign: "center",
+                                        }}
+                                      >
+                                        {assessment.studentPoints}/
+                                        {assessment.maxPoints}
+                                      </Text>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          fontSize: 12,
+                                          color: "#374151",
+                                          textAlign: "right",
+                                          fontWeight: "600",
+                                        }}
+                                      >
+                                        {assessment.maxPoints > 0
+                                          ? (
+                                              (assessment.studentPoints /
+                                                assessment.maxPoints) *
+                                              100
+                                            ).toFixed(1)
+                                          : 0}
+                                        %
+                                      </Text>
+                                    </View>
+                                  )
+                                )
                               ) : (
                                 <Text
                                   style={{
@@ -5368,7 +5864,6 @@ const CourseDetailsPage = () => {
                               )}
                             </View>
                           )}
-
                         </View>
                       )}
                     </View>
@@ -5411,10 +5906,9 @@ const CourseDetailsPage = () => {
       >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View style={styles.modalOverlay}>
-
             <View
               style={[styles.modalContent, { width: "95%", maxWidth: 420 }]}
             >
@@ -5461,11 +5955,14 @@ const CourseDetailsPage = () => {
                   value={editCoursePrice}
                   onChangeText={(text) => {
                     // Only allow digits
-                    let numericValue = text.replace(/[^0-9]/g, '');
+                    let numericValue = text.replace(/[^0-9]/g, "");
 
                     // If it starts with 1–9 and length exceeds 4 → limit to 4 digits
-                    if (/^[1-9]/.test(numericValue) && numericValue.length > 4) {
-                      numericValue = '9999';
+                    if (
+                      /^[1-9]/.test(numericValue) &&
+                      numericValue.length > 4
+                    ) {
+                      numericValue = "9999";
                     }
 
                     setEditCoursePrice(numericValue);
@@ -5506,8 +6003,8 @@ const CourseDetailsPage = () => {
                     >
                       {editCourseSubcategory
                         ? subcategories.find(
-                          (s) => s._id === editCourseSubcategory
-                        )?.title || "Select sub category"
+                            (s) => s._id === editCourseSubcategory
+                          )?.title || "Select sub category"
                         : "Select sub category"}
                     </Text>
                     <SimpleIcon name="chevron-down" size={16} color="#666" />
@@ -5534,7 +6031,10 @@ const CourseDetailsPage = () => {
                       shadowRadius: 4,
                     }}
                   >
-                    <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
+                    <ScrollView
+                      style={{ maxHeight: 200 }}
+                      nestedScrollEnabled={true}
+                    >
                       {subcategories.map((subcategory) => (
                         <TouchableOpacity
                           key={subcategory._id}
@@ -5598,9 +6098,7 @@ const CourseDetailsPage = () => {
                     setShowLanguageDropdown(!showLanguageDropdown);
                   }}
                 >
-                  <Text
-                    style={{ color: editCourseLanguage ? "#333" : "#999" }}
-                  >
+                  <Text style={{ color: editCourseLanguage ? "#333" : "#999" }}>
                     {editCourseLanguage || "Select language"}
                   </Text>
                   <SimpleIcon name="chevron-down" size={16} color="#666" />
@@ -5901,20 +6399,15 @@ const CourseDetailsPage = () => {
                         teachingPoints: JSON.stringify(editTeachingPoints),
                         requirements: JSON.stringify(editRequirements),
                       });
-                      console.log(res)
+                      console.log(res);
                       getCourseDetails(courseId)
                         .then((res) => {
                           setCourse(res.course);
-                          Toast.show(
-                            "Course updated successfully",
-                            Toast.LONG
-                          );
+                          Toast.show("Course updated successfully", Toast.LONG);
                           setShowEditCourseModal(false);
                           setLoading(true);
                         })
-                        .catch(() =>
-                          setError("Failed to load course details.")
-                        )
+                        .catch(() => setError("Failed to load course details."))
                         .finally(() => setLoading(false));
                     } catch (err: any) {
                       setEditCourseError(
@@ -6019,11 +6512,7 @@ const CourseDetailsPage = () => {
                 <View style={styles.chapterDetailsCard}>
                   <View style={styles.chapterDetailsHeader}>
                     <View style={styles.chapterDetailsIcon}>
-                      <SimpleIcon
-                        name="menu-book"
-                        size={24}
-                        color="#10B144"
-                      />
+                      <SimpleIcon name="menu-book" size={24} color="#10B144" />
                     </View>
                     <View style={styles.chapterDetailsActions}>
                       <TouchableOpacity
@@ -6034,68 +6523,12 @@ const CourseDetailsPage = () => {
                       </TouchableOpacity>
                       <View style={styles.plusButtonContainer}>
                         <TouchableOpacity
+                          ref={plusButtonRef}
                           style={styles.chapterDetailsActionButton}
                           onPress={handlePlusButtonPress}
                         >
                           <SimpleIcon name="plus" size={25} color="#fff" />
                         </TouchableOpacity>
-
-                        {showPlusDropdown && (
-                          <View style={styles.dropdownMenu}>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => handleDropdownOption("lesson")}
-                            >
-                              <SimpleIcon
-                                name="menu-book"
-                                size={20}
-                                color="#3b82f6"
-                              />
-                              <Text style={styles.dropdownItemText}>
-                                + Add Lesson
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => handleDropdownOption("assessment")}
-                            >
-                              <SimpleIcon
-                                name="clipboard"
-                                size={20}
-                                color="#10b981"
-                              />
-                              <Text style={styles.dropdownItemText}>
-                                + Add Assessment
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => handleDropdownOption("page")}
-                            >
-                              <SimpleIcon
-                                name="description"
-                                size={20}
-                                color="#6b7280"
-                              />
-                              <Text style={styles.dropdownItemText}>
-                                + Add Page
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => handleDropdownOption("discussion")}
-                            >
-                              <SimpleIcon
-                                name="chat"
-                                size={20}
-                                color="#6b7280"
-                              />
-                              <Text style={styles.dropdownItemText}>
-                                + Discussion
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
                       </View>
                     </View>
                   </View>
@@ -6125,7 +6558,7 @@ const CourseDetailsPage = () => {
                   </View>
 
                   {chapterDetails.chapter_assessments &&
-                    chapterDetails.chapter_assessments.length > 0 ? (
+                  chapterDetails.chapter_assessments.length > 0 ? (
                     <View style={styles.chapterLessonsList}>
                       {chapterDetails.chapter_assessments.map(
                         (assessment: any, index: number) => (
@@ -6143,8 +6576,8 @@ const CourseDetailsPage = () => {
                                       ? assessment.category
                                       : assessment.category &&
                                         assessment.category.name
-                                        ? assessment.category.name
-                                        : "Uncategorized"}
+                                      ? assessment.category.name
+                                      : "Uncategorized"}
                                   </Text>
                                 </View>
                               ) : null}
@@ -6152,7 +6585,8 @@ const CourseDetailsPage = () => {
                                 onPress={() => {
                                   Alert.alert(
                                     "Delete Assessment",
-                                    `Are you sure you want to delete "${assessment.title || "this assessment"
+                                    `Are you sure you want to delete "${
+                                      assessment.title || "this assessment"
                                     }"?`,
                                     [
                                       {
@@ -6222,11 +6656,7 @@ const CourseDetailsPage = () => {
                 <View style={styles.lessonsCard}>
                   <View style={styles.lessonsHeader}>
                     <View style={styles.lessonsIcon}>
-                      <SimpleIcon
-                        name="menu-book"
-                        size={24}
-                        color="#10B144"
-                      />
+                      <SimpleIcon name="menu-book" size={24} color="#10B144" />
                     </View>
                     <Text style={styles.lessonsTitle}>Lessons</Text>
                     <View style={styles.lessonsCount}>
@@ -6239,7 +6669,7 @@ const CourseDetailsPage = () => {
                   </View>
 
                   {chapterDetails.lessons &&
-                    chapterDetails.lessons.length > 0 ? (
+                  chapterDetails.lessons.length > 0 ? (
                     <View style={styles.chapterLessonsList}>
                       {chapterDetails.lessons.map(
                         (lesson: any, index: number) => (
@@ -6641,6 +7071,68 @@ const CourseDetailsPage = () => {
         </View>
       </Modal>
 
+      {/* Plus Dropdown Modal */}
+      {showPlusDropdown && (
+        <Modal
+          visible={showPlusDropdown}
+          transparent={true}
+          animationType="none"
+          onRequestClose={() => setShowPlusDropdown(false)}
+        >
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => setShowPlusDropdown(false)}
+          >
+            <View
+              style={{
+                position: "absolute",
+                top: dropdownPosition.y,
+                right: 16,
+                backgroundColor: "#fff",
+                borderRadius: 12,
+                paddingVertical: 8,
+                minWidth: 180,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                elevation: 10,
+              }}
+            >
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => handleDropdownOption("lesson")}
+              >
+                <SimpleIcon name="menu-book" size={20} color="#3b82f6" />
+                <Text style={styles.dropdownItemText}>+ Add Lesson</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => handleDropdownOption("assessment")}
+              >
+                <SimpleIcon name="clipboard" size={20} color="#10b981" />
+                <Text style={styles.dropdownItemText}>+ Add Assessment</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => handleDropdownOption("page")}
+              >
+                <SimpleIcon name="description" size={20} color="#6b7280" />
+                <Text style={styles.dropdownItemText}>+ Add Page</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => handleDropdownOption("discussion")}
+              >
+                <SimpleIcon name="chat" size={20} color="#6b7280" />
+                <Text style={styles.dropdownItemText}>+ Discussion</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
       {/* Lesson Creation Modal */}
       <Modal
         visible={showLessonCreationModal}
@@ -6744,7 +7236,11 @@ const CourseDetailsPage = () => {
                   <View style={styles.fileList}>
                     {lessonCreationFiles.map((file, index) => (
                       <View key={index} style={styles.fileItem}>
-                        <SimpleIcon name="description" size={20} color="#10B144" />
+                        <SimpleIcon
+                          name="description"
+                          size={20}
+                          color="#10B144"
+                        />
                         <Text style={styles.fileName}>{file.name}</Text>
                         <TouchableOpacity
                           onPress={() => handleRemoveFile(index)}
@@ -6823,17 +7319,18 @@ const CourseDetailsPage = () => {
         transparent={false}
         animationType="slide"
         onRequestClose={() => {
-          setShowEditChapterModal(false)
-          setShowChapterDetailsModal(true)
+          setShowEditChapterModal(false);
+          setShowChapterDetailsModal(true);
         }}
       >
         <View style={styles.fullScreenModalContainer}>
-          <View style={[styles.fullScreenModalHeader, { paddingTop: insets.top }]}>
+          <View
+            style={[styles.fullScreenModalHeader, { paddingTop: insets.top }]}
+          >
             <TouchableOpacity
               onPress={() => {
-                setShowEditChapterModal(false)
-                setShowChapterDetailsModal(true)
-
+                setShowEditChapterModal(false);
+                setShowChapterDetailsModal(true);
               }}
               style={styles.backButton}
             >
@@ -6893,9 +7390,8 @@ const CourseDetailsPage = () => {
             <TouchableOpacity
               style={styles.editChapterCancelButton}
               onPress={() => {
-                setShowEditChapterModal(false)
-                setShowChapterDetailsModal(true)
-
+                setShowEditChapterModal(false);
+                setShowChapterDetailsModal(true);
               }}
             >
               <Text style={styles.editChapterCancelButtonText}>Cancel</Text>
@@ -6927,16 +7423,18 @@ const CourseDetailsPage = () => {
         transparent={false}
         animationType="slide"
         onRequestClose={() => {
-          setShowLessonEditModal(false)
-          setShowChapterDetailsModal(true)
+          setShowLessonEditModal(false);
+          setShowChapterDetailsModal(true);
         }}
       >
         <View style={styles.fullScreenModalContainer}>
-          <View style={[styles.fullScreenModalHeader, { paddingTop: insets.top }]}>
+          <View
+            style={[styles.fullScreenModalHeader, { paddingTop: insets.top }]}
+          >
             <TouchableOpacity
               onPress={() => {
-                setShowLessonEditModal(false)
-                setShowChapterDetailsModal(true)
+                setShowLessonEditModal(false);
+                setShowChapterDetailsModal(true);
               }}
               style={styles.backButton}
             >
@@ -7020,8 +7518,8 @@ const CourseDetailsPage = () => {
             <TouchableOpacity
               style={styles.lessonEditCancelButton}
               onPress={() => {
-                setShowLessonEditModal(false)
-                setShowChapterDetailsModal(true)
+                setShowLessonEditModal(false);
+                setShowChapterDetailsModal(true);
               }}
             >
               <Text style={styles.lessonEditCancelButtonText}>Cancel</Text>
@@ -7051,8 +7549,8 @@ const CourseDetailsPage = () => {
         transparent={false}
         animationType="slide"
         onRequestClose={() => {
-          setShowAddFilesModal(false)
-          setShowChapterDetailsModal(true)
+          setShowAddFilesModal(false);
+          setShowChapterDetailsModal(true);
         }}
       >
         <View style={styles.fullScreenModalContainer}>
@@ -7060,8 +7558,8 @@ const CourseDetailsPage = () => {
             <View style={styles.fullScreenModalHeader}>
               <TouchableOpacity
                 onPress={() => {
-                  setShowAddFilesModal(false)
-                  setShowChapterDetailsModal(true)
+                  setShowAddFilesModal(false);
+                  setShowChapterDetailsModal(true);
                 }}
                 style={styles.backButton}
               >
@@ -7098,11 +7596,7 @@ const CourseDetailsPage = () => {
                       <TouchableOpacity
                         onPress={() => handleRemoveSelectedFile(index)}
                       >
-                        <SimpleIcon
-                          name="trash"
-                          size={20}
-                          color="#ef4444"
-                        />
+                        <SimpleIcon name="trash" size={20} color="#ef4444" />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -7344,87 +7838,90 @@ const CourseDetailsPage = () => {
               </TouchableOpacity>
               <Text style={styles.fullScreenModalTitle}>Grade Scale</Text>
               <View style={{ width: 40 }} />
-
             </View>
-            <TouchableOpacity style={styles.manageButton} onPress={() => {
-              setShowGradeScaleManagement(false)
-              setShowGradeScaleModal(true)
-            }}>
+            <TouchableOpacity
+              style={styles.manageButton}
+              onPress={() => {
+                setShowGradeScaleManagement(false);
+                setShowGradeScaleModal(true);
+              }}
+            >
               <Text style={styles.manageButtonText}>Manage Grade Scale</Text>
             </TouchableOpacity>
-            {showGradeScaleManagementLoader ?
+            {showGradeScaleManagementLoader ? (
               <ActivityIndicator
                 size="large"
                 color="#10B144"
                 style={{ marginTop: 20 }}
-              /> :
-              Object.keys(gradeScale).length > 0 ?
-                <ScrollView style={{ flex: 1, marginTop: 20 }}>
-                  {/* Table Header */}
-                  <View style={styles.tableHeader}>
-                    <Text style={[styles.headerText, { flex: 1 }]}>Grade</Text>
-                    <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
-                    <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
-                  </View>
+              />
+            ) : Object.keys(gradeScale).length > 0 ? (
+              <ScrollView style={{ flex: 1, marginTop: 20 }}>
+                {/* Table Header */}
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.headerText, { flex: 1 }]}>Grade</Text>
+                  <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
+                  <Text style={[styles.headerText, { flex: 3 }]}>
+                    Percentage
+                  </Text>
+                </View>
 
-                  {/* Table Rows */}
-                  {gradeScale?.map((item: GradeScaleItem) => {
-                    const percentage = (item.max - item.min) / 100; // simulate visual fill
+                {/* Table Rows */}
+                {gradeScale?.map((item: GradeScaleItem) => {
+                  const percentage = (item.max - item.min) / 100; // simulate visual fill
 
-                    return (
-                      <View key={item._id} style={styles.tableRow}>
-                        {/* Grade */}
-                        <View style={styles.gradeBadge}>
-                          <Text style={styles.gradeText}>{item.grade}</Text>
-                        </View>
+                  return (
+                    <View key={item._id} style={styles.tableRow}>
+                      {/* Grade */}
+                      <View style={styles.gradeBadge}>
+                        <Text style={styles.gradeText}>{item.grade}</Text>
+                      </View>
 
-                        {/* Range */}
-                        <Text style={[styles.rangeText, { flex: 2 }]}>
-                          {item.min}% - {item.max}%
-                        </Text>
+                      {/* Range */}
+                      <Text style={[styles.rangeText, { flex: 2 }]}>
+                        {item.min}% - {item.max}%
+                      </Text>
 
-                        {/* Custom Progress Bar */}
-                        <View style={[styles.progressWrapper, { flex: 3 }]}>
-                          <View style={[styles.progressBackground]}>
-                            <View
-                              style={[
-                                styles.progressFill,
-                                { width: `${percentage * 100}%` },
-                              ]}
-                            />
-                          </View>
+                      {/* Custom Progress Bar */}
+                      <View style={[styles.progressWrapper, { flex: 3 }]}>
+                        <View style={[styles.progressBackground]}>
+                          <View
+                            style={[
+                              styles.progressFill,
+                              { width: `${percentage * 100}%` },
+                            ]}
+                          />
                         </View>
                       </View>
-                    );
-                  })}
-                </ScrollView>
-                :
-                <Text style={{ marginTop: 20 }}>No gradescale found for this course.</Text>
-            }
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <Text style={{ marginTop: 20 }}>
+                No gradescale found for this course.
+              </Text>
+            )}
           </View>
         </View>
       </Modal>
       <GradeScaleModal
         visible={showGradeScaleModal}
         onClose={() => {
-          setShowGradeScaleModal(false)
-          setShowGradeScaleManagement(true)
-        }
-        }
+          setShowGradeScaleModal(false);
+          setShowGradeScaleManagement(true);
+        }}
         onSave={async (newGradeScales) => {
           try {
-            console.log(newGradeScales)
-            const res = await gradingScale(courseId, newGradeScales)
-            Toast.show('Successfully created grade scale', Toast.LONG)
-            setShowGradeScaleModal(false)
-            loadGradeScale()
-
-          }
-          catch (err) {
-            console.log(err)
-            Toast.show('Failed to create grade scale', Toast.LONG)
-            setShowGradeScaleModal(false)
-            setShowGradeScaleManagement(true)
+            console.log(newGradeScales);
+            const res = await gradingScale(courseId, newGradeScales);
+            Toast.show("Successfully created grade scale", Toast.LONG);
+            setShowGradeScaleModal(false);
+            loadGradeScale();
+          } catch (err) {
+            console.log(err);
+            Toast.show("Failed to create grade scale", Toast.LONG);
+            setShowGradeScaleModal(false);
+            setShowGradeScaleManagement(true);
           }
         }}
       />
@@ -7447,88 +7944,95 @@ const CourseDetailsPage = () => {
               </TouchableOpacity>
               <Text style={styles.fullScreenModalTitle}>GPA</Text>
               <View style={{ width: 40 }} />
-
             </View>
-            <TouchableOpacity style={styles.manageButton} onPress={() => {
-              setShowGPAManagement(false)
-              setShowGPAModal(true)
-            }}>
+            <TouchableOpacity
+              style={styles.manageButton}
+              onPress={() => {
+                setShowGPAManagement(false);
+                setShowGPAModal(true);
+              }}
+            >
               <Text style={styles.manageButtonText}>Manage GPA</Text>
             </TouchableOpacity>
-            {showGPAManagementLoader ?
+            {showGPAManagementLoader ? (
               <ActivityIndicator
                 size="large"
                 color="#10B144"
                 style={{ marginTop: 20 }}
-              /> : Object.keys(GPA).length > 0 ?
-                <ScrollView style={{ flex: 1, marginTop: 20 }}>
-                  {/* Table Header */}
-                  <View style={styles.tableHeader}>
-                    <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>
-                    <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
-                    <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
-                  </View>
+              />
+            ) : Object.keys(GPA).length > 0 ? (
+              <ScrollView style={{ flex: 1, marginTop: 20 }}>
+                {/* Table Header */}
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>
+                  <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
+                  <Text style={[styles.headerText, { flex: 3 }]}>
+                    Percentage
+                  </Text>
+                </View>
 
-                  {/* Table Rows */}
-                  {GPA?.map((item: GPAItem) => {
-                    const percentage = (item.maxPercentage - item.minPercentage) / 100; // simulate visual fill
-                    console.log(percentage)
-                    return (
-                      <View key={item._id} style={styles.tableRow}>
-                        {/* Grade */}
-                        <View style={styles.gradeBadge}>
-                          <Text style={styles.gradeText}>{item.gpa}</Text>
-                        </View>
+                {/* Table Rows */}
+                {GPA?.map((item: GPAItem) => {
+                  const percentage =
+                    (item.maxPercentage - item.minPercentage) / 100; // simulate visual fill
+                  console.log(percentage);
+                  return (
+                    <View key={item._id} style={styles.tableRow}>
+                      {/* Grade */}
+                      <View style={styles.gradeBadge}>
+                        <Text style={styles.gradeText}>{item.gpa}</Text>
+                      </View>
 
-                        {/* Range */}
-                        <Text style={[styles.rangeText, { flex: 2 }]}>
-                          {item.minPercentage}% - {item.maxPercentage}%
-                        </Text>
+                      {/* Range */}
+                      <Text style={[styles.rangeText, { flex: 2 }]}>
+                        {item.minPercentage}% - {item.maxPercentage}%
+                      </Text>
 
-                        {/* Custom Progress Bar */}
-                        <View style={[styles.progressWrapper, { flex: 3 }]}>
-                          <View style={[styles.progressBackground]}>
-                            <View
-                              style={[
-                                styles.progressFill,
-                                { width: `${percentage * 100}%` },
-                              ]}
-                            />
-                          </View>
+                      {/* Custom Progress Bar */}
+                      <View style={[styles.progressWrapper, { flex: 3 }]}>
+                        <View style={[styles.progressBackground]}>
+                          <View
+                            style={[
+                              styles.progressFill,
+                              { width: `${percentage * 100}%` },
+                            ]}
+                          />
                         </View>
                       </View>
-                    );
-                  })}
-                </ScrollView>
-                :
-                <Text style={{ marginTop: 20 }}>No gradescale found for this course.</Text>}
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <Text style={{ marginTop: 20 }}>
+                No gradescale found for this course.
+              </Text>
+            )}
           </View>
         </View>
       </Modal>
       <GPAModal
         visible={showGPAModal}
         onClose={() => {
-          setShowGPAModal(false)
-          setShowGPAManagement(true)
-        }
-        }
+          setShowGPAModal(false);
+          setShowGPAManagement(true);
+        }}
         onSave={async (newGradeScales) => {
           try {
-            console.log(newGradeScales, courseId)
-            const res = await gpaScale(courseId, newGradeScales)
-            Toast.show('Successfully created gpa scale', Toast.LONG)
-            setShowGPAModal(false)
-            loadGradeScale()
-          }
-          catch (err) {
-            console.log(err)
-            Toast.show('Failed to create gpa scale', Toast.LONG)
-            setShowGPAModal(false)
-            setShowGPAManagement(true)
+            console.log(newGradeScales, courseId);
+            const res = await gpaScale(courseId, newGradeScales);
+            Toast.show("Successfully created gpa scale", Toast.LONG);
+            setShowGPAModal(false);
+            loadGradeScale();
+          } catch (err) {
+            console.log(err);
+            Toast.show("Failed to create gpa scale", Toast.LONG);
+            setShowGPAModal(false);
+            setShowGPAManagement(true);
           }
         }}
       />
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -8607,17 +9111,17 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: "bold",
     color: "#111",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   ratingStarsRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 4,
+    // backgroundColor: "#cdcdcd",
   },
   ratingCountText: {
     color: "#A0AEC0",
     fontSize: 16,
-    marginTop: 4,
+    marginTop: 14,
     fontWeight: "500",
   },
   commentsSectionTitle: {
@@ -8731,7 +9235,7 @@ const styles = StyleSheet.create({
   },
   // Chapter Details Modal Styles
   chapterDetailsCard: {
-    backgroundColor: "#fff",
+    backgroundColor: "#ffff",
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
@@ -8770,22 +9274,6 @@ const styles = StyleSheet.create({
   },
   plusButtonContainer: {
     position: "relative",
-  },
-  dropdownMenu: {
-    position: "absolute",
-    top: 40,
-    right: 0,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    minWidth: 180,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    zIndex: 99999999999999999,
   },
   dropdownItem: {
     flexDirection: "row",
@@ -9661,65 +10149,65 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   tableHeader: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   headerText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#6B7280',
+    fontWeight: "600",
+    color: "#6B7280",
   },
   tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   gradeBadge: {
-    backgroundColor: '#6EE7B7',
+    backgroundColor: "#6EE7B7",
     borderRadius: 10,
     height: 40,
     flex: 0.8,
     marginHorizontal: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   gradeText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   rangeText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#111',
+    fontWeight: "500",
+    color: "#111",
   },
   progressWrapper: {
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   progressBackground: {
     height: 10,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     borderRadius: 10,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
-    backgroundColor: '#10B144',
+    height: "100%",
+    backgroundColor: "#10B144",
     borderRadius: 10,
   },
   manageButton: {
-    backgroundColor: '#10B144',
+    backgroundColor: "#10B144",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
   manageButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 16,
   },
   // Grading Periods Modal Styles
@@ -9730,7 +10218,7 @@ const styles = StyleSheet.create({
   gradingPeriodsModalContent: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 10
+    padding: 10,
   },
   gradingPeriodsHeader: {
     flexDirection: "row",
@@ -9929,9 +10417,9 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
   },
   semesterModalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center'
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
   },
   semesterModalButton: {
     backgroundColor: "#374151",
@@ -9959,6 +10447,29 @@ const styles = StyleSheet.create({
   },
   editCategoryDropdownItemActive: {
     backgroundColor: "#eef2ff",
+  },
+
+  starTouchable: {
+    marginRight: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  star: {
+    width: 22,
+    height: 22,
+  },
+  submitButton: {
+    backgroundColor: "#10B144",
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 16,
+    width: "100%",
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,12 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { signup } from '../services/schoolService';
-import Toast from 'react-native-simple-toast';
-import MaterialIcons from '@react-native-vector-icons/material-icons';
-import { countryCodes } from '../utils/countries';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { signup } from "../services/schoolService";
+import Toast from "react-native-simple-toast";
+import MaterialIcons from "@react-native-vector-icons/material-icons";
+import { countryCodes } from "../utils/countries";
 
 const SignupPage = () => {
   const navigation = useNavigation();
@@ -22,28 +22,28 @@ const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    role: '',
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    phone: '',
-    countryCode: '+1',
+    email: "",
+    role: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    phone: "",
+    countryCode: "+1",
     // Home Address fields
-    homeAddressLine1: '',
-    homeAddressLine2: '',
-    homeCity: '',
-    homeState: '',
-    homeZip: '',
+    homeAddressLine1: "",
+    homeAddressLine2: "",
+    homeCity: "",
+    homeState: "",
+    homeZip: "",
     // Mailing Address fields
-    mailingAddressLine1: '',
-    mailingAddressLine2: '',
-    mailingCity: '',
-    mailingState: '',
-    mailingZip: '',
-    password: '',
-    confirmPassword: '',
-    documents: []
+    mailingAddressLine1: "",
+    mailingAddressLine2: "",
+    mailingCity: "",
+    mailingState: "",
+    mailingZip: "",
+    password: "",
+    confirmPassword: "",
+    documents: [],
   });
 
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
@@ -53,23 +53,23 @@ const SignupPage = () => {
   const passwordRules = [
     {
       test: (pw: string) => pw.length >= 8,
-      message: 'Minimum 8 characters',
+      message: "Minimum 8 characters",
     },
     {
       test: (pw: string) => /[A-Z]/.test(pw),
-      message: 'At least one uppercase letter',
+      message: "At least one uppercase letter",
     },
     {
       test: (pw: string) => /[a-z]/.test(pw),
-      message: 'At least one lowercase letter',
+      message: "At least one lowercase letter",
     },
     {
       test: (pw: string) => /\d/.test(pw),
-      message: 'At least one digit',
+      message: "At least one digit",
     },
     {
       test: (pw: string) => /[#!@$%^&*\-]/.test(pw),
-      message: 'At least one special character (#?!@$%^&*-)',
+      message: "At least one special character (#?!@$%^&*-)",
     },
   ];
 
@@ -80,28 +80,38 @@ const SignupPage = () => {
     const hasDigit = /[0-9]/.test(password);
     const hasSpecialChar = /[#?!@$%^&*-]/.test(password);
 
-    if (!minLength) return 'Password must be at least 8 characters long';
-    if (!hasUpperCase) return 'Password must contain at least one uppercase letter';
-    if (!hasLowerCase) return 'Password must contain at least one lowercase letter';
-    if (!hasDigit) return 'Password must contain at least one digit';
-    if (!hasSpecialChar) return 'Password must contain at least one special character (#?!@$%^&*-)';
-    return '';
+    if (!minLength) return "Password must be at least 8 characters long";
+    if (!hasUpperCase)
+      return "Password must contain at least one uppercase letter";
+    if (!hasLowerCase)
+      return "Password must contain at least one lowercase letter";
+    if (!hasDigit) return "Password must contain at least one digit";
+    if (!hasSpecialChar)
+      return "Password must contain at least one special character (#?!@$%^&*-)";
+    return "";
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
-    const requiredFields = ['email', 'role', 'firstName', 'lastName', 'password', 'confirmPassword'];
-    requiredFields.forEach(field => {
+    const requiredFields = [
+      "email",
+      "role",
+      "firstName",
+      "lastName",
+      "password",
+      "confirmPassword",
+    ];
+    requiredFields.forEach((field) => {
       if (!formData[field as keyof typeof formData]) {
-        newErrors[field] = 'This field is required';
+        newErrors[field] = "This field is required";
       }
     });
 
     // Email validation
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = "Please enter a valid email address";
     }
 
     // Password validation
@@ -112,7 +122,7 @@ const SignupPage = () => {
 
     // Confirm password validation
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -126,13 +136,21 @@ const SignupPage = () => {
 
     try {
       setIsLoading(true);
-      
+
       // Format addresses as single strings
-      const homeAddress = `${formData.homeAddressLine1}${formData.homeAddressLine2 ? ', ' + formData.homeAddressLine2 : ''}, ${formData.homeCity}, ${formData.homeState} ${formData.homeZip}`;
-      const mailingAddress = formData.mailingAddressLine1 ? 
-        `${formData.mailingAddressLine1}${formData.mailingAddressLine2 ? ', ' + formData.mailingAddressLine2 : ''}, ${formData.mailingCity}, ${formData.mailingState} ${formData.mailingZip}` : 
-        '';
-      
+      const homeAddress = `${formData.homeAddressLine1}${
+        formData.homeAddressLine2 ? ", " + formData.homeAddressLine2 : ""
+      }, ${formData.homeCity}, ${formData.homeState} ${formData.homeZip}`;
+      const mailingAddress = formData.mailingAddressLine1
+        ? `${formData.mailingAddressLine1}${
+            formData.mailingAddressLine2
+              ? ", " + formData.mailingAddressLine2
+              : ""
+          }, ${formData.mailingCity}, ${formData.mailingState} ${
+            formData.mailingZip
+          }`
+        : "";
+
       const payload = {
         email: formData.email,
         role: formData.role.toLowerCase(),
@@ -140,25 +158,52 @@ const SignupPage = () => {
         middleName: formData.middleName,
         lastName: formData.lastName,
         password: formData.password,
-        confirmPassword: formData.confirmPassword
+        confirmPassword: formData.confirmPassword,
+        phone: formData.phone,
+        countryCode: formData.countryCode,
+        // Home address fields
+        homeAddressLine1: formData.homeAddressLine1,
+        homeAddressLine2: formData.homeAddressLine2 || "",
+        homeCity: formData.homeCity,
+        homeState: formData.homeState,
+        homeZip: formData.homeZip,
+        // Mailing address fields
+        mailingAddressLine1: formData.mailingAddressLine1 || "",
+        mailingAddressLine2: formData.mailingAddressLine2 || "",
+        mailingCity: formData.mailingCity || "",
+        mailingState: formData.mailingState || "",
+        mailingZip: formData.mailingZip || "",
+        // Combined addresses (some APIs expect these)
+        homeAddress: homeAddress,
+        mailingAddress: mailingAddress || homeAddress,
       };
-      
-      console.log('=== SIGNUP PAYLOAD ===');
+
+      console.log("=== SIGNUP PAYLOAD ===");
       console.log(JSON.stringify(payload, null, 2));
-      console.log('=====================');
-      
+      console.log("=====================");
+
       const response = await signup(payload);
 
-      console.log('Signup response:', response);
-      if (response.message === "OTP sent successfully" || response.message === "OTP sent to your email.") {
-        Toast.show('OTP sent successfully!', Toast.LONG);
-        (navigation as any).navigate('OTPVerification', { email: formData.email, flow: 'signup' });
+      console.log("Signup response:", response);
+      if (
+        response.message === "OTP sent successfully" ||
+        response.message === "OTP sent to your email." ||
+        response.message === "OTP sent to your email and phone number." ||
+        response.message === "OTP sent to your email and phone number."
+      ) {
+        Toast.show("OTP sent successfully!", Toast.LONG);
+        (navigation as any).navigate("OTPVerification", {
+          email: formData.email,
+          flow: "signup",
+        });
       } else {
-        Toast.show('Invalid response from server', Toast.LONG);
+        Toast.show("Invalid response from server", Toast.LONG);
+        console.log("mbkbkbkjbkbkbbkbkbbk: ", response.error);
       }
     } catch (error: any) {
-      console.error('Signup error:', error);
-      let errorMessage = 'Failed to sign up';
+      console.log("Signup error:", error);
+      console.error("Signup error:", error);
+      let errorMessage = "Failed to sign up";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
@@ -181,14 +226,16 @@ const SignupPage = () => {
             key={option}
             style={[
               styles.optionButton,
-              formData[field as keyof typeof formData] === option && styles.selectedOption,
+              formData[field as keyof typeof formData] === option &&
+                styles.selectedOption,
             ]}
             onPress={() => setFormData({ ...formData, [field]: option })}
           >
             <Text
               style={[
                 styles.optionText,
-                formData[field as keyof typeof formData] === option && styles.selectedOptionText,
+                formData[field as keyof typeof formData] === option &&
+                  styles.selectedOptionText,
               ]}
             >
               {option}
@@ -203,7 +250,7 @@ const SignupPage = () => {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
       >
         <ScrollView style={styles.scrollView}>
@@ -217,14 +264,18 @@ const SignupPage = () => {
                 placeholder="Enter your email"
                 placeholderTextColor="#666"
                 value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, email: text })
+                }
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
-              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              {errors.email && (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              )}
             </View>
 
-            {renderSelectField('role', ['Teacher', 'Student'], 'Role')}
+            {renderSelectField("role", ["Teacher", "Student"], "Role")}
 
             <View style={styles.fieldContainer}>
               <Text style={styles.label}>First Name</Text>
@@ -233,9 +284,13 @@ const SignupPage = () => {
                 placeholder="Enter your first name"
                 placeholderTextColor="#666"
                 value={formData.firstName}
-                onChangeText={(text) => setFormData({ ...formData, firstName: text })}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, firstName: text })
+                }
               />
-              {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
+              {errors.firstName && (
+                <Text style={styles.errorText}>{errors.firstName}</Text>
+              )}
             </View>
 
             <View style={styles.fieldContainer}>
@@ -245,7 +300,9 @@ const SignupPage = () => {
                 placeholder="Enter your middle name (optional)"
                 placeholderTextColor="#666"
                 value={formData.middleName}
-                onChangeText={(text) => setFormData({ ...formData, middleName: text })}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, middleName: text })
+                }
               />
             </View>
 
@@ -256,20 +313,28 @@ const SignupPage = () => {
                 placeholder="Enter your last name"
                 placeholderTextColor="#666"
                 value={formData.lastName}
-                onChangeText={(text) => setFormData({ ...formData, lastName: text })}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, lastName: text })
+                }
               />
-              {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
+              {errors.lastName && (
+                <Text style={styles.errorText}>{errors.lastName}</Text>
+              )}
             </View>
 
-            {/* <View style={styles.fieldContainer}>
+            <View style={styles.fieldContainer}>
               <Text style={styles.label}>Phone Number *</Text>
               <View style={styles.phoneContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.countryCodeContainer}
                   onPress={() => setShowCountryDropdown(!showCountryDropdown)}
                 >
                   <Text style={styles.countryCodeText}>
-                    {countryCodes.find(c => c.code === formData.countryCode)?.flag} {formData.countryCode}
+                    {
+                      countryCodes.find((c) => c.code === formData.countryCode)
+                        ?.flag
+                    }{" "}
+                    {formData.countryCode}
                   </Text>
                   <Text style={styles.dropdownArrow}>▼</Text>
                 </TouchableOpacity>
@@ -278,15 +343,17 @@ const SignupPage = () => {
                   placeholder="Enter your phone number"
                   placeholderTextColor="#666"
                   value={formData.phone}
-                  onChangeText={(text) => setFormData({ ...formData, phone: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, phone: text })
+                  }
                   keyboardType="phone-pad"
                 />
               </View>
-              
+
               {showCountryDropdown && (
                 <View style={styles.countryDropdown}>
-                  <ScrollView 
-                    style={styles.countryScrollView} 
+                  <ScrollView
+                    style={styles.countryScrollView}
                     showsVerticalScrollIndicator={true}
                     nestedScrollEnabled={true}
                     bounces={false}
@@ -296,7 +363,10 @@ const SignupPage = () => {
                         key={`${country.code}-${country.country}-${index}`}
                         style={styles.countryOption}
                         onPress={() => {
-                          setFormData({ ...formData, countryCode: country.code });
+                          setFormData({
+                            ...formData,
+                            countryCode: country.code,
+                          });
                           setShowCountryDropdown(false);
                         }}
                       >
@@ -308,9 +378,11 @@ const SignupPage = () => {
                   </ScrollView>
                 </View>
               )}
-              
-              {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
-            </View> */}
+
+              {errors.phone && (
+                <Text style={styles.errorText}>{errors.phone}</Text>
+              )}
+            </View>
 
             {/* Home Address Section */}
             {/* <View style={styles.addressSection}>
@@ -448,7 +520,9 @@ const SignupPage = () => {
                   placeholder="Enter your password"
                   placeholderTextColor="#666"
                   value={formData.password}
-                  onChangeText={(text) => setFormData({ ...formData, password: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, password: text })
+                  }
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                 />
@@ -458,30 +532,39 @@ const SignupPage = () => {
                     onPress={() => setShowPassword(!showPassword)}
                   >
                     <MaterialIcons
-                      name={showPassword ? 'visibility' : 'visibility-off'}
+                      name={showPassword ? "visibility" : "visibility-off"}
                       size={24}
                       color="#00c951"
                     />
                   </TouchableOpacity>
                 )}
               </View>
-              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              )}
               <View style={{ marginTop: 8, marginBottom: 8 }}>
                 {passwordRules.map((rule, idx) => {
                   const passed = rule.test(formData.password);
                   return (
-                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                    <View
+                      key={idx}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginBottom: 2,
+                      }}
+                    >
                       <MaterialIcons
                         name="fiber-manual-record"
                         size={16}
-                        color={passed ? '#00c951' : '#ff3b30'}
+                        color={passed ? "#00c951" : "#ff3b30"}
                         style={{ marginRight: 8 }}
                       />
                       <Text
                         style={{
-                          color: passed ? '#00c951' : '#ff3b30',
+                          color: passed ? "#00c951" : "#ff3b30",
                           fontSize: 15,
-                          fontWeight: '500',
+                          fontWeight: "500",
                         }}
                       >
                         {rule.message}
@@ -500,7 +583,9 @@ const SignupPage = () => {
                   placeholder="Confirm your password"
                   placeholderTextColor="#666"
                   value={formData.confirmPassword}
-                  onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, confirmPassword: text })
+                  }
                   secureTextEntry={!showConfirmPassword}
                   autoCapitalize="none"
                 />
@@ -510,14 +595,18 @@ const SignupPage = () => {
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     <MaterialIcons
-                      name={showConfirmPassword ? 'visibility' : 'visibility-off'}
+                      name={
+                        showConfirmPassword ? "visibility" : "visibility-off"
+                      }
                       size={24}
                       color="#00c951"
                     />
                   </TouchableOpacity>
                 )}
               </View>
-              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+              {errors.confirmPassword && (
+                <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+              )}
             </View>
 
             <TouchableOpacity
@@ -526,13 +615,15 @@ const SignupPage = () => {
               disabled={isLoading}
             >
               <Text style={styles.buttonText}>
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? "Creating Account..." : "Create Account"}
               </Text>
             </TouchableOpacity>
 
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => (navigation as any).navigate('Login')}>
+              <TouchableOpacity
+                onPress={() => (navigation as any).navigate("Login")}
+              >
                 <Text style={styles.loginLink}>Login</Text>
               </TouchableOpacity>
             </View>
@@ -546,7 +637,7 @@ const SignupPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -559,38 +650,38 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 30,
-    textAlign: 'center',
-    color: '#333',
+    textAlign: "center",
+    color: "#333",
   },
   fieldContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
-    color: '#333',
+    color: "#333",
   },
   input: {
     height: 50,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     paddingHorizontal: 15,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
-    color: '#333',
+    backgroundColor: "#f9f9f9",
+    color: "#333",
   },
   multilineInput: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     paddingTop: 15,
   },
   optionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
   },
   optionButton: {
@@ -598,116 +689,131 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#00c951',
-    backgroundColor: '#fff',
+    borderColor: "#00c951",
+    backgroundColor: "#fff",
   },
   selectedOption: {
-    backgroundColor: '#00c951',
+    backgroundColor: "#00c951",
   },
   optionText: {
-    color: '#00c951',
+    color: "#00c951",
     fontSize: 14,
   },
   selectedOptionText: {
-    color: '#fff',
+    color: "#fff",
   },
   button: {
-    backgroundColor: '#00c951',
+    backgroundColor: "#00c951",
     height: 50,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 20,
   },
   buttonDisabled: {
-    backgroundColor: '#99e6b3',
+    backgroundColor: "#99e6b3",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   errorText: {
-    color: '#ff3b30',
+    color: "#ff3b30",
     fontSize: 14,
     marginTop: 5,
   },
   loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 20,
   },
   loginText: {
-    color: '#666',
+    color: "#666",
     fontSize: 16,
   },
   loginLink: {
-    color: '#00c951',
+    color: "#00c951",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   passwordContainer: {
-    position: 'relative',
+    position: "relative",
     marginBottom: 15,
   },
   passwordInput: {
     paddingRight: 60,
   },
   showHideButton: {
-    position: 'absolute',
+    position: "absolute",
     right: 15,
     top: 13,
     padding: 5,
   },
   showHideText: {
-    color: '#00c951',
+    color: "#00c951",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   phoneContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
   },
   countryCodeContainer: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderTopLeftRadius: 8,
     borderBottomLeftRadius: 8,
     paddingHorizontal: 15,
     paddingVertical: 15,
     borderRightWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     minWidth: 80,
   },
   countryCodeText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    color: "#333",
+    fontWeight: "500",
   },
   dropdownArrow: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     marginLeft: 5,
   },
+
   countryDropdown: {
-    position: 'absolute',
-    top: 60,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
+    // position: "absolute",
+    // top: 60,
+    // left: 0,
+    // right: 0,
+
+    alignItems: "center",
+    alignSelf: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    marginTop: 5,
+
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     maxHeight: 300,
-    zIndex: 1000,
+    zIndex: 10000,
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+
+    // width: "100%",
+    // borderTopLeftRadius: 0,
+    // borderTopRightRadius: 0,
+    // borderBottomRightRadius: 20,
+    // borderBottomLeftRadius: 20,
   },
   countryScrollView: {
     maxHeight: 300,
@@ -715,11 +821,11 @@ const styles = StyleSheet.create({
   countryOption: {
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   countryOptionText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   phoneInput: {
     borderTopLeftRadius: 0,
@@ -729,21 +835,21 @@ const styles = StyleSheet.create({
   addressSection: {
     marginBottom: 30,
     padding: 15,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: "#e9ecef",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 15,
-    color: '#333',
+    color: "#333",
   },
   rowContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
   },
 });
 
-export default SignupPage; 
+export default SignupPage;
