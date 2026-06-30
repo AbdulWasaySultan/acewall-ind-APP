@@ -198,7 +198,7 @@ const SignupPage = () => {
         });
       } else {
         Toast.show("Invalid response from server", Toast.LONG);
-        console.log("mbkbkbkjbkbkbbkbkbbk: ", response.error);
+        console.error("error within the try block: ", response.error);
       }
     } catch (error: any) {
       console.log("Signup error:", error);
