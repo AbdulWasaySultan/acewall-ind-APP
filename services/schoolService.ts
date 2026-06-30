@@ -112,13 +112,17 @@ export const login = async (email: string, password: string) => {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.log("otp error before consoling on screen", error.message);
-      console.error("Login error details:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-        url: error.config?.url,
-      });
+      let apiResponse;
+      console.error(
+        "Login error details:",
+        (apiResponse = {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          url: error.config?.url,
+        })
+      );
+      console.log("otp error before consoling on screen", apiResponse);
 
       if (error.response?.status === 404) {
         throw new Error(
