@@ -978,6 +978,7 @@ const CreateCoursePage = () => {
       }
     } catch (error: any) {
       console.error("Error generating thumbnail:", error);
+      console.log(error.response?.data?.message || "Failed to generate thumbnail")
       Toast.show(
         error.response?.data?.message || "Failed to generate thumbnail",
         Toast.LONG
