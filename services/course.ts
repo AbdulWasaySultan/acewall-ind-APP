@@ -14,7 +14,63 @@ export const addAuthInterceptor = (api: any) => api;
 interface Thumbnail {
   url: string;
   filename: string;
+  type?: string;
 }
+
+const IMAGE_MIME_MAP: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  heic: "image/heic",
+};
+
+const resolveImageMimeType = (
+  filename?: string | null,
+  explicitType?: string | null,
+  uri?: string | null
+): string => {
+  if (explicitType) {
+    if (explicitType === "photo") return "image/jpeg";
+    if (explicitType.includes("/")) {
+      return explicitType === "image/jpg" ? "image/jpeg" : explicitType;
+    }
+  }
+
+  const dataUriMatch = uri?.match(/^data:(image\/[^;]+);/i);
+  if (dataUriMatch?.[1]) {
+    const mime = dataUriMatch[1];
+    return mime === "image/jpg" ? "image/jpeg" : mime;
+  }
+
+  const name = filename || uri?.split("/").pop()?.split("?")[0] || "";
+  const ext = name.split(".").pop()?.toLowerCase();
+  if (ext && IMAGE_MIME_MAP[ext]) {
+    return IMAGE_MIME_MAP[ext];
+  }
+
+  return "image/jpeg";
+};
+
+const resolveImageFilename = (
+  mimeType: string,
+  filename?: string | null,
+  uri?: string | null
+): string => {
+  if (filename && filename.includes(".")) {
+    return filename;
+  }
+
+  const uriName = uri?.split("/").pop()?.split("?")[0];
+  if (uriName && uriName.includes(".")) {
+    return uriName;
+  }
+
+  const ext = mimeType.split("/")[1] || "jpeg";
+  const normalizedExt = ext === "jpeg" ? "jpg" : ext;
+  return `thumbnail_${Date.now()}.${normalizedExt}`;
+};
 
 interface Category {
   _id: string;
@@ -42,6 +98,10 @@ interface CourseData {
   quarter?: string[];
   syllabus?: any;
   price: string;
+  paymentType?: string;
+  offersCertificate?: boolean;
+  offersTranscript?: boolean;
+  passingPercentage?: string;
 }
 
 interface CourseResponse {
@@ -59,12 +119,19 @@ export const createCourse = async (courseData: CourseData) => {
 
     if (courseData.thumbnail.url) {
       const imageUri = courseData.thumbnail.url;
-      const filename = courseData.thumbnail.filename || "thumbnail.jpg";
-      const extension = filename.split(".").pop() || "jpg";
-      const type = `image/${extension}`;
+      const mimeType = resolveImageMimeType(
+        courseData.thumbnail.filename,
+        courseData.thumbnail.type,
+        imageUri
+      );
+      const filename = resolveImageFilename(
+        mimeType,
+        courseData.thumbnail.filename,
+        imageUri
+      );
       formData.append("thumbnail", {
         uri: imageUri,
-        type,
+        type: mimeType,
         name: filename,
       } as any);
     }
@@ -81,15 +148,24 @@ export const createCourse = async (courseData: CourseData) => {
       JSON.stringify(courseData.teachingPoints)
     );
     formData.append("requirements", JSON.stringify(courseData.requirements));
-    formData.append("semesterbased", String(courseData.semesterbased));
-    formData.append("price", courseData.price);
-
-    if (courseData.semester && courseData.semester.length > 0) {
-      formData.append("semester", JSON.stringify(courseData.semester));
-    }
-    if (courseData.quarter && courseData.quarter.length > 0) {
-      formData.append("quarter", JSON.stringify(courseData.quarter));
-    }
+    formData.append(
+      "semesterbased",
+      courseData.semesterbased ? "true" : "false"
+    );
+    formData.append("price", courseData.price ?? "");
+    formData.append("paymentType", courseData.paymentType || "FREE");
+    formData.append(
+      "offersCertificate",
+      String(courseData.offersCertificate ?? false)
+    );
+    formData.append(
+      "offersTranscript",
+      String(courseData.offersTranscript ?? false)
+    );
+    formData.append("passingPercentage", courseData.passingPercentage || "80");
+    formData.append("published", String(courseData.published ?? false));
+    formData.append("semester", JSON.stringify(courseData.semester || []));
+    formData.append("quarter", JSON.stringify(courseData.quarter || []));
 
     if (courseData.syllabus) {
       formData.append("syllabus", {
@@ -258,13 +334,15 @@ export const updateCourseThumbnail = async (courseId: string, thumbnail: any) =>
   try {
     const api = await getApiInstance();
     const formData = new FormData();
+    const mimeType = resolveImageMimeType(
+      thumbnail.fileName,
+      thumbnail.type,
+      thumbnail.uri
+    );
     formData.append("thumbnail", {
       uri: thumbnail.uri,
-      type: thumbnail.type || "image/jpeg",
-      name:
-        thumbnail.fileName ||
-        thumbnail.uri.split("/").pop() ||
-        "thumbnail.jpg",
+      type: mimeType,
+      name: resolveImageFilename(mimeType, thumbnail.fileName, thumbnail.uri),
     } as any);
     const response = await api.put(`/course/thumbnail/${courseId}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },

@@ -532,12 +532,47 @@ const AIModal: React.FC<AIModalProps> = ({
   );
 };
 
+const MAX_LIST_ITEM_LENGTH = 120;
+const MAX_LIST_ITEMS = 12;
+
+const splitIntoChunks = (text: string, maxLen: number): string[] => {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+  if (trimmed.length <= maxLen) return [trimmed];
+
+  const chunks: string[] = [];
+  let remaining = trimmed;
+  while (remaining.length > 0) {
+    if (remaining.length <= maxLen) {
+      chunks.push(remaining);
+      break;
+    }
+    let cut = remaining.lastIndexOf(" ", maxLen);
+    if (cut <= 0) cut = maxLen;
+    chunks.push(remaining.slice(0, cut).trim());
+    remaining = remaining.slice(cut).trim();
+  }
+  return chunks.filter(Boolean);
+};
+
+const parseAiListItems = (content: string): string[] =>
+  content
+    .split("\n")
+    .flatMap((line) =>
+      splitIntoChunks(line.replace(/^\d+\.\s*/, "").trim(), MAX_LIST_ITEM_LENGTH)
+    )
+    .filter((item) => item.length >= 5)
+    .slice(0, MAX_LIST_ITEMS);
+
 const CreateCoursePage = () => {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [selectedImageFilename, setSelectedImageFilename] = useState<
     string | null
   >(null);
+  const [selectedImageType, setSelectedImageType] = useState<string | null>(
+    null
+  );
   const [selectedSyllabusFile, setSelectedSyllabusFile] = useState<any>(null);
   const [teachingPoints, setTeachingPoints] = useState<string[]>([""]);
   const [courseRequirements, setCourseRequirements] = useState<string[]>([""]);
@@ -781,6 +816,7 @@ const CreateCoursePage = () => {
         const asset = response.assets[0];
         setSelectedImageUri(asset.uri || null);
         setSelectedImageFilename(asset.fileName || null);
+        setSelectedImageType(asset.type || null);
       }
     });
   };
@@ -838,6 +874,7 @@ const CreateCoursePage = () => {
   const resetForm = () => {
     setSelectedImageUri(null);
     setSelectedImageFilename(null);
+    setSelectedImageType(null);
     setSelectedSyllabusFile(null);
     setTeachingPoints([""]);
     setCourseRequirements([""]);
@@ -925,13 +962,18 @@ const CreateCoursePage = () => {
   // ✅ Helper function for normalizing generated images
   const normalizeGeneratedImage = (data: any) => {
     if (!data) {
-      return { uri: null as string | null, filename: null as string | null };
+      return {
+        uri: null as string | null,
+        filename: null as string | null,
+        type: null as string | null,
+      };
     }
 
     if (data.imageUrl) {
       return {
         uri: data.imageUrl,
         filename: `ai-generated-${Date.now()}.jpg`,
+        type: "image/jpeg",
       };
     }
 
@@ -941,10 +983,11 @@ const CreateCoursePage = () => {
       return {
         uri: `data:${mimeType};base64,${data.imageBase64}`,
         filename: `ai-generated-${Date.now()}.${extension}`,
+        type: mimeType,
       };
     }
 
-    return { uri: null, filename: null };
+    return { uri: null, filename: null, type: null };
   };
 
   // ✅ Handle Thumbnail Generation
@@ -962,12 +1005,15 @@ const CreateCoursePage = () => {
         prompt: aiPrompt,
       });
 
-      const { uri, filename } = normalizeGeneratedImage(response.data);
+      const { uri, filename, type } = normalizeGeneratedImage(response.data);
 
       if (uri) {
         setSelectedImageUri(uri);
         if (filename) {
           setSelectedImageFilename(filename);
+        }
+        if (type) {
+          setSelectedImageType(type);
         }
         Toast.show("Thumbnail generated successfully!", Toast.SHORT);
         setShowAIModal(false);
@@ -1042,10 +1088,7 @@ const CreateCoursePage = () => {
       });
 
       if (response.data && response.data.content) {
-        const points = response.data.content
-          .split("\n")
-          .filter((p: string) => p.trim())
-          .map((p: string) => p.replace(/^\d+\.\s*/, "").trim());
+        const points = parseAiListItems(response.data.content);
 
         setTeachingPoints(points.length > 0 ? points : [""]);
         Toast.show("Teaching points generated successfully!", Toast.SHORT);
@@ -1083,10 +1126,7 @@ const CreateCoursePage = () => {
       });
 
       if (response.data && response.data.content) {
-        const requirements = response.data.content
-          .split("\n")
-          .filter((r: string) => r.trim())
-          .map((r: string) => r.replace(/^\d+\.\s*/, "").trim());
+        const requirements = parseAiListItems(response.data.content);
 
         setCourseRequirements(requirements.length > 0 ? requirements : [""]);
         Toast.show("Requirements generated successfully!", Toast.SHORT);
@@ -1116,22 +1156,31 @@ const CreateCoursePage = () => {
     try {
       setIsLoading(true);
 
-      const filteredTeachingPoints = teachingPoints.filter(
-        (point) => point.trim() !== ""
-      );
-      const filteredRequirements = courseRequirements.filter(
-        (req) => req.trim() !== ""
-      );
+      const filteredTeachingPoints = teachingPoints
+        .filter((point) => point.trim() !== "")
+        .flatMap((point) =>
+          splitIntoChunks(point.trim(), MAX_LIST_ITEM_LENGTH)
+        )
+        .slice(0, MAX_LIST_ITEMS);
+      const filteredRequirements = courseRequirements
+        .filter((req) => req.trim() !== "")
+        .flatMap((req) => splitIntoChunks(req.trim(), MAX_LIST_ITEM_LENGTH))
+        .slice(0, MAX_LIST_ITEMS);
+
+      const paymentType =
+        coursePrice && Number(coursePrice) > 0 ? "ONETIME" : "FREE";
 
       const courseData = {
         courseTitle,
         category,
-        subcategory: subcategory || category,
+        subcategory:
+          subcategory || (subcategories.length === 0 ? category : undefined),
         language,
         courseDescription,
         thumbnail: {
           url: selectedImageUri!,
           filename: selectedImageFilename || "thumbnail.jpg",
+          type: selectedImageType || undefined,
         },
         teachingPoints: filteredTeachingPoints,
         requirements: filteredRequirements,
@@ -1139,7 +1188,11 @@ const CreateCoursePage = () => {
         semesterbased: semesterBased?.title === "Yes" ? true : false,
         semester: selectedSemesters,
         quarter: selectedQuarters,
-        price: coursePrice,
+        price: coursePrice || "",
+        paymentType,
+        offersCertificate: false,
+        offersTranscript: false,
+        passingPercentage: "80",
       };
 
       console.log("Sending course data:", courseData);
@@ -1151,9 +1204,24 @@ const CreateCoursePage = () => {
       navigation.navigate("MyCourses");
     } catch (error: any) {
       console.error("Course creation error:", error);
+      console.log("Course creation error response:", error.response?.data);
       let errorMessage = "Failed to create course";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      const responseData = error.response?.data;
+      if (responseData?.message) {
+        errorMessage = responseData.message;
+        if (Array.isArray(responseData.details)) {
+          const detailMessages = responseData.details
+            .map((d: { field?: string; message?: string }) => d.message)
+            .filter(Boolean);
+          if (detailMessages.length > 0) {
+            errorMessage = detailMessages.join("\n");
+          }
+        } else if (Array.isArray(responseData.errors)) {
+          errorMessage = `${responseData.message}: ${responseData.errors.join(", ")}`;
+        } else if (responseData.errors && typeof responseData.errors === "object") {
+          errorMessage = `${responseData.message}: ${Object.values(responseData.errors).join(", ")}`;
+        }
+        console.log("Error message:", errorMessage);
       }
       Toast.show(errorMessage, Toast.LONG);
     } finally {
