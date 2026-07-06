@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import pages
-import LandingPage from '../pages/LandingPage';
+// import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
 import SignupPage from '../pages/SignupPage';
 import DashboardPage from '../pages/DashboardPage';
@@ -46,7 +46,7 @@ import AIAssistantScreen from '../pages/AIAssistantScreen';
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
-  Landing: undefined;
+  // Landing: undefined;
   Login: undefined;
   ForgotPassword: undefined;
   Signup: undefined;
@@ -221,7 +221,7 @@ const DrawerNavigator = () => {
 };
 
 const AppNavigator = () => {
-  const { isAuthenticated, hasSeenLanding } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <NavigationContainer>
@@ -236,13 +236,7 @@ const AppNavigator = () => {
           },
         }}
       >
-        {!hasSeenLanding ? (
-          <Stack.Screen
-            name="Landing"
-            component={LandingPage}
-            options={{ headerShown: false }}
-          />
-        ) : !isAuthenticated ? (
+        {!isAuthenticated ? (
           <>
             <Stack.Screen
               name="Login"

@@ -290,6 +290,8 @@ export const getUserInfo = async () => {
         'Content-Type': 'application/json',
       }
     });
+    console.log('Get user info API URL:', authApi.defaults.baseURL + '/api/auth/getUserInfo');
+    console.log('Base URL:', baseUrl);
     const response = await authApi.get('/api/auth/getUserInfo');
     return response.data;
   } catch (error) {

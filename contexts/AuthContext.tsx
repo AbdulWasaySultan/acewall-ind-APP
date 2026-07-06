@@ -3,19 +3,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type AuthContextType = {
   isAuthenticated: boolean;
-  hasSeenLanding: boolean;
+  // hasSeenLanding: boolean;
   userRole: string | null;
   user: any;
   login: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
-  markLandingSeen: () => Promise<void>;
+  // markLandingSeen: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasSeenLanding, setHasSeenLanding] = useState(false);
+  // const [hasSeenLanding, setHasSeenLanding] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
 
@@ -23,9 +23,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check authentication and landing page status on app start
     const checkAuth = async () => {
       try {
-        const [auth, landing, userDataString] = await Promise.all([
+        const [auth, userDataString
+          // ,landing
+        ] = await Promise.all([
           AsyncStorage.getItem('isAuthenticated'),
-          AsyncStorage.getItem('hasSeenLanding'),
+          // AsyncStorage.getItem('hasSeenLanding'),
           AsyncStorage.getItem('userData'),
           // AsyncStorage.getItem('selectedBaseUrl'),
         ]);
@@ -33,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(auth === 'true');
         
         // Show landing page only if baseUrl is not saved
-        setHasSeenLanding(baseUrl !== null );
+        // setHasSeenLanding(baseUrl !== null );
 
         if (auth === 'true' && userDataString) {
           const userData = JSON.parse(userDataString);
@@ -77,17 +79,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const markLandingSeen = async () => {
-    try {
-      await AsyncStorage.setItem('hasSeenLanding', 'true');
-      setHasSeenLanding(true);
-    } catch (error) {
-      console.error('Error marking landing as seen:', error);
-    }
-  };
+  // const markLandingSeen = async () => {
+  //   try {
+  //     await AsyncStorage.setItem('hasSeenLanding', 'true');
+  //     setHasSeenLanding(true);
+  //   } catch (error) {
+  //     console.error('Error marking landing as seen:', error);
+  //   }
+  // };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, hasSeenLanding, userRole, user, login, logout, markLandingSeen }}>
+    <AuthContext.Provider value={{ isAuthenticated, userRole, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
-import { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { DrawerContentComponentProps, useDrawerStatus } from '@react-navigation/drawer';
 import { useAuth } from '../contexts/AuthContext';
 import { useUser } from '../contexts/UserContext';
-import { useFocusEffect } from '@react-navigation/native';
 import { getUserInfo } from '../services/schoolService';
 
 interface UserData {
@@ -76,27 +75,44 @@ const studentMenuItems = [
 const Sidebar: React.FC<SidebarProps> = ({ active, onSelect, navigation, onLogout }) => {
   const { userRole } = useAuth();
   const { user, setUser } = useUser();
+  const drawerStatus = useDrawerStatus();
+  const isFetchingRef = useRef(false);
 
   const menuItems = userRole === 'student' ? studentMenuItems : teacherMenuItems;
 
-  // Fetch latest user info whenever sidebar is focused
-  useFocusEffect(
-    React.useCallback(() => {
-      const fetchLatestUserInfo = async () => {
-        try {
-          const response = await getUserInfo();
-          if (response && response.user) {
-            setUser(response.user);
-          }
-        } catch (error) {
-          console.error('Error fetching latest user info in sidebar:', error);
-          // Don't show error to user as this is a background update
-        }
-      };
+  // Refresh profile when the drawer opens (not on every context re-render)
+  useEffect(() => {
+    if (drawerStatus !== 'open' || isFetchingRef.current) {
+      return;
+    }
 
-      fetchLatestUserInfo();
-    }, [setUser])
-  );
+    let cancelled = false;
+
+    const fetchLatestUserInfo = async () => {
+      isFetchingRef.current = true;
+      try {
+        const response = await getUserInfo();
+        if (!cancelled && response?.user) {
+          setUser(response.user);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Error fetching latest user info in sidebar:', error);
+        }
+      } finally {
+        if (!cancelled) {
+          isFetchingRef.current = false;
+        }
+      }
+    };
+
+    fetchLatestUserInfo();
+
+    return () => {
+      cancelled = true;
+      isFetchingRef.current = false;
+    };
+  }, [drawerStatus, setUser]);
 
   const handleNavigation = (label: string) => {
     onSelect(label);
