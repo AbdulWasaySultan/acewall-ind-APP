@@ -1,4 +1,10 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   FlatList,
@@ -40,16 +46,13 @@ const WELCOME: Message = {
 // ─────────────────────────────────────────────────────────────────────────────
 const AIChatbotScreen: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
-  const previousMessageCountRef = useRef(0);
+  const hasSentMessageRef = useRef(false);
 
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("Medium");
-  const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(
-    null
-  );
 
-  const chatOptions = React.useMemo(
+  const chatOptions = useMemo(
     () => ({
       sessionType: "educational",
       difficulty,
@@ -89,33 +92,62 @@ const AIChatbotScreen: React.FC = () => {
     }
   }, [messages, isTyping]);
 
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    const previousCount = previousMessageCountRef.current;
-
-    previousMessageCountRef.current = messages.length;
-
-    if (
-      !historyLoading &&
-      messages.length > previousCount &&
-      lastMessage?.role === "assistant"
-    ) {
-      setAnimatingMessageId(lastMessage.id);
-    }
-  }, [messages.length, historyLoading]);
-
   // ── Build message list ─────────────────────────────────────────────────────
   // Show WELCOME only if no history loaded
-  const allMessages: (Message | "typing")[] = [
-    ...(messages.length === 0 ? [WELCOME] : []),
-    ...messages,
-    ...(isTyping ? (["typing"] as const) : []),
-  ];
+  const allMessages = useMemo<(Message | "typing")[]>(
+    () => [
+      ...(messages.length === 0 ? [WELCOME] : []),
+      ...messages,
+      ...(isTyping ? (["typing"] as const) : []),
+    ],
+    [messages, isTyping]
+  );
+
+  const lastAIIndex = useMemo(
+    () =>
+      allMessages.reduce((lastIndex, item, index) => {
+        if (item !== "typing" && item.role === "assistant") return index;
+        return lastIndex;
+      }, -1),
+    [allMessages]
+  );
+
+  const keyExtractor = useCallback((item: Message | "typing") => {
+    return item === "typing" ? "typing" : item.id;
+  }, []);
 
   // ── Handle send with optional file ────────────────────────────────────────
-  const handleSend = (text: string, file?: AttachedFile) => {
-    sendMessage(text, file);
-  };
+  const handleSend = useCallback(
+    (text: string, file?: AttachedFile) => {
+      hasSentMessageRef.current = true;
+      sendMessage(text, file);
+    },
+    [sendMessage]
+  );
+
+  const handleQuickReply = useCallback(
+    (text: string) => {
+      hasSentMessageRef.current = true;
+      sendMessage(text);
+    },
+    [sendMessage]
+  );
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: Message | "typing"; index: number }) => {
+      if (item === "typing") return <TypingIndicator />;
+
+      const shouldAnimate =
+        hasSentMessageRef.current &&
+        !historyLoading &&
+        !isTyping &&
+        item.role === "assistant" &&
+        index === lastAIIndex;
+
+      return <ChatMessage message={item} animate={shouldAnimate} />;
+    },
+    [historyLoading, isTyping, lastAIIndex]
+  );
 
   // ─────────────────────────────────────────────────────────────────────────
   // RENDER
@@ -144,25 +176,12 @@ const AIChatbotScreen: React.FC = () => {
           <FlatList
             ref={flatListRef}
             data={allMessages}
-            keyExtractor={(item) =>
-              item === "typing" ? "typing" : (item as Message).id
-            }
+            keyExtractor={keyExtractor}
             contentContainerStyle={styles.messageList}
             showsVerticalScrollIndicator={false}
             style={{ flex: 1 }}
             keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => {
-              if (item === "typing") return <TypingIndicator />;
-
-              const msg = item as Message;
-
-              return (
-                <ChatMessage
-                  message={msg}
-                  animate={msg.id === animatingMessageId}
-                />
-              );
-            }}
+            renderItem={renderItem}
             ListFooterComponent={
               error ? (
                 <View style={styles.errorBox}>
@@ -196,7 +215,7 @@ const AIChatbotScreen: React.FC = () => {
         {/* ── Quick reply chips ── */}
         <QuickReplies
           replies={quickReplies}
-          onSelect={(text) => sendMessage(text)}
+          onSelect={handleQuickReply}
           disabled={isTyping || historyLoading}
         />
 

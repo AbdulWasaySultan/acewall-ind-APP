@@ -24,47 +24,6 @@ const QUICK_REPLIES_DEFAULT = [
 const generateId = () =>
   `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-// const markdownToPlainText = (value: unknown) => {
-//   const text = String(value ?? "");
-
-//   return text
-//     .replace(/```(?:\w+)?\n([\s\S]*?)```/g, "$1")
-//     .replace(/`([^`]+)`/g, "$1")
-//     .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-//     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-//     .replace(/^#{1,6}\s+/gm, "")
-//     .replace(/^\s{0,3}>\s?/gm, "")
-//     .replace(/^\s*[-*+]\s+/gm, "")
-//     .replace(/^\s*\d+\.\s+/gm, "")
-//     .replace(/(\*\*|__)(.*?)\1/g, "$2")
-//     .replace(/(\*|_)(.*?)\1/g, "$2")
-//     .replace(/~~(.*?)~~/g, "$1")
-//     .replace(/\n{3,}/g, "\n\n")
-//     .trim();
-// };
-
-// const markdownToPlainText = (value: unknown) => {
-//   const text = String(value ?? "");
-//   return (
-//     text
-//       .replace(/```(?:\w+)?\n([\s\S]*?)```/g, "$1")
-//       .replace(/`([^`]+)`/g, "$1")
-//       .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-//       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-//       .replace(/^#{1,6}\s+/gm, "")
-//       .replace(/^\s{0,3}>\s?/gm, "")
-//       .replace(/^\s*[-*+]\s+/gm, "")
-//       .replace(/^\s*\d+\.\s+/gm, "")
-//       // 👇 Fix bold: match **text** (allow spaces inside)
-//       .replace(/\*\*(.*?)\*\*/g, "$1")
-//       // 👇 Fix italic: match *text* or _text_
-//       .replace(/(\*|_)(.*?)\1/g, "$2")
-//       .replace(/~~(.*?)~~/g, "$1")
-//       .replace(/\n{3,}/g, "\n\n")
-//       .trim()
-//   );
-// };
-
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────

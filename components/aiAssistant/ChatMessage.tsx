@@ -19,6 +19,8 @@ interface ChatMessageProps {
   animate?: boolean;
 }
 
+const animatedMessageIds = new Set<string>();
+
 const formatTime = (date: Date) =>
   date.toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -37,36 +39,53 @@ const formatSize = (bytes?: number) => {
 // TYPEWRITER HOOK
 // ─────────────────────────────────────────────────────────────────────────────
 const useTypewriter = (
+  animationKey: string,
   fullText: string,
   shouldAnimate: boolean,
   speed = 18
 ) => {
-  const [displayed, setDisplayed] = useState(shouldAnimate ? "" : fullText);
-  const [done, setDone] = useState(!shouldAnimate);
+  const alreadyAnimated = animatedMessageIds.has(animationKey);
+  const [displayed, setDisplayed] = useState(
+    shouldAnimate && !alreadyAnimated ? "" : fullText
+  );
+  const [done, setDone] = useState(!shouldAnimate || alreadyAnimated);
   const indexRef = useRef(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const animatedTextRef = useRef<string | null>(
+    shouldAnimate && !alreadyAnimated ? null : fullText
+  );
 
   useEffect(() => {
     if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    if (!shouldAnimate) {
-      setDisplayed(fullText);
-      setDone(true);
       return;
     }
+
+    if (!shouldAnimate || animatedMessageIds.has(animationKey)) {
+      setDisplayed(fullText);
+      setDone(true);
+      animatedTextRef.current = fullText;
+      return;
+    }
+
+    if (done && animatedTextRef.current === fullText) {
+      return;
+    }
+
     setDisplayed("");
     setDone(false);
     indexRef.current = 0;
+    animatedTextRef.current = fullText;
+    animatedMessageIds.add(animationKey);
 
     intervalRef.current = setInterval(() => {
       if (indexRef.current < fullText.length) {
         setDisplayed(fullText.slice(0, indexRef.current + 1));
         indexRef.current += 1;
       } else {
-        if (intervalRef.current) clearInterval(intervalRef.current);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
         setDone(true);
       }
     }, speed);
@@ -77,7 +96,7 @@ const useTypewriter = (
         intervalRef.current = null;
       }
     };
-  }, [fullText, shouldAnimate, speed]);
+  }, [animationKey, fullText, shouldAnimate, speed]);
 
   return { displayed, done };
 };
@@ -132,6 +151,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const isImage = message.file?.type?.startsWith("image/");
 
   const { displayed, done } = useTypewriter(
+    message.id,
     message.content,
     !isUser && animate,
     18
