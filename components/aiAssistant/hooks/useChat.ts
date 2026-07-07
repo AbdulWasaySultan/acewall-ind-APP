@@ -1,30 +1,80 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Message }                          from '../types';
-import { sendAIMessage, getChatHistory }    from '../../../services/aiAssestant';
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Message } from "../types";
+import { sendAIMessage, getChatHistory } from "../../../services/aiAssestant";
+import removeMarkdown from "remove-markdown";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEFAULTS
 // ─────────────────────────────────────────────────────────────────────────────
 const QUICK_REPLIES_DEFAULT = [
-  'explain more', 'tell me more', 'what do you mean',
-  'continue', 'go on', 'more', 'more details',
-  'explain this', "i don't understand", 'elaborate',
-  'clarify', 'explain again',
+  "explain more",
+  "tell me more",
+  "what do you mean",
+  "continue",
+  "go on",
+  "more",
+  "more details",
+  "explain this",
+  "i don't understand",
+  "elaborate",
+  "clarify",
+  "explain again",
 ];
 
 const generateId = () =>
   `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+// const markdownToPlainText = (value: unknown) => {
+//   const text = String(value ?? "");
+
+//   return text
+//     .replace(/```(?:\w+)?\n([\s\S]*?)```/g, "$1")
+//     .replace(/`([^`]+)`/g, "$1")
+//     .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+//     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+//     .replace(/^#{1,6}\s+/gm, "")
+//     .replace(/^\s{0,3}>\s?/gm, "")
+//     .replace(/^\s*[-*+]\s+/gm, "")
+//     .replace(/^\s*\d+\.\s+/gm, "")
+//     .replace(/(\*\*|__)(.*?)\1/g, "$2")
+//     .replace(/(\*|_)(.*?)\1/g, "$2")
+//     .replace(/~~(.*?)~~/g, "$1")
+//     .replace(/\n{3,}/g, "\n\n")
+//     .trim();
+// };
+
+// const markdownToPlainText = (value: unknown) => {
+//   const text = String(value ?? "");
+//   return (
+//     text
+//       .replace(/```(?:\w+)?\n([\s\S]*?)```/g, "$1")
+//       .replace(/`([^`]+)`/g, "$1")
+//       .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+//       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+//       .replace(/^#{1,6}\s+/gm, "")
+//       .replace(/^\s{0,3}>\s?/gm, "")
+//       .replace(/^\s*[-*+]\s+/gm, "")
+//       .replace(/^\s*\d+\.\s+/gm, "")
+//       // 👇 Fix bold: match **text** (allow spaces inside)
+//       .replace(/\*\*(.*?)\*\*/g, "$1")
+//       // 👇 Fix italic: match *text* or _text_
+//       .replace(/(\*|_)(.*?)\1/g, "$2")
+//       .replace(/~~(.*?)~~/g, "$1")
+//       .replace(/\n{3,}/g, "\n\n")
+//       .trim()
+//   );
+// };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 interface UseChatOptions {
   systemPrompt?: string;
-  sessionType?:  string;
-  courseId?:     string;
-  context?:      string;
-  model?:        string;
-  difficulty?:   string;
+  sessionType?: string;
+  courseId?: string;
+  context?: string;
+  model?: string;
+  difficulty?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,9 +88,9 @@ const normalizeChatItem = (item: any): Message[] => {
   // User message from question.text
   if (item.question?.text) {
     msgs.push({
-      id:        `${item._id}_q`,
-      role:      'user',
-      content:   item.question.text,
+      id: `${item._id}_q`,
+      role: "user",
+      content: item.question.text,
       timestamp,
     });
   }
@@ -48,9 +98,9 @@ const normalizeChatItem = (item: any): Message[] => {
   // AI message from answer.text
   if (item.answer?.text) {
     msgs.push({
-      id:        `${item._id}_a`,
-      role:      'assistant',
-      content:   item.answer.text,
+      id: `${item._id}_a`,
+      role: "assistant",
+      content: removeMarkdown(item.answer.text),
       timestamp,
     });
   }
@@ -62,34 +112,39 @@ const normalizeChatItem = (item: any): Message[] => {
 // HOOK
 // ─────────────────────────────────────────────────────────────────────────────
 const useChat = (options: UseChatOptions = {}) => {
-  const [messages,       setMessages]       = useState<Message[]>([]);
-  const [isTyping,       setIsTyping]       = useState(false);
-  const [quickReplies,   setQuickReplies]   = useState<string[]>([]);
-  const [error,          setError]          = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(true);
+
+  const isSendingRef = useRef(false);
+  const currentRequestIdRef = useRef<string | null>(null);
 
   // ── Load chat history on mount ────────────────────────────────────────────
   useEffect(() => {
     const loadHistory = async () => {
-      console.log('=== LOADING CHAT HISTORY ===');
+      console.log("=== LOADING CHAT HISTORY ===");
       setHistoryLoading(true);
       try {
         const data = await getChatHistory();
-        console.log('=== HISTORY DATA KEYS ===', Object.keys(data ?? {}));
+        console.log("=== HISTORY DATA KEYS ===", Object.keys(data ?? {}));
 
         // ✅ API returns { chats: [] }
         const raw: any[] = data.chats ?? data.messages ?? data.history ?? [];
-        console.log('=== RAW CHATS COUNT ===', raw.length);
+        console.log("=== RAW CHATS COUNT ===", raw.length);
 
         if (raw.length > 0) {
           // ✅ Each chat { question, answer } → flatMap into [userMsg, aiMsg]
           const normalized = raw.flatMap(normalizeChatItem);
           setMessages(normalized);
-          console.log(`✅ Loaded ${normalized.length} messages from ${raw.length} chats`);
+          console.log(
+            `✅ Loaded ${normalized.length} messages from ${raw.length} chats`
+          );
         }
       } catch (e: any) {
         // Fail silently — start with empty chat
-        console.warn('Could not load chat history:', e.message);
+        console.warn("Could not load chat history:", e.message);
       } finally {
         setHistoryLoading(false);
       }
@@ -99,66 +154,89 @@ const useChat = (options: UseChatOptions = {}) => {
   }, []);
 
   // ── Send message ──────────────────────────────────────────────────────────
-  const sendMessage = useCallback(async (userText: string, file?: any) => {
-    if (!userText.trim() && !file) return;
-    if (isTyping) return;
+  const sendMessage = useCallback(
+    async (userText: string, file?: any) => {
+      if (!userText.trim() && !file) return;
+      if (isSendingRef.current) return;
 
-    setError(null);
-    setQuickReplies([]);
+      setError(null);
+      setQuickReplies([]);
 
-    console.log('=== useChat.sendMessage ===');
-    console.log('text:', userText);
-    console.log('file:', file ? file.name : 'none');
+      const requestId = generateId();
+      currentRequestIdRef.current = requestId;
+      isSendingRef.current = true;
 
-    // ✅ Store file inside message so ChatMessage can render image/PDF
-    const userMessage: Message = {
-      id:        generateId(),
-      role:      'user',
-      content:   userText.trim(),
-      timestamp: new Date(),
-      file:      file ? {
-        uri:  file.uri,
-        name: file.name,
-        type: file.type ?? 'application/octet-stream',
-        size: file.size,
-      } : undefined,
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsTyping(true);
+      console.log("=== useChat.sendMessage ===");
+      console.log("text:", userText);
+      console.log("file:", file ? file.name : "none");
 
-    try {
-      const data = await sendAIMessage({
-        question:    userText.trim(),
-        difficulty:  options.difficulty,
-        context:     options.context,
-        sessionType: options.sessionType,
-        model:       options.model,
-        file:        file,
-      });
-
-      const aiText =
-        data.answer   ??
-        data.response ??
-        data.reply    ??
-        data.message  ??
-        'No response received.';
-
-      setMessages((prev) => [...prev, {
-        id:        generateId(),
-        role:      'assistant',
-        content:   aiText,
+      const userMessage: Message = {
+        id: generateId(),
+        role: "user",
+        content: userText.trim(),
         timestamp: new Date(),
-      }]);
+        file: file
+          ? {
+              uri: file.uri,
+              name: file.name,
+              type: file.type ?? "application/octet-stream",
+              size: file.size,
+            }
+          : undefined,
+      };
 
-      setQuickReplies(data.suggestedQuestions ?? QUICK_REPLIES_DEFAULT);
+      setMessages((prev) => [...prev, userMessage]);
+      setIsTyping(true);
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to get response.');
-      console.error('AI chat error:', err);
-    } finally {
-      setIsTyping(false);
-    }
-  }, [messages, isTyping, options]);
+      try {
+        const data = await sendAIMessage({
+          question: userText.trim(),
+          difficulty: options.difficulty,
+          context: options.context,
+          sessionType: options.sessionType,
+          model: options.model,
+          file: file,
+        });
+
+        if (currentRequestIdRef.current !== requestId) return;
+
+        const rawAIText =
+          data.answer ??
+          data.response ??
+          data.reply ??
+          data.message ??
+          "No response received.";
+
+        console.log("🔴 RAW AI TEXT:", rawAIText);
+        const plainlib = removeMarkdown(rawAIText);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: generateId(),
+            role: "assistant",
+            // content: markdownToPlainText(rawAIText),
+            // content: plain,
+            content: plainlib,
+            timestamp: new Date(),
+          },
+        ]);
+
+        setQuickReplies(data.suggestedQuestions ?? QUICK_REPLIES_DEFAULT);
+      } catch (err: any) {
+        if (currentRequestIdRef.current !== requestId) return;
+        setError(err.message || "Failed to get response.");
+        console.error("AI chat error:", err);
+      } finally {
+        if (currentRequestIdRef.current === requestId) {
+          setIsTyping(false);
+          isSendingRef.current = false;
+          currentRequestIdRef.current = null;
+        }
+      }
+    },
+    [options.difficulty, options.context, options.sessionType, options.model]
+  );
 
   // ── Clear conversation ────────────────────────────────────────────────────
   const clearChat = useCallback(() => {

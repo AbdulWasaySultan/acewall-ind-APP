@@ -1,18 +1,26 @@
 // QuickReplies.tsx
 // Horizontal scrollable pill-shaped quick reply suggestion chips
 
-import React from 'react';
+import React from "react";
 import {
-  View, Text, TouchableOpacity,
-  ScrollView, StyleSheet,
-} from 'react-native';
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
 
 interface QuickRepliesProps {
-  replies:  string[];
+  replies: string[];
   onSelect: (reply: string) => void;
+  disabled?: boolean;
 }
 
-const QuickReplies: React.FC<QuickRepliesProps> = ({ replies, onSelect }) => {
+const QuickReplies: React.FC<QuickRepliesProps> = ({
+  replies,
+  onSelect,
+  disabled = false,
+}) => {
   if (replies.length === 0) return null;
 
   return (
@@ -25,11 +33,16 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ replies, onSelect }) => {
         {replies.map((reply, index) => (
           <TouchableOpacity
             key={`${reply}-${index}`}
-            style={styles.chip}
-            onPress={() => onSelect(reply)}
-            activeOpacity={0.7}
+            style={[styles.chip, disabled && styles.chipDisabled]}
+            onPress={() => !disabled && onSelect(reply)}
+            activeOpacity={disabled ? 1 : 0.7}
+            disabled={disabled}
           >
-            <Text style={styles.chipText}>{reply}</Text>
+            <Text
+              style={[styles.chipText, disabled && styles.chipTextDisabled]}
+            >
+              {reply}
+            </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -40,28 +53,35 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ replies, onSelect }) => {
 const styles = StyleSheet.create({
   container: {
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: "#f0f0f0",
     paddingTop: 10,
   },
   scroll: {
     paddingHorizontal: 16,
-    flexWrap:          'wrap',
-    flexDirection:     'row',
-    gap:               8,
+    flexWrap: "wrap",
+    flexDirection: "row",
+    gap: 8,
   },
   chip: {
-    borderWidth:      1.5,
-    borderColor:      '#d1d5db',
-    borderRadius:     20,
+    borderWidth: 1.5,
+    borderColor: "#d1d5db",
+    borderRadius: 20,
     paddingHorizontal: 14,
-    paddingVertical:   8,
-    backgroundColor:  '#fff',
-    marginBottom:     8,
+    paddingVertical: 8,
+    backgroundColor: "#fff",
+    marginBottom: 8,
   },
   chipText: {
-    fontSize:   13,
-    color:      '#374151',
-    fontWeight: '500',
+    fontSize: 13,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  chipDisabled: {
+    opacity: 0.5,
+    borderColor: "#d1d5db",
+  },
+  chipTextDisabled: {
+    color: "#9ca3af",
   },
 });
 
