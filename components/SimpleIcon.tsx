@@ -130,11 +130,12 @@
 // });
 
 // export default SimpleIcon;
-import React from 'react';
-import { TextStyle, StyleProp } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import EvilIcons from 'react-native-vector-icons/EvilIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome6';
+import React from "react";
+import { TextStyle, StyleProp } from "react-native";
+
+import MaterialIcons from "@react-native-vector-icons/material-icons";
+import EvilIcons from "@react-native-vector-icons/evil-icons";
+import FontAwesome from "@react-native-vector-icons/fontawesome6";
 
 interface SimpleIconProps {
   name: string;
@@ -151,7 +152,7 @@ const fontawesomeMap = (FontAwesome as any).getRawGlyphMap?.() || {};
 const SimpleIcon: React.FC<SimpleIconProps> = ({
   name,
   size = 24,
-  color = '#000',
+  color = "#000",
   style,
 }) => {
   let IconComponent: any = null;
@@ -160,7 +161,9 @@ const SimpleIcon: React.FC<SimpleIconProps> = ({
   else if (fontawesomeMap[name]) IconComponent = FontAwesome;
 
   if (IconComponent) {
-    return <IconComponent name={name} size={size} color={color} style={style} />;
+    return (
+      <IconComponent name={name} size={size} color={color} style={style} />
+    );
   }
 
   // fallback

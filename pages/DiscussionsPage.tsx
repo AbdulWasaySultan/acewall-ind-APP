@@ -1,13 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Image, FlatList } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
-import { getAllDiscussions, createDiscussion, getDiscussionDetails, getDiscussionComments, sendDiscussionComment } from '../services/discussion';
-import { getAllCourses } from '../services/course';
-import { getStoredUserId } from '../utils/storage';
-import SimpleIcon from '../components/SimpleIcon';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  Image,
+  FlatList,
+} from "react-native";
+import DropDownPicker from "react-native-dropdown-picker";
+import {
+  getAllDiscussions,
+  createDiscussion,
+  getDiscussionDetails,
+  getDiscussionComments,
+  sendDiscussionComment,
+} from "../services/discussion";
+import { getPublishedCourses } from "../services/course";
+import { getStoredUserId } from "../utils/storage";
+import SimpleIcon from "../components/SimpleIcon";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { useNavigation } from "@react-navigation/native";
 // You will need to install react-native-document-picker: npm install react-native-document-picker or yarn add react-native-document-picker
 // import DocumentPicker from 'react-native-document-picker'; // Commenting out the import
 export interface Discussion {
@@ -54,31 +72,37 @@ const DiscussionsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const navigation = useNavigation<NavigationProp>()
+  const navigation = useNavigation<NavigationProp>();
   // Modal form states
   const [discussionTypeOpen, setDiscussionTypeOpen] = useState(false);
-  const [discussionTypeValue, setDiscussionTypeValue] = useState<string | null>(null);
+  const [discussionTypeValue, setDiscussionTypeValue] = useState<string | null>(
+    null
+  );
   const [discussionTypeItems, setDiscussionTypeItems] = useState([
-    { label: 'Course', value: 'course' },
-    { label: 'Public', value: 'public' },
+    { label: "Course", value: "course" },
+    { label: "Public", value: "public" },
   ]);
 
   const [courseOpen, setCourseOpen] = useState(false);
   const [courseValue, setCourseValue] = useState<string | null>(null);
-  const [courseItems, setCourseItems] = useState<{ label: string; value: string; }[]>([]);
+  const [courseItems, setCourseItems] = useState<
+    { label: string; value: string }[]
+  >([]);
 
-  const [topic, setTopic] = useState('');
-  const [description, setDescription] = useState('');
+  const [topic, setTopic] = useState("");
+  const [description, setDescription] = useState("");
   const [createLoading, setCreateLoading] = useState(false);
 
   // Discussion details modal states
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
-  const [selectedDiscussionId, setSelectedDiscussionId] = useState<string | null>(null);
+  const [selectedDiscussionId, setSelectedDiscussionId] = useState<
+    string | null
+  >(null);
   const [discussionDetails, setDiscussionDetails] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
-  const [commentInput, setCommentInput] = useState('');
+  const [commentInput, setCommentInput] = useState("");
   const [commentsPage, setCommentsPage] = useState(1);
   const [commentsTotalPages, setCommentsTotalPages] = useState(1);
   const [myUserId, setMyUserId] = useState<string | null>(null);
@@ -89,11 +113,11 @@ const DiscussionsPage = () => {
       setLoading(true);
       setError(null);
       const data = await getAllDiscussions();
-      console.log(data)
+      console.log(data);
       setDiscussions(data.discussions || data.discussion || []);
     } catch (err: any) {
-      console.error('Failed to fetch discussions:', err);
-      setError(err.message || 'Failed to load discussions.');
+      console.error("Failed to fetch discussions:", err);
+      setError(err.message || "Failed to load discussions.");
     } finally {
       setLoading(false);
     }
@@ -101,7 +125,7 @@ const DiscussionsPage = () => {
 
   const fetchCourses = async () => {
     try {
-      const coursesRes = await getAllCourses();
+      const coursesRes = await getPublishedCourses();
       if (coursesRes.courses) {
         const formattedCourses = coursesRes.courses.map((course: any) => ({
           label: course.courseTitle,
@@ -110,8 +134,8 @@ const DiscussionsPage = () => {
         setCourseItems(formattedCourses);
       }
     } catch (err) {
-      console.error('Failed to fetch courses:', err);
-      Alert.alert('Error', 'Failed to load courses for discussion creation.');
+      console.error("Failed to fetch courses:", err);
+      Alert.alert("Error", "Failed to load courses for discussion creation.");
     }
   };
 
@@ -127,34 +151,34 @@ const DiscussionsPage = () => {
       !discussionTypeValue ||
       !topic.trim() ||
       !description.trim() ||
-      (discussionTypeValue === 'course' && !courseValue)
+      (discussionTypeValue === "course" && !courseValue)
     ) {
-      Alert.alert('Validation Error', 'Please fill all required fields.');
+      Alert.alert("Validation Error", "Please fill all required fields.");
       return;
     }
 
     try {
       setCreateLoading(true);
       const discussionData = {
-        type: discussionTypeValue as 'course' | 'public',
+        type: discussionTypeValue as "course" | "public",
         topic: topic.trim(),
         description: description.trim(),
-        ...(discussionTypeValue === 'course' && { courseId: courseValue }),
+        ...(discussionTypeValue === "course" && { courseId: courseValue }),
         // ...(selectedFile && { file: selectedFile }),
       };
       await createDiscussion(discussionData);
-      Alert.alert('Success', 'Discussion created successfully!');
+      Alert.alert("Success", "Discussion created successfully!");
       setModalVisible(false);
       // Reset form fields
       setDiscussionTypeValue(null);
       setCourseValue(null);
-      setTopic('');
-      setDescription('');
+      setTopic("");
+      setDescription("");
       // setSelectedFile(null); // Commenting out reset
       fetchDiscussions(); // Refresh the list of discussions
     } catch (err: any) {
-      console.error('Error creating discussion:', err);
-      Alert.alert('Error', err.message || 'Failed to create discussion.');
+      console.error("Error creating discussion:", err);
+      Alert.alert("Error", err.message || "Failed to create discussion.");
     } finally {
       setCreateLoading(false);
     }
@@ -177,8 +201,12 @@ const DiscussionsPage = () => {
   // };
 
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    };
+    return new Date(dateString).toLocaleDateString("en-US", options);
   };
 
   const fetchDiscussionDetails = async (discussionId: string) => {
@@ -187,7 +215,7 @@ const DiscussionsPage = () => {
       const data = await getDiscussionDetails(discussionId);
       setDiscussionDetails(data.discussion);
     } catch (err) {
-      Alert.alert('Error', 'Failed to fetch discussion details.');
+      Alert.alert("Error", "Failed to fetch discussion details.");
     } finally {
       setDetailsLoading(false);
     }
@@ -201,7 +229,7 @@ const DiscussionsPage = () => {
       setCommentsTotalPages(data.totalPages || 1);
       setCommentsPage(data.currentPage || 1);
     } catch (err) {
-      Alert.alert('Error', 'Failed to fetch comments.');
+      Alert.alert("Error", "Failed to fetch comments.");
     } finally {
       setCommentsLoading(false);
     }
@@ -221,7 +249,7 @@ const DiscussionsPage = () => {
     setSelectedDiscussionId(null);
     setDiscussionDetails(null);
     setComments([]);
-    setCommentInput('');
+    setCommentInput("");
     setCommentsPage(1);
     setCommentsTotalPages(1);
   };
@@ -236,13 +264,16 @@ const DiscussionsPage = () => {
     if (!selectedDiscussionId || !commentInput.trim()) return;
     setSending(true);
     try {
-      const res = await sendDiscussionComment(selectedDiscussionId, commentInput.trim());
-      if (res.message === 'Comment sent successfully') {
-        setCommentInput('');
+      const res = await sendDiscussionComment(
+        selectedDiscussionId,
+        commentInput.trim()
+      );
+      if (res.message === "Comment sent successfully") {
+        setCommentInput("");
         fetchDiscussionComments(selectedDiscussionId, 1);
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to send comment.');
+      Alert.alert("Error", "Failed to send comment.");
     } finally {
       setSending(false);
     }
@@ -256,60 +287,77 @@ const DiscussionsPage = () => {
       </TouchableOpacity> */}
 
       {loading ? (
-        <ActivityIndicator size="large" color="#007bff" style={styles.loadingIndicator} />
+        <ActivityIndicator
+          size="large"
+          color="#007bff"
+          style={styles.loadingIndicator}
+        />
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : discussions.length === 0 ? (
         <Text style={styles.noDiscussionsText}>No discussions available.</Text>
+      ) : discussions && discussions.length > 0 ? (
+        <View style={styles.discussionsGrid}>
+          {discussions.map((discussion: Discussion, index: number) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.discussionCard}
+              onPress={() =>
+                navigation.navigate("DiscussionStudent", {
+                  discussionId: discussion?._id,
+                })
+              }
+            >
+              <Image
+                source={{ uri: discussion.course.thumbnail.url }}
+                style={{ width: "100%", height: 150 }}
+              />
+
+              <Text style={styles.dueDate}>
+                Due Date: {new Date(discussion.dueDate.date).toDateString()}
+              </Text>
+
+              <View style={styles.chapterBadge}>
+                <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
+              </View>
+
+              <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+              <Text style={styles.discussionSubtitle}>
+                {discussion.course.courseTitle || "test"}
+              </Text>
+              <Text style={styles.discussionDescription}>
+                {discussion.description}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       ) : (
-
-        discussions && discussions.length > 0 ? (
-          <View style={styles.discussionsGrid}>
-            {discussions.map((discussion: Discussion, index: number) => (
-              <TouchableOpacity key={index} style={styles.discussionCard} onPress={() => navigation.navigate('DiscussionStudent', { discussionId: discussion?._id })}>
-
-
-                <Image source={{ uri: discussion.course.thumbnail.url }} style={{ width: '100%', height: 150 }} />
-
-                <Text style={styles.dueDate}>Due Date: {new Date(discussion.dueDate.date).toDateString()}</Text>
-
-                <View style={styles.chapterBadge}>
-                  <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
-                </View>
-
-                <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-                <Text style={styles.discussionSubtitle}>{discussion.course.courseTitle || "test"}</Text>
-                <Text style={styles.discussionDescription}>{discussion.description}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <SimpleIcon name="chat-bubble-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyStateText}>No discussions available</Text>
-          </View>
-        )
-        // discussions.map((discussion: any) => (
-        //   <TouchableOpacity key={discussion._id} onPress={() => openDetailsModal(discussion._id)}>
-        //     <View style={styles.discussionCard}>
-        //       {discussion.type === 'course' && discussion.course && discussion.course.thumbnail && discussion.course.thumbnail.url && (
-        //         <Image
-        //           source={{ uri: discussion.course.thumbnail.url }}
-        //           style={styles.courseThumbnail}
-        //           resizeMode="cover"
-        //         />
-        //       )}
-        //       <Text style={styles.discussionTypeTag}>{discussion.type}</Text>
-        //       <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-        //       {discussion.type === 'course' && discussion.course && (
-        //         <Text style={styles.discussionCourse}>Course: {discussion.course.courseTitle}</Text>
-        //       )}
-        //       <Text style={styles.discussionDescription}>{discussion.description}</Text>
-        //       <Text style={styles.discussionDate}>Created: {formatDate(discussion.createdAt)}</Text>
-        //     </View>
-        //   </TouchableOpacity>
-        // ))
-      )}
+        <View style={styles.emptyState}>
+          <SimpleIcon name="chat-bubble-outline" size={48} color="#ccc" />
+          <Text style={styles.emptyStateText}>No discussions available</Text>
+        </View>
+      )
+      // discussions.map((discussion: any) => (
+      //   <TouchableOpacity key={discussion._id} onPress={() => openDetailsModal(discussion._id)}>
+      //     <View style={styles.discussionCard}>
+      //       {discussion.type === 'course' && discussion.course && discussion.course.thumbnail && discussion.course.thumbnail.url && (
+      //         <Image
+      //           source={{ uri: discussion.course.thumbnail.url }}
+      //           style={styles.courseThumbnail}
+      //           resizeMode="cover"
+      //         />
+      //       )}
+      //       <Text style={styles.discussionTypeTag}>{discussion.type}</Text>
+      //       <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+      //       {discussion.type === 'course' && discussion.course && (
+      //         <Text style={styles.discussionCourse}>Course: {discussion.course.courseTitle}</Text>
+      //       )}
+      //       <Text style={styles.discussionDescription}>{discussion.description}</Text>
+      //       <Text style={styles.discussionDate}>Created: {formatDate(discussion.createdAt)}</Text>
+      //     </View>
+      //   </TouchableOpacity>
+      // ))
+      }
 
       {/* Details Modal */}
       <Modal
@@ -321,22 +369,37 @@ const DiscussionsPage = () => {
         <View style={styles.fullScreenModal}>
           {/* Modal Header with Title and Close Icon */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalHeaderTitle} numberOfLines={1} ellipsizeMode="tail">
-              {discussionDetails?.topic || 'Discussion'}
+            <Text
+              style={styles.modalHeaderTitle}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {discussionDetails?.topic || "Discussion"}
             </Text>
-            <TouchableOpacity style={styles.modalHeaderClose} onPress={closeDetailsModal}>
+            <TouchableOpacity
+              style={styles.modalHeaderClose}
+              onPress={closeDetailsModal}
+            >
               <Text style={styles.closeIconText}>×</Text>
             </TouchableOpacity>
           </View>
           {detailsLoading ? (
-            <ActivityIndicator size="large" color="#007bff" style={{ alignSelf: 'center', marginVertical: 20 }} />
+            <ActivityIndicator
+              size="large"
+              color="#007bff"
+              style={{ alignSelf: "center", marginVertical: 20 }}
+            />
           ) : discussionDetails ? (
             <>
               {/* Only Chat Section, no image, no course, no created/by */}
               <View style={styles.chatSectionOnly}>
                 <Text style={styles.commentsTitle}>Comments</Text>
                 {commentsLoading ? (
-                  <ActivityIndicator size="small" color="#007bff" style={{ marginVertical: 10 }} />
+                  <ActivityIndicator
+                    size="small"
+                    color="#007bff"
+                    style={{ marginVertical: 10 }}
+                  />
                 ) : comments.length === 0 ? (
                   <Text style={styles.noCommentsText}>No comments yet</Text>
                 ) : (
@@ -344,44 +407,79 @@ const DiscussionsPage = () => {
                     data={comments}
                     keyExtractor={(item) => item._id}
                     renderItem={({ item }) => {
-                      const isMine = !!myUserId && item.createdby && item.createdby._id === myUserId;
+                      const isMine =
+                        !!myUserId &&
+                        item.createdby &&
+                        item.createdby._id === myUserId;
                       return (
-                        <View style={[styles.chatBubbleRow, isMine ? styles.chatBubbleRowRight : styles.chatBubbleRowLeft]}>
+                        <View
+                          style={[
+                            styles.chatBubbleRow,
+                            isMine
+                              ? styles.chatBubbleRowRight
+                              : styles.chatBubbleRowLeft,
+                          ]}
+                        >
                           {!isMine && (
-                            <Text style={styles.chatUserInitials}>{(item.createdby?.firstName || '').charAt(0).toUpperCase()}</Text>
+                            <Text style={styles.chatUserInitials}>
+                              {(item.createdby?.firstName || "")
+                                .charAt(0)
+                                .toUpperCase()}
+                            </Text>
                           )}
-                          <View style={[styles.chatBubble, isMine ? styles.chatBubbleMine : styles.chatBubbleOther]}>
+                          <View
+                            style={[
+                              styles.chatBubble,
+                              isMine
+                                ? styles.chatBubbleMine
+                                : styles.chatBubbleOther,
+                            ]}
+                          >
                             <Text style={styles.chatUserName}>
-                              {item.createdby?.firstName || ''} {item.createdby?.middleName || ''} {item.createdby?.lastName || ''}
+                              {item.createdby?.firstName || ""}{" "}
+                              {item.createdby?.middleName || ""}{" "}
+                              {item.createdby?.lastName || ""}
                             </Text>
                             <Text style={styles.chatText}>{item.text}</Text>
                           </View>
                           {isMine && (
-                            <Text style={styles.chatUserInitials}>{(item.createdby?.firstName || '').charAt(0).toUpperCase()}</Text>
+                            <Text style={styles.chatUserInitials}>
+                              {(item.createdby?.firstName || "")
+                                .charAt(0)
+                                .toUpperCase()}
+                            </Text>
                           )}
                         </View>
                       );
                     }}
-                    style={{ width: '100%' }}
+                    style={{ width: "100%" }}
                   />
                 )}
                 {/* Pagination Controls */}
                 {commentsTotalPages > 1 && (
                   <View style={styles.paginationContainer}>
                     <TouchableOpacity
-                      style={[styles.paginationButton, commentsPage === 1 && { opacity: 0.5 }]}
+                      style={[
+                        styles.paginationButton,
+                        commentsPage === 1 && { opacity: 0.5 },
+                      ]}
                       disabled={commentsPage === 1}
                       onPress={() => handleCommentsPageChange(commentsPage - 1)}
                     >
-                      <Text style={styles.paginationButtonText}>{'<'}</Text>
+                      <Text style={styles.paginationButtonText}>{"<"}</Text>
                     </TouchableOpacity>
-                    <Text style={styles.paginationText}>{commentsPage} / {commentsTotalPages}</Text>
+                    <Text style={styles.paginationText}>
+                      {commentsPage} / {commentsTotalPages}
+                    </Text>
                     <TouchableOpacity
-                      style={[styles.paginationButton, commentsPage === commentsTotalPages && { opacity: 0.5 }]}
+                      style={[
+                        styles.paginationButton,
+                        commentsPage === commentsTotalPages && { opacity: 0.5 },
+                      ]}
                       disabled={commentsPage === commentsTotalPages}
                       onPress={() => handleCommentsPageChange(commentsPage + 1)}
                     >
-                      <Text style={styles.paginationButtonText}>{'>'}</Text>
+                      <Text style={styles.paginationButtonText}>{">"}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -395,11 +493,18 @@ const DiscussionsPage = () => {
                   onChangeText={setCommentInput}
                 />
                 <TouchableOpacity
-                  style={[styles.sendButton, commentInput.trim() && !sending ? { opacity: 1 } : { opacity: 0.5 }]}
+                  style={[
+                    styles.sendButton,
+                    commentInput.trim() && !sending
+                      ? { opacity: 1 }
+                      : { opacity: 0.5 },
+                  ]}
                   disabled={!commentInput.trim() || sending}
                   onPress={handleSendComment}
                 >
-                  <Text style={styles.sendButtonText}>{sending ? '...' : 'Send'}</Text>
+                  <Text style={styles.sendButtonText}>
+                    {sending ? "..." : "Send"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -435,7 +540,7 @@ const DiscussionsPage = () => {
               zIndexInverse={1000}
             />
 
-            {discussionTypeValue === 'course' && (
+            {discussionTypeValue === "course" && (
               <DropDownPicker
                 open={courseOpen}
                 value={courseValue}
@@ -491,7 +596,10 @@ const DiscussionsPage = () => {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
               <Text style={styles.closeButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -504,73 +612,73 @@ const DiscussionsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     padding: 16,
   },
   createButton: {
-    backgroundColor: '#00c853',
+    backgroundColor: "#00c853",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   createButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   loadingIndicator: {
     marginTop: 50,
   },
   errorText: {
     fontSize: 16,
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
     marginTop: 50,
   },
   noDiscussionsText: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginTop: 50,
   },
 
   discussionTypeTag: {
-    backgroundColor: '#a7d9ff',
-    color: '#007bff',
+    backgroundColor: "#a7d9ff",
+    color: "#007bff",
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 5,
     fontSize: 12,
-    fontWeight: 'bold',
-    alignSelf: 'flex-start',
+    fontWeight: "bold",
+    alignSelf: "flex-start",
     marginBottom: 10,
   },
 
   discussionCourse: {
     fontSize: 16,
-    color: '#555',
+    color: "#555",
     marginBottom: 5,
   },
 
   discussionDate: {
     fontSize: 13,
-    color: '#777',
-    fontStyle: 'italic',
+    color: "#777",
+    fontStyle: "italic",
   },
   centeredView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -578,104 +686,104 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    width: '90%',
+    width: "90%",
   },
   modalTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    color: '#333',
+    color: "#333",
   },
   dropdownPicker: {
-    backgroundColor: '#f9f9f9',
-    borderColor: '#ddd',
+    backgroundColor: "#f9f9f9",
+    borderColor: "#ddd",
     borderRadius: 8,
   },
   dropdownContainerStyle: {
-    width: '100%',
+    width: "100%",
     marginBottom: 15,
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
   },
   descriptionInput: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     paddingVertical: 10,
   },
   filePickerContainer: {
-    width: '100%',
+    width: "100%",
     marginBottom: 20,
   },
   filePickerLabel: {
     fontSize: 14,
-    color: '#555',
+    color: "#555",
     marginBottom: 8,
   },
   chooseFileButton: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
   },
   chooseFileButtonText: {
-    color: '#555',
+    color: "#555",
     fontSize: 16,
   },
   fileName: {
     marginTop: 8,
     fontSize: 14,
-    color: '#777',
+    color: "#777",
   },
   submitButton: {
-    backgroundColor: '#00c853',
+    backgroundColor: "#00c853",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
     marginBottom: 10,
   },
   submitButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   closeButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
   },
   closeButtonText: {
-    color: '#333',
+    color: "#333",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   courseThumbnail: {
-    width: '100%',
+    width: "100%",
     height: 150,
     borderRadius: 8,
     marginBottom: 10,
   },
   createdByText: {
     fontSize: 13,
-    color: '#888',
+    color: "#888",
     marginBottom: 10,
   },
   commentsSection: {
-    width: '100%',
-    backgroundColor: '#f7f7f7',
+    width: "100%",
+    backgroundColor: "#f7f7f7",
     borderRadius: 10,
     padding: 15,
     marginTop: 20,
@@ -683,41 +791,41 @@ const styles = StyleSheet.create({
   },
   commentsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    color: '#222',
+    color: "#222",
   },
   noCommentsText: {
     fontSize: 15,
-    color: '#888',
-    textAlign: 'center',
+    color: "#888",
+    textAlign: "center",
     marginVertical: 20,
   },
   commentItem: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     padding: 10,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: "#eee",
   },
   commentAuthor: {
-    fontWeight: 'bold',
-    color: '#007bff',
+    fontWeight: "bold",
+    color: "#007bff",
     marginBottom: 2,
   },
   commentText: {
     fontSize: 15,
-    color: '#333',
+    color: "#333",
   },
   commentInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 10,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: "#eee",
     paddingHorizontal: 10,
   },
   commentInput: {
@@ -725,10 +833,10 @@ const styles = StyleSheet.create({
     height: 40,
     fontSize: 15,
     paddingHorizontal: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   sendButton: {
-    backgroundColor: '#00c853',
+    backgroundColor: "#00c853",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -736,37 +844,37 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   sendButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
   },
   paginationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginVertical: 10,
   },
   paginationButton: {
     padding: 8,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
     borderRadius: 5,
     marginHorizontal: 10,
   },
   paginationButtonText: {
     fontSize: 18,
-    color: '#333',
+    color: "#333",
   },
   paginationText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   fullScreenModal: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   chatSection: {
-    width: '100%',
-    backgroundColor: '#f7f7f7',
+    width: "100%",
+    backgroundColor: "#f7f7f7",
     borderRadius: 10,
     padding: 15,
     marginTop: 20,
@@ -774,70 +882,70 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   chatBubbleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: 12,
   },
   chatUserInitials: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#00c853',
-    color: '#fff',
-    fontWeight: 'bold',
+    backgroundColor: "#00c853",
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 18,
-    textAlign: 'center',
-    textAlignVertical: 'center',
+    textAlign: "center",
+    textAlignVertical: "center",
     marginRight: 8,
     marginTop: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   chatBubble: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 10,
-    maxWidth: '85%',
-    shadowColor: '#000',
+    maxWidth: "85%",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
   chatUserName: {
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     marginBottom: 2,
     fontSize: 14,
   },
   chatText: {
     fontSize: 15,
-    color: '#333',
+    color: "#333",
   },
   commentInputContainerFull: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderColor: '#eee',
+    borderColor: "#eee",
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingTop: 40,
     paddingBottom: 12,
     paddingHorizontal: 18,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderColor: "#eee",
     zIndex: 20,
   },
   modalHeaderTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     flex: 1,
     marginRight: 10,
   },
@@ -847,8 +955,8 @@ const styles = StyleSheet.create({
   },
   chatSectionOnly: {
     flex: 1,
-    width: '100%',
-    backgroundColor: '#f7f7f7',
+    width: "100%",
+    backgroundColor: "#f7f7f7",
     borderRadius: 10,
     padding: 15,
     marginTop: 60,
@@ -856,28 +964,28 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   chatBubbleRowLeft: {
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
   },
   chatBubbleRowRight: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'flex-end',
+    flexDirection: "row-reverse",
+    justifyContent: "flex-end",
   },
   chatBubbleMine: {
-    backgroundColor: '#00c85322',
-    alignSelf: 'flex-end',
+    backgroundColor: "#00c85322",
+    alignSelf: "flex-end",
   },
   chatBubbleOther: {
-    backgroundColor: '#fff',
-    alignSelf: 'flex-start',
+    backgroundColor: "#fff",
+    alignSelf: "flex-start",
   },
   closeIconText: {
     fontSize: 32,
-    color: '#333',
-    fontWeight: 'bold',
+    color: "#333",
+    fontWeight: "bold",
   },
   discussionsGrid: {
     // flexDirection: "row",
-    justifyContent: 'center',
+    justifyContent: "center",
     flexWrap: "wrap",
   },
   discussionCard: {
@@ -926,7 +1034,7 @@ const styles = StyleSheet.create({
   },
   dueDate: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: "#666",
     marginBottom: 8,
   },
@@ -971,4 +1079,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DiscussionsPage; 
+export default DiscussionsPage;

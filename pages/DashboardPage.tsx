@@ -1,9 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useAuth } from '../contexts/AuthContext';
-import { dashboardService, RecentActivity, CourseStatsResponse, PublishedCourse } from '../services/dashboard';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { DrawerNavigationProp } from "@react-navigation/drawer";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  dashboardService,
+  RecentActivity,
+  CourseStatsResponse,
+  PublishedCourse,
+} from "../services/dashboard";
 
 // Static data
 const staticRecentActivity: RecentActivity[] = [
@@ -40,7 +52,8 @@ const DashboardPage = () => {
   const [recentCourses, setRecentCourses] = useState<PublishedCourse[]>([]);
   const [recentCourseslength, setRecentCourseslength] = useState<number>(0);
   const [publishedCoursesCount, setPublishedCoursesCount] = useState<number>(0);
-  const [unpublishedCoursesCount, setUnpublishedCoursesCount] = useState<number>(0);
+  const [unpublishedCoursesCount, setUnpublishedCoursesCount] =
+    useState<number>(0);
   const [studentCount, setStudentCount] = useState(0);
   const [loading, setLoading] = useState(false);
   // Student-specific state
@@ -75,7 +88,7 @@ const DashboardPage = () => {
       setRecentCourses(limitedCourses);
       setRecentCourses(limitedCourses);
     } catch (error: any) {
-      console.error('Error fetching recent courses:', error);
+      console.error("Error fetching recent courses:", error);
     } finally {
       setLoading(false);
     }
@@ -86,7 +99,7 @@ const DashboardPage = () => {
       const count = await dashboardService.getStudentsCount();
       setStudentCount(count);
     } catch (error) {
-      console.error('Error fetching student count:', error);
+      console.error("Error fetching student count:", error);
     }
   };
 
@@ -102,7 +115,7 @@ const DashboardPage = () => {
       setStudentCourses(courses);
       setStudentAnnouncements(announcements);
     } catch (err) {
-      setStudentError('Failed to load student dashboard data.');
+      setStudentError("Failed to load student dashboard data.");
     } finally {
       setStudentLoading(false);
     }
@@ -111,20 +124,23 @@ const DashboardPage = () => {
   // Use useFocusEffect to refresh data every time the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      console.log('Dashboard focused - refreshing data...');
-      if (userRole === 'student') {
+      console.log("Dashboard focused - refreshing data...");
+      if (userRole === "student") {
         fetchStudentDashboard();
-      } else {
-        fetchRecentCourses();
-        fetchStudentCount();
+      } 
+      //If teacher gets login
+      else {
+        Promise.all([fetchRecentCourses(), fetchStudentCount()]).catch((err) => {
+          console.error("Error fetching dashboard data:", err);
+        });
       }
+      
     }, [userRole])
   );
 
-  if (userRole === 'student') {
+  if (userRole === "student") {
     return (
       <View style={styles.mainContainer}>
-
         <ScrollView style={styles.container}>
           <Text style={styles.sectionTitle}>Announcements</Text>
           {studentLoading ? (
@@ -135,12 +151,16 @@ const DashboardPage = () => {
             studentAnnouncements.slice(0, 3).map((a) => (
               <View key={a.id} style={styles.activityCard}>
                 <Text style={styles.activityText}>{a.title}</Text>
-                <Text style={styles.activityTime}>{a.date ? new Date(a.date).toLocaleString() : ''}</Text>
+                <Text style={styles.activityTime}>
+                  {a.date ? new Date(a.date).toLocaleString() : ""}
+                </Text>
                 <Text style={styles.activityText}>{a.content}</Text>
               </View>
             ))
           ) : (
-            <Text style={styles.sectionSubtitle}>No announcements to show.</Text>
+            <Text style={styles.sectionSubtitle}>
+              No announcements to show.
+            </Text>
           )}
 
           <Text style={styles.sectionTitle}>Courses</Text>
@@ -148,26 +168,41 @@ const DashboardPage = () => {
             {studentLoading ? (
               <Text style={styles.sectionSubtitle}>Loading...</Text>
             ) : studentCourses.length > 0 ? (
-              studentCourses.slice(0,3).map((enrollment) => (
+              studentCourses.slice(0, 3).map((enrollment) => (
                 <TouchableOpacity
                   key={enrollment._id}
                   style={styles.horizontalCourseCard}
-                  onPress={() => navigation.navigate('CourseDetailStudentPageEnrolled', { enrollmentId: enrollment._id, courseId: enrollment.course?._id })}
+                  onPress={() =>
+                    navigation.navigate("CourseDetailStudentPageEnrolled", {
+                      enrollmentId: enrollment._id,
+                      courseId: enrollment.course?._id,
+                    })
+                  }
                 >
                   <Image
-                    source={{ uri: enrollment.course?.thumbnail?.url || 'https://via.placeholder.com/150' }}
+                    source={{
+                      uri:
+                        enrollment.course?.thumbnail?.url ||
+                        "https://via.placeholder.com/150",
+                    }}
                     style={styles.horizontalCourseImage}
-                    defaultSource={require('../assets/jpg.jpg')}
+                    defaultSource={require("../assets/jpg.jpg")}
                   />
                   <View style={styles.horizontalCourseInfo}>
-                    <Text style={styles.horizontalCourseTitle} numberOfLines={1}>
+                    <Text
+                      style={styles.horizontalCourseTitle}
+                      numberOfLines={1}
+                    >
                       {enrollment.course?.courseTitle}
                     </Text>
                     <Text style={styles.horizontalCourseCategory}>
                       {enrollment.course?.category?.title}
                     </Text>
                     <Text style={styles.horizontalCourseCategory}>
-                      Enrolled at {enrollment.enrolledAt ? new Date(enrollment.enrolledAt).toLocaleDateString() : ''}
+                      Enrolled at{" "}
+                      {enrollment.enrolledAt
+                        ? new Date(enrollment.enrolledAt).toLocaleDateString()
+                        : ""}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -186,7 +221,10 @@ const DashboardPage = () => {
       <ScrollView style={styles.container}>
         {/* Cards */}
         <View style={styles.cardsContainer}>
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('MyCourses')}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("MyCourses")}
+          >
             <Text style={styles.cardTitle}>Total Courses</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardNumber}>{recentCourseslength}</Text>
@@ -195,7 +233,10 @@ const DashboardPage = () => {
               </View>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Students')}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("Students")}
+          >
             <Text style={styles.cardTitle}>Students</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardNumber}>{studentCount}</Text>
@@ -204,7 +245,12 @@ const DashboardPage = () => {
               </View>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('MyCourses')}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => {
+              navigation.navigate("MyCourses", { filter: "published" });
+            }}
+          >
             <Text style={styles.cardTitle}>Published Courses</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardNumber}>{publishedCoursesCount}</Text>
@@ -213,7 +259,12 @@ const DashboardPage = () => {
               </View>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('MyCourses')}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => {
+              navigation.navigate("MyCourses", { filter: "unpublished" });
+            }}
+          >
             <Text style={styles.cardTitle}>Unpublished Courses</Text>
             <View style={styles.cardContent}>
               <Text style={styles.cardNumber}>{unpublishedCoursesCount}</Text>
@@ -234,7 +285,9 @@ const DashboardPage = () => {
             </View>
           ))
         ) : (
-          <Text style={styles.sectionSubtitle}>No recent activity to show.</Text>
+          <Text style={styles.sectionSubtitle}>
+            No recent activity to show.
+          </Text>
         )}
 
         {/* Recent Courses */}
@@ -245,20 +298,26 @@ const DashboardPage = () => {
               <TouchableOpacity
                 key={course._id}
                 style={styles.horizontalCourseCard}
-                onPress={() => navigation.navigate('CourseDetails', { courseId: course._id })}
+                onPress={() =>
+                  navigation.navigate("CourseDetails", { courseId: course._id })
+                }
               >
                 <Image
                   source={{ uri: course.thumbnail.url }}
                   style={styles.horizontalCourseImage}
-                  defaultSource={require('../assets/jpg.jpg')}
+                  defaultSource={require("../assets/jpg.jpg")}
                 />
                 <View style={styles.horizontalCourseInfo}>
-                  <Text style={styles.horizontalCourseTitle} numberOfLines={1}>{course.courseTitle}</Text>
+                  <Text style={styles.horizontalCourseTitle} numberOfLines={1}>
+                    {course.courseTitle}
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))
           ) : (
-            <Text style={styles.sectionSubtitle}>No recent courses to show.</Text>
+            <Text style={styles.sectionSubtitle}>
+              No recent courses to show.
+            </Text>
           )}
         </View>
       </ScrollView>
@@ -269,16 +328,16 @@ const DashboardPage = () => {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   customHeader: {
     height: 60,
-    backgroundColor: '#10B144',
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: "#10B144",
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -288,105 +347,105 @@ const styles = StyleSheet.create({
   },
   menuIcon: {
     fontSize: 24,
-    color: '#fff',
+    color: "#fff",
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginLeft: 16,
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   cardsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginHorizontal: 10,
     marginBottom: 10,
     marginTop: 30,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    width: '48%',
-    shadowColor: '#000',
+    width: "48%",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
   cardTitle: {
-    color: '#444',
+    color: "#444",
     fontSize: 18,
     marginBottom: 10,
   },
   cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   cardNumber: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
   },
   iconCircleGreen: {
-    backgroundColor: '#D1FADF',
+    backgroundColor: "#D1FADF",
     borderRadius: 20,
     width: 40,
     height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconCircleBlue: {
-    backgroundColor: '#E0EDFF',
+    backgroundColor: "#E0EDFF",
     borderRadius: 20,
     width: 40,
     height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconCircleRed: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: "#FEE2E2",
     borderRadius: 20,
     width: 40,
     height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconText: {
     fontSize: 22,
   },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 4,
-    color: '#111',
+    color: "#111",
   },
   sectionSubtitle: {
     fontSize: 16,
-    color: '#888',
+    color: "#888",
     marginHorizontal: 16,
     marginBottom: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    textAlign: 'center',
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
     marginTop: 10,
   },
   activityCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     marginHorizontal: 10,
     marginBottom: 10,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -394,34 +453,34 @@ const styles = StyleSheet.create({
   },
   activityText: {
     fontSize: 16,
-    color: '#222',
+    color: "#222",
   },
   activityTime: {
     fontSize: 13,
-    color: '#888',
+    color: "#888",
     marginTop: 4,
   },
   saleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 16,
     marginHorizontal: 10,
     marginBottom: 10,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
   saleIconCircle: {
-    backgroundColor: '#FFF7E0',
+    backgroundColor: "#FFF7E0",
     borderRadius: 16,
     width: 32,
     height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   saleIcon: {
@@ -432,18 +491,18 @@ const styles = StyleSheet.create({
   },
   saleText: {
     fontSize: 16,
-    color: '#222',
+    color: "#222",
   },
   bold: {
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
   },
   gray: {
-    color: '#888',
+    color: "#888",
   },
   saleTime: {
     fontSize: 13,
-    color: '#888',
+    color: "#888",
     marginTop: 2,
   },
   recentCoursesContainer: {
@@ -451,14 +510,14 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   horizontalCourseCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -472,19 +531,19 @@ const styles = StyleSheet.create({
   },
   horizontalCourseInfo: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
+    flexDirection: "column",
+    justifyContent: "center",
   },
   horizontalCourseTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#222',
+    fontWeight: "bold",
+    color: "#222",
     marginBottom: 4,
   },
   horizontalCourseCategory: {
     fontSize: 14,
-    color: '#888',
+    color: "#888",
   },
 });
 
-export default DashboardPage; 
+export default DashboardPage;

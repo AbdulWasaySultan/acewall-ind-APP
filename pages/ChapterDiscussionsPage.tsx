@@ -1,15 +1,40 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Linking, Modal, TextInput, Alert, Platform, KeyboardAvoidingView } from 'react-native';
-import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { getDiscussionsForChapter, getDiscussionsForLesson, createDiscussionForChapter, createDiscussionForLesson, getDiscussionDetails, getDiscussionComments } from '../services/discussion';
-import { addAuthInterceptor, createApiInstance, getAssessmentCategories } from '../services/course';
-import * as ImagePicker from 'react-native-image-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import Toast from 'react-native-simple-toast';
-import SimpleIcon from '../components/SimpleIcon';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-type RouteParams = RouteProp<RootStackParamList, 'ChapterDiscussions'>;
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Linking,
+  Modal,
+  TextInput,
+  Alert,
+  Platform,
+  KeyboardAvoidingView,
+} from "react-native";
+import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import {
+  getDiscussionsForChapter,
+  getDiscussionsForLesson,
+  createDiscussionForChapter,
+  createDiscussionForLesson,
+  getDiscussionDetails,
+  getDiscussionComments,
+} from "../services/discussion";
+import {
+  addAuthInterceptor,
+  createApiInstance,
+  getAssessmentCategories,
+} from "../services/course";
+import * as ImagePicker from "react-native-image-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import Toast from "react-native-simple-toast";
+import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+type RouteParams = RouteProp<RootStackParamList, "ChapterDiscussions">;
 interface AssessmentCategory {
   _id: string;
   name: string;
@@ -17,66 +42,74 @@ interface AssessmentCategory {
 const ChapterDiscussionsPage = () => {
   const route = useRoute<RouteParams>();
   const navigation = useNavigation();
-  const { chapterId, courseId, semesterId, quarterId, lessonId,navigateBack } = route.params;
-  const insets = useSafeAreaInsets()
+  const { chapterId, courseId, semesterId, quarterId, lessonId, navigateBack } =
+    route.params;
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<any[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [topic, setTopic] = useState('');
-  const [description, setDescription] = useState('');
-  const [totalMarks, setTotalMarks] = useState('');
+  const [topic, setTopic] = useState("");
+  const [description, setDescription] = useState("");
+  const [totalMarks, setTotalMarks] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
-  const [loadingCategories,setLoadingCategories] = useState(false)
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<AssessmentCategory | null>(null);
-
+  const [selectedCategory, setSelectedCategory] =
+    useState<AssessmentCategory | null>(null);
 
   const [file, setFile] = useState<any | null>(null);
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
-  const [selectedDiscussion, setSelectedDiscussion] = useState<any | null>(null);
+  const [selectedDiscussion, setSelectedDiscussion] = useState<any | null>(
+    null
+  );
   const [discussionDetails, setDiscussionDetails] = useState<any | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingDiscussion, setLoadingDiscussion] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryWeight, setNewCategoryWeight] = useState<string>('0');
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryWeight, setNewCategoryWeight] = useState<string>("0");
   const [creatingCategory, setCreatingCategory] = useState(false);
-  const [quarterDates, setQuarterDates] = useState<{ startDate: string, endDate: string } | null>(null);
+  const [quarterDates, setQuarterDates] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
   const fetchQuarterDates = async () => {
     try {
       const api = await createApiInstance();
       addAuthInterceptor(api);
 
-      const response = await api.get(`/api/quarter/getDatesofQuarter/${quarterId}`);
+      const response = await api.get(
+        `/api/quarter/getDatesofQuarter/${quarterId}`
+      );
       setQuarterDates({
         startDate: response.data.startDate,
-        endDate: response.data.endDate
+        endDate: response.data.endDate,
       });
     } catch (error) {
-      console.error('Error fetching quarter dates:', error);
+      console.error("Error fetching quarter dates:", error);
       // Don't show error toast as this is not critical
     }
   };
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
   useEffect(() => {
@@ -84,17 +117,19 @@ const ChapterDiscussionsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = lessonId ? await getDiscussionsForLesson(lessonId) : await getDiscussionsForChapter(chapterId);
+        const res = lessonId
+          ? await getDiscussionsForLesson(lessonId)
+          : await getDiscussionsForChapter(chapterId);
         setItems(res.discussion || []);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch discussions');
+        setError(err.message || "Failed to fetch discussions");
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-    fetchQuarterDates()
-    fetchCategories()
+    fetchQuarterDates();
+    fetchCategories();
   }, [chapterId]);
   const fetchCategories = async () => {
     try {
@@ -105,7 +140,7 @@ const ChapterDiscussionsPage = () => {
       const response = await api.get(`/api/assessmentCategory/${courseId}`);
       setCategories(response.data.categories || []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
       // Toast.show('Failed to fetch categories', Toast.LONG);
     } finally {
       setLoadingCategories(false);
@@ -116,11 +151,11 @@ const ChapterDiscussionsPage = () => {
     const name = newCategoryName.trim();
     const weight = parseFloat(newCategoryWeight);
     if (!name) {
-      Toast.show('Please enter topic name', Toast.SHORT);
+      Toast.show("Please enter topic name", Toast.SHORT);
       return;
     }
     if (Number.isNaN(weight) || weight <= 0) {
-      Toast.show('Please enter a valid weight (> 0)', Toast.SHORT);
+      Toast.show("Please enter a valid weight (> 0)", Toast.SHORT);
       return;
     }
 
@@ -129,20 +164,26 @@ const ChapterDiscussionsPage = () => {
       const api = await createApiInstance();
       addAuthInterceptor(api);
       const payload = { name, weight, course: courseId } as any;
-      const response = await api.post(`/api/assessmentCategory/${courseId}`, payload);
-      Toast.show('Assessment category created successfully', Toast.LONG);
+      const response = await api.post(
+        `/api/assessmentCategory/${courseId}`,
+        payload
+      );
+      Toast.show("Assessment category created successfully", Toast.LONG);
       const created = response.data?.category || response.data?.data || null;
       if (created) {
         setSelectedCategory({ _id: created._id, name: created.name });
       }
       setShowAddCategoryModal(false);
-      setShowCategoryModal(true)
-      setNewCategoryName('');
-      setNewCategoryWeight('0');
+      setShowCategoryModal(true);
+      setNewCategoryName("");
+      setNewCategoryWeight("0");
       await fetchCategories();
     } catch (e: any) {
-      console.error('Create category error:', e);
-      Toast.show(e?.response?.data?.message || e.message || 'Failed to create category', Toast.LONG);
+      console.error("Create category error:", e);
+      Toast.show(
+        e?.response?.data?.message || e.message || "Failed to create category",
+        Toast.LONG
+      );
     } finally {
       setCreatingCategory(false);
     }
@@ -157,73 +198,109 @@ const ChapterDiscussionsPage = () => {
       // Fetch discussion details and comments
       const [detailsRes, commentsRes] = await Promise.all([
         getDiscussionDetails(discussion._id),
-        getDiscussionComments(discussion._id, 1, 5)
+        getDiscussionComments(discussion._id, 1, 5),
       ]);
 
       setDiscussionDetails(detailsRes.discussion);
       setComments(commentsRes.discussionComments || []);
     } catch (err: any) {
-      Toast.show(err.message || 'Failed to load discussion details', Toast.LONG);
+      Toast.show(
+        err.message || "Failed to load discussion details",
+        Toast.LONG
+      );
     } finally {
       setLoadingDiscussion(false);
     }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
-  <View style={[styles.header,{paddingTop:insets.top}]}>
-      <TouchableOpacity onPress={() => navigateBack?navigateBack():(navigation as any).goBack()} style={{ padding: 4, marginRight: 12 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
+        <TouchableOpacity
+          onPress={() =>
+            navigateBack ? navigateBack() : (navigation as any).goBack()
+          }
+          style={{ padding: 4, marginRight: 12 }}
+        >
           <SimpleIcon name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{lessonId ? 'Lesson Discussions' : 'Chapter Discussions'}</Text>
+        <Text style={styles.headerTitle}>
+          {lessonId ? "Lesson Discussions" : "Chapter Discussions"}
+        </Text>
         <View style={{ width: 28 }} />
       </View>
 
       <View style={{ padding: 16 }}>
-        <TouchableOpacity style={styles.createButton} onPress={async () => {
-          try {
-            setShowCreate(true);
-            const res = await getAssessmentCategories(courseId);
-            setCategories(res.categories || []);
-          } catch (e: any) {
-            Toast.show(e.message || 'Failed to load categories', Toast.LONG);
-          }
-        }}>
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={async () => {
+            try {
+              setShowCreate(true);
+              const res = await getAssessmentCategories(courseId);
+              setCategories(res.categories || []);
+            } catch (e: any) {
+              Toast.show(e.message || "Failed to load categories", Toast.LONG);
+            }
+          }}
+        >
           <Text style={styles.createButtonText}>Create Discussion</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
-        <View style={styles.centered}><ActivityIndicator size="large" color="#10B144" /></View>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#10B144" />
+        </View>
       ) : error ? (
-        <View style={styles.centered}><Text style={{ color: 'red' }}>{error}</Text></View>
+        <View style={styles.centered}>
+          <Text style={{ color: "red" }}>{error}</Text>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16 }}>
           {items.map((d) => {
             const bannerUrl = d.course?.thumbnail?.url;
             return (
-              <TouchableOpacity key={d._id} style={styles.card} onPress={() => openDiscussionModal(d)}>
+              <TouchableOpacity
+                key={d._id}
+                style={styles.card}
+                onPress={() => openDiscussionModal(d)}
+              >
                 {!!bannerUrl && (
                   <Image source={{ uri: bannerUrl }} style={styles.banner} />
                 )}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                  <View style={styles.badge}><Text style={styles.badgeText}>{lessonId ? 'lesson' : 'chapter'}</Text></View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginTop: 12,
+                  }}
+                >
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {lessonId ? "lesson" : "chapter"}
+                    </Text>
+                  </View>
                   <View style={{ marginLeft: 12 }}>
                     <Text style={styles.dueDateLabel}>Due Date:</Text>
                     <Text style={styles.dueDateValue}>
-                      {new Date(d.dueDate?.date).toLocaleDateString('en-GB')}  {d.dueDate?.time}
+                      {new Date(d.dueDate?.date).toLocaleDateString("en-GB")}{" "}
+                      {d.dueDate?.time}
                     </Text>
                   </View>
                 </View>
                 <Text style={styles.title}>{d.topic}</Text>
                 <Text style={styles.courseTitle}>{d?.course?.courseTitle}</Text>
                 <Text style={styles.description}>{d.description}</Text>
-                <Text style={styles.dateRight}>{new Date(d.createdAt).toLocaleDateString('en-GB')}</Text>
+                <Text style={styles.dateRight}>
+                  {new Date(d.createdAt).toLocaleDateString("en-GB")}
+                </Text>
               </TouchableOpacity>
-            )
+            );
           })}
           {items.length === 0 && (
-            <Text style={{ textAlign: 'center', color: '#6b7280' }}>No discussions found.</Text>
+            <Text style={{ textAlign: "center", color: "#6b7280" }}>
+              No discussions found.
+            </Text>
           )}
         </ScrollView>
       )}
@@ -234,9 +311,12 @@ const ChapterDiscussionsPage = () => {
         animationType="slide"
         onRequestClose={() => setShowCreate(false)}
       >
-        <View style={{ flex: 1, backgroundColor: '#fff' }}>
-        <View style={[styles.header,{paddingTop:insets.top}]}>
-            <TouchableOpacity onPress={() => setShowCreate(false)} style={{ padding: 4, marginRight: 12 }}>
+        <View style={{ flex: 1, backgroundColor: "#fff" }}>
+          <View style={[styles.header, { paddingTop: insets.top }]}>
+            <TouchableOpacity
+              onPress={() => setShowCreate(false)}
+              style={{ padding: 4, marginRight: 12 }}
+            >
               <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Create New Discussion</Text>
@@ -244,354 +324,460 @@ const ChapterDiscussionsPage = () => {
           </View>
           <KeyboardAvoidingView
             style={{ flex: 1 }}
-           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              <Text style={styles.inputLabel}>Topic</Text>
+              <TextInput
+                style={styles.textInput}
+                value={topic}
+                onChangeText={setTopic}
+                placeholder="Topic"
+              />
 
-          <ScrollView contentContainerStyle={{ padding: 16 }}>
-            <Text style={styles.inputLabel}>Topic</Text>
-            <TextInput style={styles.textInput} value={topic} onChangeText={setTopic} placeholder="Topic" />
+              <Text style={styles.inputLabel}>Description</Text>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  { minHeight: 100, textAlignVertical: "top" },
+                ]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Description"
+                multiline
+              />
 
-            <Text style={styles.inputLabel}>Description</Text>
-            <TextInput
-              style={[styles.textInput, { minHeight: 100, textAlignVertical: 'top' }]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Description"
-              multiline
-            />
-
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>Total Points</Text>
-                <TextInput style={styles.textInput} value={totalMarks} onChangeText={setTotalMarks} keyboardType="numeric" placeholder="0" />
+              <View style={{ flexDirection: "row", gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inputLabel}>Total Points</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={totalMarks}
+                    onChangeText={setTotalMarks}
+                    keyboardType="numeric"
+                    placeholder="0"
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inputLabel}>Category</Text>
+                  <TouchableOpacity
+                    style={styles.dropdownTrigger}
+                    onPress={() => setShowCategoryModal(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownTriggerText,
+                        !selectedCategory && styles.dropdownPlaceholder,
+                      ]}
+                    >
+                      {selectedCategory
+                        ? selectedCategory.name
+                        : "Select a Topic"}
+                    </Text>
+                    <SimpleIcon
+                      name={showCategoryMenu ? "chevron-up" : "chevron-down"}
+                      size={18}
+                      color="#333"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>Category</Text>
-                <TouchableOpacity
-                  style={styles.dropdownTrigger}
-                  onPress={() => setShowCategoryModal(true)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.dropdownTriggerText,
-                     !selectedCategory && styles.dropdownPlaceholder
-                  ]
-                    
-                  }>
-                  {selectedCategory ? selectedCategory.name : 'Select a Topic'}
-                  </Text>
-                  <SimpleIcon name={showCategoryMenu ? 'chevron-up' : 'chevron-down'} size={18} color="#333" />
-                </TouchableOpacity>
-             
-              </View>
-            </View>
 
-            <Text style={styles.inputLabel}>Due Date</Text>
-            <TouchableOpacity
-              style={styles.textInput}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={{ color: dueDate ? '#111' : '#9ca3af' }}>{dueDate
-                ? `${formatDate(dueDate)} at ${formatTime(dueDate)}`
-                : 'Select Due Date'}</Text>
-            </TouchableOpacity>
+              <Text style={styles.inputLabel}>Due Date</Text>
+              <TouchableOpacity
+                style={styles.textInput}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={{ color: dueDate ? "#111" : "#9ca3af" }}>
+                  {dueDate
+                    ? `${formatDate(dueDate)} at ${formatTime(dueDate)}`
+                    : "Select Due Date"}
+                </Text>
+              </TouchableOpacity>
 
+              <Text style={styles.inputLabel}>
+                Attach Image (PNG, JPEG, JPG)
+              </Text>
+              <TouchableOpacity
+                style={styles.filePickerButton}
+                onPress={async () => {
+                  ImagePicker.launchImageLibrary(
+                    { mediaType: "photo" },
+                    (res) => {
+                      if (res.didCancel || res.errorMessage) return;
+                      const asset = res.assets && res.assets[0];
+                      if (asset) {
+                        setFile({
+                          uri: asset.uri,
+                          type: asset.type || "image/jpeg",
+                          name:
+                            asset.fileName ||
+                            asset.uri?.split("/").pop() ||
+                            "image.jpg",
+                        });
+                      }
+                    }
+                  );
+                }}
+              >
+                <Text style={styles.filePickerButtonText}>
+                  {file?.name || "Choose image No file chosen"}
+                </Text>
+              </TouchableOpacity>
 
-            <Text style={styles.inputLabel}>Attach Image (PNG, JPEG, JPG)</Text>
-            <TouchableOpacity
-              style={styles.filePickerButton}
-              onPress={async () => {
-                ImagePicker.launchImageLibrary({ mediaType: 'photo' }, (res) => {
-                  if (res.didCancel || res.errorMessage) return;
-                  const asset = res.assets && res.assets[0];
-                  if (asset) {
-                    setFile({ uri: asset.uri, type: asset.type || 'image/jpeg', name: asset.fileName || asset.uri?.split('/').pop() || 'image.jpg' });
-                  }
-                });
-              }}
-            >
-              <Text style={styles.filePickerButtonText}>{file?.name || 'Choose image No file chosen'}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.createButton, creating && { opacity: 0.7 }]}
-              disabled={creating}
-              onPress={async () => {
-                if (!topic.trim() || !description.trim() || !selectedCategory?._id || !totalMarks) {
-                  Alert.alert('Validation', 'Topic, Description, Category and Total Points are required.');
-                  return;
-                }
-                if (dueDate && quarterDates) {
-                  const dueDateTimestamp = dueDate.getTime();
-                  const quarterStartTimestamp = new Date(quarterDates.startDate).getTime();
-                  const quarterEndTimestamp = new Date(quarterDates.endDate).getTime();
-                
-                  if (dueDateTimestamp < quarterStartTimestamp || dueDateTimestamp > quarterEndTimestamp) {
-                    Toast.show(
-                      `Due date must be between ${formatDate(new Date(quarterDates.startDate))} and ${formatDate(new Date(quarterDates.endDate))}`,
-                      Toast.LONG
+              <TouchableOpacity
+                style={[styles.createButton, creating && { opacity: 0.7 }]}
+                disabled={creating}
+                onPress={async () => {
+                  if (
+                    !topic.trim() ||
+                    !description.trim() ||
+                    !selectedCategory?._id ||
+                    !totalMarks
+                  ) {
+                    Alert.alert(
+                      "Validation",
+                      "Topic, Description, Category and Total Points are required."
                     );
                     return;
                   }
-                }
-                if (!dueDate) {
-                  Alert.alert('Validation', 'Please select due date');
-                  return;
-                }
-                try {
-                  setCreating(true);
-                  setError(null);
-                  const due = {
-                    date: new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate()).toISOString(),
-                    time: `${String(dueDate.getHours()).padStart(2, '0')}:${String(dueDate.getMinutes()).padStart(2, '0')}`,
-                    dateTime: dueDate.toISOString(),
-                  };
-                  const res = lessonId
-                    ? await createDiscussionForLesson({
-                      course: courseId,
-                      topic: topic.trim(),
-                      description: description.trim(),
-                      category: selectedCategory?._id,
-                      type: 'lesson',
-                      dueDate: due,
-                      totalMarks: Number(totalMarks),
-                      semester: semesterId,
-                      quarter: quarterId,
-                      lesson: lessonId,
-                      file,
-                    })
-                    : await createDiscussionForChapter({
-                      course: courseId,
-                      topic: topic.trim(),
-                      description: description.trim(),
-                      category: selectedCategory?._id,
-                      type: 'chapter',
-                      dueDate: due,
-                      totalMarks: Number(totalMarks),
-                      semester: semesterId,
-                      quarter: quarterId,
-                      chapter: chapterId,
-                      file,
-                    });
-                  Toast.show(res.message || 'Discussion created successfully', Toast.LONG);
-                  setShowCreate(false);
-                  setTopic(''); setDescription(''); setTotalMarks(''); setSelectedCategory(null); setDueDate(null); setFile(null);
-                  // refresh
-                  setLoading(true);
-                  const refreshed = lessonId ? await getDiscussionsForLesson(lessonId) : await getDiscussionsForChapter(chapterId);
-                  setItems(refreshed.discussion || []);
-                } catch (err: any) {
-                  Toast.show(err.message || 'Failed to create discussion', Toast.LONG);
-                } finally {
-                  setCreating(false);
-                  setLoading(false);
-                }
-              }}
-            >
-              {creating ? <ActivityIndicator color="#fff" /> : <Text style={styles.createButtonText}>Create Discussion</Text>}
-            </TouchableOpacity>
+                  if (dueDate && quarterDates) {
+                    const dueDateTimestamp = dueDate.getTime();
+                    const quarterStartTimestamp = new Date(
+                      quarterDates.startDate
+                    ).getTime();
+                    const quarterEndTimestamp = new Date(
+                      quarterDates.endDate
+                    ).getTime();
 
-            <TouchableOpacity style={styles.cancelButton} onPress={() => setShowCreate(false)}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </ScrollView>
+                    if (
+                      dueDateTimestamp < quarterStartTimestamp ||
+                      dueDateTimestamp > quarterEndTimestamp
+                    ) {
+                      Toast.show(
+                        `Due date must be between ${formatDate(
+                          new Date(quarterDates.startDate)
+                        )} and ${formatDate(new Date(quarterDates.endDate))}`,
+                        Toast.LONG
+                      );
+                      return;
+                    }
+                  }
+                  if (!dueDate) {
+                    Alert.alert("Validation", "Please select due date");
+                    return;
+                  }
+                  try {
+                    setCreating(true);
+                    setError(null);
+                    const due = {
+                      date: new Date(
+                        dueDate.getFullYear(),
+                        dueDate.getMonth(),
+                        dueDate.getDate()
+                      ).toISOString(),
+                      time: `${String(dueDate.getHours()).padStart(
+                        2,
+                        "0"
+                      )}:${String(dueDate.getMinutes()).padStart(2, "0")}`,
+                      dateTime: dueDate.toISOString(),
+                    };
+                    const res = lessonId
+                      ? await createDiscussionForLesson({
+                          course: courseId,
+                          topic: topic.trim(),
+                          description: description.trim(),
+                          category: selectedCategory?._id,
+                          type: "lesson",
+                          dueDate: due,
+                          totalMarks: Number(totalMarks),
+                          semester: semesterId,
+                          quarter: quarterId,
+                          lesson: lessonId,
+                          file,
+                        })
+                      : await createDiscussionForChapter({
+                          course: courseId,
+                          topic: topic.trim(),
+                          description: description.trim(),
+                          category: selectedCategory?._id,
+                          type: "chapter",
+                          dueDate: due,
+                          totalMarks: Number(totalMarks),
+                          semester: semesterId,
+                          quarter: quarterId,
+                          chapter: chapterId,
+                          file,
+                        });
+                    Toast.show(
+                      res.message || "Discussion created successfully",
+                      Toast.LONG
+                    );
+                    setShowCreate(false);
+                    setTopic("");
+                    setDescription("");
+                    setTotalMarks("");
+                    setSelectedCategory(null);
+                    setDueDate(null);
+                    setFile(null);
+                    // refresh
+                    setLoading(true);
+                    const refreshed = lessonId
+                      ? await getDiscussionsForLesson(lessonId)
+                      : await getDiscussionsForChapter(chapterId);
+                    setItems(refreshed.discussion || []);
+                  } catch (err: any) {
+                    Toast.show(
+                      err.message || "Failed to create discussion",
+                      Toast.LONG
+                    );
+                  } finally {
+                    setCreating(false);
+                    setLoading(false);
+                  }
+                }}
+              >
+                {creating ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.createButtonText}>Create Discussion</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowCreate(false)}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </KeyboardAvoidingView>
           {showDatePicker && (
-             <>
-             {Platform.OS === 'ios' && (
-              <Text style={{color: '#007AFF', fontSize: 18, fontWeight: '600',alignSelf:'flex-end',marginTop:10,marginRight:15}}
-              onPress={() => {
-                setShowDatePicker(false);
-                if (tempDate) {
-                  setTimeout(() => setShowTimePicker(true), 200);
-                }
-              }}>
-                Done
-              </Text>
-          )}
-            <DateTimePicker
-              value={dueDate || new Date()}
-              mode="date"
-              style={{alignSelf:'center'}}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedDate) => {
-                if (Platform.OS === 'android') {
-                  setShowDatePicker(false);
-                  if (event.type === 'set' && selectedDate) {
-                    setTempDate(selectedDate);
-                    setTimeout(() => setShowTimePicker(true), 200);
+            <>
+              {Platform.OS === "ios" && (
+                <Text
+                  style={{
+                    color: "#007AFF",
+                    fontSize: 18,
+                    fontWeight: "600",
+                    alignSelf: "flex-end",
+                    marginTop: 10,
+                    marginRight: 15,
+                  }}
+                  onPress={() => {
+                    setShowDatePicker(false);
+                    if (tempDate) {
+                      setTimeout(() => setShowTimePicker(true), 200);
+                    }
+                  }}
+                >
+                  Done
+                </Text>
+              )}
+              <DateTimePicker
+                value={dueDate || new Date()}
+                mode="date"
+                style={{ alignSelf: "center" }}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedDate) => {
+                  if (Platform.OS === "android") {
+                    setShowDatePicker(false);
+                    if (event.type === "set" && selectedDate) {
+                      setTempDate(selectedDate);
+                      setTimeout(() => setShowTimePicker(true), 200);
+                    } else {
+                      setTempDate(null);
+                    }
                   } else {
-                    setTempDate(null);
-                    
+                    if (selectedDate) {
+                      setTempDate(selectedDate);
+                      setDueDate(selectedDate);
+                    }
                   }
-                } else {
-                  if (selectedDate) {
-                    setTempDate(selectedDate);
-                    setDueDate(selectedDate)
-                  }
-                }
-              }}
-            />
+                }}
+              />
             </>
           )}
 
           {showTimePicker && (
-               <>
-               {Platform.OS === 'ios' && (
-               <Text style={{color: '#007AFF', fontSize: 18, fontWeight: '600',alignSelf:'flex-end',marginTop:10,marginRight:15}}
-               onPress={() => {
-                 setShowTimePicker(false);
-                 if (tempDate) {
-                   setDueDate(tempDate);
-                 }
-               }}>
-                 Done
-               </Text>
-           )}
-            <DateTimePicker
-              value={tempDate || new Date()}
-              mode="time"
-              style={{alignSelf:'center'}}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, selectedTime) => {
-                if (Platform.OS === 'android') {
-                  setShowTimePicker(false);
-                  if (event.type === 'set' && selectedTime && tempDate) {
-                    const combined = new Date(tempDate);
-                    combined.setHours(selectedTime.getHours());
-                    combined.setMinutes(selectedTime.getMinutes());
-                    setDueDate(combined);
+            <>
+              {Platform.OS === "ios" && (
+                <Text
+                  style={{
+                    color: "#007AFF",
+                    fontSize: 18,
+                    fontWeight: "600",
+                    alignSelf: "flex-end",
+                    marginTop: 10,
+                    marginRight: 15,
+                  }}
+                  onPress={() => {
+                    setShowTimePicker(false);
+                    if (tempDate) {
+                      setDueDate(tempDate);
+                    }
+                  }}
+                >
+                  Done
+                </Text>
+              )}
+              <DateTimePicker
+                value={tempDate || new Date()}
+                mode="time"
+                style={{ alignSelf: "center" }}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedTime) => {
+                  if (Platform.OS === "android") {
+                    setShowTimePicker(false);
+                    if (event.type === "set" && selectedTime && tempDate) {
+                      const combined = new Date(tempDate);
+                      combined.setHours(selectedTime.getHours());
+                      combined.setMinutes(selectedTime.getMinutes());
+                      setDueDate(combined);
+                    } else {
+                      setTempDate(null);
+                      setDueDate(null);
+                    }
                   } else {
-                    setTempDate(null);
-                    setDueDate(null);
+                    if (selectedTime && tempDate) {
+                      const combined = new Date(tempDate);
+                      combined.setHours(selectedTime.getHours());
+                      combined.setMinutes(selectedTime.getMinutes());
+                      setTempDate(combined);
+                    }
                   }
-                } else {
-                  if (selectedTime && tempDate) {
-                    const combined = new Date(tempDate);
-                    combined.setHours(selectedTime.getHours());
-                    combined.setMinutes(selectedTime.getMinutes());
-                    setTempDate(combined);
-                  }
-                }
-              }}
-            />
+                }}
+              />
             </>
           )}
-            <Modal
-        visible={showCategoryModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowCategoryModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Category</Text>
-            <ScrollView style={styles.categoryList}>
-              {loadingCategories ? (
-                <ActivityIndicator size="large" color="#10B144" />
-              ) : categories.length > 0 ? (
-                categories.map((category) => (
-                  <TouchableOpacity
-                    key={category._id}
-                    style={[
-                      styles.categoryItem,
-                      selectedCategory?._id === category._id && styles.categoryItemSelected
-                    ]}
-                    onPress={() => {
-                      setSelectedCategory(category);
-                      setShowCategoryModal(false);
-                    }}
-                  >
-                    <Text style={[
-                      styles.categoryItemText,
-                      selectedCategory?._id === category._id && styles.categoryItemTextSelected
-                    ]}>
-                      {category.name}
+          <Modal
+            visible={showCategoryModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowCategoryModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Select Category</Text>
+                <ScrollView style={styles.categoryList}>
+                  {loadingCategories ? (
+                    <ActivityIndicator size="large" color="#10B144" />
+                  ) : categories.length > 0 ? (
+                    categories.map((category) => (
+                      <TouchableOpacity
+                        key={category._id}
+                        style={[
+                          styles.categoryItem,
+                          selectedCategory?._id === category._id &&
+                            styles.categoryItemSelected,
+                        ]}
+                        onPress={() => {
+                          setSelectedCategory(category);
+                          setShowCategoryModal(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.categoryItemText,
+                            selectedCategory?._id === category._id &&
+                              styles.categoryItemTextSelected,
+                          ]}
+                        >
+                          {category.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <Text style={styles.noCategoriesText}>
+                      No categories available
                     </Text>
+                  )}
+                </ScrollView>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setShowCategoryModal(false)}
+                >
+                  <Text style={styles.modalCloseButtonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                {/* Add New Topic CTA */}
+                <TouchableOpacity
+                  style={[styles.modalCloseButton, { backgroundColor: "#111" }]}
+                  onPress={() => {
+                    setShowCategoryModal(false);
+                    setShowAddCategoryModal(true);
+                  }}
+                >
+                  <Text
+                    style={[styles.modalCloseButtonText, { color: "#fff" }]}
+                  >
+                    + Add New Topic
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+            visible={showAddCategoryModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowAddCategoryModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Add New Topic</Text>
+                <Text style={{ color: "#6b7280", marginBottom: 16 }}>
+                  Create a new assessment category for this course.
+                </Text>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Topic Name</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="e.g., Midterm Exam, Quiz, Assignment"
+                    value={newCategoryName}
+                    onChangeText={setNewCategoryName}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Weight (%)</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="0"
+                    value={newCategoryWeight}
+                    onChangeText={setNewCategoryWeight}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
+                  <TouchableOpacity
+                    style={[styles.cancelQuestionButton]}
+                    onPress={() => setShowAddCategoryModal(false)}
+                    disabled={creatingCategory}
+                  >
+                    <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
                   </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={styles.noCategoriesText}>No categories available</Text>
-              )}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setShowCategoryModal(false)}
-            >
-              <Text style={styles.modalCloseButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            {/* Add New Topic CTA */}
-            <TouchableOpacity
-              style={[styles.modalCloseButton, { backgroundColor: '#111' }]}
-              onPress={() => {
-                setShowCategoryModal(false);
-                setShowAddCategoryModal(true);
-              }}
-            >
-              <Text style={[styles.modalCloseButtonText, { color: '#fff' }]}>+ Add New Topic</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      <Modal
-        visible={showAddCategoryModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowAddCategoryModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Topic</Text>
-            <Text style={{ color: '#6b7280', marginBottom: 16 }}>
-              Create a new assessment category for this course.
-            </Text>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Topic Name</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="e.g., Midterm Exam, Quiz, Assignment"
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
-              />
+                  <TouchableOpacity
+                    style={[styles.saveQuestionButton]}
+                    onPress={handleCreateCategory}
+                    disabled={creatingCategory}
+                  >
+                    {creatingCategory ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.saveQuestionButtonText}>
+                        Create Category
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Weight (%)</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="0"
-                value={newCategoryWeight}
-                onChangeText={setNewCategoryWeight}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
-              <TouchableOpacity
-                style={[styles.cancelQuestionButton]}
-                onPress={() => setShowAddCategoryModal(false)}
-                disabled={creatingCategory}
-              >
-                <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.saveQuestionButton]}
-                onPress={handleCreateCategory}
-                disabled={creatingCategory}
-              >
-                {creatingCategory ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveQuestionButtonText}>Create Category</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
+          </Modal>
         </View>
-      </Modal>
-        </View>
-
       </Modal>
 
       {/* Discussion Details Modal */}
@@ -601,9 +787,12 @@ const ChapterDiscussionsPage = () => {
         animationType="slide"
         onRequestClose={() => setShowDiscussionModal(false)}
       >
-        <View style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
-          <View style={[styles.header,{paddingTop:insets.top}]}>
-            <TouchableOpacity onPress={() => setShowDiscussionModal(false)} style={{ padding: 4, marginRight: 12 }}>
+        <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
+          <View style={[styles.header, { paddingTop: insets.top }]}>
+            <TouchableOpacity
+              onPress={() => setShowDiscussionModal(false)}
+              style={{ padding: 4, marginRight: 12 }}
+            >
               <SimpleIcon name="arrow-back" size={28} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Back</Text>
@@ -627,35 +816,51 @@ const ChapterDiscussionsPage = () => {
                   <View style={styles.metaItem}>
                     <Text style={styles.metaLabel}>Due Date:</Text>
                     <Text style={styles.metaValue}>
-                      {new Date(discussionDetails.dueDate?.date).toLocaleDateString('en-GB')} {discussionDetails.dueDate?.time}
+                      {new Date(
+                        discussionDetails.dueDate?.date
+                      ).toLocaleDateString("en-GB")}{" "}
+                      {discussionDetails.dueDate?.time}
                     </Text>
                   </View>
                   <View style={styles.metaItem}>
                     <Text style={styles.metaLabel}>Total Marks:</Text>
-                    <Text style={styles.metaValue}>{discussionDetails.totalMarks}</Text>
+                    <Text style={styles.metaValue}>
+                      {discussionDetails.totalMarks}
+                    </Text>
                   </View>
                 </View>
 
                 {/* Topic */}
-                <Text style={styles.discussionTopic}>{discussionDetails.topic}</Text>
+                <Text style={styles.discussionTopic}>
+                  {discussionDetails.topic}
+                </Text>
 
                 {/* Description */}
-                <Text style={styles.discussionDescription}>{discussionDetails.description}</Text>
+                <Text style={styles.discussionDescription}>
+                  {discussionDetails.description}
+                </Text>
 
                 {/* Attached Files */}
-                {discussionDetails.files && discussionDetails.files.length > 0 && (
-                  <View style={styles.attachedFileContainer}>
-                    {discussionDetails.files.map((file: any, index: number) => (
-                      <View key={index} style={styles.attachedFile}>
-                        <View style={styles.fileIcon}>
-                          <SimpleIcon name="document" size={24} color="#8b5cf6" />
-                          <Text style={styles.fileIconText}>Mava AI</Text>
-                        </View>
-                        <Text style={styles.fileName}>{file.filename}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                {discussionDetails.files &&
+                  discussionDetails.files.length > 0 && (
+                    <View style={styles.attachedFileContainer}>
+                      {discussionDetails.files.map(
+                        (file: any, index: number) => (
+                          <View key={index} style={styles.attachedFile}>
+                            <View style={styles.fileIcon}>
+                              <SimpleIcon
+                                name="document"
+                                size={24}
+                                color="#8b5cf6"
+                              />
+                              <Text style={styles.fileIconText}>Mava AI</Text>
+                            </View>
+                            <Text style={styles.fileName}>{file.filename}</Text>
+                          </View>
+                        )
+                      )}
+                    </View>
+                  )}
 
                 {/* Comments Section */}
                 <View style={styles.commentsSection}>
@@ -670,7 +875,9 @@ const ChapterDiscussionsPage = () => {
                           {comment.user?.firstName} {comment.user?.lastName}
                         </Text>
                         <Text style={styles.commentDate}>
-                          {new Date(comment.createdAt).toLocaleDateString('en-GB')}
+                          {new Date(comment.createdAt).toLocaleDateString(
+                            "en-GB"
+                          )}
                         </Text>
                       </View>
                     ))
@@ -682,7 +889,9 @@ const ChapterDiscussionsPage = () => {
             </ScrollView>
           ) : (
             <View style={styles.centered}>
-              <Text style={{ color: 'red' }}>Failed to load discussion details</Text>
+              <Text style={{ color: "red" }}>
+                Failed to load discussion details
+              </Text>
             </View>
           )}
         </View>
@@ -694,236 +903,246 @@ const ChapterDiscussionsPage = () => {
 const styles = StyleSheet.create({
   header: {
     minHeight: 56,
-    backgroundColor: '#10B144',
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: "#10B144",
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
-    paddingBottom:Platform.OS === "ios"?10:0,
+    paddingBottom: Platform.OS === "ios" ? 10 : 0,
   },
-  headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', flex: 1 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { color: "#fff", fontSize: 20, fontWeight: "bold", flex: 1 },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   createButton: {
-    backgroundColor: '#10B144',
+    backgroundColor: "#10B144",
     borderRadius: 8,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  createButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  createButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: "#e5e7eb",
     marginBottom: 16,
   },
-  banner: { width: '100%', height: 220, borderRadius: 12 },
-  badge: { backgroundColor: '#6d28d9', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 },
-  badgeText: { color: '#fff', fontWeight: 'bold' },
-  dueDateLabel: { color: '#64748b', fontWeight: 'bold' },
-  dueDateValue: { color: '#0f172a', fontWeight: '600' },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#111', marginTop: 8 },
-  link: { color: '#2563eb', textDecorationLine: 'underline', marginTop: 4 },
-  description: { color: '#334155', marginTop: 4 },
-  courseTitle: { marginTop: 4, color: 'blue' },
-  dateRight: { color: '#94a3b8', textAlign: 'right', marginTop: 12 },
-  inputLabel: { fontWeight: 'bold', marginBottom: 6, color: '#111', marginTop: 8 },
+  banner: { width: "100%", height: 220, borderRadius: 12 },
+  badge: {
+    backgroundColor: "#6d28d9",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  badgeText: { color: "#fff", fontWeight: "bold" },
+  dueDateLabel: { color: "#64748b", fontWeight: "bold" },
+  dueDateValue: { color: "#0f172a", fontWeight: "600" },
+  title: { fontSize: 24, fontWeight: "bold", color: "#111", marginTop: 8 },
+  link: { color: "#2563eb", textDecorationLine: "underline", marginTop: 4 },
+  description: { color: "#334155", marginTop: 4 },
+  courseTitle: { marginTop: 4, color: "blue" },
+  dateRight: { color: "#94a3b8", textAlign: "right", marginTop: 12 },
+  inputLabel: {
+    fontWeight: "bold",
+    marginBottom: 6,
+    color: "#111",
+    marginTop: 8,
+  },
   textInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginBottom: 8,
   },
   dropdownLike: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     maxHeight: 160,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   dropdownTrigger: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  dropdownTriggerText: { color: '#111' },
+  dropdownTriggerText: { color: "#111" },
   dropdownMenu: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     maxHeight: 180,
     marginTop: 6,
   },
   dropdownItem: { paddingHorizontal: 12, paddingVertical: 10 },
-  dropdownItemActive: { backgroundColor: '#eef2ff' },
+  dropdownItemActive: { backgroundColor: "#eef2ff" },
   filePickerButton: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
     marginBottom: 16,
   },
-  filePickerButtonText: { color: '#6b7280' },
+  filePickerButtonText: { color: "#6b7280" },
   cancelButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 8,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: "#e5e7eb",
     marginTop: 12,
   },
-  cancelText: { color: '#111', fontWeight: 'bold', fontSize: 16 },
+  cancelText: { color: "#111", fontWeight: "bold", fontSize: 16 },
   // Discussion Modal Styles
   discussionBanner: {
-    backgroundColor: '#10B144',
+    backgroundColor: "#10B144",
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 20,
     margin: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   discussionBannerText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   discussionContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     margin: 16,
     borderRadius: 12,
     padding: 16,
   },
   discussionMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   metaItem: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   metaLabel: {
-    fontWeight: 'bold',
-    color: '#374151',
+    fontWeight: "bold",
+    color: "#374151",
     fontSize: 14,
   },
   metaValue: {
-    color: '#111',
-    fontWeight: '600',
+    color: "#111",
+    fontWeight: "600",
     fontSize: 14,
     marginTop: 2,
   },
   discussionTopic: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 8,
   },
   discussionDescription: {
     fontSize: 16,
-    color: '#374151',
+    color: "#374151",
     marginBottom: 16,
   },
   attachedFileContainer: {
     marginBottom: 24,
   },
   attachedFile: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderColor: "#e5e7eb",
+    flexDirection: "row",
+    alignItems: "center",
   },
   fileIcon: {
-    alignItems: 'center',
+    alignItems: "center",
     marginRight: 12,
   },
   fileIconText: {
     fontSize: 10,
-    color: '#8b5cf6',
+    color: "#8b5cf6",
     marginTop: 2,
   },
   fileName: {
-    color: '#2563eb',
+    color: "#2563eb",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   commentsSection: {
     marginTop: 16,
   },
   commentsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 8,
   },
   commentsDivider: {
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: "#e5e7eb",
     marginBottom: 16,
   },
   commentItem: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
   },
   commentText: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
     marginBottom: 4,
   },
   commentAuthor: {
     fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
+    color: "#6b7280",
+    fontWeight: "500",
   },
   commentDate: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: "#9ca3af",
     marginTop: 2,
   },
   noCommentsText: {
-    color: '#9ca3af',
+    color: "#9ca3af",
     fontSize: 14,
-    textAlign: 'center',
-    fontStyle: 'italic',
+    textAlign: "center",
+    fontStyle: "italic",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
-    width: '90%',
+    width: "90%",
     maxWidth: 400,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   questionModalContent: {
-    maxHeight: '90%',
+    maxHeight: "90%",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginBottom: 16,
   },
   categoryList: {
@@ -933,79 +1152,77 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   categoryItemSelected: {
-    backgroundColor: '#f0fdf4',
+    backgroundColor: "#f0fdf4",
   },
   categoryItemText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   categoryItemTextSelected: {
-    color: '#10B144',
-    fontWeight: 'bold',
+    color: "#10B144",
+    fontWeight: "bold",
   },
   noCategoriesText: {
-    textAlign: 'center',
-    color: '#7b8794',
+    textAlign: "center",
+    color: "#7b8794",
     paddingVertical: 20,
   },
   modalCloseButton: {
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 16,
   },
   modalCloseButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#555',
+    fontWeight: "bold",
+    color: "#555",
   },
   inputGroup: {
     marginBottom: 16,
   },
-  
+
   textArea: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   characterCount: {
     fontSize: 12,
-    color: '#7b8794',
-    textAlign: 'right',
+    color: "#7b8794",
+    textAlign: "right",
     marginTop: 4,
   },
   saveQuestionButton: {
     flex: 1,
-    backgroundColor: '#222',
+    backgroundColor: "#222",
     paddingVertical: 14,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   saveQuestionButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
   },
   cancelQuestionButton: {
     flex: 1,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
     paddingVertical: 14,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelQuestionButtonText: {
-    color: '#555',
-    fontWeight: 'bold',
+    color: "#555",
+    fontWeight: "bold",
     fontSize: 16,
   },
   dropdownPlaceholder: {
-    color: '#7b8794',
+    color: "#7b8794",
   },
 });
 
 export default ChapterDiscussionsPage;
-
-

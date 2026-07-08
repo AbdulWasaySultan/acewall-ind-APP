@@ -220,6 +220,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onClose, onS
   const [target,  setTarget]  = useState<PostTarget>('public');
   const [content, setContent] = useState('');
   const [media,   setMedia]   = useState<MediaFile[]>([]);
+  
 
   const resetState = () => {
     setTarget('public');

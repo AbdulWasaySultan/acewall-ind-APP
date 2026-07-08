@@ -1,20 +1,7 @@
 import axios from 'axios';
 import { getStoredBaseUrl, getStoredUserData } from '../utils/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const createApiInstance = async () => {
-  const baseUrl = await getStoredBaseUrl();
-  if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
-  }
-  return axios.create({
-    baseURL: baseUrl,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  });
-};
+import { getApiInstance } from '../services/apiInstance';
 
 const addAuthInterceptor = (api: any) => {
   api.interceptors.request.use(
@@ -39,7 +26,7 @@ const addAuthInterceptor = (api: any) => {
 
 export const createAnnouncement = async ({ title, courseId, message }: { title: string; courseId: string; message: string }) => {
   try {
-    const api = await createApiInstance();
+    const api = await getApiInstance();
     console.log('Base URL:', api.defaults.baseURL);
     console.log('Full URL:', api.defaults.baseURL + '/api/announcements/createannouncement');
     const user = await getStoredUserData();
@@ -61,7 +48,7 @@ export const createAnnouncement = async ({ title, courseId, message }: { title: 
 
 export const getAnnouncementsByTeacher = async () => {
   try {
-    const api = await createApiInstance();
+    const api = await getApiInstance();
     const user = await getStoredUserData();
     console.log(user)
     const teacherId = user?.user?._id;
@@ -85,7 +72,7 @@ export const getAnnouncementsByTeacher = async () => {
 
 export const deleteAnnouncement = async (announcementId: string) => {
   try {
-    const api = await createApiInstance();
+    const api = await getApiInstance();
     addAuthInterceptor(api);
     const response = await api.delete(`/api/announcements/${announcementId}`);
     return response.data;
@@ -102,7 +89,7 @@ export const deleteAnnouncement = async (announcementId: string) => {
 
 export const getAnnouncementsByStudent = async (studentId: string) => {
   try {
-    const api = await createApiInstance();
+    const api = await getApiInstance();
     const response = await api.get(`/api/announcements/getbystudent/${studentId}`);
     return response.data;
   } catch (error: any) {

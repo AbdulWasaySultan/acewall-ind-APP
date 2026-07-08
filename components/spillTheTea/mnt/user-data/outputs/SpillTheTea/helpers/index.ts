@@ -11,7 +11,7 @@ export const getFullName = (author?: Author) =>
 export const capitalize = (str?: string) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 
-export const toggleLike = (likes: string[], userId: string) =>
+export const toggleLike = (likes: string[], userId: string) => 
   likes.includes(userId)
     ? likes.filter((id) => id !== userId)
     : [...likes, userId];

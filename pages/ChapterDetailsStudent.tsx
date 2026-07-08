@@ -1,16 +1,37 @@
-
-import { useEffect, useState } from "react"
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Platform, ActivityIndicator, Linking, Modal } from "react-native"
-import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native"
-import SimpleIcon from "../components/SimpleIcon"
-import { getChapterDetailsForStudent, getChapterDiscussionsForStudent, getChapterPagesForStudent, getLessonDiscussionsForStudent, getLessonPagesForStudent, getStudentAssessmentDetails } from "../services/course"
-import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Platform,
+  ActivityIndicator,
+  Linking,
+  Modal,
+} from "react-native";
+import {
+  useRoute,
+  useNavigation,
+  type RouteProp,
+} from "@react-navigation/native";
+import SimpleIcon from "../components/SimpleIcon";
+import {
+  getChapterDetailsForStudent,
+  getChapterDiscussionsForStudent,
+  getChapterPagesForStudent,
+  getLessonDiscussionsForStudent,
+  getLessonPagesForStudent,
+  getStudentAssessmentDetails,
+} from "../services/course";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import YoutubePlayer from "react-native-youtube-iframe";
-import { RootStackParamList } from "../navigation/AppNavigator"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 interface ChapterDetailParams {
-  chapterId: string,
-  navigateBack: () => void
+  chapterId: string;
+  navigateBack: () => void;
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -118,7 +139,12 @@ export interface PageImage {
   publicId: string;
 }
 
-type TabType = "description" | "files" | "assessments" | "discussions" | "pages"
+type TabType =
+  | "description"
+  | "files"
+  | "assessments"
+  | "discussions"
+  | "pages";
 const extractVideoId = (url: string): string | null => {
   const regex =
     /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|embed)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -126,76 +152,83 @@ const extractVideoId = (url: string): string | null => {
   return match ? match[1] : null;
 };
 const ChapterDetailsStudent = () => {
-  const route = useRoute<RouteProp<Record<string, ChapterDetailParams>, string>>()
-  const navigation = useNavigation<NavigationProp>()
-  const { chapterId, navigateBack } = route.params
-  const [chapter, setChapter] = useState<null | ChapterDetails>(null)
-  const [chapterDetailsLoading, setChapterDetailsLoading] = useState(false)
-  const [discussions, setDiscussions] = useState<null | Discussion[]>(null)
-  const [pages, setPages] = useState<null | Page[]>(null)
+  const route =
+    useRoute<RouteProp<Record<string, ChapterDetailParams>, string>>();
+  const navigation = useNavigation<NavigationProp>();
+  const { chapterId, navigateBack } = route.params;
+  const [chapter, setChapter] = useState<null | ChapterDetails>(null);
+  const [chapterDetailsLoading, setChapterDetailsLoading] = useState(false);
+  const [discussions, setDiscussions] = useState<null | Discussion[]>(null);
+  const [pages, setPages] = useState<null | Page[]>(null);
   const [expanded, setExpanded] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
-  const [lessonDiscussions, setLessonDiscussions] = useState<Discussion[]>([])
-  const [lessonPages, setLessonPages] = useState<Page[]>([])
+  const [lessonDiscussions, setLessonDiscussions] = useState<Discussion[]>([]);
+  const [lessonPages, setLessonPages] = useState<Page[]>([]);
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
-  const insets = useSafeAreaInsets()
+  const insets = useSafeAreaInsets();
 
   const [detailedModalVisible, setDetailedModalVisible] = useState(false);
   const [submissionDetails, setSubmissionDetails] = useState<any>(null);
-  const [submissionDetailsLoading, setSubmissionDetailsLoading] = useState(false);
-  const [submissionDetailsError, setSubmissionDetailsError] = useState<string | null>(null);
-  const [modalActiveTab, setModalActiveTab] = useState<'all' | 'needs_grading' | 'graded'>('all');
-
+  const [submissionDetailsLoading, setSubmissionDetailsLoading] =
+    useState(false);
+  const [submissionDetailsError, setSubmissionDetailsError] = useState<
+    string | null
+  >(null);
+  const [modalActiveTab, setModalActiveTab] = useState<
+    "all" | "needs_grading" | "graded"
+  >("all");
 
   useEffect(() => {
     const fetchChapterData = async () => {
-      setChapterDetailsLoading(true)
+      setChapterDetailsLoading(true);
       try {
-
         const results = await Promise.allSettled([
           getChapterDetailsForStudent(chapterId),
           getChapterDiscussionsForStudent(chapterId),
           getChapterPagesForStudent(chapterId),
         ]);
 
-        const [details, discussions, pages] = results.map(r =>
+        const [details, discussions, pages] = results.map((r) =>
           r.status === "fulfilled" ? r.value : null
         );
-        console.log(details, discussions, pages)
+        console.log(details, discussions, pages);
         if (details) setChapter(details.chapterDetails);
         if (discussions) setDiscussions(discussions.discussion);
         if (pages) setPages(pages.pages);
       } catch (err) {
-        console.log('error', err)
+        console.log("error", err);
       } finally {
-        setChapterDetailsLoading(false)
+        setChapterDetailsLoading(false);
       }
-    }
+    };
 
-
-    fetchChapterData()
-  }, [chapterId])
+    fetchChapterData();
+  }, [chapterId]);
 
   const formatDateTime = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    return new Date(dateString).toLocaleDateString("en-US", options);
   };
 
   const getFilteredQuestions = () => {
     if (!submissionDetails?.answers) return [];
 
     switch (modalActiveTab) {
-      case 'needs_grading':
-        return submissionDetails.answers.filter((answer: any) => answer.requiresManualCheck);
-      case 'graded':
-        return submissionDetails.answers.filter((answer: any) => !answer.requiresManualCheck);
+      case "needs_grading":
+        return submissionDetails.answers.filter(
+          (answer: any) => answer.requiresManualCheck
+        );
+      case "graded":
+        return submissionDetails.answers.filter(
+          (answer: any) => !answer.requiresManualCheck
+        );
       default:
         return submissionDetails.answers;
     }
@@ -216,8 +249,8 @@ const ChapterDetailsStudent = () => {
         navigation.navigate("AssessmentScreenStudent", { assessmentId });
       }
     } catch (err: any) {
-      setSubmissionDetailsError('Failed to load assessment details');
-      console.error('Error fetching assessment details:', err);
+      setSubmissionDetailsError("Failed to load assessment details");
+      console.error("Error fetching assessment details:", err);
       // If there's an error, we might still want to try navigating to the assessment screen
       // but only if the error specifically means "no submission found" or similar.
       // Based on the prompt, we should navigate if message is NOT "Submission found".
@@ -228,106 +261,141 @@ const ChapterDetailsStudent = () => {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<TabType>("description")
+  const [activeTab, setActiveTab] = useState<TabType>("description");
   const handleLessonSelect = async (lesson: Lesson) => {
-    setSelectedLesson(lesson)
+    setSelectedLesson(lesson);
     try {
       const [lessonDiscussionsRes, lessonPagesRes] = await Promise.allSettled([
         getLessonDiscussionsForStudent(lesson._id),
         getLessonPagesForStudent(lesson._id),
-      ])
+      ]);
       if (lessonDiscussionsRes.status === "fulfilled")
-        setLessonDiscussions(lessonDiscussionsRes.value.discussion || [])
-      else setLessonDiscussions([])
+        setLessonDiscussions(lessonDiscussionsRes.value.discussion || []);
+      else setLessonDiscussions([]);
 
       if (lessonPagesRes.status === "fulfilled")
-        setLessonPages(lessonPagesRes.value.pages || [])
-      else setLessonPages([])
+        setLessonPages(lessonPagesRes.value.pages || []);
+      else setLessonPages([]);
     } catch (err) {
-      console.log("Error fetching lesson data:", err)
+      console.log("Error fetching lesson data:", err);
     }
-  }
+  };
   const renderTabButton = (tab: TabType, label: string) => (
     <TouchableOpacity
       style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
       onPress={() => setActiveTab(tab)}
     >
-      <Text style={[styles.tabButtonText, activeTab === tab && styles.tabButtonTextActive]}>{label}</Text>
+      <Text
+        style={[
+          styles.tabButtonText,
+          activeTab === tab && styles.tabButtonTextActive,
+        ]}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
-  )
+  );
 
   const renderDescription = () => (
     <View style={styles.tabContent}>
       <Text style={styles.sectionTitle}>{chapter?.title}</Text>
-      <Text style={styles.descriptionText}>{chapter?.description || "This is the chapter description"}</Text>
-      {
-        selectedLesson &&
-        <View style={{
-          borderTopWidth: 1,
-          marginTop: 20,
-          borderTopColor: "#e0e0e0",
-        }}>
-          <Text style={styles.sectionTitle}>Current Lesson: {selectedLesson?.title}</Text>
-          <Text style={styles.descriptionText}>{selectedLesson?.description}</Text>
-
+      <Text style={styles.descriptionText}>
+        {chapter?.description || "This is the chapter description"}
+      </Text>
+      {selectedLesson && (
+        <View
+          style={{
+            borderTopWidth: 1,
+            marginTop: 20,
+            borderTopColor: "#e0e0e0",
+          }}
+        >
+          <Text style={styles.sectionTitle}>
+            Current Lesson: {selectedLesson?.title}
+          </Text>
+          <Text style={styles.descriptionText}>
+            {selectedLesson?.description}
+          </Text>
         </View>
-      }
-
+      )}
     </View>
-  )
+  );
 
   const renderFiles = () => (
     <View style={styles.tabContent}>
       {selectedLesson && selectedLesson?.pdfFiles.length > 0 ? (
         selectedLesson?.pdfFiles.map((file: PdfFile, index: number) => (
-          <TouchableOpacity key={index} style={styles.fileCard} onPress={() => Linking.openURL(file.url)}>
+          <TouchableOpacity
+            key={index}
+            style={styles.fileCard}
+            onPress={() => Linking.openURL(file.url)}
+          >
             <SimpleIcon name="description" size={24} color="#10B144" />
             <View style={styles.fileInfo}>
-              <Text style={styles.fileName}>{file.filename || `File ${index + 1}`}</Text>
-              <Text style={styles.fileSize}>Uploaded: {file.uploadedAt && new Date(file.uploadedAt).toDateString()}</Text>
+              <Text style={styles.fileName}>
+                {file.filename || `File ${index + 1}`}
+              </Text>
+              <Text style={styles.fileSize}>
+                Uploaded:{" "}
+                {file.uploadedAt && new Date(file.uploadedAt).toDateString()}
+              </Text>
             </View>
           </TouchableOpacity>
         ))
       ) : (
         <View style={styles.emptyState}>
           <SimpleIcon name="file" size={48} color="#ccc" />
-          <Text style={styles.emptyStateText}>No PDF files available for this lesson</Text>
+          <Text style={styles.emptyStateText}>
+            No PDF files available for this lesson
+          </Text>
         </View>
       )}
     </View>
-  )
+  );
 
   const renderAssessments = () => (
     <View style={styles.tabContent}>
       <Text style={styles.sectionTitle}>Lesson Assessments</Text>
 
-      {
-        selectedLesson &&
-          selectedLesson?.lessonAssessments.length > 0 ?
-          selectedLesson?.lessonAssessments.map((assessment: any, index: number) => (
-            <TouchableOpacity key={index} style={styles.assessmentCard} onPress={() => handleAssessmentPress(assessment._id)}>
+      {selectedLesson && selectedLesson?.lessonAssessments.length > 0 ? (
+        selectedLesson?.lessonAssessments.map(
+          (assessment: any, index: number) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.assessmentCard}
+              onPress={() => handleAssessmentPress(assessment._id)}
+            >
               <View style={styles.assessmentHeader}>
                 <SimpleIcon name="menu-book" size={24} color="#10B144" />
                 <Text style={styles.assessmentTitle}>{assessment.title}</Text>
               </View>
-              <Text style={styles.assessmentDescription}>{assessment.description}</Text>
+              <Text style={styles.assessmentDescription}>
+                {assessment.description}
+              </Text>
             </TouchableOpacity>
-          ))
-          :
-          <Text style={styles.emptyMessage}>No lesson assessments available</Text>
+          )
+        )
+      ) : (
+        <Text style={styles.emptyMessage}>No lesson assessments available</Text>
+      )}
 
-      }
-
-
-      <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Chapter Assessment</Text>
+      <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+        Chapter Assessment
+      </Text>
       {chapter?.chapterAssessments && chapter?.chapterAssessments.length > 0 ? (
         chapter?.chapterAssessments.map((assessment: any, index: number) => (
-          <TouchableOpacity key={index} style={styles.assessmentCard} onPress={() => handleAssessmentPress(assessment._id)}>
+          <TouchableOpacity
+            key={index}
+            style={styles.assessmentCard}
+            onPress={() => handleAssessmentPress(assessment._id)}
+          >
             <View style={styles.assessmentHeader}>
               <SimpleIcon name="menu-book" size={24} color="#10B144" />
               <Text style={styles.assessmentTitle}>{assessment.title}</Text>
             </View>
-            <Text style={styles.assessmentDescription}>{assessment.description}</Text>
+            <Text style={styles.assessmentDescription}>
+              {assessment.description}
+            </Text>
           </TouchableOpacity>
         ))
       ) : (
@@ -337,7 +405,7 @@ const ChapterDetailsStudent = () => {
         </View>
       )}
     </View>
-  )
+  );
 
   const renderDiscussions = () => (
     <View style={styles.tabContent}>
@@ -345,20 +413,35 @@ const ChapterDetailsStudent = () => {
       {discussions && discussions.length > 0 ? (
         <View style={styles.discussionsGrid}>
           {discussions.map((discussion: Discussion, index: number) => (
-            <TouchableOpacity key={index} style={styles.discussionCard} onPress={() => navigation.navigate('DiscussionStudent', { discussionId: discussion?._id })}>
+            <TouchableOpacity
+              key={index}
+              style={styles.discussionCard}
+              onPress={() =>
+                navigation.navigate("DiscussionStudent", {
+                  discussionId: discussion?._id,
+                })
+              }
+            >
+              <Image
+                source={{ uri: discussion.course.thumbnail.url }}
+                style={{ width: "100%", height: 150 }}
+              />
 
-
-              <Image source={{ uri: discussion.course.thumbnail.url }} style={{ width: '100%', height: 150 }} />
-
-              <Text style={styles.dueDate}>Due Date: {new Date(discussion.dueDate.date).toDateString()}</Text>
+              <Text style={styles.dueDate}>
+                Due Date: {new Date(discussion.dueDate.date).toDateString()}
+              </Text>
 
               <View style={styles.chapterBadge}>
                 <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
               </View>
 
               <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-              <Text style={styles.discussionSubtitle}>{discussion.course.courseTitle || "test"}</Text>
-              <Text style={styles.discussionDescription}>{discussion.description}</Text>
+              <Text style={styles.discussionSubtitle}>
+                {discussion.course.courseTitle || "test"}
+              </Text>
+              <Text style={styles.discussionDescription}>
+                {discussion.description}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -371,38 +454,69 @@ const ChapterDetailsStudent = () => {
 
       {selectedLesson && (
         <>
-          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Lesson Discussion</Text>
+          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+            Lesson Discussion
+          </Text>
           {lessonDiscussions && lessonDiscussions.length > 0 ? (
             lessonDiscussions.map((discussion, index) => (
-              <TouchableOpacity key={`lesson-discussion-${index}`} style={styles.discussionCard} onPress={() => navigation.navigate('DiscussionStudent', { discussionId: discussion?._id })}>
-                <Image source={{ uri: discussion.course.thumbnail.url }} style={{ width: "100%", height: 150 }} />
-                <Text style={styles.dueDate}>Due Date: {new Date(discussion.dueDate.date).toDateString()}</Text>
-                <View style={styles.chapterBadge}><Text style={styles.chapterBadgeText}>{discussion.type}</Text></View>
+              <TouchableOpacity
+                key={`lesson-discussion-${index}`}
+                style={styles.discussionCard}
+                onPress={() =>
+                  navigation.navigate("DiscussionStudent", {
+                    discussionId: discussion?._id,
+                  })
+                }
+              >
+                <Image
+                  source={{ uri: discussion.course.thumbnail.url }}
+                  style={{ width: "100%", height: 150 }}
+                />
+                <Text style={styles.dueDate}>
+                  Due Date: {new Date(discussion.dueDate.date).toDateString()}
+                </Text>
+                <View style={styles.chapterBadge}>
+                  <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
+                </View>
                 <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-                <Text style={styles.discussionSubtitle}>{discussion.course.courseTitle || "test"}</Text>
-                <Text style={styles.discussionDescription}>{discussion.description}</Text>
+                <Text style={styles.discussionSubtitle}>
+                  {discussion.course.courseTitle || "test"}
+                </Text>
+                <Text style={styles.discussionDescription}>
+                  {discussion.description}
+                </Text>
               </TouchableOpacity>
             ))
           ) : (
-            <Text style={styles.emptyMessage}>No discussions found for this lesson</Text>
+            <Text style={styles.emptyMessage}>
+              No discussions found for this lesson
+            </Text>
           )}
         </>
       )}
     </View>
-  )
+  );
 
   const renderPages = () => (
     <View style={styles.tabContent}>
       <Text style={styles.sectionTitle}>Chapter Pages</Text>
       {pages && pages.length > 0 ? (
         pages.map((page: Page, index: number) => (
-          <TouchableOpacity key={index} style={styles.pageCard} onPress={() => setSelectedPage(page)}>
+          <TouchableOpacity
+            key={index}
+            style={styles.pageCard}
+            onPress={() => setSelectedPage(page)}
+          >
             <View style={styles.pageHeader}>
               <Text style={styles.pageTitle}>{page.title}</Text>
-
             </View>
             <Text style={styles.pageDescription}>{page.description}</Text>
-            {page.image && <Image source={{ uri: page.image.url }} style={styles.pageImage} />}
+            {page.image && (
+              <Image
+                source={{ uri: page.image.url }}
+                style={styles.pageImage}
+              />
+            )}
           </TouchableOpacity>
         ))
       ) : (
@@ -413,49 +527,63 @@ const ChapterDetailsStudent = () => {
       )}
       {selectedLesson && (
         <>
-          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Lesson Pages</Text>
+          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+            Lesson Pages
+          </Text>
           {lessonPages && lessonPages.length > 0 ? (
             lessonPages.map((page, index) => (
-              <TouchableOpacity key={`lesson-page-${index}`} style={styles.pageCard} onPress={() => setSelectedPage(page)}>
+              <TouchableOpacity
+                key={`lesson-page-${index}`}
+                style={styles.pageCard}
+                onPress={() => setSelectedPage(page)}
+              >
                 <View style={styles.pageHeader}>
                   <Text style={styles.pageTitle}>{page.title}</Text>
                 </View>
                 <Text style={styles.pageDescription}>{page.description}</Text>
-                {page.image && <Image source={{ uri: page.image.url }} style={styles.pageImage} />}
+                {page.image && (
+                  <Image
+                    source={{ uri: page.image.url }}
+                    style={styles.pageImage}
+                  />
+                )}
               </TouchableOpacity>
             ))
           ) : (
-            <Text style={styles.emptyMessage}>No pages found for this lesson</Text>
+            <Text style={styles.emptyMessage}>
+              No pages found for this lesson
+            </Text>
           )}
         </>
       )}
-
-
     </View>
-  )
+  );
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "description":
-        return renderDescription()
+        return renderDescription();
       case "files":
-        return renderFiles()
+        return renderFiles();
       case "assessments":
-        return renderAssessments()
+        return renderAssessments();
       case "discussions":
-        return renderDiscussions()
+        return renderDiscussions();
       case "pages":
-        return renderPages()
+        return renderPages();
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigateBack ? navigateBack() : navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => (navigateBack ? navigateBack() : navigation.goBack())}
+          style={styles.backButton}
+        >
           <SimpleIcon name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
@@ -488,14 +616,21 @@ const ChapterDetailsStudent = () => {
           </View>
 
           {/* Tab Content */}
-          {chapterDetailsLoading ?
-            <ActivityIndicator size={'large'} color={'#10B144'} style={{ alignSelf: 'center', height: '30%' }} /> :
-            <ScrollView style={styles.contentScrollView}>{renderTabContent()}</ScrollView>
-          }
+          {chapterDetailsLoading ? (
+            <ActivityIndicator
+              size={"large"}
+              color={"#10B144"}
+              style={{ alignSelf: "center", height: "30%" }}
+            />
+          ) : (
+            <ScrollView style={styles.contentScrollView}>
+              {renderTabContent()}
+            </ScrollView>
+          )}
         </View>
 
         {/* Right Sidebar - Chapter Content */}
-        {!chapterDetailsLoading &&
+        {!chapterDetailsLoading && (
           <View style={styles.bottomBar}>
             <Text style={styles.sidebarTitle}>Chapter Content</Text>
 
@@ -522,11 +657,27 @@ const ChapterDetailsStudent = () => {
                   contentContainerStyle={{ flexGrow: 1 }}
                 >
                   {chapter.lessons.map((lesson: Lesson, index: number) => (
-                    <TouchableOpacity key={index} style={[styles.lessonItem, { backgroundColor: selectedLesson?._id === lesson._id ? '#C7F3DD' : '#fff' }]}
-                      onPress={() => handleLessonSelect(lesson)}>
-                      <SimpleIcon name="play-circle-outline" size={20} color="#666" />
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.lessonItem,
+                        {
+                          backgroundColor:
+                            selectedLesson?._id === lesson._id
+                              ? "#C7F3DD"
+                              : "#fff",
+                        },
+                      ]}
+                      onPress={() => handleLessonSelect(lesson)}
+                    >
+                      <SimpleIcon
+                        name="play-circle-outline"
+                        size={20}
+                        color="#666"
+                      />
                       <Text style={styles.lessonItemText}>
-                        Lesson {index + 1}: {lesson.title || `Lesson ${index + 1}`}
+                        Lesson {index + 1}:{" "}
+                        {lesson.title || `Lesson ${index + 1}`}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -534,9 +685,7 @@ const ChapterDetailsStudent = () => {
               )}
             </View>
           </View>
-        }
-
-
+        )}
       </View>
       {selectedPage && (
         <View style={styles.modalOverlay}>
@@ -550,7 +699,9 @@ const ChapterDetailsStudent = () => {
               />
             )}
 
-            <Text style={styles.modalDescription}>{selectedPage.description}</Text>
+            <Text style={styles.modalDescription}>
+              {selectedPage.description}
+            </Text>
 
             <TouchableOpacity
               style={styles.closeButton}
@@ -568,18 +719,22 @@ const ChapterDetailsStudent = () => {
         animationType="slide"
         transparent={false}
         onRequestClose={() => {
-          setDetailedModalVisible(false)
-        }
-        }
+          setDetailedModalVisible(false);
+        }}
       >
-        <View style={[styles.detailedModalContainer, { paddingTop: insets.top || 20 }]}>
+        <View
+          style={[
+            styles.detailedModalContainer,
+            { paddingTop: insets.top || 20 },
+          ]}
+        >
           {/* Header */}
           <View style={styles.detailedModalHeader}>
             <Text style={styles.detailedModalTitle}>Submission Details</Text>
             <TouchableOpacity
               style={styles.detailedModalCloseButton}
               onPress={() => {
-                setDetailedModalVisible(false)
+                setDetailedModalVisible(false);
               }}
             >
               <SimpleIcon name="close" size={24} color="#333" />
@@ -606,32 +761,48 @@ const ChapterDetailsStudent = () => {
               <View style={styles.submissionOverview}>
                 <View style={styles.studentOverviewDetails}>
                   <View style={styles.statusTags}>
-                    <View style={[styles.statusTag, { backgroundColor: '#E5E7EB' }]}>
-                      <Text style={styles.statusTagText}>{submissionDetails.status}</Text>
-                    </View>
-                    <View style={[styles.statusTag, { backgroundColor: '#E5E7EB' }]}>
+                    <View
+                      style={[styles.statusTag, { backgroundColor: "#E5E7EB" }]}
+                    >
                       <Text style={styles.statusTagText}>
-                        {submissionDetails.graded ? 'Graded' : 'Not Graded'}
+                        {submissionDetails.status}
+                      </Text>
+                    </View>
+                    <View
+                      style={[styles.statusTag, { backgroundColor: "#E5E7EB" }]}
+                    >
+                      <Text style={styles.statusTagText}>
+                        {submissionDetails.graded ? "Graded" : "Not Graded"}
                       </Text>
                     </View>
                   </View>
                   <Text style={styles.submissionTime}>
-                    Submitted on: {formatDateTime(submissionDetails.submittedAt || submissionDetails.createdAt)}
+                    Submitted on:{" "}
+                    {formatDateTime(
+                      submissionDetails.submittedAt ||
+                        submissionDetails.createdAt
+                    )}
                   </Text>
                 </View>
               </View>
 
               {/* Assessment Summary */}
               <View style={styles.assessmentSummary}>
-                <Text style={styles.assessmentSummaryTitle}>Assessment Summary</Text>
+                <Text style={styles.assessmentSummaryTitle}>
+                  Assessment Summary
+                </Text>
                 <View style={styles.assessmentSummaryCard}>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Assessment ID</Text>
-                    <Text style={styles.summaryValue}>{submissionDetails.assessment}</Text>
+                    <Text style={styles.summaryValue}>
+                      {submissionDetails.assessment}
+                    </Text>
                   </View>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Total Points</Text>
-                    <Text style={styles.summaryValue}>{submissionDetails.totalScore} points</Text>
+                    <Text style={styles.summaryValue}>
+                      {submissionDetails.totalScore} points
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -639,27 +810,60 @@ const ChapterDetailsStudent = () => {
               {/* Question Tabs */}
               <View style={styles.questionTabs}>
                 <TouchableOpacity
-                  style={[styles.modalTab, modalActiveTab === 'all' && styles.modalActiveTab]}
-                  onPress={() => setModalActiveTab('all')}
+                  style={[
+                    styles.modalTab,
+                    modalActiveTab === "all" && styles.modalActiveTab,
+                  ]}
+                  onPress={() => setModalActiveTab("all")}
                 >
-                  <Text style={[styles.modalTabText, modalActiveTab === 'all' && styles.modalActiveTabText]}>
+                  <Text
+                    style={[
+                      styles.modalTabText,
+                      modalActiveTab === "all" && styles.modalActiveTabText,
+                    ]}
+                  >
                     All Questions ({submissionDetails.answers?.length || 0})
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalTab, modalActiveTab === 'needs_grading' && styles.modalActiveTab]}
-                  onPress={() => setModalActiveTab('needs_grading')}
+                  style={[
+                    styles.modalTab,
+                    modalActiveTab === "needs_grading" && styles.modalActiveTab,
+                  ]}
+                  onPress={() => setModalActiveTab("needs_grading")}
                 >
-                  <Text style={[styles.modalTabText, modalActiveTab === 'needs_grading' && styles.modalActiveTabText]}>
-                    Needs Grading ({submissionDetails.answers?.filter((a: any) => a.requiresManualCheck).length || 0})
+                  <Text
+                    style={[
+                      styles.modalTabText,
+                      modalActiveTab === "needs_grading" &&
+                        styles.modalActiveTabText,
+                    ]}
+                  >
+                    Needs Grading (
+                    {submissionDetails.answers?.filter(
+                      (a: any) => a.requiresManualCheck
+                    ).length || 0}
+                    )
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalTab, modalActiveTab === 'graded' && styles.modalActiveTab]}
-                  onPress={() => setModalActiveTab('graded')}
+                  style={[
+                    styles.modalTab,
+                    modalActiveTab === "graded" && styles.modalActiveTab,
+                  ]}
+                  onPress={() => setModalActiveTab("graded")}
                 >
-                  <Text style={[styles.modalTabText, modalActiveTab === 'graded' && styles.modalActiveTabText]}>
-                    Graded ({submissionDetails.answers?.filter((a: any) => !a.requiresManualCheck).length || 0})
+                  <Text
+                    style={[
+                      styles.modalTabText,
+                      modalActiveTab === "graded" && styles.modalActiveTabText,
+                    ]}
+                  >
+                    Graded (
+                    {submissionDetails.answers?.filter(
+                      (a: any) => !a.requiresManualCheck
+                    ).length || 0}
+                    )
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -670,25 +874,73 @@ const ChapterDetailsStudent = () => {
                   <View key={answer._id} style={styles.questionCard}>
                     <View style={styles.questionHeader}>
                       <View style={styles.questionHeaderLeft}>
-                        <Text style={styles.questionNumber}>Question {index + 1}</Text>
-                        <Text style={styles.questionType}>{answer.question?.type == "truefalse" ? "True/False" : answer.question?.type}</Text>
+                        <Text style={styles.questionNumber}>
+                          Question {index + 1}
+                        </Text>
+                        <Text style={styles.questionType}>
+                          {answer.question?.type == "truefalse"
+                            ? "True/False"
+                            : answer.question?.type}
+                        </Text>
                       </View>
                       <View style={styles.questionTags}>
                         {answer.requiresManualCheck ? (
-                          <View style={[styles.questionTag, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B', borderWidth: 1 }]}>
-                            <Text style={[styles.questionTagText, { color: '#92400E' }]}>
+                          <View
+                            style={[
+                              styles.questionTag,
+                              {
+                                backgroundColor: "#FEF3C7",
+                                borderColor: "#F59E0B",
+                                borderWidth: 1,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.questionTagText,
+                                { color: "#92400E" },
+                              ]}
+                            >
                               Needs Manual Grading
                             </Text>
                           </View>
                         ) : (
-                          <View style={[styles.questionTag, { backgroundColor: answer.isCorrect ? '#D1FAE5' : '#FEE2E2' }]}>
-                            <Text style={[styles.questionTagText, { color: answer.isCorrect ? '#065F46' : '#991B1B' }]}>
-                              {answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                          <View
+                            style={[
+                              styles.questionTag,
+                              {
+                                backgroundColor: answer.isCorrect
+                                  ? "#D1FAE5"
+                                  : "#FEE2E2",
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.questionTagText,
+                                {
+                                  color: answer.isCorrect
+                                    ? "#065F46"
+                                    : "#991B1B",
+                                },
+                              ]}
+                            >
+                              {answer.isCorrect ? "✓ Correct" : "✗ Incorrect"}
                             </Text>
                           </View>
                         )}
-                        <View style={[styles.questionTag, { backgroundColor: '#F3F4F6' }]}>
-                          <Text style={[styles.questionTagText, { color: '#374151' }]}>
+                        <View
+                          style={[
+                            styles.questionTag,
+                            { backgroundColor: "#F3F4F6" },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.questionTagText,
+                              { color: "#374151" },
+                            ]}
+                          >
                             {answer.pointsAwarded}/{answer.question?.points} pts
                           </Text>
                         </View>
@@ -699,38 +951,49 @@ const ChapterDetailsStudent = () => {
                       <Text style={styles.questionLabel}>Question:</Text>
                       <View style={styles.questionTextContainer}>
                         <Text style={styles.questionText}>
-                          {answer.question?.question?.replace(/<[^>]*>/g, '') || 'No question text'}
+                          {answer.question?.question?.replace(/<[^>]*>/g, "") ||
+                            "No question text"}
                         </Text>
                       </View>
 
                       {/* Teacher uploaded files */}
-                      {answer.question?.files && answer.question.files.length > 0 && (
-                        <View style={styles.teacherFilesContainer}>
-                          <Text style={styles.filesLabel}>Teacher Files:</Text>
-                          {answer.question.files.map((file: any, fileIndex: number) => (
-                            <TouchableOpacity
-                              key={fileIndex}
-                              style={styles.fileCard}
-                              onPress={() => Linking.openURL(file.url)}
-                            >
-                              <SimpleIcon name="description" size={20} color="#4285F4" />
-                              <Text style={styles.fileName}>{file.filename}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
+                      {answer.question?.files &&
+                        answer.question.files.length > 0 && (
+                          <View style={styles.teacherFilesContainer}>
+                            <Text style={styles.filesLabel}>
+                              Teacher Files:
+                            </Text>
+                            {answer.question.files.map(
+                              (file: any, fileIndex: number) => (
+                                <TouchableOpacity
+                                  key={fileIndex}
+                                  style={styles.fileCard}
+                                  onPress={() => Linking.openURL(file.url)}
+                                >
+                                  <SimpleIcon
+                                    name="description"
+                                    size={20}
+                                    color="#4285F4"
+                                  />
+                                  <Text style={styles.fileName}>
+                                    {file.filename}
+                                  </Text>
+                                </TouchableOpacity>
+                              )
+                            )}
+                          </View>
+                        )}
                     </View>
 
                     <View style={styles.answerContent}>
                       <Text style={styles.answerLabel}>Your Answer:</Text>
                       <View style={styles.answerTextContainer}>
                         <Text style={styles.answerText}>
-                          {answer.question?.type === 'file'
-                            ? (answer.file && answer.file.length > 0
+                          {answer.question?.type === "file"
+                            ? answer.file && answer.file.length > 0
                               ? `${answer.file.length} file(s) uploaded`
-                              : 'No file uploaded')
-                            : (answer.selectedAnswer || 'No answer provided')
-                          }
+                              : "No file uploaded"
+                            : answer.selectedAnswer || "No answer provided"}
                         </Text>
                       </View>
 
@@ -744,8 +1007,14 @@ const ChapterDetailsStudent = () => {
                               style={styles.fileCard}
                               onPress={() => Linking.openURL(file.url)}
                             >
-                              <SimpleIcon name="description" size={20} color="#10B144" />
-                              <Text style={styles.fileName}>{file.filename}</Text>
+                              <SimpleIcon
+                                name="description"
+                                size={20}
+                                color="#10B144"
+                              />
+                              <Text style={styles.fileName}>
+                                {file.filename}
+                              </Text>
                             </TouchableOpacity>
                           ))}
                         </View>
@@ -758,10 +1027,9 @@ const ChapterDetailsStudent = () => {
           ) : null}
         </View>
       </Modal>
-
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -789,15 +1057,14 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-
   },
   leftContent: {
     flex: 1,
   },
   bottomBar: {
-    width: '100%',
+    width: "100%",
     borderTopWidth: 1,
-    maxHeight: '30%',
+    maxHeight: "30%",
     borderTopColor: "#e0e0e0",
     padding: 16,
     marginBottom: 10,
@@ -950,7 +1217,7 @@ const styles = StyleSheet.create({
   },
   discussionsGrid: {
     // flexDirection: "row",
-    justifyContent: 'center',
+    justifyContent: "center",
     flexWrap: "wrap",
   },
   discussionCard: {
@@ -1044,7 +1311,7 @@ const styles = StyleSheet.create({
   },
   dueDate: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: "#666",
     marginBottom: 8,
   },
@@ -1169,30 +1436,30 @@ const styles = StyleSheet.create({
   },
   detailedModalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   detailedModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    position: 'relative',
+    borderBottomColor: "#E5E7EB",
+    position: "relative",
   },
   detailedModalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontWeight: "bold",
+    color: "#111827",
   },
   detailedModalCloseButton: {
-    position: 'absolute',
+    position: "absolute",
     right: 20,
     top: 16,
     bottom: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   detailedModalContent: {
     flex: 1,
@@ -1200,29 +1467,29 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   submissionOverview: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   studentOverviewDetails: {
     flex: 1,
-    gap: 10
+    gap: 10,
   },
   statusTags: {
-    flexDirection: 'row',
-    gap: 8
+    flexDirection: "row",
+    gap: 8,
   },
   statusTag: {
     paddingHorizontal: 12,
@@ -1231,47 +1498,47 @@ const styles = StyleSheet.create({
   },
   statusTagText: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: "500",
+    color: "#374151",
   },
   submissionTime: {
     fontSize: 12,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   assessmentSummary: {
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   assessmentSummaryTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontWeight: "bold",
+    color: "#111827",
     marginBottom: 12,
   },
   assessmentSummaryCard: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     borderRadius: 8,
     padding: 16,
   },
   summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   summaryValue: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
+    fontWeight: "500",
+    color: "#111827",
   },
   questionTabs: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginVertical: 20,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     borderRadius: 8,
     padding: 4,
   },
@@ -1280,56 +1547,56 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalActiveTab: {
-    backgroundColor: '#111827',
+    backgroundColor: "#111827",
   },
   modalTabText: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#6B7280',
-    textAlign: 'center',
+    fontWeight: "500",
+    color: "#6B7280",
+    textAlign: "center",
   },
   modalActiveTabText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   questionsContainer: {
     marginBottom: 20,
   },
   questionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
   },
   questionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   questionHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   questionNumber: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
+    fontWeight: "bold",
+    color: "#111827",
     marginRight: 12,
   },
   questionType: {
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
     marginRight: 12,
   },
   questionTags: {
-    flexDirection: 'row',
-    marginLeft: 'auto',
+    flexDirection: "row",
+    marginLeft: "auto",
   },
   questionTag: {
     paddingHorizontal: 8,
@@ -1339,51 +1606,51 @@ const styles = StyleSheet.create({
   },
   questionTagText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   questionContent: {
     marginBottom: 16,
   },
   questionLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: "500",
+    color: "#374151",
     marginBottom: 8,
   },
   questionTextContainer: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     borderRadius: 8,
     padding: 12,
   },
   questionText: {
     fontSize: 14,
-    color: '#111827',
+    color: "#111827",
   },
   answerContent: {
     marginBottom: 8,
   },
   answerLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: "500",
+    color: "#374151",
     marginBottom: 8,
   },
   answerTextContainer: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     borderRadius: 8,
     padding: 12,
   },
   answerText: {
     fontSize: 14,
-    color: '#111827',
+    color: "#111827",
   },
   studentFilesContainer: {
     marginTop: 12,
   },
   filesLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: "500",
+    color: "#374151",
     marginBottom: 8,
   },
   teacherFilesContainer: {
@@ -1391,10 +1658,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
     marginBottom: 20,
   },
-})
+});
 
-export default ChapterDetailsStudent
+export default ChapterDetailsStudent;
