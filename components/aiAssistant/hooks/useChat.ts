@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Message } from "../types";
-import { sendAIMessage, getChatHistory } from "../../../services/aiAssestant";
+import { sendAIMessage, getChatHistory } from "../../../services/aiAssistant";
 import removeMarkdown from "remove-markdown";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,6 +20,10 @@ const QUICK_REPLIES_DEFAULT = [
   "clarify",
   "explain again",
 ];
+
+interface SendMessageOptions {
+  context?: string;
+}
 
 const generateId = () =>
   `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -48,6 +52,7 @@ const normalizeChatItem = (item: any): Message[] => {
   if (item.question?.text) {
     msgs.push({
       id: `${item._id}_q`,
+      dbId: item._id,
       role: "user",
       content: item.question.text,
       timestamp,
@@ -58,9 +63,12 @@ const normalizeChatItem = (item: any): Message[] => {
   if (item.answer?.text) {
     msgs.push({
       id: `${item._id}_a`,
+      dbId: item._id,
       role: "assistant",
       content: removeMarkdown(item.answer.text),
       timestamp,
+      generatedFile: item.generatedFile ?? null,
+      fileUsed: item.fileUsed ?? null,
     });
   }
 
@@ -114,7 +122,11 @@ const useChat = (options: UseChatOptions = {}) => {
 
   // ── Send message ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(
-    async (userText: string, file?: any) => {
+    async (
+      userText: string,
+      file?: any,
+      sendOptions: SendMessageOptions = {}
+    ) => {
       if (!userText.trim() && !file) return;
       if (isSendingRef.current) return;
 
@@ -151,7 +163,7 @@ const useChat = (options: UseChatOptions = {}) => {
         const data = await sendAIMessage({
           question: userText.trim(),
           difficulty: options.difficulty,
-          context: options.context,
+          context: sendOptions.context, // Only use the context passed in sendOptions
           sessionType: options.sessionType,
           model: options.model,
           file: file,
@@ -167,17 +179,18 @@ const useChat = (options: UseChatOptions = {}) => {
           "No response received.";
 
         console.log("🔴 RAW AI TEXT:", rawAIText);
-        const plainlib = removeMarkdown(rawAIText);
+        // the ai generates response in markdown text this line converts it through a rn lib called removeMarkdown
+        const plainStringText = removeMarkdown(rawAIText);
 
         setMessages((prev) => [
           ...prev,
           {
             id: generateId(),
             role: "assistant",
-            // content: markdownToPlainText(rawAIText),
-            // content: plain,
-            content: plainlib,
+            content: plainStringText,
             timestamp: new Date(),
+            generatedFile: data.generatedFile ?? null,
+            fileUsed: data.fileUsed ?? null,
           },
         ]);
 

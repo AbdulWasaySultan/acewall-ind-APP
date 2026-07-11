@@ -7,11 +7,13 @@ import React, {
   useMemo,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Message } from '../components/aiAssistant/types';
 
 const UserContext = createContext<any>(null);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
+  const [taggedMessage, setTaggedMessage] = useState<Message | null>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -30,8 +32,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ user, setUser: updateUser }),
-    [user, updateUser]
+    () => ({ user, setUser: updateUser, taggedMessage, setTaggedMessage }),
+    [user, updateUser, taggedMessage]
   );
 
   return (

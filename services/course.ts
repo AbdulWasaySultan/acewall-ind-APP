@@ -1,5 +1,6 @@
 // services/course.ts
 import { getApiInstance } from "./apiInstance";
+import React, { useEffect } from "react";
 
 // Legacy helpers used by discussion.ts, page.ts, socialPosts.ts, aiAssestant.ts, etc.
 // Auth is handled globally inside getApiInstance. useApiSuffix:false keeps /api/... paths working.
@@ -255,12 +256,15 @@ export const unarchiveCourse = async (courseId: string) => {
 };
 
 export const getAllCourses = async (
+
   search?: string
 ): Promise<CourseResponse> => {
   try {
     const api = await getApiInstance();
     const url = search
-      ? `/course/getindividualcourse?published=true&isVerified=approved&search=${encodeURIComponent(search)}`
+      ? `/course/getindividualcourse?published=true&isVerified=approved&search=${encodeURIComponent(
+          search
+        )}`
       : `/course/getindividualcourse?published=true&isVerified=approved`;
     const response = await api.get<CourseResponse>(url);
     return response.data;
@@ -323,14 +327,20 @@ export const editCourseBasics = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.put(`/course/editCourseBasics/${courseId}`, data);
+    const response = await api.put(
+      `/course/editCourseBasics/${courseId}`,
+      data
+    );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const updateCourseThumbnail = async (courseId: string, thumbnail: any) => {
+export const updateCourseThumbnail = async (
+  courseId: string,
+  thumbnail: any
+) => {
   try {
     const api = await getApiInstance();
     const formData = new FormData();
@@ -494,7 +504,10 @@ export const editLesson = async (
   }
 };
 
-export const addMoreFilesToLesson = async (lessonId: string, pdfFiles: any[]) => {
+export const addMoreFilesToLesson = async (
+  lessonId: string,
+  pdfFiles: any[]
+) => {
   try {
     const api = await getApiInstance();
     const formData = new FormData();
@@ -505,9 +518,13 @@ export const addMoreFilesToLesson = async (lessonId: string, pdfFiles: any[]) =>
         name: file.fileName || file.uri.split("/").pop() || "file.pdf",
       } as any);
     });
-    const response = await api.put(`/lesson/addMoreFiles/${lessonId}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await api.put(
+      `/lesson/addMoreFiles/${lessonId}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -716,6 +733,7 @@ export const getAllAssessmentForStudent = async () => {
     const response = await api.get("/assessment/getAllassessmentforStudent");
     return response.data;
   } catch (error) {
+    console.error(error);
     throw error;
   }
 };

@@ -1171,7 +1171,7 @@ const CreateAssessmentPage = () => {
                 <View style={styles.conceptTextEditor}>
                   <TextInput
                     style={styles.conceptTextInput}
-                    placeholder="Start writing..."
+                    // placeholder="Start writing..."
                     value={currentQuestion.concept || ""} // Use currentQuestion.concept
                     onChangeText={(text) =>
                       setCurrentQuestion({ ...currentQuestion, concept: text })

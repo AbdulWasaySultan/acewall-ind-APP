@@ -1,48 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator, DrawerContentComponentProps } from '@react-navigation/drawer';
-import Sidebar from '../components/Sidebar';
-import { useAuth } from '../contexts/AuthContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  createDrawerNavigator,
+  DrawerContentComponentProps,
+} from "@react-navigation/drawer";
+import Sidebar from "../components/Sidebar";
+import { useAuth } from "../contexts/AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Import pages
 // import LandingPage from '../pages/LandingPage';
-import LoginPage from '../pages/LoginPage';
-import SignupPage from '../pages/SignupPage';
-import DashboardPage from '../pages/DashboardPage';
-import MyCoursesPage from '../pages/MyCoursesPage';
-import CreateCoursePage from '../pages/CreateCoursePage';
-import AssessmentsPage from '../pages/AssessmentsPage';
-import MyAssessmentsPage from '../pages/MyAssessmentsPage';
-import AnnouncementsPage from '../pages/AnnouncementsPage';
-import MessagesPage from '../pages/MessagesPage';
-import StudentsPage from '../pages/StudentsPage';
-import StudentProfilePage from '../pages/StudentProfilePage';
-import AccountInformationPage, { UserData } from '../pages/AccountInformationPage';
-import EditCredentialsPage from '../pages/EditCredentialsPage';
-import GradebookPage from '../pages/GradebookPage';
-import OTPVerificationPage from '../pages/OTPVerificationPage';
-import CourseDetailsPage from '../pages/CourseDetailsPage';
-import DiscussionsPage from '../pages/DiscussionsPage';
-import CourseDetailStudentPage from '../pages/CourseDetailStudentPage';
-import CourseDetailStudentPageEnrolled from '../pages/CourseDetailStudentPageEnrolled';
-import ChatPage from '../pages/ChatPage';
-import ForgotPasswordPage from '../pages/ForgotPasswordPage';
-import ResetPasswordPage from '../pages/ResetPasswordPage';
-import SupportPage from '../pages/SupportPage';
-import CreateAssessmentPage from '../pages/CreateAssessmentPage';
-import ChapterPagesPage from '../pages/ChapterPagesPage';
-import ChapterDiscussionsPage from '../pages/ChapterDiscussionsPage';
-import ChapterDetailsStudent from '../pages/ChapterDetailsStudent';
-import AssessmentScreenStudent from '../pages/AssessmentScreenStudent';
-import DiscussionStudent from '../pages/DiscussionStudent';
-import CoursePagesStudent from '../pages/CoursePagesStudent';
-import MoreCoursesPage from '../pages/MoreCourses';
-import WalletPage from '../pages/WalletPage';
-import SpillTheTeaPage from '../pages/SpillTheTeaPage';
-import SpillTheTeaProfilePage from '../pages/Spilltheteaprofilepage';
-import AIAssistantScreen from '../pages/AIAssistantScreen';
+import LoginPage from "../pages/LoginPage";
+import SignupPage from "../pages/SignupPage";
+import DashboardPage from "../pages/DashboardPage";
+import MyCoursesPage from "../pages/MyCoursesPage";
+import CreateCoursePage from "../pages/CreateCoursePage";
+import AssessmentsPage from "../pages/AssessmentsPage";
+import MyAssessmentsPage from "../pages/MyAssessmentsPage";
+import AnnouncementsPage from "../pages/AnnouncementsPage";
+import MessagesPage from "../pages/MessagesPage";
+import StudentsPage from "../pages/StudentsPage";
+import StudentProfilePage from "../pages/StudentProfilePage";
+import AccountInformationPage, {
+  UserData,
+} from "../pages/AccountInformationPage";
+import EditCredentialsPage from "../pages/EditCredentialsPage";
+import GradebookPage from "../pages/GradebookPage";
+import OTPVerificationPage from "../pages/OTPVerificationPage";
+import CourseDetailsPage from "../pages/CourseDetailsPage";
+import DiscussionsPage from "../pages/DiscussionsPage";
+import CourseDetailStudentPage from "../pages/CourseDetailStudentPage";
+import CourseDetailStudentPageEnrolled from "../pages/CourseDetailStudentPageEnrolled";
+import ChatPage from "../pages/ChatPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
+import SupportPage from "../pages/SupportPage";
+import CreateAssessmentPage from "../pages/CreateAssessmentPage";
+import ChapterPagesPage from "../pages/ChapterPagesPage";
+import ChapterDiscussionsPage from "../pages/ChapterDiscussionsPage";
+import ChapterDetailsStudent from "../pages/ChapterDetailsStudent";
+import AssessmentScreenStudent from "../pages/AssessmentScreenStudent";
+import DiscussionStudent from "../pages/DiscussionStudent";
+import CoursePagesStudent from "../pages/CoursePagesStudent";
+import MoreCoursesPage from "../pages/MoreCourses";
+import WalletPage from "../pages/WalletPage";
+import SpillTheTeaPage from "../pages/SpillTheTeaPage";
+import SpillTheTeaProfilePage from "../pages/Spilltheteaprofilepage";
+import AIAssistantScreen from "../pages/AIAssistantScreen";
+import CourseImportPage from "../pages/ImportCourses";
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -50,7 +56,7 @@ export type RootStackParamList = {
   Login: undefined;
   ForgotPassword: undefined;
   Signup: undefined;
-  OTPVerification: { email: string; flow: 'signup' | 'forgot-password' };
+  OTPVerification: { email: string; flow: "signup" | "forgot-password" };
   Main: undefined;
   StudentProfile: { studentId: string };
   AccountInformation: undefined;
@@ -59,14 +65,28 @@ export type RootStackParamList = {
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;
   CourseDetailStudentPageEnrolled: { enrollmentId: string };
-  ChapterDetailsStudent: { chapterId: string, navigateBack?: () => void };
+  ChapterDetailsStudent: { chapterId: string; navigateBack?: () => void };
   Chat: undefined;
   ResetPassword: { email: string };
-  CreateAssessment: { courseId: string; chapterId: string; semesterId: string; quarterId: string, refreshAssessments: () => void, navigateBack?: () => void };
+  CreateAssessment: {
+    courseId: string;
+    chapterId: string;
+    semesterId: string;
+    quarterId: string;
+    refreshAssessments: () => void;
+    navigateBack?: () => void;
+  };
   ChapterPages: { courseId: string; chapterId: string };
-  ChapterDiscussions: { chapterId: string; courseId: string; semesterId?: string; quarterId?: string; lessonId?: string, navigateBack?: () => void };
+  ChapterDiscussions: {
+    chapterId: string;
+    courseId: string;
+    semesterId?: string;
+    quarterId?: string;
+    lessonId?: string;
+    navigateBack?: () => void;
+  };
   AssessmentScreenStudent: { assessmentId: string };
-  DiscussionStudent: { discussionId: string }
+  DiscussionStudent: { discussionId: string };
   SpillTheTeaProfile: undefined;
   AIAssistant: undefined;
 };
@@ -75,21 +95,23 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Drawer = createDrawerNavigator();
 
 const DrawerNavigator = () => {
-  const [active, setActive] = useState('Dashboard');
+  const [active, setActive] = useState("Dashboard");
   const { logout, userRole } = useAuth();
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         // Retrieve user data from AsyncStorage
-        const userData = await AsyncStorage.getItem('userData');
-        console.log('userData', userData);
+        const userData = await AsyncStorage.getItem("userData");
+        console.log("userData", userData);
         if (userData) {
           setUser(JSON.parse(userData)); // Parse and set user data
         }
       } catch (error) {
-        console.error('Failed to load user data:', error);
+        console.error("Failed to load user data:", error);
       }
     };
 
@@ -101,15 +123,15 @@ const DrawerNavigator = () => {
       screenOptions={{
         headerShown: true,
         drawerStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: "#fff",
           width: 260,
         },
         headerStyle: {
-          backgroundColor: '#10B144',
+          backgroundColor: "#10B144",
         },
-        headerTintColor: '#fff',
+        headerTintColor: "#fff",
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontWeight: "bold",
         },
       }}
       drawerContent={(props: DrawerContentComponentProps) => (
@@ -118,7 +140,7 @@ const DrawerNavigator = () => {
           onSelect={(label) => {
             setActive(label);
           }}
-          user={user || { name: 'no-name', email: 'no-email' }}
+          user={user || { name: "no-name", email: "no-email" }}
           navigation={props.navigation}
           onLogout={logout}
         />
@@ -131,45 +153,60 @@ const DrawerNavigator = () => {
 
           // Map route names to menu labels
           const routeToLabel: { [key: string]: string } = {
-            'Dashboard': 'Dashboard',
-            'MyCourses': 'My Courses',
-            'CreateCourse': 'Create Course',
-            'Assessments': userRole === 'student' ? 'My Assessments' : 'Assessments',
-            'Announcements': 'Announcements',
-            'spillTheTea': 'Spill the Tea',
-            'AIAssistant': 'AI Educational Assistant',
-            'Messages': 'Messages',
-            'Students': 'Students',
-            'Gradebook': 'Gradebook',
-            'AccountInformation': 'Account Information',
-            'Discussions': 'Discussions',
-            'Support': 'Support',
-            'Wallet': 'Wallet'
+            Dashboard: "Dashboard",
+            MyCourses: "My Courses",
+            CreateCourse: "Create Course",
+            Assessments:
+              userRole === "student" ? "My Assessments" : "Assessments",
+            Announcements: "Announcements",
+            ImportCourses: "Import Course",
+            spillTheTea: "Spill the Tea",
+            AIAssistant: "AI Educational Assistant",
+            Messages: "Messages",
+            Students: "Students",
+            Gradebook: "Gradebook",
+            AccountInformation: "Account Information",
+            Discussions: "Discussions",
+            Support: "Support",
+            Wallet: "Wallet",
           };
 
           // Update active state based on current route
           if (routeToLabel[routeName]) {
             setActive(routeToLabel[routeName]);
           }
-        }
+        },
       }}
     >
       <Drawer.Screen name="Dashboard" component={DashboardPage} />
-      <Drawer.Screen name="MyCourses" component={MyCoursesPage} options={{ title: 'My Courses' }} />
-      {userRole === 'student' && (
-        <Drawer.Screen name="MoreCourses" component={MoreCoursesPage} options={{ title: 'More Courses' }} />)}
-      {userRole !== 'student' && (
+      <Drawer.Screen
+        name="MyCourses"
+        component={MyCoursesPage}
+        options={{ title: "My Courses" }}
+      />
+      {userRole === "student" && (
+        <Drawer.Screen
+          name="MoreCourses"
+          component={MoreCoursesPage}
+          options={{ title: "More Courses" }}
+        />
+      )}
+      {userRole !== "student" && (
         <>
-          <Drawer.Screen name="CreateCourse" component={CreateCoursePage} options={{ title: 'Create Course' }} />
+          <Drawer.Screen
+            name="CreateCourse"
+            component={CreateCoursePage}
+            options={{ title: "Create Course" }}
+          />
           <Drawer.Screen name="Students" component={StudentsPage} />
         </>
       )}
-      {userRole === 'student' ? (
+      {userRole === "student" ? (
         <Drawer.Screen
           name="Assessments"
           component={MyAssessmentsPage}
           options={{
-            title: 'My Assessments'
+            title: "My Assessments",
           }}
         />
       ) : (
@@ -177,43 +214,65 @@ const DrawerNavigator = () => {
           name="Assessments"
           component={AssessmentsPage}
           options={{
-            title: 'Assessments'
+            title: "Assessments",
           }}
         />
       )}
       <Drawer.Screen name="Announcements" component={AnnouncementsPage} />
-      <Drawer.Screen name="spillTheTea" component={SpillTheTeaPage} options={{ title: 'Spill the Tea' }} />
-      <Drawer.Screen name="Messages" component={MessagesPage} />
-      <Drawer.Screen name="AIAssistant"  component={AIAssistantScreen} options={{ title: 'AI Educational Assistant' }}
+
+      <Drawer.Screen
+        name="ImportCourses"
+        component={CourseImportPage}
+        options={{ title: "Import Course" }}
       />
-      {userRole === 'student' && (
+
+      <Drawer.Screen
+        name="spillTheTea"
+        component={SpillTheTeaPage}
+        options={{ title: "Spill the Tea" }}
+      />
+      <Drawer.Screen name="Messages" component={MessagesPage} />
+      <Drawer.Screen
+        name="AIAssistant"
+        component={AIAssistantScreen}
+        options={{ title: "AI Educational Assistant" }}
+      />
+      {userRole === "student" && (
         <Drawer.Screen name="Gradebook" component={GradebookPage} />
       )}
       <Drawer.Screen name="Discussions" component={DiscussionsPage} />
-      {userRole === 'student' && (
+      {userRole === "student" && (
         <Drawer.Screen name="Pages" component={CoursePagesStudent} />
-
       )}
 
-      {userRole !== 'student' && (
+      {userRole !== "student" && (
         <>
-          <Drawer.Screen name="Support" component={SupportPage} options={{ title: 'Support' }} />
-          <Drawer.Screen name="Wallet" component={WalletPage} options={{ title: 'Wallet' }} />
+          <Drawer.Screen
+            name="Support"
+            component={SupportPage}
+            options={{ title: "Support" }}
+          />
+          <Drawer.Screen
+            name="Wallet"
+            component={WalletPage}
+            options={{ title: "Wallet" }}
+          />
         </>
       )}
+
       <Drawer.Screen
         name="StudentProfile"
         component={StudentProfilePage}
         options={{
-          title: 'Student Profile',
-          drawerItemStyle: { display: 'none' } // Hide from drawer menu
+          title: "Student Profile",
+          drawerItemStyle: { display: "none" }, // Hide from drawer menu
         }}
       />
       <Drawer.Screen
         name="AccountInformation"
         component={AccountInformationPage}
         options={{
-          title: 'Account Information',
+          title: "Account Information",
         }}
       />
     </Drawer.Navigator>
@@ -228,11 +287,11 @@ const AppNavigator = () => {
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#10B144',
+            backgroundColor: "#10B144",
           },
-          headerTintColor: '#fff',
+          headerTintColor: "#fff",
           headerTitleStyle: {
-            fontWeight: 'bold',
+            fontWeight: "bold",
           },
         }}
       >
@@ -296,7 +355,11 @@ const AppNavigator = () => {
               component={ChapterDetailsStudent}
               options={{ headerShown: false }}
             />
-            <Stack.Screen name="Chat" component={ChatPage} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="Chat"
+              component={ChatPage}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="EditCredentials"
               component={EditCredentialsPage}
@@ -329,7 +392,6 @@ const AppNavigator = () => {
             />
           </>
         )}
-
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -3,7 +3,7 @@
 // Attach button opens native file browser — shows images + PDFs + docs
 // Uses copyTo:'cachesDirectory' to fix Android content:// URI issue
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -48,10 +48,19 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const [text, setText] = useState("");
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
+  const lastSendTimeRef = useRef<number>(0);
 
   // ── Send ──────────────────────────────────────────────────────────────────
   const handleSend = () => {
     if ((!text.trim() && !attachedFile) || disabled) return;
+    
+    // Prevent double-tap/rapid sends (debounce with 500ms)
+    const now = Date.now();
+    if (now - lastSendTimeRef.current < 500) {
+      return;
+    }
+    lastSendTimeRef.current = now;
+    
     onSend(text.trim(), attachedFile ?? undefined);
     setText("");
     setAttachedFile(null);
@@ -162,6 +171,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           onPress={handleSend}
           disabled={!canSend}
           activeOpacity={0.8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Icon name="send" size={18} color={canSend ? "#fff" : "#9ca3af"} />
         </TouchableOpacity>

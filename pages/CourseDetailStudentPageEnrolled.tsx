@@ -129,6 +129,7 @@ const CourseDetailStudentPageEnrolled = () => {
     await refreshChaptersForQuarter(quarter._id);
   };
   useEffect(() => {
+   console.log(courseId)
     const fetchDetails = async () => {
       setLoading(true);
       setError(null);

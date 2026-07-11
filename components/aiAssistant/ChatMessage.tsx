@@ -2,9 +2,10 @@
 // Renders a single chat bubble — user (right, blue) or assistant (left, gray)
 // AI messages animate word by word like a typewriter
 // User messages show attached image or PDF card
+// AI messages show generated file download/view options
 
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Linking, Platform } from "react-native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { Message } from "./types";
 
@@ -17,6 +18,7 @@ const Icon: React.FC<{ name: string; size: number; color: string }> = ({
 interface ChatMessageProps {
   message: Message;
   animate?: boolean;
+  onTagPress?: (message: Message) => void;
 }
 
 const animatedMessageIds = new Set<string>();
@@ -141,11 +143,72 @@ const DocumentAttachment: React.FC<{
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GENERATED FILE ATTACHMENT — downloadable file from AI
+// ─────────────────────────────────────────────────────────────────────────────
+const GeneratedFileAttachment: React.FC<{
+  generatedFile: any;
+}> = ({ generatedFile }) => {
+  const handleDownload = async () => {
+    try {
+      const supported = await Linking.canOpenURL(generatedFile.url);
+      if (supported) {
+        await Linking.openURL(generatedFile.url);
+      } else {
+        Alert.alert('Error', 'Cannot open this file URL');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to open file');
+    }
+  };
+
+  const getFileIcon = (fileType: string) => {
+    const type = fileType?.toLowerCase() || '';
+    if (type === 'pdf') return 'picture-as-pdf';
+    if (type === 'doc' || type === 'docx') return 'description';
+    if (type === 'xls' || type === 'xlsx') return 'table-view';
+    return 'insert-drive-file';
+  };
+
+  const getFileColor = (fileType: string) => {
+    const type = fileType?.toLowerCase() || '';
+    if (type === 'pdf') return '#dc2626';
+    if (type === 'doc' || type === 'docx') return '#3B82F6';
+    if (type === 'xls' || type === 'xlsx') return '#10B981';
+    return '#6b7280';
+  };
+
+  const icon = getFileIcon(generatedFile.FileType);
+  const color = getFileColor(generatedFile.FileType);
+
+  return (
+    <TouchableOpacity
+      style={attachStyles.generatedFileCard}
+      onPress={handleDownload}
+      activeOpacity={0.7}
+    >
+      <View style={[attachStyles.genFileIconBox, { backgroundColor: color + '20' }]}>
+        <Icon name={icon} size={24} color={color} />
+      </View>
+      <View style={attachStyles.genFileInfo}>
+        <Text style={attachStyles.genFileTitle} numberOfLines={1}>
+          Download {generatedFile.FileType?.toUpperCase() || 'FILE'}
+        </Text>
+        <Text style={attachStyles.genFileName} numberOfLines={1}>
+          {generatedFile.filename}
+        </Text>
+      </View>
+      <Icon name="download" size={20} color={color} />
+    </TouchableOpacity>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
   animate = false,
+  onTagPress,
 }) => {
   const isUser = message.role === "user";
   const isImage = message.file?.type?.startsWith("image/");
@@ -181,6 +244,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           />
         )}
 
+        {/* ── Generated file attachment (AI only) ── */}
+        {!isUser && message.generatedFile && (
+          <GeneratedFileAttachment generatedFile={message.generatedFile} />
+        )}
+
         {/* ── Text ── */}
         {(displayed.length > 0 || (!isUser && !done)) && (
           <Text
@@ -196,12 +264,26 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         )}
       </View>
 
+      {!isUser && message.fileUsed && (
+        <Text style={[styles.fileUsed, styles.metaLeft]}>
+          Analyzed: {message.fileUsed}
+        </Text>
+      )}
+
       {/* Timestamp */}
       {(isUser || done) && (
         <View
           style={[styles.metaRow, isUser ? styles.metaRight : styles.metaLeft]}
         >
-          <Text style={styles.arrow}>→</Text>
+          {onTagPress && (
+            <TouchableOpacity
+              onPress={() => onTagPress(message)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.7}
+            >
+              <Icon name="forward" size={14} color="#6b7280" />
+            </TouchableOpacity>
+          )}
           <Text style={styles.timestamp}>{formatTime(message.timestamp)}</Text>
         </View>
       )}
@@ -253,6 +335,38 @@ const attachStyles = StyleSheet.create({
     color: "#9ca3af",
     marginTop: 3,
   },
+  // Generated file card
+  generatedFileCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ECFDF5",
+    borderRadius: 8,
+    padding: 12,
+    gap: 10,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#10B981",
+  },
+  genFileIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  genFileInfo: {
+    flex: 1,
+  },
+  genFileTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#065F46",
+    marginBottom: 2,
+  },
+  genFileName: {
+    fontSize: 11,
+    color: "#047857",
+  },
 });
 
 const styles = StyleSheet.create({
@@ -297,8 +411,13 @@ const styles = StyleSheet.create({
   metaRight: { marginRight: 4 },
   metaLeft: { marginLeft: 4 },
 
-  arrow: { fontSize: 11, color: "#9ca3af" },
   timestamp: { fontSize: 11, color: "#9ca3af" },
+  fileUsed: {
+    fontSize: 11,
+    color: "#6b7280",
+    fontStyle: "italic",
+    marginTop: 4,
+  },
 });
 
 export default ChatMessage;

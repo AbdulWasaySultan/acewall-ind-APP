@@ -1,0 +1,146 @@
+export const conversations = [
+    {
+      id: "1",
+      name: "Jane Cooper",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "Yeah sure, tell me zafor",
+      time: "just now",
+      unread: false,
+      online: true,
+    },
+    {
+      id: "2",
+      name: "Jenny Wilson",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "Thank you so much, sir",
+      time: "2 d",
+      unread: true,
+      online: true,
+    },
+    {
+      id: "3",
+      name: "Marvin McKinney",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "You're Welcome",
+      time: "1 m",
+      unread: true,
+      online: true,
+    },
+    {
+      id: "4",
+      name: "Eleanor Pena",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "Thank you so much, sir",
+      time: "1 m",
+      unread: false,
+      online: false,
+    },
+    {
+      id: "5",
+      name: "Ronald Richards",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "Sorry, I can't help you",
+      time: "2 m",
+      unread: false,
+      online: true,
+    },
+    {
+      id: "6",
+      name: "Kathryn Murphy",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "new message",
+      time: "2 m",
+      unread: false,
+      online: false,
+    },
+    {
+      id: "7",
+      name: "Jacob Jones",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "Thank you so much, sir",
+      time: "6 m",
+      unread: false,
+      online: true,
+    },
+    {
+      id: "8",
+      name: "Cameron Williamson",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "It's okay, no problem brother, i will fix everhitn...",
+      time: "6 m",
+      unread: false,
+      online: false,
+    },
+    {
+      id: "9",
+      name: "Arlene McCoy",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "Thank you so much, sir",
+      time: "9 m",
+      unread: false,
+      online: false,
+    },
+    {
+      id: "10",
+      name: "Dianne Russell",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "You're Welcome",
+      time: "9 m",
+      unread: false,
+      online: true,
+    },
+    {
+      id: "11",
+      name: "Kristin Watson",
+      avatar: "/placeholder.svg?height=40&width=40",
+      message: "Last message",
+      time: "1 y",
+      unread: false,
+      online: false,
+    },
+  ]
+  
+  export const messages = [
+    {
+      id: "msg-1",
+      sender: "other",
+      content:
+        "Hello and thanks for signing up to the course. If you have any questions about the course or Adobe XD, feel free to get in touch and I'll be happy to help 😊",
+      time: "10:30 AM",
+      date: "Today",
+    },
+    {
+      id: "msg-2",
+      sender: "me",
+      content: "Hello, Good Evening.",
+      time: "10:45 AM",
+      date: "Today",
+    },
+    {
+      id: "msg-3",
+      sender: "me",
+      content: "I'm Zafor",
+      time: "10:45 AM",
+      date: "Today",
+    },
+    {
+      id: "msg-4",
+      sender: "me",
+      content: "I only have a small doubt about your lecture, can you give me some time for this?",
+      time: "10:50 AM",
+      date: "Today",
+    },
+    {
+      id: "msg-5",
+      sender: "other",
+      content: "Yeah sure, tell me zafor",
+      time: "11:00 AM",
+      date: "Today",
+    },
+  ]
+  
+  export function getContactByName(name) {
+    return conversations.find((contact) => contact.name === name)
+  }
+  
+  
