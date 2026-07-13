@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,8 +11,9 @@ import {
   Alert,
   Platform,
   PermissionsAndroid,
+  Pressable,
+  Image,
 } from "react-native";
-// import DocumentPicker from "@react-native-documents/picker";
 import {
   pick,
   types,
@@ -22,8 +23,28 @@ import {
 import RNFS from "react-native-fs";
 import { useNavigation } from "@react-navigation/native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
-import { getApiInstance } from "../services/apiInstance";
+import { courseImport } from "../services/courseImport";
 
+// ─── Type definitions ────────────────────────────────────────────────────────
+interface CourseImportData {
+  courseTitle: string;
+  category: string;
+  subcategory: string;
+  language: string;
+  courseDescription: string;
+  teachingPoints: string[];
+  requirements: string[];
+  curriculum: any[]; // adjust to your actual type
+  assessments: any[];
+  discussions: any[];
+}
+
+interface PickedFile {
+  uri: string;
+  name: string | null;
+}
+
+// ─── Icon helper ────────────────────────────────────────────────────────────
 const Icon = ({
   name,
   size = 24,
@@ -34,65 +55,67 @@ const Icon = ({
   color?: string;
 }) => <MaterialIcons name={name as any} size={size} color={color} />;
 
+// ─── Main component ─────────────────────────────────────────────────────────
 const CourseImportPage = () => {
   const navigation = useNavigation();
 
-  const [file, setFile] = useState<any>(null); // { uri, name }
-  const [previewData, setPreviewData] = useState<any>(null);
+  const [file, setFile] = useState<PickedFile | null>(null);
+  const [previewData, setPreviewData] = useState<CourseImportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [isImported, setIsImported] = useState(false);
 
-  // ── Permission helper (Android only) ──────────────────────────────
-  const requestStoragePermission = async () => {
-    if (Platform.OS !== "android") return true;
-    // On Android 11+ (API 30+) we don't need READ_EXTERNAL_STORAGE for the picker
-    if (Platform.Version >= 30) return true;
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        {
-          title: "Storage Permission",
-          message: "App needs access to your storage to import course files.",
-          buttonNeutral: "Ask Me Later",
-          buttonNegative: "Cancel",
-          buttonPositive: "OK",
-        }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    } catch (err) {
-      console.warn(err);
-      return false;
-    }
+  // ── Permission helper ─────────────────────────────────────────────────────
+  // const requestStoragePermission = async () => {
+  //   if (Platform.OS !== "android") return true;
+  //   if (Platform.Version >= 30) return true; // Android 11+ no need
+  //   try {
+  //     const granted = await PermissionsAndroid.request(
+  //       PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+  //       {
+  //         title: "Storage Permission",
+  //         message: "App needs access to your storage to import course files.",
+  //         buttonNeutral: "Ask Me Later",
+  //         buttonNegative: "Cancel",
+  //         buttonPositive: "OK",
+  //       }
+  //     );
+  //     return granted === PermissionsAndroid.RESULTS.GRANTED;
+  //   } catch (err) {
+  //     console.warn(err);
+  //     return false;
+  //   }
+  // };
+
+  // ── Cancel selected file ──────────────────────────────────────────────────
+  const handleCancelFile = () => {
+    setFile(null);
+    setPreviewData(null);
   };
 
-  // ── 1. Pick JSON file ───────────────────────────────────────────────────────
+  // ── 1. Pick JSON file ─────────────────────────────────────────────────────
   const handlePickFile = async () => {
+    // Check permissions (now uncommented)
+    // const hasPermissions = await requestStoragePermission();
+    // if (!hasPermissions) {
+    //   Alert.alert("Permission Denied", "Cannot access storage.");
+    //   return;
+    // }
+
     try {
-      const hasPermissions = await requestStoragePermission();
-      if (!hasPermissions) {
-        Alert.alert("Permission Denied", "Cannot access storage.");
-        return;
-      }
       const res = await pick({
         type: [types.allFiles],
-        // On Android you could also filter by mimeType: 'application/json'
       });
 
       const picked = res[0];
-      // Only accept JSON files
       if (
         picked.type === "application/json" ||
-        picked.name?.endsWith(".json")
+        picked.name?.toLowerCase().endsWith(".json")
       ) {
         setFile({ uri: picked.uri, name: picked.name });
 
-        // Read the file content
         const content = await RNFS.readFile(picked.uri, "utf8");
-
-        // const response = await fetch(picked.uri);
-        // const content = await response.text();
         try {
-          const json = JSON.parse(content);
+          const json = JSON.parse(content) as CourseImportData;
           console.log("Parsed JSON:", json);
           console.log("Keys:", Object.keys(json));
           setPreviewData(json);
@@ -107,13 +130,18 @@ const CourseImportPage = () => {
       }
     } catch (err: any) {
       if (isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED) {
+        console.log("User cancelled the file picker");
+      } else {
+        Alert.alert(
+          "Error",
+          "An unexpected error occurred while picking the file."
+        );
         console.error(err);
-        console.log(err);
       }
     }
   };
 
-  // ── 2. Start import ─────────────────────────────────────────────────────────
+  // ── 2. Start import ────────────────────────────────────────────────────────
   const handleStartImport = async () => {
     if (!previewData) {
       Alert.alert("Error", "No data to import");
@@ -122,52 +150,75 @@ const CourseImportPage = () => {
 
     setLoading(true);
     try {
-      const requiredKeys = [
+      // Complete required keys list (now includes description, teachingPoints, requirements)
+      const requiredKeys: (keyof CourseImportData)[] = [
         "courseTitle",
         "category",
         "subcategory",
         "language",
+        "courseDescription",
+        "teachingPoints",
+        "requirements",
         "curriculum",
         "assessments",
         "discussions",
       ];
       const missing = requiredKeys.filter((key) => !previewData[key]);
       if (missing.length) {
-        console.log("ye agya range mein", missing);
-        Alert.alert("Invalid Data", `Missing fields: ${missing.join(", ")}`);
+        const presentKeys = Object.keys(previewData);
+        Alert.alert(
+          "Invalid Data",
+          `Missing fields: ${missing.join(
+            ", "
+          )}\n\nYour file has: ${presentKeys.join(", ")}`
+        );
         return;
       }
-      const api = await getApiInstance();
-      const response = await api.post(
-        `/course/import-full-course`,
-        previewData
-      );
+
+      const response = await courseImport(previewData);
 
       if (response.data.success) {
+        // No extra Alert – we go straight to the success screen
         setIsImported(true);
-        Alert.alert("Success", "Course Created Successfully!");
       }
     } catch (err: any) {
-      const message =
-        err.response?.data?.message || "Server Error during import";
+      // ── Improved error handling ──
+      let errorMessage = "Server Error during import";
+
+      if (err.response?.data) {
+        const data = err.response.data;
+        // If the server returns a structured validation object (e.g., { field: "error" })
+        if (typeof data === "object" && data !== null) {
+          const messages = Object.entries(data)
+            .map(([field, msg]) => `${field}: ${msg}`)
+            .join("\n");
+          if (messages) {
+            errorMessage = `Validation failed:\n${messages}`;
+          } else if (data.message) {
+            errorMessage = data.message;
+          }
+        } else if (typeof data === "string") {
+          errorMessage = data;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
       console.log("Import error:", err);
-      console.log("Response data:", err.response?.data);
-      console.log("Status:", err.response?.status);
-      console.log(message);
-      Alert.alert("Error", message);
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // ── 3. Reset all states ─────────────────────────────────────────────────────
+  // ── 3. Reset all states ──────────────────────────────────────────────────
   const resetPage = () => {
     setFile(null);
     setPreviewData(null);
     setIsImported(false);
   };
 
-  // ── Success state ──────────────────────────────────────────────────────────
+  // ── Success screen ────────────────────────────────────────────────────────
   if (isImported) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -203,7 +254,7 @@ const CourseImportPage = () => {
     );
   }
 
-  // ── Main import UI ──────────────────────────────────────────────────────────
+  // ── Main import UI ──────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
@@ -229,30 +280,44 @@ const CourseImportPage = () => {
 
         {/* Main content */}
         <View style={styles.content}>
-          {/* Left side: upload area */}
+          {/* Left column: upload area */}
           <View style={styles.leftColumn}>
-            <TouchableOpacity
-              style={[
-                styles.dropZone,
-                file ? styles.dropZoneActive : styles.dropZoneIdle,
-              ]}
-              onPress={handlePickFile}
-              activeOpacity={0.7}
-            >
-              {file ? (
-                <Icon name="code" size={64} color="#10B981" />
-              ) : (
-                <View style={styles.uploadIconBg}>
-                  <Icon name="upload-file" size={32} color="#2563EB" />
-                </View>
+            <View style={styles.dropZoneContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.dropZone,
+                  file ? styles.dropZoneActive : styles.dropZoneIdle,
+                ]}
+                onPress={handlePickFile}
+                activeOpacity={0.7}
+              >
+                {file ? (
+                  <Icon name="code" size={64} color="#10B981" />
+                ) : (
+                  <View style={styles.uploadIconBg}>
+                    <Icon name="upload-file" size={32} color="#2563EB" />
+                  </View>
+                )}
+                <Text style={styles.dropZoneTitle}>
+                  {file ? file.name : "Select Course JSON"}
+                </Text>
+                <Text style={styles.dropZoneSubtitle}>
+                  Click to browse for a .json file
+                </Text>
+              </TouchableOpacity>
+
+              {file && (
+                <Pressable
+                  onPress={handleCancelFile}
+                  style={styles.cancelUpload}
+                >
+                  <Image
+                    source={require("../assets/cancel.png")}
+                    style={styles.cancelIcon}
+                  />
+                </Pressable>
               )}
-              <Text style={styles.dropZoneTitle}>
-                {file ? file.name : "Select Course JSON"}
-              </Text>
-              <Text style={styles.dropZoneSubtitle}>
-                Click to browse for a .json file
-              </Text>
-            </TouchableOpacity>
+            </View>
 
             {/* Warning box */}
             <View style={styles.warningBox}>
@@ -265,7 +330,7 @@ const CourseImportPage = () => {
             </View>
           </View>
 
-          {/* Right side: summary panel */}
+          {/* Right column: summary card */}
           <View style={styles.summaryCard}>
             <View style={styles.summaryHeader}>
               <Icon name="history" size={18} color="#111827" />
@@ -328,19 +393,10 @@ const CourseImportPage = () => {
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Styles (unchanged – copied from your code) ────────────────────────────
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#f9fafb",
-  },
-  container: {
-    flex: 1,
-  },
-
-  // Header
+  safe: { flex: 1, backgroundColor: "#f9fafb" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -356,29 +412,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#f3f4f6",
     marginRight: 12,
   },
-  headerTextContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 2,
-  },
+  headerTextContainer: { flex: 1 },
+  headerTitle: { fontSize: 24, fontWeight: "bold", color: "#111827" },
+  headerSubtitle: { fontSize: 14, color: "#6b7280", marginTop: 2 },
 
-  // Main layout
-  content: {
-    paddingHorizontal: 16,
-  },
-  leftColumn: {
-    marginBottom: 24,
-  },
+  content: { paddingHorizontal: 16 },
+  leftColumn: { marginBottom: 24 },
 
-  // Drop zone
+  dropZoneContainer: { position: "relative", width: "100%" },
   dropZone: {
     borderWidth: 2,
     borderStyle: "dashed",
@@ -388,24 +429,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#fff",
   },
-  dropZoneIdle: {
-    borderColor: "#d1d5db",
+  dropZoneIdle: { borderColor: "#d1d5db" },
+  dropZoneActive: { borderColor: "#10B981", backgroundColor: "#f0fdf4" },
+
+  cancelUpload: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 10,
+    padding: 6,
   },
-  dropZoneActive: {
-    borderColor: "#10B981",
-    backgroundColor: "#f0fdf4",
-  },
+  cancelIcon: { width: 24, height: 24, tintColor: "#ef4444", margin: 8 },
+
   dropZoneTitle: {
     fontSize: 16,
     fontWeight: "600",
     marginTop: 12,
     color: "#111827",
   },
-  dropZoneSubtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 4,
-  },
+  dropZoneSubtitle: { fontSize: 14, color: "#6b7280", marginTop: 4 },
   uploadIconBg: {
     backgroundColor: "#EFF6FF",
     padding: 16,
@@ -413,7 +455,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  // Warning
   warningBox: {
     flexDirection: "row",
     backgroundColor: "#FFFBEB",
@@ -425,13 +466,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 8,
   },
-  warningText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#92400E",
-  },
+  warningText: { flex: 1, fontSize: 14, color: "#92400E" },
 
-  // Summary card
   summaryCard: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -452,29 +488,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 8,
   },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-  summaryContent: {
-    gap: 12,
-  },
+  summaryTitle: { fontSize: 16, fontWeight: "bold", color: "#111827" },
+  summaryContent: { gap: 12 },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 4,
   },
-  summaryLabel: {
-    color: "#6b7280",
-    fontSize: 14,
-  },
-  summaryValue: {
-    fontWeight: "600",
-    color: "#111827",
-    fontSize: 14,
-  },
+  summaryLabel: { color: "#6b7280", fontSize: 14 },
+  summaryValue: { fontWeight: "600", color: "#111827", fontSize: 14 },
   importBtn: {
     backgroundColor: "#2563EB",
     borderRadius: 12,
@@ -483,21 +506,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 12,
   },
-  importBtnText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  emptySummary: {
-    alignItems: "center",
-    paddingVertical: 32,
-  },
-  emptyText: {
-    color: "#9ca3af",
-    fontSize: 14,
-  },
+  importBtnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  emptySummary: { alignItems: "center", paddingVertical: 32 },
+  emptyText: { color: "#9ca3af", fontSize: 14 },
 
-  // Success state
   successContainer: {
     flex: 1,
     justifyContent: "center",
@@ -524,11 +536,7 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     paddingHorizontal: 20,
   },
-  successButtons: {
-    width: "100%",
-    gap: 12,
-    paddingHorizontal: 40,
-  },
+  successButtons: { width: "100%", gap: 12, paddingHorizontal: 40 },
   outlineBtn: {
     borderWidth: 1,
     borderColor: "#d1d5db",
@@ -537,11 +545,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
   },
-  outlineBtnText: {
-    fontWeight: "600",
-    color: "#374151",
-    fontSize: 16,
-  },
+  outlineBtnText: { fontWeight: "600", color: "#374151", fontSize: 16 },
   primaryBtn: {
     backgroundColor: "#2563EB",
     borderRadius: 12,
@@ -551,11 +555,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-  primaryBtnText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
+  primaryBtnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 });
 
 export default CourseImportPage;

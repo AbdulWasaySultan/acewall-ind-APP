@@ -16,6 +16,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   FlatList,
+  Touchable,
 } from "react-native";
 import GradeScaleModal from "../components/GradeScaleModal";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -87,6 +88,7 @@ import { useRef } from "react";
 import { useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { ImageProps } from "react-native";
+import { fetchCouponsByCourse } from "../services/coupon";
 
 const fallbackImage = require("../assets/star.png");
 interface Assessment {
@@ -418,6 +420,11 @@ const CourseDetailsPage = () => {
     useState(false);
   const [showGradeScaleManagementLoader, setShowGradeScaleManagementLoader] =
     useState(false);
+
+  const [showCouponsManagement, setShowCouponsManagement] = useState(false);
+  const [showCouponsManagementLoader, setShowCouponsManagementLoader] = useState(false);
+  const [coupons, setCoupons] = useState([]);
+
   const [showGPAManagement, setShowGPAManagement] = useState(false);
   const [showGPAManagementLoader, setShowGPAManagementLoader] = useState(false);
   const [gradeScale, setGradeScale] = useState([]);
@@ -1978,6 +1985,20 @@ const CourseDetailsPage = () => {
     }
   };
 
+  const loadCoupons = async () => {
+    setShowCouponsManagement(true);
+    setShowCouponsManagementLoader(true);
+    try {
+      const res = await fetchCouponsByCourse(courseId);
+      setCoupons(res);
+    } catch (err: any) {
+      Toast.show(err?.message || "Failed to get gradeScale", Toast.LONG);
+    } finally {
+      setShowCouponsManagementLoader(false);
+    }
+  };
+
+
   const loadGPA = async () => {
     setShowGPAManagement(true);
     setShowGPAManagementLoader(true);
@@ -3060,6 +3081,25 @@ const CourseDetailsPage = () => {
               Manage GradeScale
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity>
+            onPress={loadCoupons}
+            style={[
+              styles.topActionButton,
+              {
+                backgroundColor: "#ffffff",
+                borderWidth: 1,
+                borderColor: "#cccccc",
+              },
+            ]}
+          >
+            <Text style={[styles.topActionButtonText, { color: "#000000" }]}>
+              Coupons
+            </Text>
+          </TouchableOpacity>
+
+
+
           <TouchableOpacity
             onPress={loadGPA}
             style={[
