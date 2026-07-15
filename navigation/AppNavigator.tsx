@@ -49,6 +49,7 @@ import SpillTheTeaPage from "../pages/SpillTheTeaPage";
 import SpillTheTeaProfilePage from "../pages/Spilltheteaprofilepage";
 import AIAssistantScreen from "../pages/AIAssistantScreen";
 import CourseImportPage from "../pages/ImportCourses";
+import CouponsPage from "../pages/CouponsPage";
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -62,6 +63,7 @@ export type RootStackParamList = {
   AccountInformation: undefined;
   EditCredentials: { userData: UserData };
   CourseDetails: { courseId: string };
+  Coupons: { courseId: string };
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;
   CourseDetailStudentPageEnrolled: { enrollmentId: string };
@@ -335,6 +337,11 @@ const AppNavigator = () => {
               component={CourseDetailsPage}
               options={{ headerShown: false }}
             />
+            <Stack.Screen
+  name="Coupons"
+  component={CouponsPage}
+  options={{ headerShown: false }}
+/>
             <Stack.Screen
               name="CourseDetailStudentPage"
               component={CourseDetailStudentPage}

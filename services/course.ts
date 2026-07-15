@@ -256,7 +256,6 @@ export const unarchiveCourse = async (courseId: string) => {
 };
 
 export const getAllCourses = async (
-
   search?: string
 ): Promise<CourseResponse> => {
   try {
@@ -1381,7 +1380,7 @@ export const createAssessment = async (
 // import axios from "axios";
 // import { getStoredBaseUrl } from "../utils/storage";
 // import { getApiInstance } from "../services/apiInstance";
-// 
+//
 // // Create axios instance with default config
 // // export const createApiInstance = async () => {
 // //   const baseUrl = await getStoredBaseUrl();
@@ -1396,25 +1395,25 @@ export const createAssessment = async (
 // //     },
 // //   });
 // // };
-// 
+//
 // // Add request interceptor for authentication if needed
-// 
+//
 // interface Thumbnail {
 //   url: string;
 //   filename: string;
 // }
-// 
+//
 // interface Category {
 //   _id: string;
 //   title: string;
 // }
-// 
+//
 // interface Subcategory {
 //   _id: string;
 //   title: string;
 //   category: string;
 // }
-// 
+//
 // interface CourseData {
 //   courseTitle: string;
 //   category: string;
@@ -1431,7 +1430,7 @@ export const createAssessment = async (
 //   syllabus?: any;
 //   price: string;
 // }
-// 
+//
 // interface CourseResponse {
 //   courses: Array<{
 //     _id: string;
@@ -1462,7 +1461,7 @@ export const createAssessment = async (
 //   }>;
 //   message: string;
 // }
-// 
+//
 // interface CourseListResponse {
 //   success: boolean;
 //   data: {
@@ -1482,30 +1481,30 @@ export const createAssessment = async (
 //   }[];
 //   message: string;
 // }
-// 
+//
 // export const createCourse = async (
 //   courseData: CourseData
 // ): Promise<CourseResponse> => {
 //   try {
 //     const api = await getApiInstance();
 //     const formData = new FormData();
-// 
+//
 //     // Append the thumbnail
 //     if (courseData.thumbnail.url) {
 //       const imageUri = courseData.thumbnail.url;
 //       const filename = courseData.thumbnail.filename || "thumbnail.jpg";
-// 
+//
 //       // Get the file extension from the filename or default to jpg
 //       const extension = filename.split(".").pop() || "jpg";
 //       const type = `image/${extension}`;
-// 
+//
 //       formData.append("thumbnail", {
 //         uri: imageUri,
 //         type,
 //         name: filename,
 //       } as any);
 //     }
-// 
+//
 //     // Append other course data exactly as in the live payload
 //     formData.append("courseTitle", courseData.courseTitle);
 //     formData.append("category", courseData.category);
@@ -1525,11 +1524,11 @@ export const createAssessment = async (
 //     // if (courseData.semester && courseData.semester.length > 0) {
 //     //   formData.append('semester', JSON.stringify(courseData.semester));
 //     // }
-// 
+//
 //     // if (courseData.quarter && courseData.quarter.length > 0) {
 //     //   formData.append('quarter', JSON.stringify(courseData.quarter));
 //     // }
-// 
+//
 //     // Add syllabus if provided
 //     if (courseData.syllabus) {
 //       formData.append("syllabus", {
@@ -1542,7 +1541,7 @@ export const createAssessment = async (
 //       } as any);
 //     }
 //     console.log("Sending form data:", formData);
-// 
+//
 //     const response = await api.post<CourseResponse>(
 //       "/course/create",
 //       formData,
@@ -1552,7 +1551,7 @@ export const createAssessment = async (
 //         },
 //       }
 //     );
-// 
+//
 //     return response.data;
 //   } catch (error: any) {
 //     console.error("Create course error:", error);
@@ -1572,12 +1571,12 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const archiveCourse = async (courseId: string) => {
 //   try {
 //     const api = await getApiInstance();
 //     const response = await api.put(`/course/archive/${courseId}`);
-// 
+//
 //     return response.data;
 //   } catch (error: any) {
 //     console.error("Archive course error:", error);
@@ -1594,12 +1593,12 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const unarchiveCourse = async (courseId: string) => {
 //   try {
 //     const api = await getApiInstance();
 //     const response = await api.put(`/course/archive/${courseId}`);
-// 
+//
 //     return response.data;
 //   } catch (error: any) {
 //     console.error("Unarchive course error:", error);
@@ -1616,11 +1615,11 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getCategories = async () => {
 //   try {
 //     const api = await getApiInstance();
-// 
+//
 //     console.log("Fetching categories from:", "/category/get");
 //     const response = await api.get<{ categories: Category[]; message: string }>(
 //       "/category/get"
@@ -1648,11 +1647,11 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getSubcategories = async (categoryId: string) => {
 //   try {
 //     const api = await getApiInstance();
-// 
+//
 //     console.log("Fetching subcategories for category:", categoryId);
 //     const response = await api.get<{
 //       subcategories: Subcategory[];
@@ -1681,7 +1680,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getAllCourses = async (
 //   search?: string
 // ): Promise<CourseResponse> => {
@@ -1693,7 +1692,7 @@ export const createAssessment = async (
 //           search
 //         )}`
 //       : `/course/getindividualcourse?published=true&isVerified=approved`;
-// 
+//
 //     const response = await api.get<CourseResponse>(url);
 //     console.log(response);
 //     return response.data;
@@ -1710,7 +1709,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getTeacherCourses = async (
 //   published: boolean,
 //   isVerified: string,
@@ -1724,13 +1723,13 @@ export const createAssessment = async (
 //       "search:",
 //       search
 //     );
-// 
+//
 //     const searchParam = search ? encodeURIComponent(search) : "";
 //     const url =
 //       isVerified === "pending" || isVerified === "rejected"
 //         ? `/course/getindividualcourse?isVerified=${isVerified}&search=${searchParam}`
 //         : `/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`;
-// 
+//
 //     const response = await api.get<CourseResponse>(url);
 //     return response.data;
 //   } catch (error: any) {
@@ -1748,7 +1747,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getCourseDetails = async (courseId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -1768,7 +1767,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const deleteCourse = async (courseId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -1786,7 +1785,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const createChapter = async (
 //   courseId: string,
 //   title: string,
@@ -1824,7 +1823,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const deleteChapter = async (chapterId: string) => {
 //   console.log(chapterId);
 //   try {
@@ -1846,7 +1845,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const createAssessmentCategory = async (
 //   courseId: string,
 //   name: string,
@@ -1855,34 +1854,34 @@ export const createAssessment = async (
 //   if (weight <= 0) {
 //     throw new Error("Weight must be greater than 0");
 //   }
-// 
+//
 //   try {
 //     console.log("Creating API instance...");
 //     const api = await getApiInstance();
 //     console.log("API instance created successfully");
-// 
+//
 //     console.log("Adding auth interceptor...");
 //     console.log("Auth interceptor added successfully");
-// 
+//
 //     const requestData = {
 //       name,
 //       weight,
 //       course: courseId,
 //     };
 //     console.log("Request data:", JSON.stringify(requestData, null, 2));
-// 
+//
 //     console.log("Making POST request to:", `/assessmentCategory/${courseId}`);
 //     const response = await api.post(
 //       `/assessmentCategory/${courseId}`,
 //       requestData
 //     );
 //     console.log("Response received:", JSON.stringify(response.data, null, 2));
-// 
+//
 //     // Check if response has data
 //     if (!response.data) {
 //       throw new Error("No data received from server");
 //     }
-// 
+//
 //     // Return the response data directly
 //     return response.data;
 //   } catch (error: any) {
@@ -1893,7 +1892,7 @@ export const createAssessment = async (
 //       request: error.request,
 //       config: error.config,
 //     });
-// 
+//
 //     if (error.response) {
 //       console.error("Server error response:", error.response.data);
 //       throw new Error(
@@ -1910,7 +1909,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getAssessmentCategories = async (courseId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -1930,7 +1929,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const createAssessment = async (
 //   courseId: string,
 //   title: string,
@@ -1944,12 +1943,12 @@ export const createAssessment = async (
 // ) => {
 //   try {
 //     const api = await getApiInstance();
-// 
+//
 //     const formData = new FormData();
 //     formData.append("title", title);
 //     formData.append("description", description);
 //     formData.append("category", categoryId);
-// 
+//
 //     if (lessonId) {
 //       formData.append("lesson", lessonId);
 //     } else if (chapterId) {
@@ -1958,9 +1957,9 @@ export const createAssessment = async (
 //     } else {
 //       formData.append("course", courseId);
 //     }
-// 
+//
 //     formData.append("questions", JSON.stringify(questions));
-// 
+//
 //     if (file) {
 //       formData.append("files", {
 //         uri: file.uri,
@@ -1968,9 +1967,9 @@ export const createAssessment = async (
 //         name: file.fileName || file.uri.split("/").pop() || "file",
 //       } as any);
 //     }
-// 
+//
 //     console.log("Sending assessment creation request:", formData);
-// 
+//
 //     const response = await api.post("/assessment/create", formData, {
 //       headers: {
 //         "Content-Type": "multipart/form-data",
@@ -1986,7 +1985,7 @@ export const createAssessment = async (
 //       request: error.request,
 //       config: error.config,
 //     });
-// 
+//
 //     if (error.response) {
 //       throw new Error(
 //         error.response.data.message || "Failed to create assessment"
@@ -2011,12 +2010,12 @@ export const createAssessment = async (
 // ) => {
 //   try {
 //     const api = await getApiInstance();
-// 
+//
 //     const formData = new FormData();
 //     formData.append("title", title);
 //     formData.append("description", description);
 //     formData.append("course", assessmentId);
-// 
+//
 //     if (file && questionId) {
 //       formData.append("files", {
 //         uri: file.uri,
@@ -2034,9 +2033,9 @@ export const createAssessment = async (
 //         );
 //       });
 //     }
-// 
+//
 //     console.log("submitting assessment creation request:", formData);
-// 
+//
 //     const response = await api.post(
 //       `/assessmentSubmission/submission/${assessmentId}`,
 //       formData,
@@ -2056,7 +2055,7 @@ export const createAssessment = async (
 //       request: error.request,
 //       config: error.config,
 //     });
-// 
+//
 //     if (error.response) {
 //       throw new Error(
 //         error.response.data.message || "Failed to submit assessment"
@@ -2070,7 +2069,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const deleteAssessment = async (assessmentId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2090,7 +2089,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const editAssessment = async (
 //   assessmentId: string,
 //   payload: {
@@ -2121,7 +2120,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const createLesson = async (
 //   chapterId: string,
 //   title: string,
@@ -2132,14 +2131,14 @@ export const createAssessment = async (
 // ) => {
 //   try {
 //     const api = await getApiInstance();
-// 
+//
 //     const formData = new FormData();
 //     formData.append("title", title);
 //     formData.append("description", description);
 //     formData.append("youtubeLinks", youtubeLinks);
 //     formData.append("otherLink", otherLink);
 //     formData.append("chapter", chapterId);
-// 
+//
 //     pdfFiles.forEach((file) => {
 //       formData.append("pdfFiles", {
 //         uri: file.uri,
@@ -2147,9 +2146,9 @@ export const createAssessment = async (
 //         name: file.name || file.uri.split("/").pop() || "file.pdf",
 //       } as any);
 //     });
-// 
+//
 //     console.log("Sending lesson creation request:", formData);
-// 
+//
 //     const response = await api.post("/lesson/create", formData, {
 //       headers: {
 //         "Content-Type": "multipart/form-data",
@@ -2165,7 +2164,7 @@ export const createAssessment = async (
 //       request: error.request,
 //       config: error.config,
 //     });
-// 
+//
 //     if (error.response) {
 //       throw new Error(error.response.data.message || "Failed to create lesson");
 //     } else if (error.request) {
@@ -2177,7 +2176,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const deleteLesson = async (lessonId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2196,7 +2195,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getAllAssessmentsByTeacher = async () => {
 //   try {
 //     const api = await getApiInstance();
@@ -2221,7 +2220,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getAssessmentSubmissionsForTeacher = async (
 //   assessmentId: string
 // ) => {
@@ -2251,7 +2250,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getCoursesBySubcategory = async (
 //   subcategoryId: string,
 //   search?: string
@@ -2278,7 +2277,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getCoursesByCategory = async (
 //   categoryId: string,
 //   search?: string
@@ -2305,7 +2304,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // /**
 //  * Fetch a course by its ID from a full URL (for student view)
 //  */
@@ -2362,9 +2361,9 @@ export const createAssessment = async (
 //     throw new Error(error.response?.data?.message || "Failed to send comment");
 //   }
 // };
-// 
+//
 // // Add to course.ts - For course-level comments
-// 
+//
 // /**
 //  * Get all comments for a course
 //  */
@@ -2388,7 +2387,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // /**
 //  * Post a comment on a course
 //  */
@@ -2414,7 +2413,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const isCommentedInDiscussion = async (discussionId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2429,7 +2428,7 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // export const getReplyCount = async (commentId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2442,7 +2441,7 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // export const sendReply = async (commentId: string, reply: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2455,7 +2454,7 @@ export const createAssessment = async (
 //     throw new Error(error.response?.data?.message || "Failed to send reply");
 //   }
 // };
-// 
+//
 // export const getReplies = async (commentId: string, page = 1, limit = 5) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2483,7 +2482,7 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // /**
 //  * Fetch quarters for a semester
 //  */
@@ -2499,7 +2498,7 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // /**
 //  * Fetch chapters for a quarter
 //  */
@@ -2518,11 +2517,11 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // /**
 //  * Fetch chapter details for student preview
 //  */
-// 
+//
 // export const getChapterDetailsForStudent = async (chapterId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2584,7 +2583,7 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // export const getStudentEnrolledCourses = async (searchQuery: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2614,7 +2613,7 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // export const updateAssessmentCategory = async (
 //   courseId: string,
 //   categoryId: string,
@@ -2659,7 +2658,7 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // export const enrollInCourse = async (courseId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2679,7 +2678,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const deleteAssessmentCategory = async (categoryId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2699,7 +2698,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getSemesters = async () => {
 //   try {
 //     const api = await getApiInstance();
@@ -2720,7 +2719,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getQuartersBySemesters = async (semesterIds: string[]) => {
 //   try {
 //     const api = await getApiInstance();
@@ -2742,7 +2741,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const addSemesterToCourse = async (
 //   courseId: string,
 //   semesterId: string,
@@ -2772,7 +2771,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // // Get semesters of a course
 // export const getSemestersOfCourse = async (courseId: string) => {
 //   try {
@@ -2793,7 +2792,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // // Create semester
 // export const createSemester = async (
 //   courseId: string,
@@ -2823,7 +2822,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // // Update semester
 // export const updateSemester = async (
 //   semesterId: string,
@@ -2855,7 +2854,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // // Toggle archive status for semester
 // export const toggleSemesterArchive = async (
 //   semesterId: string,
@@ -2885,7 +2884,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // // Create quarter
 // export const createQuarter = async (
 //   semesterId: string,
@@ -2916,7 +2915,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // // Update quarter
 // export const updateQuarter = async (
 //   quarterId: string,
@@ -2950,7 +2949,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // // Toggle archive status for quarter
 // export const toggleQuarterArchive = async (
 //   quarterId: string,
@@ -2979,7 +2978,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getChaptersByQuarter = async (
 //   courseId: string,
 //   quarterId: string
@@ -3041,7 +3040,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getAssessmentsByLesson = async (lessonId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -3086,7 +3085,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getStudentEnrolledCourseDetails = async (enrollmentId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -3121,7 +3120,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getEnrollStatus = async (enrollmentId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -3143,7 +3142,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const unenrollFromCourse = async (
 //   enrollmentId: string,
 //   courseId: string
@@ -3170,7 +3169,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const editCourseBasics = async (
 //   courseId: string,
 //   data: {
@@ -3205,14 +3204,14 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const updateCourseThumbnail = async (
 //   courseId: string,
 //   thumbnail: any
 // ) => {
 //   try {
 //     const api = await getApiInstance();
-// 
+//
 //     const formData = new FormData();
 //     formData.append("thumbnail", {
 //       uri: thumbnail.uri,
@@ -3220,13 +3219,13 @@ export const createAssessment = async (
 //       name:
 //         thumbnail.fileName || thumbnail.uri.split("/").pop() || "thumbnail.jpg",
 //     } as any);
-// 
+//
 //     const response = await api.put(`/course/thumbnail/${courseId}`, formData, {
 //       headers: {
 //         "Content-Type": "multipart/form-data",
 //       },
 //     });
-// 
+//
 //     return response.data;
 //   } catch (error: any) {
 //     console.error("Update thumbnail error:", error);
@@ -3243,7 +3242,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // // Get individual submission details
 // export const getSubmissionDetails = async (submissionId: string) => {
 //   try {
@@ -3251,7 +3250,7 @@ export const createAssessment = async (
 //     if (!baseUrl) {
 //       throw new Error("No base URL configured. Please select a school first.");
 //     }
-// 
+//
 //     const response = await axios.get(
 //       `${baseUrl}/assessmentSubmission/submission/${submissionId}`,
 //       {
@@ -3262,7 +3261,7 @@ export const createAssessment = async (
 //         timeout: 10000,
 //       }
 //     );
-// 
+//
 //     return response.data;
 //   } catch (error: any) {
 //     console.error("Error fetching submission details:", error);
@@ -3281,7 +3280,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const submitGrades = async (
 //   submissionId: string,
 //   grades: { [answerId: string]: { awardedPoints: number; maxPoints: number } }
@@ -3308,7 +3307,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const getChapterDetailsWithLessons = async (chapterId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -3331,7 +3330,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const editChapter = async (
 //   chapterId: string,
 //   title: string,
@@ -3357,7 +3356,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const editLesson = async (
 //   lessonId: string,
 //   title: string,
@@ -3387,7 +3386,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const addMoreFilesToLesson = async (
 //   lessonId: string,
 //   pdfFiles: any[]
@@ -3428,7 +3427,7 @@ export const createAssessment = async (
 //     }
 //   }
 // };
-// 
+//
 // export const deleteLessonFile = async (lessonId: string, fileId: string) => {
 //   try {
 //     const api = await getApiInstance();
@@ -3467,7 +3466,7 @@ export const createAssessment = async (
 //     );
 //   }
 // };
-// 
+//
 // export const getStudentCourses = async () => {
 //   try {
 //     const api = await getApiInstance();

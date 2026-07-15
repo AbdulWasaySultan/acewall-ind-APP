@@ -31,7 +31,7 @@ import {
 } from "../services/rating";
 import { getComments, sendComment } from "../services/comment";
 import { createConversation } from "../services/conversation";
-import ConversationsModal from "../components/ConversationsModal";
+import ConversationsModal from "../components/modals/ConversationsModal";
 import Toast from "react-native-simple-toast";
 import { SafeAreaView } from "react-native-safe-area-context";
 // Type for navigation param

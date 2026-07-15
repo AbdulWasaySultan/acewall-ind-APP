@@ -1,5 +1,6 @@
 // ratingService.ts
 import { getApiInstance } from './apiInstance';
+import { ToastAndroid } from 'react-native';
 
 // Shared error handler
 const handleApiError = (error: any, defaultMessage: string) => {
@@ -29,7 +30,13 @@ export const getCourseRating = async (courseId: string) => {
     const api = await getApiInstance();
     const response = await api.get(`/rating/course/${courseId}`);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    const errorMessage = error?.response?.data?.message || error?.message || '';
+    if (errorMessage.toLowerCase().includes('no ratings found')) {
+      // Graceful fallback – no rating yet
+      return { averageStar: 0, count: 0 };
+    }
+    // All other errors: throw a user-friendly message
     handleApiError(error, 'Failed to fetch course rating');
   }
 };

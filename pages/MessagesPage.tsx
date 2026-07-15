@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ActivityIndicator, Button, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-import ConversationsModal from '../components/ConversationsModal';
+import ConversationsModal from '../components/modals/ConversationsModal';
 import { getConversations } from '../services/message';
 
 const MessagesPage = () => {

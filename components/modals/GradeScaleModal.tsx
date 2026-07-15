@@ -9,14 +9,8 @@ import {
     ScrollView,
     Alert,
 } from 'react-native';
-import SimpleIcon from './SimpleIcon';
-
-interface GradeScaleItem {
-    _id: string;
-    grade: string;
-    min: number;
-    max: number;
-}
+import SimpleIcon from '../SimpleIcon';
+import { GradeScaleItem } from '../../types/course';
 
 interface GradeScaleModalProps {
     visible: boolean;

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList, ActivityIndicator,Image } from 'react-native';
-import SimpleIcon from './SimpleIcon';
+import SimpleIcon from '../SimpleIcon';
 import { useNavigation } from '@react-navigation/native';
-import { createConversation, getConversations } from '../services/conversation';
+import { createConversation, getConversations } from '../../services/conversation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ConversationsModalProps {
@@ -10,7 +10,7 @@ interface ConversationsModalProps {
     onClose: () => void;
     conversationId: string | null;
 }
-const avatarPlaceholder = require('../assets/placeholder.png');
+const avatarPlaceholder = require('../../assets/placeholder.png');
 
 const ConversationsModal: React.FC<ConversationsModalProps> = ({ visible, onClose, conversationId }) => {
     const [conversations, setConversations] = useState<any[]>([]);

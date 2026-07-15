@@ -1,6 +1,5 @@
+// services/coupon.ts
 import { getApiInstance } from "./apiInstance";
-
-const api = await getApiInstance();
 
 export interface Coupon {
   _id: string;
@@ -8,6 +7,7 @@ export interface Coupon {
   code: string;
   discountType: "percentage" | "fixed";
   percentageOff?: number;
+  amountOff?: number;        // matches web version
   maxRedemptions: number;
   usedCount?: number;
   expiresAt?: string;
@@ -20,7 +20,7 @@ export interface CreateCouponPayload {
   code: string;
   discountType: "percentage" | "fixed";
   percentageOff?: number;
-  fixedAmount?: number;
+  amountOff?: number;        // matches web version
   maxRedemptions?: number;
   expiresAt?: string;
 }
@@ -28,27 +28,45 @@ export interface CreateCouponPayload {
 export const fetchCouponsByCourse = async (
   courseId: string
 ): Promise<Coupon[]> => {
-  const response = await api.get(`/coupon/getBycourse/${courseId}`);
-  return response.data.coupons; // ✅ important fix
+  try {
+    const api = await getApiInstance();
+    const response = await api.get(`/coupon/getBycourse/${courseId}`);
+    return response.data.coupons;
+  } catch (error: any) {
+    console.error("Failed to fetch coupons:", error);
+    throw new Error(error?.message || "Failed to fetch coupons");
+  }
 };
 
-export const createCoupon = async (
+export const createCouponsByCourse = async (
   courseId: string,
   payload: CreateCouponPayload
 ) => {
-  const response = await api.post("/coupon/createCoupon", {
-    ...payload,
-    courseId,
-  });
-  return response.data;
+  try {
+    const api = await getApiInstance();
+    const response = await api.post("/coupon/createCoupon", {
+      ...payload,
+      courseId,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to create coupon:", error);
+    throw new Error(error?.message || "Failed to create coupon");
+  }
 };
 
 export const updateCouponStatus = async (
   couponId: string,
   isActive: boolean
 ) => {
-  const response = await api.patch(`/coupon/updateCoupon/${couponId}`, {
-    isActive,
-  });
-  return response.data;
+  try {
+    const api = await getApiInstance();
+    const response = await api.patch(`/coupon/updateCoupon/${couponId}`, {
+      isActive,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to update coupon status:", error);
+    throw new Error(error?.message || "Failed to update coupon status");
+  }
 };
