@@ -68,11 +68,8 @@ const MyCoursesPage = () => {
   const [subcategoryItems, setSubcategoryItems] = useState<any[]>([]);
 
   const [selectedTab, setSelectedTab] = useState<
-    "published" | "unpublished"
+    "published" | "unpublished" | "all"
   >("published");
-  const [isVerified, setIsVerified] = useState<
-    "approved" | "pending" | "rejected"
-  >("approved");
 
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const route = useRoute<any>();
@@ -112,25 +109,77 @@ const MyCoursesPage = () => {
     }
   }, []);
 
-  const getPublishedFilter = (
-    tab: "published" | "unpublished" | "all"
-  ): boolean | undefined => {
-    if (tab === "all") return undefined;
-    return tab === "published";
-  };
+  // getTeacherCourses only reliably supports 4 real combinations:
+  //   (published: true,  isVerified: "approved")
+  //   (published: false, isVerified: "approved")
+  //   (isVerified: "pending")   -> published is ignored by the service, returns ALL pending
+  //   (isVerified: "rejected")  -> published is ignored by the service, returns ALL rejected
+  // "Total Courses" / "Unpublished Courses" on the Dashboard count courses
+  // regardless of verification status, so to match those numbers we fetch
+  // all 4 combinations and compose the tab we need client-side, instead of
+  // trusting the untested published=undefined "fetch everything" shortcut.
+  const fetchTeacherCourses = useCallback(
+    async (tab: "published" | "unpublished" | "all", search: string) => {
+      const [approvedPublishedRes, approvedUnpublishedRes, pendingRes, rejectedRes] =
+        await Promise.all([
+          getTeacherCourses(true, "approved", search),
+          getTeacherCourses(false, "approved", search),
+          getTeacherCourses(true, "pending", search),
+          getTeacherCourses(true, "rejected", search),
+        ]);
+
+      const approvedPublished = approvedPublishedRes.courses || [];
+      const approvedUnpublished = approvedUnpublishedRes.courses || [];
+      const pending = pendingRes.courses || [];
+      const rejected = rejectedRes.courses || [];
+
+      const dedupe = (list: any[]) => {
+        const map = new Map<string, any>();
+        list.forEach((c) => map.set(c._id, c));
+        return Array.from(map.values());
+      };
+
+      if (tab === "published") {
+        return dedupe([
+          ...approvedPublished,
+          ...pending.filter((c) => c.published === true),
+          ...rejected.filter((c) => c.published === true),
+        ]);
+      }
+      if (tab === "unpublished") {
+        return dedupe([
+          ...approvedUnpublished,
+          ...pending.filter((c) => c.published === false),
+          ...rejected.filter((c) => c.published === false),
+        ]);
+      }
+      // "all"
+      return dedupe([
+        ...approvedPublished,
+        ...approvedUnpublished,
+        ...pending,
+        ...rejected,
+      ]);
+    },
+    []
+  );
 
   // Use useFocusEffect to fetch data every time the page comes into focus
   useFocusEffect(
     useCallback(() => {
-      let activeTab = selectedTab;
-      const routeFilter = route.params?.filter;
+      // If the Dashboard sent us here with a specific filter (Total /
+      // Published / Unpublished Courses card), adopt it as the active tab.
+      // Important: we do NOT return early here - the fetch below always
+      // has to run, otherwise the page shows no courses until an unrelated
+      // re-render happens to trigger it.
+      const routeFilter = route.params?.filter as
+        | "published"
+        | "unpublished"
+        | "all"
+        | undefined;
+      const activeTab = routeFilter ?? selectedTab;
 
-      if (
-        routeFilter === "published" ||
-        routeFilter === "unpublished" ||
-        routeFilter === "all"
-      ) {
-        activeTab = routeFilter;
+      if (routeFilter) {
         setSelectedTab(routeFilter);
         navigation.setParams({ filter: undefined });
       }
@@ -145,7 +194,6 @@ const MyCoursesPage = () => {
         setLoading(true);
         setError(null);
         try {
-          let response;
           if (userRole === "student") {
             // If a subcategory is selected, get courses for that subcategory
             const enrolledResponse = await getStudentEnrolledCourses(
@@ -161,7 +209,7 @@ const MyCoursesPage = () => {
             setEnrolledCoursesMap(newEnrolledCoursesMap);
 
             if (selectedSubcategory) {
-              response = await getCoursesBySubcategory(
+              const response = await getCoursesBySubcategory(
                 selectedSubcategory,
                 searchQuery
               );
@@ -175,12 +223,13 @@ const MyCoursesPage = () => {
               setCourses(enrolledCoursesList);
             }
           } else {
-            response = await getTeacherCourses(
-              getPublishedFilter(activeTab),
-              isVerified,
+            // For teacher/admin, get courses based on the active tab,
+            // composed from the real approved/pending/rejected combinations.
+            const teacherCourses = await fetchTeacherCourses(
+              activeTab,
               searchQuery
             );
-            setCourses(response.courses || []);
+            setCourses(teacherCourses);
           }
         } catch (err: any) {
           setError(err.message || "Failed to fetch courses");
@@ -194,6 +243,8 @@ const MyCoursesPage = () => {
       fetchData();
 
       return () => {
+        // This cleanup runs when the page is unfocused
+        // setSearchQuery('');
         setSelectedCategory(null);
         setSelectedSubcategory(null);
         setSubcategoryItems([]);
@@ -203,8 +254,8 @@ const MyCoursesPage = () => {
       selectedSubcategory,
       searchQuery,
       selectedTab,
-      isVerified,
       fetchCategories,
+      fetchTeacherCourses,
       categoryItems.length,
       route.params?.filter,
       navigation,
@@ -277,12 +328,13 @@ const MyCoursesPage = () => {
           setCourses(enrolledCoursesList);
         }
       } else {
-        response = await getTeacherCourses(
-          getPublishedFilter(selectedTab),
-          isVerified,
+        // For teacher/admin, get courses based on selected tab, composed
+        // from the real approved/pending/rejected combinations.
+        const teacherCourses = await fetchTeacherCourses(
+          selectedTab,
           searchQuery
         );
-        setCourses(response.courses || []);
+        setCourses(teacherCourses);
       }
 
       Toast.show("Courses refreshed successfully!", Toast.SHORT);
@@ -297,8 +349,8 @@ const MyCoursesPage = () => {
     selectedSubcategory,
     searchQuery,
     selectedTab,
-    isVerified,
     fetchCategories,
+    fetchTeacherCourses,
     categoryItems.length,
   ]);
 
@@ -309,15 +361,6 @@ const MyCoursesPage = () => {
       {/* TEACHER UI: Tab Switcher, Search, and Filtered Courses */}
       {userRole === "teacher" && (
         <>
-          {(isVerified === "pending" || isVerified === "rejected") && (
-            <TouchableOpacity
-              onPress={() => setIsVerified("approved")}
-              style={styles.backButton}
-            >
-              <SimpleIcon name="arrow-back" size={28} color="#000" style={styles.backButtonIcon}/>
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-          )}
           <View
             style={{
               flexDirection: "row",
@@ -326,112 +369,41 @@ const MyCoursesPage = () => {
               marginBottom: 16,
             }}
           >
-            {isVerified === "pending" || isVerified === "rejected" ? (
-              <View style={styles.tabSwitcherContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.tabButton,
-                    isVerified === "pending" && styles.tabButtonActive,
-                  ]}
-                  onPress={() => setIsVerified("pending")}
-                >
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      isVerified === "pending" && styles.tabButtonTextActive,
-                    ]}
-                  >
-                    Pending courses
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.tabButton,
-                    isVerified === "rejected" && styles.tabButtonActive,
-                  ]}
-                  onPress={() => setIsVerified("rejected")}
-                >
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      isVerified === "rejected" && styles.tabButtonTextActive,
-                    ]}
-                  >
-                    Rejected courses
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.tabSwitcherContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.tabButton,
-                    selectedTab === "all" && styles.tabButtonActive,
-                  ]}
-                  onPress={() => setSelectedTab("all")}
-                >
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      selectedTab === "all" && styles.tabButtonTextActive,
-                    ]}
-                  >
-                    All
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.tabButton,
-                    selectedTab === "published" && styles.tabButtonActive,
-                  ]}
-                  onPress={() => setSelectedTab("published")}
-                >
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      selectedTab === "published" && styles.tabButtonTextActive,
-                    ]}
-                  >
-                    Published
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.tabButton,
-                    selectedTab === "unpublished" && styles.tabButtonActive,
-                  ]}
-                  onPress={() => setSelectedTab("unpublished")}
-                >
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      selectedTab === "unpublished" &&
-                        styles.tabButtonTextActive,
-                    ]}
-                  >
-                    Unpublished
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {isVerified === "approved" && (
+            <View style={styles.tabSwitcherContainer}>
               <TouchableOpacity
                 style={[
                   styles.tabButton,
-                  {
-                    backgroundColor: "#66bb6a",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  },
+                  selectedTab === "published" && styles.tabButtonActive,
                 ]}
-                onPress={() => setIsVerified("pending")}
+                onPress={() => setSelectedTab("published")}
               >
-                <Text style={[styles.tabButtonText]}>
-                  {"Unverified Courses"}
+                <Text
+                  style={[
+                    styles.tabButtonText,
+                    selectedTab === "published" && styles.tabButtonTextActive,
+                  ]}
+                >
+                  Published
                 </Text>
               </TouchableOpacity>
-            )}
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  selectedTab === "unpublished" && styles.tabButtonActive,
+                ]}
+                onPress={() => setSelectedTab("unpublished")}
+              >
+                <Text
+                  style={[
+                    styles.tabButtonText,
+                    selectedTab === "unpublished" &&
+                      styles.tabButtonTextActive,
+                  ]}
+                >
+                  Unpublished
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.searchContainer}>
@@ -698,27 +670,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 16,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    // paddingVertical:3,
-    paddingHorizontal: 8,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    alignSelf: "flex-start",
-  },
-  backButtonIcon:{
-    marginBottom: 9
-  },
-  backButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#000",
-    marginLeft: 8,
   },
   dropdownContainer: {
     marginBottom: 16,
