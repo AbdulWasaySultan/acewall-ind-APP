@@ -1,11 +1,16 @@
-import axios from 'axios';
-import { Platform } from 'react-native';
-import { getStoredBaseUrl, setStoredUserData, setUserToken } from '../utils/storage';
+import axios from "axios";
+import { Platform } from "react-native";
+import {
+  getStoredBaseUrl,
+  setStoredUserData,
+  setUserToken,
+} from "../utils/storage";
+import { getApiInstance } from "./apiInstance";
 
 // Default API URL for school search
 // Use hosted API to avoid localhost/ATS issues on iOS
 const getLocalBaseUrl = () => {
-  return 'https://admin-panel-server-lac.vercel.app/api';
+  return "https://admin-panel-server-lac.vercel.app/api";
 };
 
 // Create axios instance for local API (school search)
@@ -13,24 +18,24 @@ const localApi = axios.create({
   baseURL: getLocalBaseUrl(),
   timeout: 10000,
   headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  }
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  },
 });
 
 // Create axios instance for auth API
 const createAuthApiInstance = async () => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No auth base URL selected');
+    throw new Error("No auth base URL selected");
   }
   return axios.create({
     baseURL: baseUrl,
     timeout: 10000,
     headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    }
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -38,15 +43,15 @@ const createAuthApiInstance = async () => {
 const createSchoolApiInstance = async () => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No school base URL selected');
+    throw new Error("No school base URL selected");
   }
   return axios.create({
     baseURL: baseUrl,
     timeout: 10000,
     headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    }
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -61,21 +66,21 @@ export interface School {
 // Local API call for searching schools
 export const searchSchools = async (query: string): Promise<School[]> => {
   try {
-    const response = await localApi.get('/schools/search', {
-      params: { name: query }
+    const response = await localApi.get("/api/schools/search", {
+      params: { name: query },
     });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Search error details:', {
+      console.error("Search error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
         config: {
           url: error.config?.url,
           method: error.config?.method,
-          params: error.config?.params
-        }
+          params: error.config?.params,
+        },
       });
     }
     throw error;
@@ -87,35 +92,37 @@ export const login = async (email: string, password: string) => {
   try {
     const baseUrl = await getStoredBaseUrl();
     if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
+      throw new Error("No base URL configured. Please select a school first.");
     }
 
     const authApi = axios.create({
       baseURL: baseUrl,
       timeout: 10000,
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
     });
-    console.log('Login API URL:', authApi.defaults.baseURL + '/api/auth/login');
-    const response = await authApi.post('/api/auth/login', { email, password });
-    console.log(response.data)
+    console.log("Login API URL:", authApi.defaults.baseURL + "/api/auth/login");
+    const response = await authApi.post("/api/auth/login", { email, password });
+    console.log(response.data);
     if (response.data && response.data.token) {
       await setUserToken(response.data.token);
     }
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Login error details:', {
+      console.error("Login error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
 
       if (error.response?.status === 404) {
-        throw new Error('Authentication service not found. Please check your school configuration.');
+        throw new Error(
+          "Authentication service not found. Please check your school configuration."
+        );
       }
     }
     throw error;
@@ -126,43 +133,51 @@ export const signup = async (userData: any) => {
   try {
     const baseUrl = await getStoredBaseUrl();
     if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
+      throw new Error("No base URL configured. Please select a school first.");
     }
 
-    console.log('Using base URL:', baseUrl);
+    console.log("Using base URL:", baseUrl);
 
     const authApi = axios.create({
       baseURL: baseUrl,
       timeout: 10000,
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
     });
-    console.log('Login API URL:', authApi.defaults.baseURL + '/api/auth/register');
-    const response = await authApi.post('/api/auth/register', userData);
+    console.log(
+      "Login API URL:",
+      authApi.defaults.baseURL + "/api/auth/register"
+    );
+    const response = await authApi.post("/api/auth/register", userData);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Signup error details:', {
+      console.error("Signup error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
 
       if (error.response?.status === 404) {
-        throw new Error('Authentication service not found. Please check your school configuration.');
+        throw new Error(
+          "Authentication service not found. Please check your school configuration."
+        );
       }
     }
     throw error;
   }
 };
 
-export const verifyOtpAndSignup = async (data: { email: string; otp: string }) => {
+export const verifyOtpAndSignup = async (data: {
+  email: string;
+  otp: string;
+}) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
     const response = await axios.post(`${baseUrl}/api/auth/verifyOTP`, data);
@@ -175,7 +190,7 @@ export const verifyOtpAndSignup = async (data: { email: string; otp: string }) =
 export const resendOTP = async (data: { email: string }) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
     const response = await axios.post(`${baseUrl}/api/auth/resendOTP`, data);
@@ -189,30 +204,30 @@ export const checkAuth = async () => {
   try {
     const baseUrl = await getStoredBaseUrl();
     if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
+      throw new Error("No base URL configured. Please select a school first.");
     }
 
     const authApi = axios.create({
       baseURL: baseUrl,
       timeout: 10000,
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
     });
-    const response = await authApi.get('/api/auth/checkAuth');
-    console.log(response.data)
+    const response = await authApi.get("/api/auth/checkAuth");
+    console.log(response.data);
     if (response.data && response.data.user) {
       await setStoredUserData(response.data.user);
     }
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Check auth error details:', {
+      console.error("Check auth error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
     }
     throw error;
@@ -225,7 +240,7 @@ export interface UpdateUserProfileData {
   lastName: string;
   Bio: string;
   pronoun?: string | null;
-  gender?: string | null
+  gender?: string | null;
   email: string;
   phone: string;
   homeAddressLine1: string;
@@ -245,31 +260,37 @@ export const updateUserProfile = async (userData: UpdateUserProfileData) => {
   try {
     const baseUrl = await getStoredBaseUrl();
     if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
+      throw new Error("No base URL configured. Please select a school first.");
     }
 
-    console.log('Update profile API URL:', baseUrl + '/api/auth/updateuser');
-    console.log('Update profile data:', userData);
+    console.log("Update profile API URL:", baseUrl + "/api/auth/updateuser");
+    console.log("Update profile data:", userData);
 
-    const response = await axios.put(`${baseUrl}/api/auth/updateuser`, userData, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
+    const response = await axios.put(
+      `${baseUrl}/api/auth/updateuser`,
+      userData,
+      {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
     return response.data;
   } catch (error) {
-    console.log(error)
+    console.log(error);
     if (axios.isAxiosError(error)) {
-      console.error('Update profile error details:', {
+      console.error("Update profile error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
 
       if (error.response?.status === 404) {
-        throw new Error('Profile update service not found. Please check your school configuration.');
+        throw new Error(
+          "Profile update service not found. Please check your school configuration."
+        );
       }
     }
     throw error;
@@ -278,29 +299,17 @@ export const updateUserProfile = async (userData: UpdateUserProfileData) => {
 
 export const getUserInfo = async () => {
   try {
-    const baseUrl = await getStoredBaseUrl();
-    if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
-    }
-    const authApi = axios.create({
-      baseURL: baseUrl,
-      timeout: 10000,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
-    });
-    console.log('Get user info API URL:', authApi.defaults.baseURL + '/api/auth/getUserInfo');
-    console.log('Base URL:', baseUrl);
-    const response = await authApi.get('/api/auth/getUserInfo');
+    const api = await getApiInstance();
+    const response = await api.get("/api/auth/getUserInfo");
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Get user info error details:', {
+      console.error("Get user info error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
     }
     throw error;
@@ -311,42 +320,50 @@ export const uploadProfileImage = async (imageUri: string) => {
   try {
     const baseUrl = await getStoredBaseUrl();
     if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
+      throw new Error("No base URL configured. Please select a school first.");
     }
 
     const formData = new FormData();
     // Extract filename and type from uri
-    const uriParts = imageUri.split('/');
+    const uriParts = imageUri.split("/");
     const fileName = uriParts[uriParts.length - 1];
-    const fileType = fileName.split('.').pop();
-    const mimeType = fileType ? `image/${fileType === 'jpg' ? 'jpeg' : fileType}` : 'image/jpeg';
+    const fileType = fileName.split(".").pop();
+    const mimeType = fileType
+      ? `image/${fileType === "jpg" ? "jpeg" : fileType}`
+      : "image/jpeg";
 
-    formData.append('profileImg', {
+    formData.append("profileImg", {
       uri: imageUri,
       name: fileName,
       type: mimeType,
     } as any);
 
-    const response = await axios.put(`${baseUrl}/api/auth/updateProfileImg`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Accept': 'application/json',
-      },
-    });
+    const response = await axios.put(
+      `${baseUrl}/api/auth/updateProfileImg`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Accept: "application/json",
+        },
+      }
+    );
 
     // After upload, get updated user info
     const updatedUserInfo = await getUserInfo();
     return updatedUserInfo;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Upload profile image error details:', {
+      console.error("Upload profile image error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
       if (error.response?.status === 404) {
-        throw new Error('Profile image upload service not found. Please check your school configuration.');
+        throw new Error(
+          "Profile image upload service not found. Please check your school configuration."
+        );
       }
     }
     throw error;
@@ -356,10 +373,12 @@ export const uploadProfileImage = async (imageUri: string) => {
 export const forgotPassword = async (email: string) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/forgotPassword`, { email });
+    const response = await axios.post(`${baseUrl}/api/auth/forgotPassword`, {
+      email,
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -369,10 +388,13 @@ export const forgotPassword = async (email: string) => {
 export const verifyForgotPassOTP = async (email: string, otp: string) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/verifyForgotPassOTP`, { email, otp });
+    const response = await axios.post(
+      `${baseUrl}/api/auth/verifyForgotPassOTP`,
+      { email, otp }
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -382,10 +404,13 @@ export const verifyForgotPassOTP = async (email: string, otp: string) => {
 export const resetPassword = async (email: string, newPassword: string) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
-    const response = await axios.post(`${baseUrl}/api/auth/resetPassword`, { email, newPassword });
+    const response = await axios.post(`${baseUrl}/api/auth/resetPassword`, {
+      email,
+      newPassword,
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -393,16 +418,20 @@ export const resetPassword = async (email: string, newPassword: string) => {
 };
 
 // Update Password with OTP
-export const updatePasswordOTP = async (oldPassword: string, newPassword: string, confirmPassword: string) => {
+export const updatePasswordOTP = async (
+  oldPassword: string,
+  newPassword: string,
+  confirmPassword: string
+) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
     const response = await axios.post(`${baseUrl}/api/auth/updatePasswordOTP`, {
       oldPassword,
       newPassword,
-      confirmPassword
+      confirmPassword,
     });
     return response.data;
   } catch (error) {
@@ -414,11 +443,11 @@ export const updatePasswordOTP = async (oldPassword: string, newPassword: string
 export const updateEmailOTP = async (newEmail: string) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
     const response = await axios.post(`${baseUrl}/api/auth/updateEmailOTP`, {
-      newEmail
+      newEmail,
     });
     return response.data;
   } catch (error) {
@@ -430,11 +459,11 @@ export const updateEmailOTP = async (newEmail: string) => {
 export const updatePhoneOTP = async (newPhone: string) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
     const response = await axios.post(`${baseUrl}/api/auth/updatePhoneOTP`, {
-      newPhone
+      newPhone,
     });
     return response.data;
   } catch (error) {
@@ -446,12 +475,12 @@ export const updatePhoneOTP = async (newPhone: string) => {
 export const updateEmail = async (email: string, otp: string) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
     const response = await axios.put(`${baseUrl}/api/auth/updateEmail`, {
       email,
-      otp
+      otp,
     });
     return response.data;
   } catch (error) {
@@ -460,17 +489,22 @@ export const updateEmail = async (email: string, otp: string) => {
 };
 
 // Verify OTP and update Password
-export const updatePassword = async (oldPassword: string, newPassword: string, confirmPassword: string, otp: string) => {
+export const updatePassword = async (
+  oldPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+  otp: string
+) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
     const response = await axios.put(`${baseUrl}/api/auth/updatePassword`, {
       oldPassword,
       newPassword,
       confirmPassword,
-      otp
+      otp,
     });
     return response.data;
   } catch (error) {
@@ -482,12 +516,12 @@ export const updatePassword = async (oldPassword: string, newPassword: string, c
 export const updatePhone = async (newPhone: string, otp: string) => {
   const baseUrl = await getStoredBaseUrl();
   if (!baseUrl) {
-    throw new Error('No base URL configured. Please select a school first.');
+    throw new Error("No base URL configured. Please select a school first.");
   }
   try {
     const response = await axios.put(`${baseUrl}/api/auth/updatePhone`, {
       newPhone,
-      otp
+      otp,
     });
     return response.data;
   } catch (error) {
@@ -496,41 +530,54 @@ export const updatePhone = async (newPhone: string, otp: string) => {
 };
 
 // Upload Document
-export const uploadDocument = async (fileUri: string, fileName: string, fileType: string, category: string) => {
+export const uploadDocument = async (
+  fileUri: string,
+  fileName: string,
+  fileType: string,
+  category: string
+) => {
   try {
     const baseUrl = await getStoredBaseUrl();
     if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
+      throw new Error("No base URL configured. Please select a school first.");
     }
 
     const formData = new FormData();
-    formData.append('document', {
+    formData.append("document", {
       uri: fileUri,
       name: fileName,
-      type: fileType || 'application/pdf',
+      type: fileType || "application/pdf",
     } as any);
-    formData.append('category', category);
+    formData.append("category", category);
 
-    const response = await axios.post(`${baseUrl}/api/auth/uploadDocument`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Accept': 'application/json',
-      },
-    });
+    const response = await axios.post(
+      `${baseUrl}/api/auth/uploadDocument`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Accept: "application/json",
+        },
+      }
+    );
 
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Upload document error details:', {
+      console.error("Upload document error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
       if (error.response?.status === 404) {
-        throw new Error('Document upload service not found. Please check your school configuration.');
+        throw new Error(
+          "Document upload service not found. Please check your school configuration."
+        );
       }
-      throw new Error(error.response?.data?.message || 'Failed to upload document');
+      throw new Error(
+        error.response?.data?.message || "Failed to upload document"
+      );
     }
     throw error;
   }
@@ -541,29 +588,36 @@ export const deleteDocument = async (documentId: string, category: string) => {
   try {
     const baseUrl = await getStoredBaseUrl();
     if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
+      throw new Error("No base URL configured. Please select a school first.");
     }
 
-    const response = await axios.delete(`${baseUrl}/api/auth/teacher/document/${documentId}?category=${category}`, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
+    const response = await axios.delete(
+      `${baseUrl}/api/auth/teacher/document/${documentId}?category=${category}`,
+      {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
 
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Delete document error details:', {
+      console.error("Delete document error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
       if (error.response?.status === 404) {
-        throw new Error('Document delete service not found. Please check your school configuration.');
+        throw new Error(
+          "Document delete service not found. Please check your school configuration."
+        );
       }
-      throw new Error(error.response?.data?.message || 'Failed to delete document');
+      throw new Error(
+        error.response?.data?.message || "Failed to delete document"
+      );
     }
     throw error;
   }
@@ -574,29 +628,36 @@ export const deleteUserAccount = async () => {
   try {
     const baseUrl = await getStoredBaseUrl();
     if (!baseUrl) {
-      throw new Error('No base URL configured. Please select a school first.');
+      throw new Error("No base URL configured. Please select a school first.");
     }
 
-    const response = await axios.delete(`${baseUrl}/api/auth/deleteUserwithData`, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
+    const response = await axios.delete(
+      `${baseUrl}/api/auth/deleteUserwithData`,
+      {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
 
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Delete user account error details:', {
+      console.error("Delete user account error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
       });
       if (error.response?.status === 404) {
-        throw new Error('User delete service not found. Please check your school configuration.');
+        throw new Error(
+          "User delete service not found. Please check your school configuration."
+        );
       }
-      throw new Error(error.response?.data?.message || 'Failed to delete user account');
+      throw new Error(
+        error.response?.data?.message || "Failed to delete user account"
+      );
     }
     throw error;
   }

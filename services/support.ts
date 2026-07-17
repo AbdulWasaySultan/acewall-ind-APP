@@ -52,7 +52,7 @@ export const sendSupportMessage = async (supportData: SupportData) => {
     console.log("Sending support message:", requestData);
 
     // Send to the correct endpoint
-    const response = await api.post("/support/send", requestData);
+    const response = await api.post("/api/support/send", requestData);
 
     console.log("Support message sent successfully:", response.data);
     return response.data;

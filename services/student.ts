@@ -76,7 +76,7 @@ const handleApiError = (error: any, defaultMessage: string) => {
 export const getAllStudentsWithCourses = async (): Promise<Student[]> => {
   try {
     const api = await getApiInstance(); // Interceptor already handles auth
-    const response = await api.get("/course/getallCoursesforTeacher");
+    const response = await api.get("/api/course/getallCoursesforTeacher");
 
     // Validate response
     if (!response.data?.students) {
@@ -97,7 +97,7 @@ export const getCourseGradebook = async (
   try {
     const api = await getApiInstance(); // Interceptor already handles auth
     const response = await api.get(
-      `/gradebook/getGradebook/${studentId}/${courseId}`
+      `/api/gradebook/getGradebook/${studentId}/${courseId}`
     );
 
     // Validate response

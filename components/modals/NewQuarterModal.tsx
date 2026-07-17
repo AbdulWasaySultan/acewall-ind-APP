@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
+  Animated,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -27,6 +28,15 @@ interface NewQuarterModalProps {
   setQuarterEndDate: (date: string) => void;
 }
 
+// Strips time so we compare calendar days, not exact timestamps
+const isBeforeToday = (date: Date) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const compareDate = new Date(date);
+  compareDate.setHours(0, 0, 0, 0);
+  return compareDate.getTime() < today.getTime();
+};
+
 const NewQuarterModal: React.FC<NewQuarterModalProps> = ({
   visible,
   onClose,
@@ -44,11 +54,91 @@ const NewQuarterModal: React.FC<NewQuarterModalProps> = ({
   quarterEndDate,
   setQuarterEndDate,
 }) => {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setToastMessage(null));
+  };
+
   const handleClose = () => {
     setQuarterTitle('');
     setQuarterStartDate('');
     setQuarterEndDate('');
     onClose();
+  };
+
+  const semesterStart = selectedSemesterForQuarter
+    ? parseDateFromInput(selectedSemesterForQuarter.startDate)
+    : null;
+  const semesterEnd = selectedSemesterForQuarter
+    ? parseDateFromInput(selectedSemesterForQuarter.endDate)
+    : null;
+
+  const handleStartDateChange = (event: any, date?: Date) => {
+    setShowQuarterDatePicker(null);
+    if (!date) return;
+
+    if (isBeforeToday(date)) {
+      showToast("Start date can't be in the past");
+      return;
+    }
+
+    if (semesterStart && date < semesterStart) {
+      showToast('Start date must be within the semester duration');
+      return;
+    }
+    if (semesterEnd && date > semesterEnd) {
+      showToast('Start date must be within the semester duration');
+      return;
+    }
+
+    setQuarterStartDate(formatDateForInput(date.toISOString()));
+
+    // If an end date was already picked and is now invalid, clear it
+    if (quarterEndDate && date > parseDateFromInput(quarterEndDate)) {
+      setQuarterEndDate('');
+      showToast('End date was cleared — it was before the new start date');
+    }
+  };
+
+  const handleEndDateChange = (event: any, date?: Date) => {
+    setShowQuarterDatePicker(null);
+    if (!date) return;
+
+    if (isBeforeToday(date)) {
+      showToast("End date can't be in the past");
+      return;
+    }
+
+    if (quarterStartDate && date < parseDateFromInput(quarterStartDate)) {
+      showToast("End date can't be before the start date");
+      return;
+    }
+
+    if (semesterEnd && date > semesterEnd) {
+      showToast('End date must be within the semester duration');
+      return;
+    }
+    if (semesterStart && date < semesterStart) {
+      showToast('End date must be within the semester duration');
+      return;
+    }
+
+    setQuarterEndDate(formatDateForInput(date.toISOString()));
   };
 
   return (
@@ -95,12 +185,13 @@ const NewQuarterModal: React.FC<NewQuarterModalProps> = ({
               }
               mode="date"
               display="default"
-              onChange={(event, date) => {
-                setShowQuarterDatePicker(null);
-                if (date) {
-                  setQuarterStartDate(formatDateForInput(date.toISOString()));
-                }
-              }}
+              minimumDate={
+                semesterStart && semesterStart > new Date()
+                  ? semesterStart
+                  : new Date()
+              }
+              maximumDate={semesterEnd || undefined}
+              onChange={handleStartDateChange}
             />
           )}
           <TouchableOpacity
@@ -126,12 +217,13 @@ const NewQuarterModal: React.FC<NewQuarterModalProps> = ({
               }
               mode="date"
               display="default"
-              onChange={(event, date) => {
-                setShowQuarterDatePicker(null);
-                if (date) {
-                  setQuarterEndDate(formatDateForInput(date.toISOString()));
-                }
-              }}
+              minimumDate={
+                quarterStartDate
+                  ? parseDateFromInput(quarterStartDate)
+                  : semesterStart || new Date()
+              }
+              maximumDate={semesterEnd || undefined}
+              onChange={handleEndDateChange}
             />
           )}
           <View style={styles.semesterModalContainer}>
@@ -149,6 +241,12 @@ const NewQuarterModal: React.FC<NewQuarterModalProps> = ({
             </TouchableOpacity>
           </View>
         </View>
+
+        {toastMessage && (
+          <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+            <Text style={styles.toastText}>{toastMessage}</Text>
+          </Animated.View>
+        )}
       </View>
     </Modal>
   );
@@ -213,6 +311,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    maxWidth: '90%',
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 14,
   },
 });
 

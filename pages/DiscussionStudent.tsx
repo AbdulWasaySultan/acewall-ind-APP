@@ -1,7 +1,6 @@
+"use client";
 
-"use client"
-
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,9 +12,14 @@ import {
   TextInput,
   Keyboard,
   Linking,
-} from "react-native"
-import { useRoute, useNavigation, type RouteProp } from "@react-navigation/native"
-import SimpleIcon from "../components/SimpleIcon"
+  Image,
+} from "react-native";
+import {
+  useRoute,
+  useNavigation,
+  type RouteProp,
+} from "@react-navigation/native";
+import SimpleIcon from "../components/SimpleIcon";
 import {
   getStudentDiscussion,
   getCommentForDiscussionStudent,
@@ -24,123 +28,124 @@ import {
   getReplyCount,
   sendReply,
   getReplies,
-} from "../services/course"
+} from "../services/course";
 
 interface DiscussionDetailParams {
-  discussionId: string
+  discussionId: string;
 }
 
 interface Discussion {
-  _id: string
+  _id: string;
   dueDate: {
-    date: string
-    time: string
-  }
+    date: string;
+    time: string;
+  };
   course: {
-    _id: string
-    courseTitle: string
+    _id: string;
+    courseTitle: string;
     thumbnail: {
-      url: string
-      publicId: string
-      filename: string
-    }
-  }
-  totalMarks: number
-  topic: string
-  description: string
-  files: DiscussionFile[]
-  category: string
-  semester: string
-  quarter: string
+      url: string;
+      publicId: string;
+      filename: string;
+    };
+  };
+  totalMarks: number;
+  topic: string;
+  description: string;
+  files: DiscussionFile[];
+  category: string;
+  semester: string;
+  quarter: string;
   chapter: {
-    _id: string
-    title: string
-  }
-  type: string
+    _id: string;
+    title: string;
+  };
+  type: string;
   createdby: {
-    _id: string
-    firstName: string
-    middleName: string
-    lastName: string
-  }
-  createdAt: string
-  updatedAt: string
+    _id: string;
+    firstName: string;
+    middleName: string;
+    lastName: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface DiscussionFile {
-  _id: string
-  url: string
-  type: string
-  filename: string
-  publicId: string
+  _id: string;
+  url: string;
+  type: string;
+  filename: string;
+  publicId: string;
 }
 
 interface Comment {
-  _id: string
-  text: string
-  discussion: string
-  role: string
+  _id: string;
+  text: string;
+  discussion: string;
+  role: string;
   createdby: {
-    _id: string
-    firstName: string
-    middleName?: string
-    lastName: string
-    role: string
-  }
-  marksObtained: number
-  isGraded: boolean
-  createdAt: string
-  updatedAt: string
-  replyCount?: number
-  showReplies?: boolean
-  replies?: Reply[]
-  repliesLoading?: boolean
-  showReplyInput?: boolean
-  replyText?: string
-  sendingReply?: boolean
+    _id: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    role: string;
+  };
+  marksObtained: number;
+  isGraded: boolean;
+  createdAt: string;
+  updatedAt: string;
+  replyCount?: number;
+  showReplies?: boolean;
+  replies?: Reply[];
+  repliesLoading?: boolean;
+  showReplyInput?: boolean;
+  replyText?: string;
+  sendingReply?: boolean;
 }
 
 interface Reply {
-  _id: string
-  text: string
-  role: string
-  comment: string
+  _id: string;
+  text: string;
+  role: string;
+  comment: string;
   createdby: {
-    _id: string
-    firstName: string
-    lastName: string
-  }
-  createdAt: string
-  updatedAt: string
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface CommentsResponse {
-  discussionComments: Comment[]
-  totalPages: number
-  currentPage: number
+  discussionComments: Comment[];
+  totalPages: number;
+  currentPage: number;
 }
 
 const DiscussionStudent = () => {
-  const route = useRoute<RouteProp<Record<string, DiscussionDetailParams>, string>>()
-  const navigation = useNavigation()
-  const { discussionId } = route.params
+  const route =
+    useRoute<RouteProp<Record<string, DiscussionDetailParams>, string>>();
+  const navigation = useNavigation();
+  const { discussionId } = route.params;
 
-  const [discussion, setDiscussion] = useState<Discussion | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [commentsLoading, setCommentsLoading] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(0)
-  const [commentText, setCommentText] = useState("")
-  const [sendingComment, setSendingComment] = useState(false)
-  const [hasCommented, setHasCommented] = useState(false)
-  const [checkingCommented, setCheckingCommented] = useState(false)
+  const [discussion, setDiscussion] = useState<Discussion | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [commentText, setCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const [hasCommented, setHasCommented] = useState(false);
+  const [checkingCommented, setCheckingCommented] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
       setKeyboardHeight(20);
     });
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
       setKeyboardHeight(0);
     });
 
@@ -150,34 +155,40 @@ const DiscussionStudent = () => {
     };
   }, []);
   useEffect(() => {
-    fetchDiscussionDetails()
-    fetchComments(1)
-    checkIfCommented()
-  }, [discussionId, navigation])
+    fetchDiscussionDetails();
+    fetchComments(1);
+    checkIfCommented();
+  }, [discussionId, navigation]);
 
   const fetchDiscussionDetails = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await getStudentDiscussion(discussionId)
+      const response = await getStudentDiscussion(discussionId);
+      console.log("Discussion:", JSON.stringify(response.discussion, null, 2));
+      console.log(response.discussion.files);
       if (response?.discussion) {
-        setDiscussion(response.discussion)
+        setDiscussion(response.discussion);
       }
     } catch (error) {
-      console.error("Error fetching discussion:", error)
+      console.error("Error fetching discussion:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const fetchComments = async (page: number) => {
-    setCommentsLoading(true)
+    setCommentsLoading(true);
     try {
-      const response: CommentsResponse = await getCommentForDiscussionStudent(discussionId, page, 5)
+      const response: CommentsResponse = await getCommentForDiscussionStudent(
+        discussionId,
+        page,
+        5
+      );
       if (response?.discussionComments) {
         const commentsWithReplyCounts = await Promise.all(
           response.discussionComments.map(async (comment) => {
             try {
-              const replyCountResponse = await getReplyCount(comment._id)
+              const replyCountResponse = await getReplyCount(comment._id);
               return {
                 ...comment,
                 replyCount: replyCountResponse?.replyCount || 0,
@@ -187,7 +198,7 @@ const DiscussionStudent = () => {
                 showReplyInput: false,
                 replyText: "",
                 sendingReply: false,
-              }
+              };
             } catch (error) {
               return {
                 ...comment,
@@ -198,181 +209,221 @@ const DiscussionStudent = () => {
                 showReplyInput: false,
                 replyText: "",
                 sendingReply: false,
-              }
+              };
             }
-          }),
-        )
+          })
+        );
 
         if (page === 1) {
-          setComments(commentsWithReplyCounts)
+          setComments(commentsWithReplyCounts);
         } else {
-          setComments((prev) => [...prev, ...commentsWithReplyCounts])
+          setComments((prev) => [...prev, ...commentsWithReplyCounts]);
         }
-        setTotalPages(response.totalPages)
-        setCurrentPage(response.currentPage)
+        setTotalPages(response.totalPages);
+        setCurrentPage(response.currentPage);
       }
     } catch (error) {
-      console.error("Error fetching comments:", error)
+      console.error("Error fetching comments:", error);
     } finally {
-      setCommentsLoading(false)
+      setCommentsLoading(false);
     }
-  }
+  };
 
   const handleLoadMoreComments = () => {
     if (currentPage < totalPages && !commentsLoading) {
-      fetchComments(currentPage + 1)
+      fetchComments(currentPage + 1);
     }
-  }
+  };
 
   const handleSendComment = async () => {
-    if (!commentText.trim()) return
+    if (!commentText.trim()) return;
 
-    setSendingComment(true)
+    setSendingComment(true);
     try {
-      await sendComment(discussionId, commentText)
-      setCommentText("")
-      fetchComments(1)
-      checkIfCommented()
+      await sendComment(discussionId, commentText);
+      setCommentText("");
+      fetchComments(1);
+      checkIfCommented();
     } catch (error) {
-      console.error("Error sending comment:", error)
+      console.error("Error sending comment:", error);
     } finally {
-      setSendingComment(false)
+      setSendingComment(false);
     }
-  }
+  };
 
   const checkIfCommented = async () => {
-    setCheckingCommented(true)
+    setCheckingCommented(true);
     try {
-      const response = await isCommentedInDiscussion(discussionId)
-      setHasCommented(response?.commented || false)
+      const response = await isCommentedInDiscussion(discussionId);
+      setHasCommented(response?.commented || false);
     } catch (error) {
-      console.error("Error checking if commented:", error)
+      console.error("Error checking if commented:", error);
     } finally {
-      setCheckingCommented(false)
+      setCheckingCommented(false);
     }
-  }
+  };
 
   const toggleReplyInput = (commentId: string) => {
     setComments((prev) =>
       prev.map((comment) =>
-        comment._id === commentId ? { ...comment, showReplyInput: !comment.showReplyInput } : comment,
-      ),
-    )
-  }
+        comment._id === commentId
+          ? { ...comment, showReplyInput: !comment.showReplyInput }
+          : comment
+      )
+    );
+  };
 
   const updateReplyText = (commentId: string, text: string) => {
     setComments((prev) =>
-      prev.map((comment) => (comment._id === commentId ? { ...comment, replyText: text } : comment)),
-    )
-  }
+      prev.map((comment) =>
+        comment._id === commentId ? { ...comment, replyText: text } : comment
+      )
+    );
+  };
 
   const handleSendReply = async (commentId: string) => {
-    const comment = comments.find((c) => c._id === commentId)
-    if (!comment?.replyText?.trim()) return
+    const comment = comments.find((c) => c._id === commentId);
+    if (!comment?.replyText?.trim()) return;
 
-    setComments((prev) => prev.map((c) => (c._id === commentId ? { ...c, sendingReply: true } : c)))
+    setComments((prev) =>
+      prev.map((c) => (c._id === commentId ? { ...c, sendingReply: true } : c))
+    );
 
     try {
-      await sendReply(commentId, comment.replyText)
+      await sendReply(commentId, comment.replyText);
       setComments((prev) =>
         prev.map((c) =>
-          c._id === commentId ? { ...c, replyText: "", showReplyInput: false, sendingReply: false } : c,
-        ),
-      )
+          c._id === commentId
+            ? {
+                ...c,
+                replyText: "",
+                showReplyInput: false,
+                sendingReply: false,
+              }
+            : c
+        )
+      );
       if (comment.showReplies) {
-        fetchRepliesForComment(commentId)
+        fetchRepliesForComment(commentId);
       }
-      const replyCountResponse = await getReplyCount(commentId)
+      const replyCountResponse = await getReplyCount(commentId);
       setComments((prev) =>
-        prev.map((c) => (c._id === commentId ? { ...c, replyCount: replyCountResponse?.replyCount || 0 } : c)),
-      )
+        prev.map((c) =>
+          c._id === commentId
+            ? { ...c, replyCount: replyCountResponse?.replyCount || 0 }
+            : c
+        )
+      );
     } catch (error) {
-      console.error("Error sending reply:", error)
-      setComments((prev) => prev.map((c) => (c._id === commentId ? { ...c, sendingReply: false } : c)))
+      console.error("Error sending reply:", error);
+      setComments((prev) =>
+        prev.map((c) =>
+          c._id === commentId ? { ...c, sendingReply: false } : c
+        )
+      );
     }
-  }
+  };
 
   const fetchRepliesForComment = async (commentId: string) => {
     setComments((prev) =>
-      prev.map((comment) => (comment._id === commentId ? { ...comment, repliesLoading: true } : comment)),
-    )
+      prev.map((comment) =>
+        comment._id === commentId
+          ? { ...comment, repliesLoading: true }
+          : comment
+      )
+    );
 
     try {
-      const response = await getReplies(commentId, 1, 5)
+      const response = await getReplies(commentId, 1, 5);
       setComments((prev) =>
         prev.map((comment) =>
           comment._id === commentId
             ? {
-              ...comment,
-              replies: response?.replies || [],
-              repliesLoading: false,
-            }
-            : comment,
-        ),
-      )
+                ...comment,
+                replies: response?.replies || [],
+                repliesLoading: false,
+              }
+            : comment
+        )
+      );
     } catch (error) {
-      console.error("Error fetching replies:", error)
+      console.error("Error fetching replies:", error);
       setComments((prev) =>
-        prev.map((comment) => (comment._id === commentId ? { ...comment, repliesLoading: false } : comment)),
-      )
+        prev.map((comment) =>
+          comment._id === commentId
+            ? { ...comment, repliesLoading: false }
+            : comment
+        )
+      );
     }
-  }
+  };
 
   const toggleShowReplies = async (commentId: string) => {
-    const comment = comments.find((c) => c._id === commentId)
-    if (!comment) return
+    const comment = comments.find((c) => c._id === commentId);
+    if (!comment) return;
 
-    if (!comment.showReplies && (!comment.replies || comment.replies.length === 0)) {
-      await fetchRepliesForComment(commentId)
+    if (
+      !comment.showReplies &&
+      (!comment.replies || comment.replies.length === 0)
+    ) {
+      await fetchRepliesForComment(commentId);
     }
 
-    setComments((prev) => prev.map((c) => (c._id === commentId ? { ...c, showReplies: !c.showReplies } : c)))
-  }
+    setComments((prev) =>
+      prev.map((c) =>
+        c._id === commentId ? { ...c, showReplies: !c.showReplies } : c
+      )
+    );
+  };
 
   const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (diffInSeconds < 60) {
-      return "less than a minute ago"
+      return "less than a minute ago";
     } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60)
-      return `${minutes} minute${minutes > 1 ? "s" : ""} ago`
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
     } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600)
-      return `${hours} hour${hours > 1 ? "s" : ""} ago`
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? "s" : ""} ago`;
     } else {
-      const days = Math.floor(diffInSeconds / 86400)
-      return `${days} day${days > 1 ? "s" : ""} ago`
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} day${days > 1 ? "s" : ""} ago`;
     }
-  }
+  };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes("image")) return "image"
-    if (fileType.includes("pdf")) return "description"
-    if (fileType.includes("video")) return "videocam"
-    return "attach-file"
-  }
+    if (fileType.includes("image")) return "image";
+    if (fileType.includes("pdf")) return "description";
+    if (fileType.includes("video")) return "videocam";
+    return "attach-file";
+  };
 
   const getFileIconColor = (fileType: string) => {
-    if (fileType.includes("image")) return "#6366f1"
-    if (fileType.includes("pdf")) return "#3b82f6"
-    if (fileType.includes("video")) return "#ef4444"
-    return "#666"
-  }
+    if (fileType.includes("image")) return "#6366f1";
+    if (fileType.includes("pdf")) return "#3b82f6";
+    if (fileType.includes("video")) return "#ef4444";
+    return "#666";
+  };
 
   const renderComment = ({ item }: { item: Comment }) => (
     <View style={styles.commentItem}>
       <View style={styles.commentAvatar}>
-        <Text style={styles.avatarText}>{item.createdby.firstName.charAt(0).toUpperCase()}</Text>
+        <Text style={styles.avatarText}>
+          {item.createdby.firstName.charAt(0).toUpperCase()}
+        </Text>
       </View>
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
           <Text style={styles.commentAuthor}>
             {item.createdby.firstName} {item.createdby.lastName}
           </Text>
-          <Text style={styles.commentDate}>{formatRelativeTime(item.createdAt)}</Text>
+          <Text style={styles.commentDate}>
+            {formatRelativeTime(item.createdAt)}
+          </Text>
         </View>
         <Text style={styles.commentText}>{item.text}</Text>
 
@@ -384,12 +435,16 @@ const DiscussionStudent = () => {
           {item.replyCount! > 0 && (
             <TouchableOpacity onPress={() => toggleShowReplies(item._id)}>
               <Text style={styles.actionText}>
-                {item.showReplies ? "Hide replies" : `Show replies (${item.replyCount})`}
+                {item.showReplies
+                  ? "Hide replies"
+                  : `Show replies (${item.replyCount})`}
               </Text>
             </TouchableOpacity>
           )}
 
-          <Text style={styles.notGradedText}>{item.isGraded ? "Graded" : "Not Graded"}</Text>
+          <Text style={styles.notGradedText}>
+            {item.isGraded ? "Graded" : "Not Graded"}
+          </Text>
         </View>
 
         {item.showReplyInput && (
@@ -406,7 +461,10 @@ const DiscussionStudent = () => {
               multiline
             />
             <TouchableOpacity
-              style={[styles.replyButton, !item.replyText?.trim() && styles.replyButtonDisabled]}
+              style={[
+                styles.replyButton,
+                !item.replyText?.trim() && styles.replyButtonDisabled,
+              ]}
               onPress={() => handleSendReply(item._id)}
               disabled={!item.replyText?.trim() || item.sendingReply}
             >
@@ -416,7 +474,10 @@ const DiscussionStudent = () => {
                 <SimpleIcon name="send" size={16} color="#fff" />
               )}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelButton} onPress={() => toggleReplyInput(item._id)}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => toggleReplyInput(item._id)}
+            >
               <SimpleIcon name="delete" size={16} color="#ef4444" />
             </TouchableOpacity>
           </View>
@@ -425,20 +486,28 @@ const DiscussionStudent = () => {
         {item.showReplies && (
           <View style={styles.repliesContainer}>
             {item.repliesLoading ? (
-              <ActivityIndicator size="small" color="#10B144" style={styles.repliesLoading} />
+              <ActivityIndicator
+                size="small"
+                color="#10B144"
+                style={styles.repliesLoading}
+              />
             ) : (
               <>
                 {item.replies?.map((reply) => (
                   <View key={reply._id} style={styles.replyItem}>
                     <View style={styles.replyAvatar}>
-                      <Text style={styles.replyAvatarText}>{reply.createdby.firstName.charAt(0).toUpperCase()}</Text>
+                      <Text style={styles.replyAvatarText}>
+                        {reply.createdby.firstName.charAt(0).toUpperCase()}
+                      </Text>
                     </View>
                     <View style={styles.replyContent}>
                       <View style={styles.replyHeader}>
                         <Text style={styles.replyAuthor}>
                           {reply.createdby.firstName} {reply.createdby.lastName}
                         </Text>
-                        <Text style={styles.replyDate}>{formatRelativeTime(reply.createdAt)}</Text>
+                        <Text style={styles.replyDate}>
+                          {formatRelativeTime(reply.createdAt)}
+                        </Text>
                       </View>
                       <Text style={styles.replyText}>{reply.text}</Text>
                     </View>
@@ -450,14 +519,14 @@ const DiscussionStudent = () => {
         )}
       </View>
     </View>
-  )
+  );
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#10B144" />
       </View>
-    )
+    );
   }
 
   if (!discussion) {
@@ -465,19 +534,25 @@ const DiscussionStudent = () => {
       <View style={styles.loadingContainer}>
         <Text style={styles.errorText}>Discussion not found</Text>
       </View>
-    )
+    );
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <SimpleIcon name="arrow-back" size={24} color="#333" />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={{paddingBottom:keyboardHeight}} >
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: keyboardHeight }}
+      >
         <View style={styles.discussionBanner}>
           <Text style={styles.discussionBannerText}>Discussion</Text>
         </View>
@@ -503,13 +578,13 @@ const DiscussionStudent = () => {
 
                 <Text style={styles.infoLabel}>Course</Text>
               </View>
-              <Text style={styles.infoValue}>{discussion.course.courseTitle}</Text>
-
+              <Text style={styles.infoValue}>
+                {discussion.course.courseTitle}
+              </Text>
             </View>
 
             <View style={styles.infoColumn}>
               <View style={styles.row}>
-
                 <SimpleIcon name="book" size={16} />
 
                 <Text style={styles.infoLabel}>Chapter</Text>
@@ -522,20 +597,51 @@ const DiscussionStudent = () => {
 
         <View style={styles.discussionContent}>
           <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-          <Text style={styles.discussionDescription}>{discussion.description}</Text>
+          <Text style={styles.discussionDescription}>
+            {discussion.description}
+          </Text>
+          {
+            discussion.files && discussion.files.length > 0 && (
+              <View style={styles.filesSection}>
+                {discussion.files.map((file, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.fileItem}
+                    onPress={() => Linking.openURL(file.url)}
+                  >
+                    <View
+                      style={[
+                        styles.fileIconContainer,
+                        { backgroundColor: getFileIconColor(file.type) + "20" },
+                      ]}
+                    >
+                      <Image
+                        source={{ uri: file.url }}
+                        style={{
+                          width: 50,
+                          height: 50,
+                          // borderRadius: 8,
+                        }}
+                        resizeMode="cover"
+                      />
+                    </View>
+                    <Text style={styles.fileName}>{file.filename}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )
 
-          {discussion.files && discussion.files.length > 0 && (
-            <View style={styles.filesSection}>
-              {discussion.files.map((file, index) => (
-                <TouchableOpacity key={index} style={styles.fileItem} onPress={() => Linking.openURL(file.url)}>
-                  <View style={[styles.fileIconContainer, { backgroundColor: getFileIconColor(file.type) + "20" }]}>
-                    <SimpleIcon name={getFileIcon(file.type)} size={24} color={getFileIconColor(file.type)} />
-                  </View>
-                  <Text style={styles.fileName}>{file.filename}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+            /*
+          :
+{
+  <SimpleIcon
+    name={getFileIcon(file.type)}
+    size={24}
+    color={getFileIconColor(file.type)}
+  />
+}
+          */
+          }
         </View>
 
         <View style={styles.commentsSection}>
@@ -548,13 +654,24 @@ const DiscussionStudent = () => {
           ) : (
             <View style={styles.commentsList}>
               {comments.map((comment) => (
-                <View key={comment._id}>{renderComment({ item: comment })}</View>
+                <View key={comment._id}>
+                  {renderComment({ item: comment })}
+                </View>
               ))}
 
-              {commentsLoading && <ActivityIndicator size="small" color="#10B144" style={styles.loadingMore} />}
+              {commentsLoading && (
+                <ActivityIndicator
+                  size="small"
+                  color="#10B144"
+                  style={styles.loadingMore}
+                />
+              )}
 
               {currentPage < totalPages && !commentsLoading && (
-                <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMoreComments}>
+                <TouchableOpacity
+                  style={styles.loadMoreButton}
+                  onPress={handleLoadMoreComments}
+                >
                   <Text style={styles.loadMoreText}>Load more comments</Text>
                 </TouchableOpacity>
               )}
@@ -568,7 +685,9 @@ const DiscussionStudent = () => {
           <View style={styles.commentInputAvatar}>
             <Text style={styles.commentInputAvatarText}>U</Text>
           </View>
-          <Text style={styles.alreadyCommentedText}>You have already commented on this discussion</Text>
+          <Text style={styles.alreadyCommentedText}>
+            You have already commented on this discussion
+          </Text>
         </View>
       ) : (
         <View style={styles.commentInputContainer}>
@@ -584,7 +703,10 @@ const DiscussionStudent = () => {
             multiline
           />
           <TouchableOpacity
-            style={[styles.sendButton, !commentText.trim() && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton,
+              !commentText.trim() && styles.sendButtonDisabled,
+            ]}
             onPress={handleSendComment}
             disabled={!commentText.trim() || sendingComment}
           >
@@ -597,8 +719,8 @@ const DiscussionStudent = () => {
         </View>
       )}
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -1002,10 +1124,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2
-  }
-})
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+});
 
-export default DiscussionStudent
+export default DiscussionStudent;

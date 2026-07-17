@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,11 +8,14 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-} from 'react-native';
-import SimpleIcon from '../SimpleIcon';
-import { editChapter, getChapterDetailsWithLessons } from '../../services/course';
-import Toast from 'react-native-simple-toast';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import SimpleIcon from "../SimpleIcon";
+import {
+  editChapter,
+  getChapterDetailsWithLessons,
+} from "../../services/course";
+import Toast from "react-native-simple-toast";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface EditChapterModalProps {
   visible: boolean;
@@ -28,13 +31,15 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
   onUpdated,
 }) => {
   const insets = useSafeAreaInsets();
-  const [editChapterTitle, setEditChapterTitle] = useState('');
-  const [editChapterDescription, setEditChapterDescription] = useState('');
+  const [editChapterTitle, setEditChapterTitle] = useState("");
+  const [editChapterDescription, setEditChapterDescription] = useState("");
   const [editChapterLoading, setEditChapterLoading] = useState(false);
   const [editChapterError, setEditChapterError] = useState<string | null>(null);
+  // State to show loading while fetching updated details
+  // const [refreshingDetails, setRefreshingDetails] = useState(false);
 
   // Initialize form when chapterDetails changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (chapterDetails) {
       setEditChapterTitle(chapterDetails.title);
       setEditChapterDescription(chapterDetails.description);
@@ -43,12 +48,12 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
 
   const handleUpdate = async () => {
     if (!editChapterTitle.trim() || !editChapterDescription.trim()) {
-      Toast.show('Chapter title and description are required', Toast.LONG);
+      Toast.show("Chapter title and description are required", Toast.LONG);
       return;
     }
 
     if (!chapterDetails?._id) {
-      Toast.show('Chapter not found', Toast.LONG);
+      Toast.show("Chapter not found", Toast.LONG);
       return;
     }
 
@@ -56,32 +61,35 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
       setEditChapterLoading(true);
       setEditChapterError(null);
 
+      // 1. Update the chapter
       await editChapter(
         chapterDetails._id,
         editChapterTitle,
         editChapterDescription
       );
 
-      Toast.show('Chapter updated successfully', Toast.LONG);
-
-      // Refresh chapter details to show the updated data
+      // 2. Refresh the updated chapter details (optional but ensures fresh data)
+      // setRefreshingDetails(true);
       const updatedResponse = await getChapterDetailsWithLessons(
         chapterDetails._id
       );
+      const updatedChapter = updatedResponse.chapter;
 
-      onUpdated(updatedResponse.chapter);
-      onClose();
+      // 3. Pass updated chapter to parent BEFORE showing toast
+      onUpdated(updatedChapter);
+
+      // 4. Now show success toast (UI already updated)
+      Toast.show("Chapter updated successfully", Toast.LONG);
     } catch (error: any) {
-      console.error('Error updating chapter:', error);
-      setEditChapterError(error.message || 'Failed to update chapter');
+      console.error("Error updating chapter:", error);
+      setEditChapterError(error.message || "Failed to update chapter");
+      Toast.show("Failed to update chapter", Toast.LONG);
     } finally {
       setEditChapterLoading(false);
     }
   };
 
   const handleCancel = () => {
-    setEditChapterTitle(chapterDetails?.title || '');
-    setEditChapterDescription(chapterDetails?.description || '');
     setEditChapterError(null);
     onClose();
   };
@@ -143,9 +151,7 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
           </View>
 
           {editChapterError && (
-            <Text style={styles.editChapterErrorText}>
-              {editChapterError}
-            </Text>
+            <Text style={styles.editChapterErrorText}>{editChapterError}</Text>
           )}
         </ScrollView>
 
@@ -154,6 +160,7 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
           <TouchableOpacity
             style={styles.editChapterCancelButton}
             onPress={handleCancel}
+            disabled={editChapterLoading}
           >
             <Text style={styles.editChapterCancelButtonText}>Cancel</Text>
           </TouchableOpacity>
@@ -169,9 +176,7 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
             {editChapterLoading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.editChapterSaveButtonText}>
-                Edit Chapter
-              </Text>
+              <Text style={styles.editChapterSaveButtonText}>Edit Chapter</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -183,24 +188,24 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
 const styles = StyleSheet.create({
   fullScreenModalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   fullScreenModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: "#e5e7eb",
   },
   backButton: {
     padding: 8,
   },
   fullScreenModalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a2e',
+    fontWeight: "600",
+    color: "#1a1a2e",
   },
   editChapterForm: {
     flex: 1,
@@ -211,80 +216,80 @@ const styles = StyleSheet.create({
   },
   editChapterLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: "500",
+    color: "#374151",
     marginBottom: 8,
   },
   editChapterTitleContainer: {
-    position: 'relative',
+    position: "relative",
   },
   editChapterTitleInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#1a1a2e',
+    color: "#1a1a2e",
   },
   editChapterDescriptionContainer: {
-    position: 'relative',
+    position: "relative",
   },
   editChapterDescriptionInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#1a1a2e',
+    color: "#1a1a2e",
     minHeight: 100,
   },
   editChapterCharacterCount: {
     fontSize: 12,
-    color: '#9ca3af',
-    textAlign: 'right',
+    color: "#9ca3af",
+    textAlign: "right",
     marginTop: 4,
   },
   editChapterErrorText: {
-    color: '#EF4444',
+    color: "#EF4444",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 8,
   },
   editChapterActionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 16,
     gap: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: "#e5e7eb",
   },
   editChapterCancelButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
   },
   editChapterCancelButtonText: {
-    color: '#6b7280',
+    color: "#6b7280",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   editChapterSaveButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: '#10B144',
-    alignItems: 'center',
+    backgroundColor: "#10B144",
+    alignItems: "center",
   },
   editChapterDisabledButton: {
     opacity: 0.6,
   },
   editChapterSaveButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 

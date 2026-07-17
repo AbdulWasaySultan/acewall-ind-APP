@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
+  Animated,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -27,6 +28,15 @@ interface NewSemesterModalProps {
   setSemesterEndDate: (date: string) => void;
 }
 
+// Strips time so we compare calendar days, not exact timestamps
+const isBeforeToday = (date: Date) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const compareDate = new Date(date);
+  compareDate.setHours(0, 0, 0, 0);
+  return compareDate.getTime() < today.getTime();
+};
+
 const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
   visible,
   onClose,
@@ -44,11 +54,72 @@ const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
   semesterEndDate,
   setSemesterEndDate,
 }) => {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setToastMessage(null));
+  };
+
   const handleClose = () => {
     setSemesterTitle('');
     setSemesterStartDate('');
     setSemesterEndDate('');
     onClose();
+  };
+
+  const handleStartDateChange = (event: any, date?: Date) => {
+    setShowSemesterDatePicker(null);
+    if (!date) return;
+
+    if (isBeforeToday(date)) {
+      showToast("Start date can't be in the past");
+      return;
+    }
+
+    // Optional: also enforce it isn't before the previous semester's end date
+    if (lastSemesterEndDate && date < new Date(lastSemesterEndDate)) {
+      showToast('Start date must be after the last semester ended');
+      return;
+    }
+
+    setSemesterStartDate(formatDateForInput(date.toISOString()));
+
+    // If an end date was already picked and is now invalid, clear it
+    if (semesterEndDate && date > parseDateFromInput(semesterEndDate)) {
+      setSemesterEndDate('');
+      showToast('End date was cleared — it was before the new start date');
+    }
+  };
+
+  const handleEndDateChange = (event: any, date?: Date) => {
+    setShowSemesterDatePicker(null);
+    if (!date) return;
+
+    if (isBeforeToday(date)) {
+      showToast("End date can't be in the past");
+      return;
+    }
+
+    if (semesterStartDate && date < parseDateFromInput(semesterStartDate)) {
+      showToast("End date can't be before the start date");
+      return;
+    }
+
+    setSemesterEndDate(formatDateForInput(date.toISOString()));
   };
 
   return (
@@ -95,12 +166,8 @@ const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
               }
               mode="date"
               display="default"
-              onChange={(event, date) => {
-                setShowSemesterDatePicker(null);
-                if (date) {
-                  setSemesterStartDate(formatDateForInput(date.toISOString()));
-                }
-              }}
+              minimumDate={new Date()}
+              onChange={handleStartDateChange}
             />
           )}
           <TouchableOpacity
@@ -126,12 +193,12 @@ const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
               }
               mode="date"
               display="default"
-              onChange={(event, date) => {
-                setShowSemesterDatePicker(null);
-                if (date) {
-                  setSemesterEndDate(formatDateForInput(date.toISOString()));
-                }
-              }}
+              minimumDate={
+                semesterStartDate
+                  ? parseDateFromInput(semesterStartDate)
+                  : new Date()
+              }
+              onChange={handleEndDateChange}
             />
           )}
           <View style={styles.semesterModalContainer}>
@@ -151,6 +218,12 @@ const NewSemesterModal: React.FC<NewSemesterModalProps> = ({
             </TouchableOpacity>
           </View>
         </View>
+
+        {toastMessage && (
+          <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+            <Text style={styles.toastText}>{toastMessage}</Text>
+          </Animated.View>
+        )}
       </View>
     </Modal>
   );
@@ -215,6 +288,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    maxWidth: '90%',
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 14,
   },
 });
 

@@ -20,7 +20,7 @@ export const getApiInstance = async (
 ): Promise<AxiosInstance> => {
   // 1. Fallback Defaults
   const timeout = options.timeout ?? 30000; // Defaults to 30s if not specified
-  const useApiSuffix = options.useApiSuffix ?? true; // Most services need /api
+  const useApiSuffix = options.useApiSuffix ?? false; // Changed to false to avoid double /api
   const enableTiming = options.enableTiming ?? false;
 
   // 2. Resolve Base URL
@@ -29,8 +29,20 @@ export const getApiInstance = async (
     throw new Error("No base URL configured. Please select a school first.");
   }
 
-  // 3. Construct the actual target endpoint path
-  const finalBaseUrl = useApiSuffix ? `${baseUrl}/api` : baseUrl;
+  // 3. Sanitize and construct the actual target endpoint path
+  let finalBaseUrl = baseUrl.trim();
+  // Remove trailing slash if present
+  if (finalBaseUrl.endsWith('/')) {
+    finalBaseUrl = finalBaseUrl.slice(0, -1);
+  }
+  
+  if (useApiSuffix) {
+    // If baseUrl already ends with '/api', remove it before appending to avoid duplication
+    if (finalBaseUrl.endsWith('/api')) {
+      finalBaseUrl = finalBaseUrl.slice(0, -4); // remove '/api'
+    }
+    finalBaseUrl = `${finalBaseUrl}/api`;
+  }
 
   // 4. Generate a unique cache signature for these specific parameters
   const currentOptionsKey = `${finalBaseUrl}_${timeout}_${enableTiming}`;

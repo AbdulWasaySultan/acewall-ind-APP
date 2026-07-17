@@ -67,9 +67,9 @@ const MyCoursesPage = () => {
   );
   const [subcategoryItems, setSubcategoryItems] = useState<any[]>([]);
 
-  const [selectedTab, setSelectedTab] = useState<"published" | "unpublished">(
-    "published"
-  );
+  const [selectedTab, setSelectedTab] = useState<
+    "published" | "unpublished"
+  >("published");
   const [isVerified, setIsVerified] = useState<
     "approved" | "pending" | "rejected"
   >("approved");
@@ -112,15 +112,29 @@ const MyCoursesPage = () => {
     }
   }, []);
 
+  const getPublishedFilter = (
+    tab: "published" | "unpublished" | "all"
+  ): boolean | undefined => {
+    if (tab === "all") return undefined;
+    return tab === "published";
+  };
+
   // Use useFocusEffect to fetch data every time the page comes into focus
   useFocusEffect(
     useCallback(() => {
+      let activeTab = selectedTab;
+      const routeFilter = route.params?.filter;
 
-   if(route.params?.filter){
-setSelectedTab(route.params.filter);
-navigation.setParams({ filter: undefined });
-return;
+      if (
+        routeFilter === "published" ||
+        routeFilter === "unpublished" ||
+        routeFilter === "all"
+      ) {
+        activeTab = routeFilter;
+        setSelectedTab(routeFilter);
+        navigation.setParams({ filter: undefined });
       }
+
       const fetchData = async () => {
         // Fetch categories for students if not already loaded
         if (userRole === "student" && categoryItems.length === 0) {
@@ -161,11 +175,8 @@ return;
               setCourses(enrolledCoursesList);
             }
           } else {
-            // For teacher/admin, get courses based on selected tab
-            const isPublished = selectedTab === "published";
-            console.log(isPublished, isVerified, searchQuery);
             response = await getTeacherCourses(
-              isPublished,
+              getPublishedFilter(activeTab),
               isVerified,
               searchQuery
             );
@@ -183,8 +194,6 @@ return;
       fetchData();
 
       return () => {
-        // This cleanup runs when the page is unfocused
-        // setSearchQuery('');
         setSelectedCategory(null);
         setSelectedSubcategory(null);
         setSubcategoryItems([]);
@@ -198,6 +207,7 @@ return;
       fetchCategories,
       categoryItems.length,
       route.params?.filter,
+      navigation,
     ])
   );
 
@@ -267,10 +277,8 @@ return;
           setCourses(enrolledCoursesList);
         }
       } else {
-        // For teacher/admin, get courses based on selected tab
-        const isPublished = selectedTab === "published";
         response = await getTeacherCourses(
-          isPublished,
+          getPublishedFilter(selectedTab),
           isVerified,
           searchQuery
         );
@@ -306,7 +314,7 @@ return;
               onPress={() => setIsVerified("approved")}
               style={styles.backButton}
             >
-              <SimpleIcon name="arrow-back" size={18} color="#000" />
+              <SimpleIcon name="arrow-back" size={28} color="#000" style={styles.backButtonIcon}/>
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
           )}
@@ -355,6 +363,22 @@ return;
               </View>
             ) : (
               <View style={styles.tabSwitcherContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.tabButton,
+                    selectedTab === "all" && styles.tabButtonActive,
+                  ]}
+                  onPress={() => setSelectedTab("all")}
+                >
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      selectedTab === "all" && styles.tabButtonTextActive,
+                    ]}
+                  >
+                    All
+                  </Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.tabButton,
@@ -678,14 +702,17 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    // paddingVertical:3,
+    paddingHorizontal: 8,
     backgroundColor: "#fff",
     borderRadius: 8,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: "#e0e0e0",
     alignSelf: "flex-start",
+  },
+  backButtonIcon:{
+    marginBottom: 9
   },
   backButtonText: {
     fontSize: 14,

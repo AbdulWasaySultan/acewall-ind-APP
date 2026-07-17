@@ -72,10 +72,10 @@ export type RootStackParamList = {
   ResetPassword: { email: string };
   CreateAssessment: {
     courseId: string;
-    chapterId: string;
-    semesterId: string;
-    quarterId: string;
-    refreshAssessments: () => void;
+    chapterId?: string;
+    semesterId?: string;
+    quarterId?: string;
+    refreshAssessments?: () => void;
     navigateBack?: () => void;
   };
   ChapterPages: { courseId: string; chapterId: string };
@@ -85,6 +85,7 @@ export type RootStackParamList = {
     semesterId?: string;
     quarterId?: string;
     lessonId?: string;
+    discussionId? : string;
     navigateBack?: () => void;
   };
   AssessmentScreenStudent: { assessmentId: string };
@@ -338,10 +339,10 @@ const AppNavigator = () => {
               options={{ headerShown: false }}
             />
             <Stack.Screen
-  name="Coupons"
-  component={CouponsPage}
-  options={{ headerShown: false }}
-/>
+              name="Coupons"
+              component={CouponsPage}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="CourseDetailStudentPage"
               component={CourseDetailStudentPage}

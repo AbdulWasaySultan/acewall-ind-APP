@@ -10,6 +10,141 @@ import {
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
 
+interface ChaptersForQuarterModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onBackToQuarters: () => void;
+  onCreateChapter: () => void;
+  loadingChaptersForQuarter: boolean;
+  chaptersForQuarter: any[];
+  chaptersMessage: string;
+  onViewChapterDetails: (chapterId: string) => void;
+  onDeleteChapter: (chapter: any) => void;
+}
+
+const ChaptersForQuarterModal: React.FC<ChaptersForQuarterModalProps> = ({
+  visible,
+  onClose,
+  onBackToQuarters,
+  onCreateChapter,
+  loadingChaptersForQuarter,
+  chaptersForQuarter,
+  chaptersMessage,
+  onViewChapterDetails,
+  onDeleteChapter,
+}) => {
+  return (
+    <Modal
+      visible={visible}
+      transparent={false}
+      animationType="slide"
+      onRequestClose={() => {
+        onClose();
+        onBackToQuarters();
+      }}
+    >
+      <View style={styles.chaptersModalContainer}>
+        <View style={styles.chaptersModalHeader}>
+          <Text style={styles.chaptersModalTitle}>Chapters</Text>
+          <TouchableOpacity
+            onPress={() => {
+              onClose();
+              onBackToQuarters();
+            }}
+          >
+            <SimpleIcon name="close" size={32} color="#333" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.chaptersContent}>
+          <View style={styles.chaptersHeaderButton}>
+            <Text style={styles.chaptersHeaderButtonText}>
+              Manage your chapters and course content
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.createChapterButton}
+            onPress={onCreateChapter}
+          >
+            <Text style={styles.createChapterButtonText}>
+              Create New Chapter
+            </Text>
+          </TouchableOpacity>
+
+          {loadingChaptersForQuarter ? (
+            <ActivityIndicator
+              style={{ marginTop: 20 }}
+              size="large"
+              color="#10B144"
+            />
+          ) : chaptersForQuarter.length > 0 ? (
+            <ScrollView>
+              {chaptersForQuarter.map((chapter, index) => {
+                return (
+                  <View key={chapter._id} style={styles.chapterCard}>
+                    <View style={styles.chapterCardHeader}>
+                      <View style={styles.chapterNumberChip}>
+                        <Text style={styles.chapterNumberText}>
+                          Chapter {index + 1}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => onDeleteChapter(chapter)}
+                        style={styles.chapterDeleteButton}
+                      >
+                        <SimpleIcon name="trash" size={20} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={styles.chapterCardTitle}>{chapter.title}</Text>
+                    <Text style={styles.chapterCardDescription}>
+                      {chapter.description}
+                    </Text>
+
+                    <View style={styles.chapterCardStats}>
+                      <View style={styles.chapterStatItem}>
+                        <SimpleIcon name="menu-book" size={16} color="#666" />
+                        <Text style={styles.chapterStatText}>
+                          {chapter.lessons ? chapter.lessons.length : 0} Lessons
+                        </Text>
+                      </View>
+                      <View style={styles.chapterStatItem}>
+                        <SimpleIcon name="star" size={16} color="#666" />
+                        <Text style={styles.chapterStatText}>
+                          {chapter.chapter_assessments
+                            ? chapter.chapter_assessments.length
+                            : 0}{" "}
+                          Assessments
+                        </Text>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.chapterViewButton}
+                      onPress={() => onViewChapterDetails(chapter._id)}
+                    >
+                      <Text style={styles.chapterViewButtonText}>
+                        View Details
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <Text style={{ textAlign: "center", marginTop: 20, fontSize: 16 }}>
+              {chaptersMessage}
+            </Text>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+export default ChaptersForQuarterModal;
+
 const styles = StyleSheet.create({
   chaptersModalContainer: {
     flex: 1,
@@ -127,143 +262,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-
-interface ChaptersForQuarterModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onBackToQuarters: () => void;
-  onCreateChapter: () => void;
-  loadingChaptersForQuarter: boolean;
-  chaptersForQuarter: any[];
-  chaptersMessage: string;
-  onViewChapterDetails: (chapterId: string) => void;
-  onDeleteChapter: (chapter: any) => void;
-}
-
-const ChaptersForQuarterModal: React.FC<ChaptersForQuarterModalProps> = ({
-  visible,
-  onClose,
-  onBackToQuarters,
-  onCreateChapter,
-  loadingChaptersForQuarter,
-  chaptersForQuarter,
-  chaptersMessage,
-  onViewChapterDetails,
-  onDeleteChapter,
-}) => {
-  return (
-    <Modal
-      visible={visible}
-      transparent={false}
-      animationType="slide"
-      onRequestClose={() => {
-        onClose();
-        onBackToQuarters();
-      }}
-    >
-      <View style={styles.chaptersModalContainer}>
-        <View style={styles.chaptersModalHeader}>
-          <Text style={styles.chaptersModalTitle}>Chapters</Text>
-          <TouchableOpacity
-            onPress={() => {
-              onClose();
-              onBackToQuarters();
-            }}
-          >
-            <SimpleIcon name="close" size={32} color="#333" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.chaptersContent}>
-          <TouchableOpacity style={styles.chaptersHeaderButton}>
-            <Text style={styles.chaptersHeaderButtonText}>
-              Manage your chapters and course content
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.createChapterButton}
-            onPress={onCreateChapter}
-          >
-            <Text style={styles.createChapterButtonText}>
-              Create New Chapter
-            </Text>
-          </TouchableOpacity>
-
-          {loadingChaptersForQuarter ? (
-            <ActivityIndicator
-              style={{ marginTop: 20 }}
-              size="large"
-              color="#10B144"
-            />
-          ) : chaptersForQuarter.length > 0 ? (
-            <ScrollView>
-              {chaptersForQuarter.map((chapter, index) => {
-                return (
-                  <View key={chapter._id} style={styles.chapterCard}>
-                    <View style={styles.chapterCardHeader}>
-                      <View style={styles.chapterNumberChip}>
-                        <Text style={styles.chapterNumberText}>
-                          Chapter {index + 1}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => onDeleteChapter(chapter)}
-                        style={styles.chapterDeleteButton}
-                      >
-                        <SimpleIcon name="trash" size={20} color="#ef4444" />
-                      </TouchableOpacity>
-                    </View>
-
-                    <Text style={styles.chapterCardTitle}>
-                      {chapter.title}
-                    </Text>
-                    <Text style={styles.chapterCardDescription}>
-                      {chapter.description}
-                    </Text>
-
-                    <View style={styles.chapterCardStats}>
-                      <View style={styles.chapterStatItem}>
-                        <SimpleIcon name="menu-book" size={16} color="#666" />
-                        <Text style={styles.chapterStatText}>
-                          {chapter.lessons ? chapter.lessons.length : 0}{" "}
-                          Lessons
-                        </Text>
-                      </View>
-                      <View style={styles.chapterStatItem}>
-                        <SimpleIcon name="star" size={16} color="#666" />
-                        <Text style={styles.chapterStatText}>
-                          {chapter.chapter_assessments
-                            ? chapter.chapter_assessments.length
-                            : 0}{" "}
-                          Assessments
-                        </Text>
-                      </View>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.chapterViewButton}
-                      onPress={() => onViewChapterDetails(chapter._id)}
-                    >
-                      <Text style={styles.chapterViewButtonText}>
-                        View Details
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </ScrollView>
-          ) : (
-            <Text
-              style={{ textAlign: "center", marginTop: 20, fontSize: 16 }}
-            >
-              {chaptersMessage}
-            </Text>
-          )}
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-export default ChaptersForQuarterModal;

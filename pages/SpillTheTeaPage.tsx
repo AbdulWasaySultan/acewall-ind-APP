@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import {
   View,
   Text,
@@ -31,6 +37,8 @@ import {
   getCommentCount,
 } from "../services/socialPosts";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import PostTarget from "../components/spillTheTea/CreatePostModal";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -133,6 +141,12 @@ const SpillTheTeaPage: React.FC = () => {
       if (user?._id) setCurrentUserId(user._id);
     });
   }, []);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
 
   // ── Update single post like/comment data ──────────────────────────────────
   const updatePostLike = useCallback(
@@ -453,8 +467,8 @@ const SpillTheTeaPage: React.FC = () => {
       <CreatePostModal
         visible={createOpen}
         onClose={() => setCreateOpen(false)}
-        onSubmit={({ content, target, media }) => {
-          handleCreatePost(content, media ?? [], target);
+        onSubmit={({ content, target, media, courseId }) => {
+          handleCreatePost(content, media ?? [], target, courseId);
           console.log("👉 FRONTEND PAYLOAD ON SUBMIT:", {
             content,
             target,

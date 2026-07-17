@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -11,525 +11,6 @@ import {
   StyleSheet,
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
-import Toast from "react-native-simple-toast";
-
-const styles = StyleSheet.create({
-  fullScreenModalContainer: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  fullScreenModalContent: {
-    flex: 1,
-    padding: 20,
-  },
-  fullScreenModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fullScreenModalTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#222",
-  },
-  chapterDetailsModalSpacer: {
-    width: 40,
-  },
-  chapterDetailsModalButton: {
-    backgroundColor: "#10B144",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  chapterDetailsModalButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  chapterDetailsModalInfo: {
-    backgroundColor: "#f5f5f5",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  chapterDetailsModalInfoText: {
-    color: "#666",
-    fontSize: 14,
-    textAlign: "center",
-  },
-  chapterDetailsModalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#222",
-    marginBottom: 8,
-  },
-  chapterDetailsModalDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 16,
-  },
-  chapterDetailsModalSection: {
-    marginBottom: 16,
-  },
-  chapterDetailsModalSectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#222",
-    marginBottom: 8,
-  },
-  chapterDetailsModalLessonCard: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-  },
-  chapterDetailsModalLessonTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#222",
-    marginBottom: 4,
-  },
-  chapterDetailsModalLessonDescription: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 8,
-  },
-  chapterDetailsModalLessonActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  chapterDetailsModalLessonActionButton: {
-    padding: 8,
-    borderRadius: 4,
-    backgroundColor: "#f5f5f5",
-  },
-  chapterDetailsModalLessonActionText: {
-    fontSize: 12,
-    color: "#666",
-  },
-  chapterDetailsModalAssessmentCard: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-  },
-  chapterDetailsModalAssessmentTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#222",
-    marginBottom: 4,
-  },
-  chapterDetailsModalAssessmentType: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 8,
-  },
-  chapterDetailsModalAssessmentActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  chapterDetailsModalAssessmentActionButton: {
-    padding: 8,
-    borderRadius: 4,
-    backgroundColor: "#f5f5f5",
-  },
-  chapterDetailsModalAssessmentActionText: {
-    fontSize: 12,
-    color: "#666",
-  },
-  chapterDetailsModalDropdown: {
-    position: "absolute",
-    top: 40,
-    right: 0,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 1000,
-    minWidth: 150,
-  },
-  chapterDetailsModalDropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-  },
-  chapterDetailsModalDropdownItemText: {
-    fontSize: 14,
-    color: "#222",
-  },
-  chapterDetailsModalDropdownItemLast: {
-    borderBottomWidth: 0,
-  },
-  addLessonButton: {
-    backgroundColor: "#10B144",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 16,
-  },
-  addLessonButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  chapterDetailsLoadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  chapterDetailsLoadingText: {
-    fontSize: 16,
-    color: "#666",
-  },
-  chapterDetailsErrorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  chapterDetailsErrorText: {
-    fontSize: 16,
-    color: "#ef4444",
-    textAlign: "center",
-  },
-  chapterViewButton: {
-    backgroundColor: "#10B144",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  chapterDetailsCloseButtonMargin: {
-    marginBottom: 16,
-  },
-  chapterViewButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  chapterDetailsCard: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-  },
-  chapterDetailsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  chapterDetailsIcon: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-  },
-  chapterDetailsActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  chapterDetailsActionButton: {
-    padding: 8,
-    borderRadius: 4,
-    backgroundColor: "#f5f5f5",
-  },
-  plusButtonContainer: {
-    position: "relative",
-  },
-  chapterDetailsTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#222",
-    marginBottom: 8,
-  },
-  chapterDetailsDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 16,
-  },
-  lessonsCard: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-  },
-  lessonsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  lessonsIcon: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-  },
-  lessonsTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#222",
-  },
-  lessonsCount: {
-    backgroundColor: "#10B144",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  lessonsCountText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  chapterLessonsList: {
-    marginTop: 12,
-  },
-  assessmentItemContainer: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-  },
-  assessmentItemHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  assessmentCategoryChip: {
-    backgroundColor: "#10B144",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  assessmentCategoryChipText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  assessmentDeleteButton: {
-    padding: 8,
-    borderRadius: 4,
-    backgroundColor: "#fee2e2",
-  },
-  assessmentContent: {
-    marginTop: 8,
-  },
-  assessmentInfo: {
-    marginBottom: 4,
-  },
-  assessmentTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#222",
-  },
-  assessmentDescription: {
-    fontSize: 12,
-    color: "#666",
-  },
-  noLessonsContainer: {
-    padding: 20,
-    alignItems: "center",
-  },
-  noLessonsTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#222",
-    marginBottom: 8,
-  },
-  noLessonsDescription: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-  },
-  lessonCard: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-  },
-  lessonCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  lessonNumberBadge: {
-    backgroundColor: "#10B144",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  lessonCardNumberText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  lessonCardActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  lessonActionIcon: {
-    padding: 8,
-    borderRadius: 4,
-    backgroundColor: "#f5f5f5",
-  },
-  lessonsPlusButtonContainer: {
-    position: "relative",
-  },
-  lessonAddButton: {
-    backgroundColor: "#10B144",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 16,
-  },
-  lessonsDropdownMenu: {
-    position: "absolute",
-    top: 40,
-    right: 0,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 1000,
-    minWidth: 150,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-  },
-  dropdownItemText: {
-    fontSize: 14,
-    color: "#222",
-  },
-  lessonCardTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#222",
-    marginBottom: 4,
-  },
-  lessonCardDescription: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 8,
-  },
-  filesSection: {
-    marginTop: 12,
-  },
-  filesHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  filesTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#222",
-  },
-  lessonAddFileButton: {
-    backgroundColor: "#10B144",
-    padding: 8,
-    borderRadius: 4,
-  },
-  lessonAddFileButtonText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  fileItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 8,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  fileItemContent: {
-    flex: 1,
-  },
-  fileName: {
-    fontSize: 12,
-    color: "#222",
-    marginBottom: 2,
-  },
-  fileDate: {
-    fontSize: 10,
-    color: "#666",
-  },
-  noFilesText: {
-    fontSize: 12,
-    color: "#666",
-    fontStyle: "italic",
-  },
-  resourcesSection: {
-    marginTop: 12,
-  },
-  lessonResourcesTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#222",
-    marginBottom: 8,
-  },
-  resourcesList: {
-    marginTop: 8,
-  },
-  youtubeResource: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 8,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  resourceText: {
-    fontSize: 12,
-    color: "#222",
-    marginLeft: 8,
-  },
-  linkResource: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 8,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-});
 
 interface ChapterDetailsModalProps {
   visible: boolean;
@@ -555,6 +36,7 @@ interface ChapterDetailsModalProps {
   onSelectAssessmentForModal: (assessment: any) => void;
   onAssessmentDetailsModalOpen: () => void;
   onChaptersForQuarterModalOpen: () => void;
+  plusButtonRef?: React.RefObject<any>;
 }
 
 const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
@@ -582,8 +64,6 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
   onAssessmentDetailsModalOpen,
   onChaptersForQuarterModalOpen,
 }) => {
-  const plusButtonRef = useRef<any>(null);
-
   const handleClose = () => {
     onClose();
     onChaptersForQuarterModalOpen();
@@ -620,15 +100,21 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                 {chapterDetailsError}
               </Text>
               <TouchableOpacity
-                style={[styles.chapterViewButton, styles.chapterDetailsCloseButtonMargin]}
+                style={[
+                  styles.chapterViewButton,
+                  styles.chapterDetailsCloseButtonMargin,
+                ]}
                 onPress={onClose}
               >
                 <Text style={styles.chapterViewButtonText}>Close</Text>
               </TouchableOpacity>
             </View>
           ) : chapterDetails ? (
-            <ScrollView>
-              {/* Chapter Info Card */}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
+              {/* ─── Chapter Info Card ─── */}
               <View style={styles.chapterDetailsCard}>
                 <View style={styles.chapterDetailsHeader}>
                   <View style={styles.chapterDetailsIcon}>
@@ -643,16 +129,72 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                     </TouchableOpacity>
                     <View style={styles.plusButtonContainer}>
                       <TouchableOpacity
-                        ref={plusButtonRef}
                         style={styles.chapterDetailsActionButton}
                         onPress={onPlusButtonPress}
+                        activeOpacity={0.8}
                       >
-                        <SimpleIcon name="plus" size={25} color="#fff" />
+                        <SimpleIcon name="plus" size={25} color="#000" />
+
+                        {showPlusDropdown && (
+                          <View style={styles.dropdownMenu}>
+                            <TouchableOpacity
+                              style={styles.dropdownItem}
+                              onPress={() => onDropdownOption("lesson")}
+                            >
+                              <SimpleIcon
+                                name="menu-book"
+                                size={16}
+                                color="#10B144"
+                              />
+                              <Text style={styles.dropdownItemText}>
+                                + Add Lesson
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.dropdownItem}
+                              onPress={() => onDropdownOption("assessment")}
+                            >
+                              <SimpleIcon
+                                name="clipboard"
+                                size={16}
+                                color="#10B144"
+                              />
+                              <Text style={styles.dropdownItemText}>
+                                + Add Assessment
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.dropdownItem}
+                              onPress={() => onDropdownOption("page")}
+                            >
+                              <SimpleIcon
+                                name="description"
+                                size={16}
+                                color="#6b7280"
+                              />
+                              <Text style={styles.dropdownItemText}>
+                                + Add Page
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.dropdownItem}
+                              onPress={() => onDropdownOption("discussion")}
+                            >
+                              <SimpleIcon
+                                name="chat"
+                                size={16}
+                                color="#6b7280"
+                              />
+                              <Text style={styles.dropdownItemText}>
+                                + Discussion
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </TouchableOpacity>
                     </View>
                   </View>
                 </View>
-
                 <Text style={styles.chapterDetailsTitle}>
                   {chapterDetails.title}
                 </Text>
@@ -661,7 +203,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                 </Text>
               </View>
 
-              {/* Chapter Assessments Card */}
+              {/* ─── Chapter Assessments Card ─── */}
               <View style={styles.lessonsCard}>
                 <View style={styles.lessonsHeader}>
                   <View style={styles.lessonsIcon}>
@@ -707,10 +249,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                                     assessment.title || "this assessment"
                                   }"?`,
                                   [
-                                    {
-                                      text: "Cancel",
-                                      style: "cancel",
-                                    },
+                                    { text: "Cancel", style: "cancel" },
                                     {
                                       text: "Delete",
                                       style: "destructive",
@@ -769,7 +308,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                 )}
               </View>
 
-              {/* Lessons Card */}
+              {/* ─── Lessons Card ─── */}
               <View style={styles.lessonsCard}>
                 <View style={styles.lessonsHeader}>
                   <View style={styles.lessonsIcon}>
@@ -793,6 +332,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                           key={lesson._id || index}
                           style={styles.lessonCard}
                         >
+                          {/* Header row: number badge + action icons — dropdown lives ONLY here */}
                           <View style={styles.lessonCardHeader}>
                             <View style={styles.lessonNumberBadge}>
                               <Text style={styles.lessonCardNumberText}>
@@ -822,6 +362,8 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                                   color="#ef4444"
                                 />
                               </TouchableOpacity>
+
+                              {/* add lesson button */}
 
                               <View style={styles.lessonsPlusButtonContainer}>
                                 <TouchableOpacity
@@ -891,117 +433,126 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                               </View>
                             </View>
                           </View>
-                          <Text style={styles.lessonCardTitle}>
-                            {lesson.title}
-                          </Text>
-                          <Text style={styles.lessonCardDescription}>
-                            {lesson.description?.replace(/<[^>]*>/g, "") ||
-                              "No description"}
-                          </Text>
 
-                          {/* Files Section */}
-                          <View style={styles.filesSection}>
-                            <View style={styles.filesHeader}>
-                              <Text style={styles.filesTitle}>Files</Text>
-                              <TouchableOpacity
-                                style={styles.lessonAddFileButton}
-                                onPress={() => onAddFilesToLesson(lesson._id)}
-                              >
-                                <Text style={styles.lessonAddFileButtonText}>
-                                  + Add
-                                </Text>
-                              </TouchableOpacity>
-                            </View>
-                            {lesson.pdfFiles && lesson.pdfFiles.length > 0 ? (
-                              lesson.pdfFiles.map(
-                                (file: any, fileIndex: number) => (
-                                  <View key={fileIndex} style={styles.fileItem}>
-                                    <TouchableOpacity
-                                      style={styles.fileItemContent}
-                                      onPress={() => onOpenLink(file.url)}
+                          {/* Title & description — ALWAYS rendered, independent of dropdown state */}
+                          <View collapsable={false}>
+                            <Text style={styles.lessonCardTitle}>
+                              {lesson.title || "Untitled Lesson"}
+                            </Text>
+                            <Text style={styles.lessonCardDescription}>
+                              {lesson.description?.replace(/<[^>]*>/g, "") ||
+                                "No description"}
+                            </Text>
+
+                            {/* Files Section */}
+                            <View style={styles.filesSection}>
+                              <View style={styles.filesHeader}>
+                                <Text style={styles.filesTitle}>Files</Text>
+                                <TouchableOpacity
+                                  style={styles.lessonAddFileButton}
+                                  onPress={() => onAddFilesToLesson(lesson._id)}
+                                >
+                                  <Text style={styles.lessonAddFileButtonText}>
+                                    + Add
+                                  </Text>
+                                </TouchableOpacity>
+                              </View>
+                              {lesson.pdfFiles && lesson.pdfFiles.length > 0 ? (
+                                lesson.pdfFiles.map(
+                                  (file: any, fileIndex: number) => (
+                                    <View
+                                      key={fileIndex}
+                                      style={styles.fileItem}
                                     >
-                                      <SimpleIcon
-                                        name="description"
-                                        size={16}
-                                        color="#10B144"
-                                      />
-                                      <Text style={styles.fileName}>
-                                        {file.filename}
-                                      </Text>
-                                      <Text style={styles.fileDate}>
-                                        {new Date(
-                                          file.uploadedAt
-                                        ).toLocaleDateString("en-US", {
-                                          month: "2-digit",
-                                          day: "2-digit",
-                                          year: "numeric",
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                          hour12: true,
-                                        })}
-                                      </Text>
-                                    </TouchableOpacity>
+                                      <TouchableOpacity
+                                        style={styles.fileItemContent}
+                                        onPress={() => onOpenLink(file.url)}
+                                      >
+                                        <SimpleIcon
+                                          name="description"
+                                          size={16}
+                                          color="#10B144"
+                                        />
+                                        <Text style={styles.fileName}>
+                                          {file.filename}
+                                        </Text>
+                                        <Text style={styles.fileDate}>
+                                          {new Date(
+                                            file.uploadedAt
+                                          ).toLocaleDateString("en-US", {
+                                            month: "2-digit",
+                                            day: "2-digit",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: true,
+                                          })}
+                                        </Text>
+                                      </TouchableOpacity>
+                                      <TouchableOpacity
+                                        onPress={() =>
+                                          onDeleteFile(lesson._id, file._id)
+                                        }
+                                      >
+                                        <SimpleIcon
+                                          name="trash"
+                                          size={16}
+                                          color="#ef4444"
+                                        />
+                                      </TouchableOpacity>
+                                    </View>
+                                  )
+                                )
+                              ) : (
+                                <Text style={styles.noFilesText}>no files</Text>
+                              )}
+                            </View>
+
+                            {/* Resources Section */}
+                            {(lesson.youtubeLinks || lesson.otherLink) && (
+                              <View style={styles.resourcesSection}>
+                                <Text style={styles.lessonResourcesTitle}>
+                                  Resources
+                                </Text>
+                                <View style={styles.resourcesList}>
+                                  {lesson.youtubeLinks && (
                                     <TouchableOpacity
+                                      style={styles.youtubeResource}
                                       onPress={() =>
-                                        onDeleteFile(lesson._id, file._id)
+                                        onOpenLink(lesson.youtubeLinks)
                                       }
                                     >
                                       <SimpleIcon
-                                        name="trash"
+                                        name="play"
                                         size={16}
-                                        color="#ef4444"
+                                        color="#fff"
                                       />
+                                      <Text style={styles.resourceText}>
+                                        YouTube Video
+                                      </Text>
                                     </TouchableOpacity>
-                                  </View>
-                                )
-                              )
-                            ) : (
-                              <Text style={styles.noFilesText}>no files</Text>
+                                  )}
+                                  {lesson.otherLink && (
+                                    <TouchableOpacity
+                                      style={styles.linkResource}
+                                      onPress={() =>
+                                        onOpenLink(lesson.otherLink)
+                                      }
+                                    >
+                                      <SimpleIcon
+                                        name="link"
+                                        size={16}
+                                        color="#fff"
+                                      />
+                                      <Text style={styles.resourceText}>
+                                        External Link
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                              </View>
                             )}
                           </View>
-
-                          {/* Resources Section */}
-                          {(lesson.youtubeLinks || lesson.otherLink) && (
-                            <View style={styles.resourcesSection}>
-                              <Text style={styles.lessonResourcesTitle}>
-                                Resources
-                              </Text>
-                              <View style={styles.resourcesList}>
-                                {lesson.youtubeLinks && (
-                                  <TouchableOpacity
-                                    style={styles.youtubeResource}
-                                    onPress={() =>
-                                      onOpenLink(lesson.youtubeLinks)
-                                    }
-                                  >
-                                    <SimpleIcon
-                                      name="play"
-                                      size={16}
-                                      color="#fff"
-                                    />
-                                    <Text style={styles.resourceText}>
-                                      YouTube Video
-                                    </Text>
-                                  </TouchableOpacity>
-                                )}
-                                {lesson.otherLink && (
-                                  <TouchableOpacity
-                                    style={styles.linkResource}
-                                    onPress={() => onOpenLink(lesson.otherLink)}
-                                  >
-                                    <SimpleIcon
-                                      name="link"
-                                      size={16}
-                                      color="#fff"
-                                    />
-                                    <Text style={styles.resourceText}>
-                                      External Link
-                                    </Text>
-                                  </TouchableOpacity>
-                                )}
-                              </View>
-                            </View>
-                          )}
                         </View>
                       )
                     )}
@@ -1032,5 +583,318 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  fullScreenModalContainer: { flex: 1, backgroundColor: "#fff" },
+  fullScreenModalContent: { flex: 1, padding: 20 },
+  fullScreenModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullScreenModalTitle: { fontSize: 24, fontWeight: "bold", color: "#222" },
+  chapterDetailsModalSpacer: { width: 40 },
+  chapterDetailsLoadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  chapterDetailsLoadingText: { fontSize: 16, color: "#666" },
+  chapterDetailsErrorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  chapterDetailsErrorText: {
+    fontSize: 16,
+    color: "#ef4444",
+    textAlign: "center",
+  },
+  chapterViewButton: {
+    backgroundColor: "#10B144",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  chapterDetailsCloseButtonMargin: { marginBottom: 16 },
+  chapterViewButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  chapterDetailsCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
+
+    overflow: "visible",
+
+    zIndex: 999,
+    elevation: 1,
+  },
+  chapterDetailsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  chapterDetailsIcon: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+  },
+  chapterDetailsActions: { flexDirection: "row", gap: 8 },
+  chapterDetailsActionButton: {
+    padding: 8,
+    borderRadius: 4,
+    backgroundColor: "#f5f5f5",
+  },
+  plusButtonContainer: {
+    position: "relative",
+    zIndex: 10, // always present, never toggled
+    elevation: 10, // always present, never toggled
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: 40,
+    right: 0,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 180,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  dropdownItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-evenly",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  dropdownItemText: {
+    marginLeft: 12,
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#374151",
+  },
+  chapterDetailsTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#222",
+    marginBottom: 8,
+  },
+  chapterDetailsDescription: { fontSize: 14, color: "#666", marginBottom: 16 },
+  lessonsCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
+
+    zIndex: 1,
+    elevation: 1,
+  },
+  lessonsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  lessonsIcon: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+  },
+  lessonsTitle: { fontSize: 16, fontWeight: "bold", color: "#222" },
+  lessonsCount: {
+    backgroundColor: "#10B144",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  lessonsCountText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
+  chapterLessonsList: { marginTop: 12 },
+  assessmentItemContainer: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  assessmentItemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  assessmentCategoryChip: {
+    backgroundColor: "#10B144",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  assessmentCategoryChipText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  assessmentDeleteButton: {
+    padding: 8,
+    borderRadius: 4,
+    backgroundColor: "#fee2e2",
+  },
+  assessmentContent: { marginTop: 8 },
+  assessmentInfo: { marginBottom: 4 },
+  assessmentTitle: { fontSize: 14, fontWeight: "bold", color: "#222" },
+  assessmentDescription: { fontSize: 12, color: "#666" },
+  noLessonsContainer: { padding: 20, alignItems: "center" },
+  noLessonsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#222",
+    marginBottom: 8,
+  },
+  noLessonsDescription: { fontSize: 14, color: "#666", textAlign: "center" },
+  addLessonButton: {
+    backgroundColor: "#10B144",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  addLessonButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  lessonCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
+  },
+  lessonCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  lessonNumberBadge: {
+    backgroundColor: "#10B144",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  lessonCardNumberText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
+  lessonCardActions: { flexDirection: "row", gap: 8 },
+  lessonActionIcon: { padding: 8, borderRadius: 4, backgroundColor: "#f5f5f5" },
+  lessonsPlusButtonContainer: {
+    position: "relative",
+    zIndex: 10,
+    elevation: 10,
+  },
+  lessonsDropdownMenu: {
+    position: "absolute",
+    top: 40,
+    right: 0,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minWidth: 180,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 1000, // was 999999999999999
+  },
+  lessonAddButton: {
+    backgroundColor: "#10B144",
+    paddingHorizontal: 9,
+    paddingVertical: 10,
+    borderRadius: 4,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  lessonCardTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#222",
+    marginBottom: 4,
+  },
+  lessonCardDescription: { fontSize: 12, color: "#666", marginBottom: 8 },
+  filesSection: { marginTop: 12 },
+  filesHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  filesTitle: { fontSize: 14, fontWeight: "bold", color: "#222" },
+  lessonAddFileButton: {
+    backgroundColor: "#10B144",
+    padding: 8,
+    borderRadius: 4,
+  },
+  lessonAddFileButtonText: { color: "#fff", fontSize: 12, fontWeight: "600" },
+  fileItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 8,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  fileItemContent: { flex: 1 },
+  fileName: { fontSize: 12, color: "#222", marginBottom: 2 },
+  fileDate: { fontSize: 10, color: "#666" },
+  noFilesText: { fontSize: 12, color: "#666", fontStyle: "italic" },
+  resourcesSection: { marginTop: 12 },
+  lessonResourcesTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#222",
+    marginBottom: 8,
+  },
+  resourcesList: { marginTop: 8 },
+  youtubeResource: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  resourceText: { fontSize: 12, color: "#222", marginLeft: 8 },
+  linkResource: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+});
 
 export default ChapterDetailsModal;

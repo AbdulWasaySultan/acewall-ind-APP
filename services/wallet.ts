@@ -60,7 +60,7 @@ export interface Withdrawal {
 export const getTeacherPaymentStats = async (): Promise<PaymentStats> => {
   try {
     const api = await getApiInstance();
-    const response = await api.get("/teacher/teacher-payment-stats");
+    const response = await api.get("/api/teacher/teacher-payment-stats");
     return response.data;
   } catch (error: any) {
     if (error.response) {
@@ -85,7 +85,7 @@ export const getTeacherPaymentStatsWithPagination = async (
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/teacher/teacher-payment-stats?page=${page}&pageSize=${pageSize}`
+      `/api/teacher/teacher-payment-stats?page=${page}&pageSize=${pageSize}`
     );
     return response.data;
   } catch (error: any) {
@@ -111,7 +111,7 @@ export const submitWithdrawal = async (
 ): Promise<any> => {
   try {
     const api = await getApiInstance();
-    const response = await api.post("/teacher/withdraw", {
+    const response = await api.post("/api/teacher/withdraw", {
       amount,
       method,
       stripeAccountId,

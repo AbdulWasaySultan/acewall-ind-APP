@@ -18,7 +18,7 @@ const handleApiError = (error: any, defaultMessage: string) => {
 export const isCourseRated = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/rating/isRated/${courseId}`);
+    const response = await api.get(`/api/rating/isRated/${courseId}`);
     return response.data;
   } catch (error) {
     handleApiError(error, 'Failed to check if course is rated');
@@ -28,7 +28,7 @@ export const isCourseRated = async (courseId: string) => {
 export const getCourseRating = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/rating/course/${courseId}`);
+    const response = await api.get(`/api/rating/course/${courseId}`);
     return response.data;
   } catch (error: any) {
     const errorMessage = error?.response?.data?.message || error?.message || '';
@@ -49,7 +49,7 @@ export const createRating = async (courseId: string, star: number) => {
     }
     
     const api = await getApiInstance();
-    const response = await api.post(`/rating/create/${courseId}`, { star });
+    const response = await api.post(`/api/rating/create/${courseId}`, { star });
     return response.data;
   } catch (error) {
     handleApiError(error, 'Failed to create rating');

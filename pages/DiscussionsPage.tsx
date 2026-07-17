@@ -20,7 +20,7 @@ import {
   getDiscussionComments,
   sendDiscussionComment,
 } from "../services/discussion";
-import { getPublishedCourses } from "../services/course";
+import { getAllCourses } from "../services/course";
 import { getStoredUserId } from "../utils/storage";
 import SimpleIcon from "../components/SimpleIcon";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -125,7 +125,7 @@ const DiscussionsPage = () => {
 
   const fetchCourses = async () => {
     try {
-      const coursesRes = await getPublishedCourses();
+      const coursesRes = await getAllCourses();
       if (coursesRes.courses) {
         const formattedCourses = coursesRes.courses.map((course: any) => ({
           label: course.courseTitle,
@@ -286,77 +286,80 @@ const DiscussionsPage = () => {
         <Text style={styles.createButtonText}>Create Discussion</Text>
       </TouchableOpacity> */}
 
-      {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#007bff"
-          style={styles.loadingIndicator}
-        />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : discussions.length === 0 ? (
-        <Text style={styles.noDiscussionsText}>No discussions available.</Text>
-      ) : discussions && discussions.length > 0 ? (
-        <View style={styles.discussionsGrid}>
-          {discussions.map((discussion: Discussion, index: number) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.discussionCard}
-              onPress={() =>
-                navigation.navigate("DiscussionStudent", {
-                  discussionId: discussion?._id,
-                })
-              }
-            >
-              <Image
-                source={{ uri: discussion.course.thumbnail.url }}
-                style={{ width: "100%", height: 150 }}
-              />
+      {
+        loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#007bff"
+            style={styles.loadingIndicator}
+          />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : discussions.length === 0 ? (
+          <Text style={styles.noDiscussionsText}>
+            No discussions available.
+          </Text>
+        ) : discussions && discussions.length > 0 ? (
+          <View style={styles.discussionsGrid}>
+            {discussions.map((discussion: Discussion, index: number) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.discussionCard}
+                onPress={() =>
+                  navigation.navigate("DiscussionStudent", {
+                    discussionId: discussion?._id,
+                  })
+                }
+              >
+                <Image
+                  source={{ uri: discussion.course.thumbnail.url }}
+                  style={{ width: "100%", height: 150 }}
+                />
 
-              <Text style={styles.dueDate}>
-                Due Date: {new Date(discussion.dueDate.date).toDateString()}
-              </Text>
+                <Text style={styles.dueDate}>
+                  Due Date: {new Date(discussion.dueDate.date).toDateString()}
+                </Text>
 
-              <View style={styles.chapterBadge}>
-                <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
-              </View>
+                <View style={styles.chapterBadge}>
+                  <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
+                </View>
 
-              <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-              <Text style={styles.discussionSubtitle}>
-                {discussion.course.courseTitle || "test"}
-              </Text>
-              <Text style={styles.discussionDescription}>
-                {discussion.description}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.emptyState}>
-          <SimpleIcon name="chat-bubble-outline" size={48} color="#ccc" />
-          <Text style={styles.emptyStateText}>No discussions available</Text>
-        </View>
-      )
-      // discussions.map((discussion: any) => (
-      //   <TouchableOpacity key={discussion._id} onPress={() => openDetailsModal(discussion._id)}>
-      //     <View style={styles.discussionCard}>
-      //       {discussion.type === 'course' && discussion.course && discussion.course.thumbnail && discussion.course.thumbnail.url && (
-      //         <Image
-      //           source={{ uri: discussion.course.thumbnail.url }}
-      //           style={styles.courseThumbnail}
-      //           resizeMode="cover"
-      //         />
-      //       )}
-      //       <Text style={styles.discussionTypeTag}>{discussion.type}</Text>
-      //       <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-      //       {discussion.type === 'course' && discussion.course && (
-      //         <Text style={styles.discussionCourse}>Course: {discussion.course.courseTitle}</Text>
-      //       )}
-      //       <Text style={styles.discussionDescription}>{discussion.description}</Text>
-      //       <Text style={styles.discussionDate}>Created: {formatDate(discussion.createdAt)}</Text>
-      //     </View>
-      //   </TouchableOpacity>
-      // ))
+                <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+                <Text style={styles.discussionSubtitle}>
+                  {discussion.course.courseTitle || "test"}
+                </Text>
+                <Text style={styles.discussionDescription}>
+                  {discussion.description}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <SimpleIcon name="chat-bubble-outline" size={48} color="#ccc" />
+            <Text style={styles.emptyStateText}>No discussions available</Text>
+          </View>
+        )
+        // discussions.map((discussion: any) => (
+        //   <TouchableOpacity key={discussion._id} onPress={() => openDetailsModal(discussion._id)}>
+        //     <View style={styles.discussionCard}>
+        //       {discussion.type === 'course' && discussion.course && discussion.course.thumbnail && discussion.course.thumbnail.url && (
+        //         <Image
+        //           source={{ uri: discussion.course.thumbnail.url }}
+        //           style={styles.courseThumbnail}
+        //           resizeMode="cover"
+        //         />
+        //       )}
+        //       <Text style={styles.discussionTypeTag}>{discussion.type}</Text>
+        //       <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+        //       {discussion.type === 'course' && discussion.course && (
+        //         <Text style={styles.discussionCourse}>Course: {discussion.course.courseTitle}</Text>
+        //       )}
+        //       <Text style={styles.discussionDescription}>{discussion.description}</Text>
+        //       <Text style={styles.discussionDate}>Created: {formatDate(discussion.createdAt)}</Text>
+        //     </View>
+        //   </TouchableOpacity>
+        // ))
       }
 
       {/* Details Modal */}

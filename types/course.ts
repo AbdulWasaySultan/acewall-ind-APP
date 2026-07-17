@@ -10,7 +10,7 @@ export interface Assessment {
 export interface Quarter {
   quarterId: string;
   quarterTitle: string;
-  grade: number;
+grade: number;
   gpa: number;
   letterGrade: string;
   assessments: Assessment[];

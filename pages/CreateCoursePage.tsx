@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingHorizontal: 8,
     marginBottom: 16,
+    color: "#000",
   },
   inputError: {
     borderColor: "red",
@@ -507,7 +508,7 @@ const AIModal: React.FC<AIModalProps> = ({
               style={[
                 styles.modalGenerateButton,
                 (isGenerating || !prompt.trim()) &&
-                styles.modalGenerateButtonDisabled,
+                  styles.modalGenerateButtonDisabled,
               ]}
               onPress={onGenerate}
               disabled={isGenerating || !prompt.trim()}
@@ -559,7 +560,10 @@ const parseAiListItems = (content: string): string[] =>
   content
     .split("\n")
     .flatMap((line) =>
-      splitIntoChunks(line.replace(/^\d+\.\s*/, "").trim(), MAX_LIST_ITEM_LENGTH)
+      splitIntoChunks(
+        line.replace(/^\d+\.\s*/, "").trim(),
+        MAX_LIST_ITEM_LENGTH
+      )
     )
     .filter((item) => item.length >= 5)
     .slice(0, MAX_LIST_ITEMS);
@@ -759,16 +763,18 @@ const CreateCoursePage = () => {
     } else {
       validTeachingPoints.forEach((point, index) => {
         if (point.length < 5) {
-          newErrors.teachingPoints = `Teaching point ${index + 1
-            } must be at least 5 characters long`;
+          newErrors.teachingPoints = `Teaching point ${
+            index + 1
+          } must be at least 5 characters long`;
           Toast.show(newErrors.teachingPoints, Toast.LONG);
         } else if (
           /^[.,\s]+$/.test(point) ||
           /\.{3,}/.test(point) ||
           /,{3,}/.test(point)
         ) {
-          newErrors.teachingPoints = `Teaching point ${index + 1
-            } contains invalid characters`;
+          newErrors.teachingPoints = `Teaching point ${
+            index + 1
+          } contains invalid characters`;
           Toast.show(newErrors.teachingPoints, Toast.LONG);
         }
       });
@@ -781,16 +787,18 @@ const CreateCoursePage = () => {
     } else {
       validRequirements.forEach((req, index) => {
         if (req.length < 5) {
-          newErrors.requirements = `Requirement ${index + 1
-            } must be at least 5 characters long`;
+          newErrors.requirements = `Requirement ${
+            index + 1
+          } must be at least 5 characters long`;
           Toast.show(newErrors.requirements, Toast.LONG);
         } else if (
           /^[.,\s]+$/.test(req) ||
           /\.{3,}/.test(req) ||
           /,{3,}/.test(req)
         ) {
-          newErrors.requirements = `Requirement ${index + 1
-            } contains invalid characters`;
+          newErrors.requirements = `Requirement ${
+            index + 1
+          } contains invalid characters`;
           Toast.show(newErrors.requirements, Toast.LONG);
         }
       });
@@ -1001,7 +1009,7 @@ const CreateCoursePage = () => {
       setIsGeneratingImage(true);
       const api = await getApiInstance();
 
-      const response = await api.post("aichat/generateImage", {
+      const response = await api.post("/api/aichat/generateImage", {
         prompt: aiPrompt,
       });
 
@@ -1024,7 +1032,9 @@ const CreateCoursePage = () => {
       }
     } catch (error: any) {
       console.error("Error generating thumbnail:", error);
-      console.log(error.response?.data?.message || "Failed to generate thumbnail")
+      console.log(
+        error.response?.data?.message || "Failed to generate thumbnail"
+      );
       Toast.show(
         error.response?.data?.message || "Failed to generate thumbnail",
         Toast.LONG
@@ -1045,7 +1055,7 @@ const CreateCoursePage = () => {
       setIsGeneratingDescription(true);
       const api = await getApiInstance();
 
-      const response = await api.post("aichat/generateContentForTeacher", {
+      const response = await api.post("/api/aichat/generateContentForTeacher", {
         command: aiDescriptionPrompt,
         usedfor: "courseDescription",
         difficulty: "medium",
@@ -1081,7 +1091,7 @@ const CreateCoursePage = () => {
       setIsGeneratingTeachingPoints(true);
       const api = await getApiInstance();
 
-      const response = await api.post("aichat/generateContentForTeacher", {
+      const response = await api.post("/api/aichat/generateContentForTeacher", {
         command: aiTeachingPointsPrompt,
         usedfor: "teachingPoints",
         difficulty: "medium",
@@ -1119,7 +1129,7 @@ const CreateCoursePage = () => {
       setIsGeneratingRequirements(true);
       const api = await getApiInstance();
 
-      const response = await api.post("aichat/generateContentForTeacher", {
+      const response = await api.post("/api/aichat/generateContentForTeacher", {
         command: aiRequirementsPrompt,
         usedfor: "courseRequirements",
         difficulty: "medium",
@@ -1158,9 +1168,7 @@ const CreateCoursePage = () => {
 
       const filteredTeachingPoints = teachingPoints
         .filter((point) => point.trim() !== "")
-        .flatMap((point) =>
-          splitIntoChunks(point.trim(), MAX_LIST_ITEM_LENGTH)
-        )
+        .flatMap((point) => splitIntoChunks(point.trim(), MAX_LIST_ITEM_LENGTH))
         .slice(0, MAX_LIST_ITEMS);
       const filteredRequirements = courseRequirements
         .filter((req) => req.trim() !== "")
@@ -1217,9 +1225,16 @@ const CreateCoursePage = () => {
             errorMessage = detailMessages.join("\n");
           }
         } else if (Array.isArray(responseData.errors)) {
-          errorMessage = `${responseData.message}: ${responseData.errors.join(", ")}`;
-        } else if (responseData.errors && typeof responseData.errors === "object") {
-          errorMessage = `${responseData.message}: ${Object.values(responseData.errors).join(", ")}`;
+          errorMessage = `${responseData.message}: ${responseData.errors.join(
+            ", "
+          )}`;
+        } else if (
+          responseData.errors &&
+          typeof responseData.errors === "object"
+        ) {
+          errorMessage = `${responseData.message}: ${Object.values(
+            responseData.errors
+          ).join(", ")}`;
         }
         console.log("Error message:", errorMessage);
       }
@@ -1405,7 +1420,7 @@ const CreateCoursePage = () => {
                             style={[
                               styles.modalItem,
                               subcategory === subcat._id &&
-                              styles.modalItemSelected,
+                                styles.modalItemSelected,
                             ]}
                             onPress={() => handleSubcategorySelect(subcat)}
                           >
@@ -1544,7 +1559,7 @@ const CreateCoursePage = () => {
                         style={[
                           styles.modalItem,
                           selectedSemesters.includes(semester._id) &&
-                          styles.modalItemSelected,
+                            styles.modalItemSelected,
                         ]}
                         onPress={() => handleSemesterToggle(semester)}
                       >
@@ -1552,7 +1567,7 @@ const CreateCoursePage = () => {
                           style={[
                             styles.checkbox,
                             selectedSemesters.includes(semester._id) &&
-                            styles.checkboxChecked,
+                              styles.checkboxChecked,
                           ]}
                         >
                           {selectedSemesters.includes(semester._id) && (
@@ -1632,7 +1647,7 @@ const CreateCoursePage = () => {
                             style={[
                               styles.modalItem,
                               selectedQuarters.includes(quarter._id) &&
-                              styles.modalItemSelected,
+                                styles.modalItemSelected,
                             ]}
                             onPress={() => handleQuarterToggle(quarter)}
                           >
@@ -1640,7 +1655,7 @@ const CreateCoursePage = () => {
                               style={[
                                 styles.checkbox,
                                 selectedQuarters.includes(quarter._id) &&
-                                styles.checkboxCheckedQuarter,
+                                  styles.checkboxCheckedQuarter,
                               ]}
                             >
                               {selectedQuarters.includes(quarter._id) && (

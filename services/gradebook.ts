@@ -20,7 +20,7 @@ export const getOverallGradeReport = async () => {
 export const getCourseGradebook = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/gradebook/course/${courseId}`);
+    const response = await api.get(`/api/gradebook/course/${courseId}`);
     return response.data;
   } catch (error: any) {
     if (error.response) {

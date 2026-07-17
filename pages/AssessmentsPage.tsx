@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,19 +8,19 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import DropDownPicker from "react-native-dropdown-picker";
 import {
   getAllAssessmentsByTeacher,
   getAssessmentSubmissionsForTeacher,
   getSubmissionDetails,
   submitGrades,
+  getAllCourses,
 } from "../services/course";
 import SubmissionsModal from "../components/assessment/Submissionsmodal";
 import SubmissionDetailModal from "../components/assessment/Submissiondetailmodal";
+import CourseSelector from "../components/filters/CourseSelector";
+import SearchFilter from "../components/filters/SearchFilter";
+import { FilterBar, DropdownFilter } from "../components/filters/FilterBar"; // ✅ fixed import
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
@@ -38,33 +38,53 @@ const formatDateTime = (dateString: string) =>
     second: "2-digit",
   });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAGE
-// ─────────────────────────────────────────────────────────────────────────────
 const AssessmentsPage = () => {
   const [rawAssessments, setRawAssessments] = useState<any[]>([]);
-  const [filteredAssessments, setFilteredAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Dropdown state ──────────────────────────────────────────────────────────
+  const [courses, setCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categoryValue, setCategoryValue] = useState<string | null>(null);
   const [categoryItems, setCategoryItems] = useState<
     { label: string; value: string }[]
   >([]);
-  const [courseOpen, setCourseOpen] = useState(false);
-  const [courseValue, setCourseValue] = useState<string | null>(null);
-  const [courseItems, setCourseItems] = useState<
-    { label: string; value: string }[]
-  >([]);
+
   const [datesOpen, setDatesOpen] = useState(false);
   const [datesValue, setDatesValue] = useState<string | null>(null);
   const [datesItems, setDatesItems] = useState([
     { label: "All Dates", value: "all" },
   ]);
 
-  // ── Submissions modal state ─────────────────────────────────────────────────
+  const [courseOpen, setCourseOpen] = useState(false);
+  const anyDropdownOpen = courseOpen || categoryOpen || datesOpen;
+
+  const dropdownSpacerHeight = useMemo(() => {
+    if (!anyDropdownOpen) return 0;
+    let itemCount = 0;
+    if (courseOpen) {
+      itemCount = courses.length + 1;
+    } else if (categoryOpen) {
+      itemCount = categoryItems.length;
+    } else if (datesOpen) {
+      itemCount = datesItems.length;
+    }
+    return itemCount * 25;
+  }, [
+    anyDropdownOpen,
+    courseOpen,
+    categoryOpen,
+    datesOpen,
+    courses,
+    categoryItems,
+    datesItems,
+  ]);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -75,7 +95,6 @@ const AssessmentsPage = () => {
   const [gradingValue, setGradingValue] = useState<string | null>(null);
   const [modalGradingOpen, setModalGradingOpen] = useState(false);
 
-  // ── Detail modal state ──────────────────────────────────────────────────────
   const [detailVisible, setDetailVisible] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [submissionDetails, setSubmissionDetails] = useState<any>(null);
@@ -93,132 +112,129 @@ const AssessmentsPage = () => {
   const [gradesSubmitted, setGradesSubmitted] = useState(false);
   const [submittingGrades, setSubmittingGrades] = useState(false);
 
-  // ── Dropdown interlock ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (categoryOpen) {
-      setCourseOpen(false);
-      setDatesOpen(false);
-    }
+    if (categoryOpen) setDatesOpen(false);
   }, [categoryOpen]);
   useEffect(() => {
-    if (courseOpen) {
-      setCategoryOpen(false);
-      setDatesOpen(false);
-    }
-  }, [courseOpen]);
-  useEffect(() => {
-    if (datesOpen) {
-      setCategoryOpen(false);
-      setCourseOpen(false);
-    }
+    if (datesOpen) setCategoryOpen(false);
   }, [datesOpen]);
 
-  // const handleInstantReminder = async () => {
-  //   if (!assessment?._id) return;
-  //   try {
-  //     setLoadingReminder(true);
-  //     const res = await axiosInstance.post(
-  //       `/assessment/${assessment._id}/send-reminder`,
-  //     );
-  //     setStatusMessage({
-  //       type: "success",
-  //       text: res.data.message || "Reminders sent!",
-  //     });
-  //     setTimeout(() => setStatusMessage(null), 4000);
-  //   } catch (err) {
-  //     setStatusMessage({
-  //       type: "error",
-  //       text: err?.response?.data?.message || "Failed to send.",
-  //     });
-  //   } finally {
-  //     setLoadingReminder(false);
-  //   }
-  // };
-  useEffect(() => {
-    console.log("hi this is assessment page screen!");
-  }, []);
+  const fetchCourses = async () => {
+    try {
+      setCoursesLoading(true);
+      const res = await getAllCourses();
+      if (res && Array.isArray(res.courses)) {
+        setCourses(res.courses);
+      }
+    } catch (err: any) {
+      console.error("Error fetching courses:", err);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
 
-  // ── Fetch initial data ──────────────────────────────────────────────────────
+  const handleCourseChange = async (courseId: string | null) => {
+    setSelectedCourse(courseId);
+    setCategoryValue(null);
+    setDatesValue(null);
+    setSearchQuery("");
+  };
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await getAllAssessmentsByTeacher();
-        setRawAssessments(data);
 
-        const uniqueCategories = Array.from(
-          new Map(
-            data.map((a: any) => [
-              a.category._id,
-              { label: a.category.name, value: a.category._id },
-            ])
-          ).values()
-        ) as { label: string; value: string }[];
+        const response = await getAllAssessmentsByTeacher();
+        console.log("📦 Full API response:", response);
+
+        let assessments = Array.isArray(response)
+          ? response
+          : response?.assessments || [];
+        if (!Array.isArray(assessments)) assessments = [];
+
+        console.log(`✅ Found ${assessments.length} assessments`);
+
+        const missingCategory = assessments.filter((a) => !a.category);
+        if (missingCategory.length > 0) {
+          console.warn(
+            "⚠️ Assessments without category:",
+            missingCategory.map((a) => a._id)
+          );
+        }
+
+        setRawAssessments(assessments);
+
+        const categoryMap = new Map();
+        assessments.forEach((a: any) => {
+          if (a.category && a.category._id) {
+            categoryMap.set(a.category._id, {
+              label: a.category.name || "Unnamed",
+              value: a.category._id,
+            });
+          }
+        });
+        const uniqueCategories = Array.from(categoryMap.values()) as {
+          label: string;
+          value: string;
+        }[];
         setCategoryItems([
           { label: "All Topics", value: "all" },
           ...uniqueCategories,
         ]);
+        console.log("📂 Categories:", uniqueCategories.length);
 
-        const uniqueCourses = Array.from(
-          new Map(
-            data.map((a: any) => [
-              a.course._id,
-              { label: a.course.courseTitle, value: a.course._id },
-            ])
-          ).values()
-        ) as { label: string; value: string }[];
-        setCourseItems([
-          { label: "All Courses", value: "all" },
-          ...uniqueCourses,
-        ]);
-
-        const formattedDates = Array.from(
-          new Map(
-            data.map((a: any) => [
-              formatDate(a.createdAt),
-              { label: formatDate(a.createdAt), value: a.createdAt },
-            ])
-          ).values()
-        ).sort(
-          (a: any, b: any) =>
-            new Date(b.value).getTime() - new Date(a.value).getTime()
+        const dateMap = new Map();
+        assessments.forEach((a: any) => {
+          if (a.createdAt) {
+            const formatted = formatDate(a.createdAt);
+            if (!dateMap.has(formatted)) {
+              dateMap.set(formatted, { label: formatted, value: a.createdAt });
+            }
+          }
+        });
+        const formattedDates = Array.from(dateMap.values()).sort(
+          (a, b) => new Date(b.value).getTime() - new Date(a.value).getTime()
         );
         setDatesItems([
           { label: "All Dates", value: "all" },
-          ...(formattedDates as any),
+          ...formattedDates,
         ]);
+
+        console.log("📅 Dates:", formattedDates.length);
       } catch (err: any) {
+        console.error("❌ Fetch error:", err);
         setError(err.message || "Failed to load data.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchInitialData();
+    fetchCourses();
   }, []);
 
-  // ── Filter assessments ──────────────────────────────────────────────────────
-  useEffect(() => {
-    setFilteredAssessments(
-      rawAssessments.filter((a: any) => {
-        const matchesCategory =
-          !categoryValue || categoryValue === "all"
-            ? true
-            : a.category._id === categoryValue;
-        const matchesCourse =
-          !courseValue || courseValue === "all"
-            ? true
-            : a.course._id === courseValue;
-        const matchesDate =
-          !datesValue || datesValue === "all"
-            ? true
-            : a.createdAt === datesValue;
-        return matchesCategory && matchesCourse && matchesDate;
-      })
-    );
-  }, [categoryValue, courseValue, datesValue, rawAssessments]);
+  const filteredAssessments = useMemo(() => {
+    let result = rawAssessments;
+    if (selectedCourse && selectedCourse !== "all") {
+      result = result.filter((a) => a.course?._id === selectedCourse);
+    }
 
-  // ── Open submissions modal ──────────────────────────────────────────────────
+    return result.filter((a) => {
+      const matchesCategory =
+        !categoryValue || categoryValue === "all"
+          ? true
+          : a.category?._id === categoryValue;
+      const matchesDate =
+        !datesValue || datesValue === "all" ? true : a.createdAt === datesValue;
+      const matchesSearch =
+        searchQuery.trim() === "" ||
+        a.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesDate && matchesSearch;
+    });
+  }, [rawAssessments, selectedCourse, categoryValue, datesValue, searchQuery]);
+
   const handleAssessmentPress = async (assessment: any) => {
     setSelectedAssessment(assessment);
     setModalVisible(true);
@@ -237,7 +253,6 @@ const AssessmentsPage = () => {
     }
   };
 
-  // ── Filtered submissions ────────────────────────────────────────────────────
   const filteredSubmissions = submissions.filter((sub: any) => {
     let matchesStatus = true;
     if (statusValue === "after_due" && selectedAssessment) {
@@ -255,7 +270,6 @@ const AssessmentsPage = () => {
     return matchesStatus && matchesGrading;
   });
 
-  // ── Open detail modal ───────────────────────────────────────────────────────
   const handleSubmissionPress = async (submission: any) => {
     setModalVisible(false);
     setSelectedSubmission(submission);
@@ -277,7 +291,6 @@ const AssessmentsPage = () => {
     }
   };
 
-  // ── Grade change ────────────────────────────────────────────────────────────
   const handleGradeChange = (
     answerId: string,
     value: string,
@@ -294,7 +307,6 @@ const AssessmentsPage = () => {
     });
   };
 
-  // ── Submit grades ───────────────────────────────────────────────────────────
   const handleSubmitGrades = async () => {
     if (!submissionDetails || !selectedSubmission) return;
     setSubmittingGrades(true);
@@ -315,10 +327,7 @@ const AssessmentsPage = () => {
         }
       });
       if (Object.keys(grades).length === 0) {
-        Alert.alert(
-          "Validation Error",
-          "Please enter at least one grade before submitting."
-        );
+        Alert.alert("Validation Error", "Please enter at least one grade.");
         return;
       }
       await submitGrades(selectedSubmission._id, grades);
@@ -326,67 +335,69 @@ const AssessmentsPage = () => {
       setSubmissionDetails(updated.submission);
       setGradesSubmitted(true);
     } catch {
-      Alert.alert("Error", "Failed to submit grades. Please try again.");
+      Alert.alert("Error", "Failed to submit grades.");
     } finally {
       setSubmittingGrades(false);
     }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <ScrollView style={styles.container}>
-      {/* Filters */}
-      <View style={styles.dropdownContainer}>
-        {[
-          {
-            open: categoryOpen,
-            value: categoryValue,
-            items: categoryItems,
-            setOpen: setCategoryOpen,
-            setValue: setCategoryValue,
-            placeholder: "Select Category",
-            zIndex: 3000,
-          },
-          {
-            open: courseOpen,
-            value: courseValue,
-            items: courseItems,
-            setOpen: setCourseOpen,
-            setValue: setCourseValue,
-            placeholder: "Select Course",
-            zIndex: 2000,
-          },
-          {
-            open: datesOpen,
-            value: datesValue,
-            items: datesItems,
-            setOpen: setDatesOpen,
-            setValue: setDatesValue,
-            placeholder: "All Dates",
-            zIndex: 1000,
-          },
-        ].map((d, i) => (
-          <View key={i} style={styles.dropdownWrapper}>
-            <DropDownPicker
-              open={d.open}
-              value={d.value}
-              items={d.items}
-              setOpen={d.setOpen}
-              setValue={d.setValue}
-              setItems={() => {}}
-              placeholder={d.placeholder}
-              style={styles.dropdownPicker}
-              containerStyle={styles.dropdownContainerStyle}
-              zIndex={d.zIndex}
-              zIndexInverse={0}
+    <ScrollView
+      style={styles.container}
+      nestedScrollEnabled
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.filterWrapper}>
+        <FilterBar
+          resultsCount={filteredAssessments.length}
+          resultsLabel="assessments"
+        >
+          <CourseSelector
+            courses={courses}
+            selectedCourse={selectedCourse}
+            onCourseChange={handleCourseChange}
+            loading={coursesLoading}
+            onOpenChange={setCourseOpen}
+          />
+        </FilterBar>
+
+        {selectedCourse && (
+          <FilterBar>
+            <SearchFilter
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search by title"
             />
-          </View>
-        ))}
+            <View style={styles.dropdownContainer}>
+              <DropdownFilter
+                open={categoryOpen}
+                value={categoryValue}
+                items={categoryItems}
+                setOpen={setCategoryOpen}
+                setValue={setCategoryValue}
+                placeholder="Select Category"
+                zIndex={1000}
+                zIndexInverse={1000}
+                dropDownContainerStyle={styles.dropDownContainerStyle} // ✅ added
+              />
+              <DropdownFilter
+                open={datesOpen}
+                value={datesValue}
+                items={datesItems}
+                setOpen={setDatesOpen}
+                setValue={setDatesValue}
+                placeholder="All Dates"
+                zIndex={2000}
+                zIndexInverse={1000}
+                dropDownContainerStyle={styles.dropDownContainerStyle} // ✅ added
+              />
+            </View>
+          </FilterBar>
+        )}
       </View>
 
-      {/* Assessment Cards */}
+      {anyDropdownOpen && <View style={{ height: dropdownSpacerHeight }} />}
+
       <View style={styles.cardsContainer}>
         {loading ? (
           <ActivityIndicator
@@ -395,7 +406,7 @@ const AssessmentsPage = () => {
             style={{ marginTop: 50 }}
           />
         ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>Error: {error}</Text>
         ) : filteredAssessments.length === 0 ? (
           <Text style={styles.emptyText}>No assessments available.</Text>
         ) : (
@@ -406,21 +417,30 @@ const AssessmentsPage = () => {
               onPress={() => handleAssessmentPress(assessment)}
             >
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>{assessment.title}</Text>
+                <Text style={styles.cardTitle}>
+                  {assessment.title || "Untitled"}
+                </Text>
                 <View style={styles.tagRow}>
-                  <Text style={styles.cardTag}>{assessment.category.name}</Text>
+                  <Text style={styles.cardTag}>
+                    {assessment.category?.name || "Uncategorized"}
+                  </Text>
                 </View>
                 <View style={styles.courseRow}>
                   <View style={styles.plusCircle}>
                     <Text style={styles.plus}>+</Text>
                   </View>
                   <Text style={styles.courseTitle}>
-                    {assessment.course.courseTitle}
+                    {assessment.course?.courseTitle || "No course"}
                   </Text>
                 </View>
-                <Text style={styles.cardDesc}>{assessment.description}</Text>
+                <Text style={styles.cardDesc}>
+                  {assessment.description || ""}
+                </Text>
                 <Text style={styles.cardDate}>
-                  Due: {formatDate(assessment.dueDate?.date)}
+                  Due:{" "}
+                  {assessment.dueDate?.date
+                    ? formatDate(assessment.dueDate.date)
+                    : "No due date"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -428,7 +448,6 @@ const AssessmentsPage = () => {
         )}
       </View>
 
-      {/* ── Submissions Modal ── */}
       <SubmissionsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -449,7 +468,6 @@ const AssessmentsPage = () => {
         formatDateTime={formatDateTime}
       />
 
-      {/* ── Submission Detail Modal ── */}
       <SubmissionDetailModal
         visible={detailVisible}
         onClose={() => {
@@ -475,25 +493,31 @@ const AssessmentsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#cdcdcd",
     paddingHorizontal: 16,
     paddingTop: 16,
   },
-  dropdownContainer: { marginBottom: 16 },
-  dropdownWrapper: { marginBottom: 10 },
-  dropdownPicker: {
+  filterWrapper: { flex: 1 },
+  dropdownContainer: {
     backgroundColor: "#fff",
-    borderColor: "#ddd",
-    borderRadius: 8,
+    // You can add more styling if needed
   },
-  dropdownContainerStyle: { height: 50, marginBottom: 10 },
+  dropDownContainerStyle: {
+    zIndex: 9999,
+    elevation: 9999,
+  },
   cardsContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingBottom: 50,
   },
-  errorText: { fontSize: 16, color: "red", textAlign: "center", marginTop: 50 },
+  errorText: {
+    fontSize: 16,
+    color: "#000",
+    textAlign: "center",
+    marginTop: 50,
+  },
   emptyText: {
     fontSize: 16,
     color: "#666",
@@ -524,6 +548,7 @@ const styles = StyleSheet.create({
     color: "#00a000",
     paddingVertical: 5,
     paddingHorizontal: 10,
+    marginHorizontal: 10,
     borderRadius: 5,
     fontSize: 12,
     fontWeight: "bold",

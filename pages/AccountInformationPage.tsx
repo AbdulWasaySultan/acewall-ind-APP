@@ -1312,12 +1312,21 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 24,
     fontWeight: "bold",
+    color: "#000", // <-- added
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginTop: 16,
     marginBottom: 8,
+    color: "#000", // <-- added
+  },
+  subSectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 16,
+    marginBottom: 8,
+    color: "#000", // <-- added
   },
   profileImageContainer: {
     alignItems: "center",
@@ -1334,11 +1343,19 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 50,
-    color: "#666",
+    color: "#666", // already fine
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#E0E0E0",
+    marginBottom: 12,
   },
   uploadText: {
     fontSize: 16,
     marginBottom: 8,
+    color: "#000", // <-- added
   },
   chooseFileButton: {
     flexDirection: "row",
@@ -1350,6 +1367,7 @@ const styles = StyleSheet.create({
   },
   chooseFileButtonText: {
     marginRight: 8,
+    color: "#000", // <-- added
   },
   infoRow: {
     flexDirection: "row",
@@ -1369,22 +1387,15 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 16,
-    color: "#000",
+    color: "#000", // already
     fontWeight: "500",
     flex: 1,
   },
   infoValue: {
     fontSize: 16,
-    color: "#000",
+    color: "#000", // already
     flex: 1,
     textAlign: "right",
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#E0E0E0",
-    marginBottom: 12,
   },
   imageSaveButton: {
     backgroundColor: "#4CAF50",
@@ -1403,7 +1414,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: "#555",
+    color: "#555", // already
     marginBottom: 4,
   },
   input: {
@@ -1413,6 +1424,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: "#fff",
+    color: "#000", // <-- added
   },
   textArea: {
     borderWidth: 1,
@@ -1421,6 +1433,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: "#fff",
+    color: "#000", // <-- added
     minHeight: 80,
     textAlignVertical: "top",
   },
@@ -1429,7 +1442,7 @@ const styles = StyleSheet.create({
   },
   radioLabel: {
     fontSize: 14,
-    color: "#555",
+    color: "#555", // already
     marginBottom: 8,
   },
   radioButton: {
@@ -1440,6 +1453,7 @@ const styles = StyleSheet.create({
   radioIcon: {
     marginRight: 8,
     fontSize: 16,
+    color: "#000", // <-- added
   },
   buttonContainer: {
     flexDirection: "row",
@@ -1491,13 +1505,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  subSectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 16,
-    marginBottom: 8,
-    color: "#000",
-  },
   addressRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1524,7 +1531,7 @@ const styles = StyleSheet.create({
   },
   dropdownLabel: {
     fontSize: 14,
-    color: "#555",
+    color: "#555", // already
     marginBottom: 4,
   },
   categoryDropdown: {
@@ -1539,7 +1546,7 @@ const styles = StyleSheet.create({
   },
   categoryDropdownText: {
     fontSize: 14,
-    color: "#000",
+    color: "#000", // already
     flex: 1,
   },
   categoryDropdownPlaceholder: {
@@ -1563,7 +1570,7 @@ const styles = StyleSheet.create({
   },
   fileInputText: {
     fontSize: 14,
-    color: "#666",
+    color: "#666", // already
   },
   uploadButton: {
     backgroundColor: "#4CAF50",
@@ -1597,12 +1604,12 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#000",
+    color: "#000", // already
     flex: 1,
   },
   expandIcon: {
     fontSize: 12,
-    color: "#666",
+    color: "#666", // already
     marginLeft: 8,
   },
   categoryContent: {
@@ -1621,7 +1628,7 @@ const styles = StyleSheet.create({
   },
   documentName: {
     fontSize: 14,
-    color: "#000",
+    color: "#000", // already
     flex: 1,
   },
   documentActions: {
@@ -1653,7 +1660,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#000",
+    color: "#000", // <-- added (was missing)
     textTransform: "capitalize",
   },
   deleteButton: {
@@ -1661,6 +1668,7 @@ const styles = StyleSheet.create({
   },
   deleteIcon: {
     fontSize: 18,
+    color: "#000", // <-- added
   },
   emptyMessage: {
     fontSize: 14,
@@ -1719,17 +1727,18 @@ const styles = StyleSheet.create({
   deleteModalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#000",
+    color: "#000", // <-- added
     marginBottom: 16,
   },
   deleteModalMessage: {
     fontSize: 16,
-    color: "#000",
+    color: "#000", // <-- added
     marginBottom: 24,
     lineHeight: 22,
   },
   deleteModalBold: {
     fontWeight: "bold",
+    color: "#000", // <-- added
   },
   deleteModalButtons: {
     flexDirection: "row",
@@ -1746,7 +1755,7 @@ const styles = StyleSheet.create({
   },
   deleteModalCancelText: {
     fontSize: 16,
-    color: "#666",
+    color: "#666", // already
     fontWeight: "500",
   },
   deleteModalDeleteButton: {

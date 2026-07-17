@@ -27,8 +27,6 @@ const addAuthInterceptor = (api: any) => {
 export const createAnnouncement = async ({ title, courseId, message }: { title: string; courseId: string; message: string }) => {
   try {
     const api = await getApiInstance();
-    console.log('Base URL:', api.defaults.baseURL);
-    console.log('Full URL:', api.defaults.baseURL + '/api/announcements/createannouncement');
     const user = await getStoredUserData();
     const teacherId = user?.user?._id;
     if (!teacherId) throw new Error('No teacher ID found');
@@ -54,8 +52,6 @@ export const getAnnouncementsByTeacher = async () => {
     const teacherId = user?.user?._id;
     console.log(teacherId);
     if (!teacherId) throw new Error('No teacher ID found');
-    console.log('Base URL:', api.defaults.baseURL);
-    console.log('Full URL:', api.defaults.baseURL + `/api/announcements/getbyteacher/${teacherId}`);
     const response = await api.get(`/api/announcements/getbyteacher/${teacherId}`);
     return response.data;
   } catch (error: any) {

@@ -4,7 +4,7 @@ import { getApiInstance } from "./apiInstance";
 export const courseImport = async (jsonData: any) => {
       const api = await getApiInstance();
        const response = await api.post(
-         `/course/import-full-course`,
+         `/api/course/import-full-course`,
          jsonData
        );
        return response;

@@ -15,6 +15,7 @@ import {
   RecentActivity,
   CourseStatsResponse,
   PublishedCourse,
+
 } from "../services/dashboard";
 
 // Static data
@@ -50,7 +51,7 @@ const DashboardPage = () => {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const { userRole } = useAuth();
   const [recentCourses, setRecentCourses] = useState<PublishedCourse[]>([]);
-  const [recentCourseslength, setRecentCourseslength] = useState<number>(0);
+  const [totalCoursesCount, setTotalCoursesCount] = useState<number>(0);
   const [publishedCoursesCount, setPublishedCoursesCount] = useState<number>(0);
   const [unpublishedCoursesCount, setUnpublishedCoursesCount] =
     useState<number>(0);
@@ -68,6 +69,7 @@ const DashboardPage = () => {
       const coursesData = await dashboardService.getRecentCourses();
       if (!coursesData) {
         console.log("No course data found");
+        setTotalCoursesCount(0);
         setPublishedCoursesCount(0);
         setUnpublishedCoursesCount(0);
         setRecentCourses([]);
@@ -75,13 +77,9 @@ const DashboardPage = () => {
       }
       console.log("coursesData *********", coursesData);
 
-      // Count published and unpublished courses
-      const publishedCount = coursesData.published.length;
-      const unpublishedCount = coursesData.unpublished;
-
-      setPublishedCoursesCount(publishedCount);
-      setUnpublishedCoursesCount(unpublishedCount);
-      setRecentCourseslength(coursesData.publishedCount);
+      setTotalCoursesCount(coursesData.total ?? 0);
+      setPublishedCoursesCount(coursesData.publishedCount ?? 0);
+      setUnpublishedCoursesCount(coursesData.unpublished ?? 0);
 
       // Filter only published courses and take the first 3
       const limitedCourses = coursesData.published.slice(0, 3).reverse();
@@ -223,11 +221,13 @@ const DashboardPage = () => {
         <View style={styles.cardsContainer}>
           <TouchableOpacity
             style={styles.card}
-            onPress={() => navigation.navigate("MyCourses")}
+            onPress={() =>
+              navigation.navigate("MyCourses", { filter: "all" })
+            }
           >
             <Text style={styles.cardTitle}>Total Courses</Text>
             <View style={styles.cardContent}>
-              <Text style={styles.cardNumber}>{recentCourseslength}</Text>
+              <Text style={styles.cardNumber}>{totalCoursesCount}</Text>
               <View style={styles.iconCircleGreen}>
                 <Text style={styles.iconText}>📖</Text>
               </View>

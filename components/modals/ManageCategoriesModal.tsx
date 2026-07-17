@@ -41,6 +41,7 @@ const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [newAssessmentCategoryName, setNewAssessmentCategoryName] = useState('');
   const [newAssessmentCategoryWeight, setNewAssessmentCategoryWeight] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -48,27 +49,36 @@ const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
     }
   }, [visible]);
 
-  const fetchAssessmentCategories = async () => {
-    try {
-      setLoadingCategories(true);
-      const response = await getAssessmentCategories(courseId);
-      setAssessmentCategories(
-        response.categories.map((category: any) => ({
-          id: category._id,
-          title: category.name,
-          weight: category.weight.toString(),
-        }))
-      );
-    } catch (error: any) {
-      Toast.show(
-        error.message || 'Failed to fetch assessment categories',
-        Toast.LONG
-      );
-    } finally {
-      setLoadingCategories(false);
-    }
-  };
+  // Triggers every time assessmentCategories updates in state
+// useEffect(() => {
+//   if (assessmentCategories.length > 0) {
+//     const str = assessmentCategories.map(cat => cat.title).join(', ');
+//     console.log("Current Categories State:", str);
+//   }
+//   console.log(error);
+// }, [assessmentCategories]);
 
+const fetchAssessmentCategories = async () => {
+  try {
+    setLoadingCategories(true);
+    setError(null);
+    const response = await getAssessmentCategories(courseId);
+    setAssessmentCategories(
+      response.categories.map((category: any) => ({
+        id: category._id,
+        title: category.name,
+        weight: category.weight.toString(),
+      }))
+    );
+  } catch (error: any) {
+    // console.error('Fetch categories error:', error);
+    const msg = error.message || 'Failed to fetch assessment categories';
+    setError(msg);
+    // Toast.show(msg, Toast.LONG);
+  } finally {
+    setLoadingCategories(false);
+  }
+};
   const handleWeightChange = (text: string, categoryId: string) => {
     const updatedCategories = assessmentCategories.map(cat => {
       if (cat.id === categoryId) {
@@ -92,7 +102,7 @@ const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
     } catch (error: any) {
       Toast.show(error.message || 'Failed to update category.', Toast.LONG);
     }
-  };
+   };
 
   const handleDeleteCategory = (category: Category) => {
     Alert.alert(
@@ -133,17 +143,27 @@ const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
       return;
     }
     try {
-      setCreatingCategory(true);
-      await createAssessmentCategory(
-        courseId,
-        newAssessmentCategoryName.trim(),
-        weight
-      );
-      Toast.show('Category added successfully.', Toast.LONG);
-      setNewAssessmentCategoryName('');
-      setNewAssessmentCategoryWeight('');
-      fetchAssessmentCategories();
+      {if(weight < 100){
+        setCreatingCategory(true);
+        await createAssessmentCategory(
+          courseId,
+          newAssessmentCategoryName.trim(),
+          weight
+        );
+        Toast.show('Category added successfully.', Toast.LONG);
+        setNewAssessmentCategoryName('');
+        setNewAssessmentCategoryWeight('');
+        fetchAssessmentCategories();
+
+      }
+    else{
+      Toast.show('The weightage should be less than 100%', Toast.LONG)
+    }}
+
     } catch (error: any) {
+      if(error.response.type === 404){
+        Toast.show('The weightage shouldnot exceed more than 100%', Toast.LONG)
+      }
       Toast.show(error.message || 'Failed to add category.', Toast.LONG);
     } finally {
       setCreatingCategory(false);
@@ -192,13 +212,13 @@ const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
               </View>
 
               {loadingCategories ? (
-                <ActivityIndicator
-                  size="large"
-                  color="#10B144"
-                  style={{ marginVertical: 20 }}
-                />
-              ) : (
-                assessmentCategories.map(cat => (
+  <ActivityIndicator size="large" color="#10B144" style={{ marginVertical: 20 }} />
+) : assessmentCategories.length === 0 ? (
+  <View style={styles.emptyContainer}>
+    <Text style={styles.emptyText}>No categories found for this course</Text>
+  </View>
+) : (
+  assessmentCategories.map(cat => (
                   <View key={cat.id} style={styles.categoryItem}>
                     <Text style={[styles.categoryName, { flex: 2 }]}>
                       {cat.title}
@@ -415,6 +435,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#10B144',
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 

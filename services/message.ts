@@ -42,7 +42,7 @@ const handleApiError = (error: any, defaultMessage: string) => {
 export const getMessages = async (conversationId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/messeges/get/${conversationId}`);
+    const response = await api.get(`/api/messeges/get/${conversationId}`);
     return response.data;
   } catch (error) {
     handleApiError(error, "Failed to fetch messages");
@@ -52,7 +52,7 @@ export const getMessages = async (conversationId: string) => {
 export const getConversations = async () => {
   try {
     const api = await getApiInstance();
-    const response = await api.get("/conversation/get");
+    const response = await api.get("/api/conversation/get");
     // console.log(response)
     return response.data;
   } catch (error) {
@@ -63,7 +63,7 @@ export const getConversations = async () => {
 export const sendMessage = async (conversationId: string, text: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post(`/messeges/create/${conversationId}`, {
+    const response = await api.post(`/api/messeges/create/${conversationId}`, {
       text,
     });
     return response.data;

@@ -96,7 +96,7 @@ const GradeScaleManagementModal: React.FC<GradeScaleManagementModalProps> = ({
               })}
             </ScrollView>
           ) : (
-            <Text style={{ marginTop: 20 }}>
+            <Text style={{ marginTop: 20, alignSelf: 'center' }}>
               No gradescale found for this course.
             </Text>
           )}

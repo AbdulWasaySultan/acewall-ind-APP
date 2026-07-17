@@ -17,6 +17,7 @@ import {
 import {
   getAllAssessmentForStudent,
   getStudentAssessmentDetails,
+  getAllCourses,
 } from "../services/course";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -25,6 +26,9 @@ import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect } from "react";
+import CourseSelector from "../components/filters/CourseSelector";
+import SearchFilter from "../components/filters/SearchFilter";
+import FilterBar, { DropdownFilter } from "../components/filters/FilterBar";
 
 // ---------- INTERFACE ----------
 export interface AssessmentItem {
@@ -80,6 +84,32 @@ const MyAssessmentsPage = async () => {
     "all" | "needs_grading" | "graded"
   >("all");
 
+  // Course-First Pattern: Course state
+  const [courses, setCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+
+  // Secondary filters (only active after course selection)
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryValue, setCategoryValue] = useState<string | null>(null);
+  const [categoryItems, setCategoryItems] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  const [typeOpen, setTypeOpen] = useState(false);
+  const [typeValue, setTypeValue] = useState<string | null>(null);
+  const [typeItems, setTypeItems] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [statusValue, setStatusValue] = useState<string | null>(null);
+  const statusItems = [
+    { label: "All Status", value: "all" },
+    { label: "Submitted", value: "submitted" },
+    { label: "Pending", value: "pending" },
+  ];
+
   const insets = useSafeAreaInsets();
 
   // ----------- FETCHING -----------
@@ -89,6 +119,31 @@ const MyAssessmentsPage = async () => {
     if (Array.isArray(res?.assessments)) return res.assessments;
     if (Array.isArray(res?.items)) return res.items;
     return [];
+  };
+
+  // Fetch courses for Course-First pattern
+  const fetchCourses = async () => {
+    try {
+      setCoursesLoading(true);
+      const res = await getAllCourses();
+      if (res && Array.isArray(res.courses)) {
+        setCourses(res.courses);
+      }
+    } catch (err: any) {
+      console.error("Error fetching courses:", err);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
+
+  // Handle course change - resets secondary filters
+  const handleCourseChange = async (courseId: string | null) => {
+    setSelectedCourse(courseId);
+    // Reset secondary filters when course changes
+    setCategoryValue(null);
+    setTypeValue(null);
+    setStatusValue(null);
+    setSearchQuery("");
   };
   const formatDateTime = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -108,6 +163,32 @@ const MyAssessmentsPage = async () => {
       const res = await getAllAssessmentForStudent();
       const list = normalizeArray(res);
       setAssessments(list);
+
+      // Extract unique categories for filter dropdown
+      const uniqueCategories = Array.from(
+        new Map(
+          list
+            .filter((a) => a.category?._id)
+            .map((a) => [a.category._id, a.category])
+        ).values()
+      );
+      setCategoryItems([
+        { label: "All Categories", value: "all" },
+        ...uniqueCategories.map((cat) => ({
+          label: cat.name,
+          value: cat._id,
+        })),
+      ]);
+
+      // Extract unique types
+      const uniqueTypes = [...new Set(list.map((a) => a.type))];
+      setTypeItems([
+        { label: "All Types", value: "all" },
+        ...uniqueTypes.map((type) => ({
+          label: type.replace(/-/g, " "),
+          value: type,
+        })),
+      ]);
     } catch (err: any) {
       console.log("[getAllAssessmentForStudent] error:", err);
       setError(err?.message || "Failed to load assessments");
@@ -129,6 +210,7 @@ const MyAssessmentsPage = async () => {
   useFocusEffect(
     useCallback(() => {
       fetchAssessments();
+      fetchCourses();
 
       return () => {
         console.log("Screen unfocused");
@@ -139,6 +221,7 @@ const MyAssessmentsPage = async () => {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchAssessments();
+    await fetchCourses();
     setRefreshing(false);
   }, []);
 
@@ -197,11 +280,72 @@ const MyAssessmentsPage = async () => {
   const getStatus = (item: AssessmentItem) =>
     item.isSubmitted ? "Submitted" : "Pending";
 
+  // Course-First Pattern: Apply filters
   const filtered = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return assessments;
-    return assessments.filter((a) => getTitle(a).toLowerCase().includes(q));
-  }, [assessments, searchQuery]);
+    // Step 1: Filter by course (PRIMARY FILTER)
+    let courseFiltered = assessments;
+    if (selectedCourse && selectedCourse !== "all") {
+      courseFiltered = assessments.filter(
+        (a) => a.course._id === selectedCourse
+      );
+    }
+
+    // Step 2: Apply secondary filters on course-scoped data
+    return courseFiltered.filter((a) => {
+      // Search filter
+      const matchesSearch =
+        searchQuery.trim() === "" ||
+        a.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Category filter
+      const matchesCategory =
+        !categoryValue ||
+        categoryValue === "all" ||
+        a.category._id === categoryValue;
+
+      // Type filter
+      const matchesType =
+        !typeValue || typeValue === "all" || a.type === typeValue;
+
+      // Status filter
+      const matchesStatus =
+        !statusValue ||
+        statusValue === "all" ||
+        (statusValue === "submitted" && a.isSubmitted) ||
+        (statusValue === "pending" && !a.isSubmitted);
+
+      return matchesSearch && matchesCategory && matchesType && matchesStatus;
+    });
+  }, [
+    assessments,
+    selectedCourse,
+    searchQuery,
+    categoryValue,
+    typeValue,
+    statusValue,
+  ]);
+
+  // Dropdown interlock to prevent multiple dropdowns from being open
+  useEffect(() => {
+    if (categoryOpen) {
+      setTypeOpen(false);
+      setStatusOpen(false);
+    }
+  }, [categoryOpen]);
+
+  useEffect(() => {
+    if (typeOpen) {
+      setCategoryOpen(false);
+      setStatusOpen(false);
+    }
+  }, [typeOpen]);
+
+  useEffect(() => {
+    if (statusOpen) {
+      setCategoryOpen(false);
+      setTypeOpen(false);
+    }
+  }, [statusOpen]);
 
   // ---------- COMPONENTS ----------
   const StatusBadge = ({ status }: { status: string }) => {
@@ -337,13 +481,56 @@ const MyAssessmentsPage = async () => {
         <Text style={styles.bannerText}>Assessments</Text>
       </View>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search by title"
-        placeholderTextColor="#888"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      {/* Course-First Filter Bar */}
+      <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
+        <CourseSelector
+          courses={courses}
+          selectedCourse={selectedCourse}
+          onCourseChange={handleCourseChange}
+          loading={coursesLoading}
+        />
+      </FilterBar>
+
+      {/* Secondary Filters (only visible after course selected) */}
+      {selectedCourse && (
+        <FilterBar>
+          <SearchFilter
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by title"
+          />
+          <DropdownFilter
+            open={categoryOpen}
+            value={categoryValue}
+            items={categoryItems}
+            setOpen={setCategoryOpen}
+            setValue={setCategoryValue}
+            placeholder="All Categories"
+            zIndex={3000}
+            dropDownContainerStyle={styles.dropdownContainer}
+          />
+          <DropdownFilter
+            open={typeOpen}
+            value={typeValue}
+            items={typeItems}
+            setOpen={setTypeOpen}
+            setValue={setTypeValue}
+            placeholder="All Types"
+            zIndex={2000}
+            dropDownContainerStyle={styles.dropdownContainer}
+          />
+          <DropdownFilter
+            open={statusOpen}
+            value={statusValue}
+            items={statusItems}
+            setOpen={setStatusOpen}
+            setValue={setStatusValue}
+            placeholder="All Status"
+            zIndex={1000}
+            dropDownContainerStyle={styles.dropdownContainer}
+          />
+        </FilterBar>
+      )}
 
       {loading ? (
         <View style={styles.stateWrap}>
@@ -748,14 +935,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   bannerText: { color: COLORS.white, fontSize: 18, fontWeight: "700" },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: COLORS.gray100,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    height: 40,
-    marginBottom: 10,
-  },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -1130,6 +1309,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#6B7280",
+  },
+  dropdownContainer: {
+    zIndex: 9999,
+    elevation: 9999, // Android fix
   },
 });
 

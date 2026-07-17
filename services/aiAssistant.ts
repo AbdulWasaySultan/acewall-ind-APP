@@ -57,7 +57,7 @@ export const sendAIMessage = async (payload: AIMessagePayload) => {
     console.log("difficulty:", payload.difficulty);
     console.log("hasFile:", !!payload.file);
 
-    const response = await api.post("/aichat/askupdated", formData, {
+    const response = await api.post("/api/aichat/askupdated", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
@@ -82,7 +82,7 @@ export const sendAIMessage = async (payload: AIMessagePayload) => {
 export const getChatHistory = async () => {
   try {
     const api = await getApiInstance();
-    const response = await api.get("/aichat/getChatHistory");
+    const response = await api.get("/api/aichat/getChatHistory");
     console.log("===--- CHAT HISTORY ===", response.data);
     return response.data;
   } catch (error: any) {

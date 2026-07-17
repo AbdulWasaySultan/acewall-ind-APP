@@ -7,7 +7,7 @@ export const sendComment = async (courseId: string, comment: string) => {
     // addAuthInterceptor(api);
 
     // ✅ Correct: No duplicate /api/
-    const response = await api.post(`/comment/sendComment/${courseId}`, {
+    const response = await api.post(`/api/comment/sendComment/${courseId}`, {
       text: comment,
     });
     return response.data;
@@ -23,7 +23,7 @@ export const getComments = async (courseId: string) => {
     const api = await getApiInstance();
     // addAuthInterceptor(api);
     // ✅ Correct: No duplicate /api/
-    const response = await api.get(`/comment/${courseId}`);
+    const response = await api.get(`/api/comment/${courseId}`);
     return response.data;
   } catch (error: any) {
     console.log("Error fetching comments:", error);

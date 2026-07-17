@@ -28,26 +28,34 @@ import {
   addAuthInterceptor,
   createApiInstance,
   getAssessmentCategories,
+  sendComment,
 } from "../services/course";
 import * as ImagePicker from "react-native-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Toast from "react-native-simple-toast";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 type RouteParams = RouteProp<RootStackParamList, "ChapterDiscussions">;
+
 interface AssessmentCategory {
   _id: string;
   name: string;
 }
+
 const ChapterDiscussionsPage = () => {
   const route = useRoute<RouteParams>();
   const navigation = useNavigation();
   const { chapterId, courseId, semesterId, quarterId, lessonId, navigateBack } =
     route.params;
   const insets = useSafeAreaInsets();
+
+  // ----- State for discussion list -----
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<any[]>([]);
+
+  // ----- State for creating a new discussion -----
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [topic, setTopic] = useState("");
@@ -56,15 +64,19 @@ const ChapterDiscussionsPage = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
-
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedCategory, setSelectedCategory] =
     useState<AssessmentCategory | null>(null);
-
   const [file, setFile] = useState<any | null>(null);
+  const [quarterDates, setQuarterDates] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
+
+  // ----- State for discussion modal -----
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [selectedDiscussion, setSelectedDiscussion] = useState<any | null>(
     null
@@ -72,32 +84,18 @@ const ChapterDiscussionsPage = () => {
   const [discussionDetails, setDiscussionDetails] = useState<any | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingDiscussion, setLoadingDiscussion] = useState(false);
+  const [comment, setComment] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // ----- Category creation modal states -----
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryWeight, setNewCategoryWeight] = useState<string>("0");
   const [creatingCategory, setCreatingCategory] = useState(false);
-  const [quarterDates, setQuarterDates] = useState<{
-    startDate: string;
-    endDate: string;
-  } | null>(null);
-  const fetchQuarterDates = async () => {
-    try {
-      const api = await createApiInstance();
-      addAuthInterceptor(api);
 
-      const response = await api.get(
-        `/api/quarter/getDatesofQuarter/${quarterId}`
-      );
-      setQuarterDates({
-        startDate: response.data.startDate,
-        endDate: response.data.endDate,
-      });
-    } catch (error) {
-      console.error("Error fetching quarter dates:", error);
-      // Don't show error toast as this is not critical
-    }
-  };
+  // ----- Helpers -----
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -112,6 +110,40 @@ const ChapterDiscussionsPage = () => {
       minute: "2-digit",
     });
   };
+
+  // ----- Fetch quarter dates (for validation) -----
+  const fetchQuarterDates = async () => {
+    try {
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+      const response = await api.get(
+        `/api/quarter/getDatesofQuarter/${quarterId}`
+      );
+      setQuarterDates({
+        startDate: response.data.startDate,
+        endDate: response.data.endDate,
+      });
+    } catch (error) {
+      console.error("Error fetching quarter dates:", error);
+    }
+  };
+
+  // ----- Fetch categories for dropdown -----
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const api = await createApiInstance();
+      addAuthInterceptor(api);
+      const response = await api.get(`/api/assessmentCategory/${courseId}`);
+      setCategories(response.data.categories || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  // ----- Fetch list of discussions -----
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -130,23 +162,166 @@ const ChapterDiscussionsPage = () => {
     fetchData();
     fetchQuarterDates();
     fetchCategories();
-  }, [chapterId]);
-  const fetchCategories = async () => {
-    try {
-      setLoadingCategories(true);
-      const api = await createApiInstance();
-      addAuthInterceptor(api);
+  }, [chapterId, lessonId, courseId]);
 
-      const response = await api.get(`/api/assessmentCategory/${courseId}`);
-      setCategories(response.data.categories || []);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      // Toast.show('Failed to fetch categories', Toast.LONG);
+  // ----- Handle opening a discussion modal -----
+  const openDiscussionModal = async (discussion: any) => {
+    try {
+      setLoadingDiscussion(true);
+      setSelectedDiscussion(discussion);
+      setShowDiscussionModal(true);
+
+      // Fetch discussion details and comments
+      const [detailsRes, commentsRes] = await Promise.all([
+        getDiscussionDetails(discussion._id),
+        getDiscussionComments(discussion._id, 1, 100), // fetch all comments
+      ]);
+
+      setDiscussionDetails(detailsRes.discussion);
+      setComments(commentsRes.discussionComments || []);
+    } catch (err: any) {
+      Toast.show(
+        err.message || "Failed to load discussion details",
+        Toast.LONG
+      );
     } finally {
-      setLoadingCategories(false);
+      setLoadingDiscussion(false);
     }
   };
 
+  // ----- Handle posting a comment -----
+  const handlePostComment = async () => {
+    if (!comment.trim() || !selectedDiscussion) {
+      Toast.show("Please enter a comment", Toast.SHORT);
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    try {
+      const response = await sendComment(
+        selectedDiscussion._id,
+        comment.trim()
+      );
+      const newComment = response.comment || response.data || response;
+      if (newComment?._id) {
+        // Add new comment to the top of the list
+        setComments((prev) => [newComment, ...prev]);
+        setComment("");
+        setRefreshKey((prev) => prev + 1); // triggers re-fetch if needed
+        Toast.show("Comment posted!", Toast.SHORT);
+      } else {
+        Toast.show("Failed to post comment", Toast.SHORT);
+      }
+    } catch (err: any) {
+      Toast.show(err.message || "Failed to post comment.", Toast.LONG);
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  // ----- Create a new discussion -----
+  const handleCreateDiscussion = async () => {
+    if (
+      !topic.trim() ||
+      !description.trim() ||
+      !selectedCategory?._id ||
+      !totalMarks
+    ) {
+      Alert.alert(
+        "Validation",
+        "Topic, Description, Category and Total Points are required."
+      );
+      return;
+    }
+    if (dueDate && quarterDates) {
+      const dueDateTimestamp = dueDate.getTime();
+      const quarterStartTimestamp = new Date(quarterDates.startDate).getTime();
+      const quarterEndTimestamp = new Date(quarterDates.endDate).getTime();
+      if (
+        dueDateTimestamp < quarterStartTimestamp ||
+        dueDateTimestamp > quarterEndTimestamp
+      ) {
+        Toast.show(
+          `Due date must be between ${formatDate(
+            new Date(quarterDates.startDate)
+          )} and ${formatDate(new Date(quarterDates.endDate))}`,
+          Toast.LONG
+        );
+        return;
+      }
+    }
+    if (!dueDate) {
+      Alert.alert("Validation", "Please select due date");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      setError(null);
+      const due = {
+        date: new Date(
+          dueDate.getFullYear(),
+          dueDate.getMonth(),
+          dueDate.getDate()
+        ).toISOString(),
+        time: `${String(dueDate.getHours()).padStart(2, "0")}:${String(
+          dueDate.getMinutes()
+        ).padStart(2, "0")}`,
+        dateTime: dueDate.toISOString(),
+      };
+
+      const res = lessonId
+        ? await createDiscussionForLesson({
+            course: courseId,
+            topic: topic.trim(),
+            description: description.trim(),
+            category: selectedCategory._id,
+            type: "lesson",
+            dueDate: due,
+            totalMarks: Number(totalMarks),
+            semester: semesterId,
+            quarter: quarterId,
+            lesson: lessonId,
+            file,
+          })
+        : await createDiscussionForChapter({
+            course: courseId,
+            topic: topic.trim(),
+            description: description.trim(),
+            category: selectedCategory._id,
+            type: "chapter",
+            dueDate: due,
+            totalMarks: Number(totalMarks),
+            semester: semesterId,
+            quarter: quarterId,
+            chapter: chapterId,
+            file,
+          });
+
+      Toast.show(res.message || "Discussion created successfully", Toast.LONG);
+      setShowCreate(false);
+      setTopic("");
+      setDescription("");
+      setTotalMarks("");
+      setSelectedCategory(null);
+      setDueDate(null);
+      setFile(null);
+
+      // Refresh list
+      setLoading(true);
+      const refreshed = lessonId
+        ? await getDiscussionsForLesson(lessonId)
+        : await getDiscussionsForChapter(chapterId);
+      setItems(refreshed.discussion || []);
+    } catch (err: any) {
+      Toast.show(err.message || "Failed to create discussion", Toast.LONG);
+    } finally {
+      setCreating(false);
+      setLoading(false);
+    }
+  };
+
+  // ----- Create category -----
   const handleCreateCategory = async () => {
     const name = newCategoryName.trim();
     const weight = parseFloat(newCategoryWeight);
@@ -179,7 +354,6 @@ const ChapterDiscussionsPage = () => {
       setNewCategoryWeight("0");
       await fetchCategories();
     } catch (e: any) {
-      console.error("Create category error:", e);
       Toast.show(
         e?.response?.data?.message || e.message || "Failed to create category",
         Toast.LONG
@@ -189,32 +363,11 @@ const ChapterDiscussionsPage = () => {
     }
   };
 
-  const openDiscussionModal = async (discussion: any) => {
-    try {
-      setLoadingDiscussion(true);
-      setSelectedDiscussion(discussion);
-      setShowDiscussionModal(true);
-
-      // Fetch discussion details and comments
-      const [detailsRes, commentsRes] = await Promise.all([
-        getDiscussionDetails(discussion._id),
-        getDiscussionComments(discussion._id, 1, 5),
-      ]);
-
-      setDiscussionDetails(detailsRes.discussion);
-      setComments(commentsRes.discussionComments || []);
-    } catch (err: any) {
-      Toast.show(
-        err.message || "Failed to load discussion details",
-        Toast.LONG
-      );
-    } finally {
-      setLoadingDiscussion(false);
-    }
-  };
+  // ======================== RENDER ========================
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity
           onPress={() =>
@@ -230,6 +383,7 @@ const ChapterDiscussionsPage = () => {
         <View style={{ width: 28 }} />
       </View>
 
+      {/* Create Discussion Button */}
       <View style={{ padding: 16 }}>
         <TouchableOpacity
           style={styles.createButton}
@@ -247,13 +401,14 @@ const ChapterDiscussionsPage = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Discussion List */}
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#10B144" />
         </View>
       ) : error ? (
         <View style={styles.centered}>
-          <Text style={{ color: "red" }}>{error}</Text>
+          <Text style={{ color: "#000" }}>{error}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16 }}>
@@ -305,6 +460,7 @@ const ChapterDiscussionsPage = () => {
         </ScrollView>
       )}
 
+      {/* ========== CREATE DISCUSSION MODAL ========== */}
       <Modal
         visible={showCreate}
         transparent={false}
@@ -401,7 +557,7 @@ const ChapterDiscussionsPage = () => {
               </Text>
               <TouchableOpacity
                 style={styles.filePickerButton}
-                onPress={async () => {
+                onPress={() => {
                   ImagePicker.launchImageLibrary(
                     { mediaType: "photo" },
                     (res) => {
@@ -429,114 +585,7 @@ const ChapterDiscussionsPage = () => {
               <TouchableOpacity
                 style={[styles.createButton, creating && { opacity: 0.7 }]}
                 disabled={creating}
-                onPress={async () => {
-                  if (
-                    !topic.trim() ||
-                    !description.trim() ||
-                    !selectedCategory?._id ||
-                    !totalMarks
-                  ) {
-                    Alert.alert(
-                      "Validation",
-                      "Topic, Description, Category and Total Points are required."
-                    );
-                    return;
-                  }
-                  if (dueDate && quarterDates) {
-                    const dueDateTimestamp = dueDate.getTime();
-                    const quarterStartTimestamp = new Date(
-                      quarterDates.startDate
-                    ).getTime();
-                    const quarterEndTimestamp = new Date(
-                      quarterDates.endDate
-                    ).getTime();
-
-                    if (
-                      dueDateTimestamp < quarterStartTimestamp ||
-                      dueDateTimestamp > quarterEndTimestamp
-                    ) {
-                      Toast.show(
-                        `Due date must be between ${formatDate(
-                          new Date(quarterDates.startDate)
-                        )} and ${formatDate(new Date(quarterDates.endDate))}`,
-                        Toast.LONG
-                      );
-                      return;
-                    }
-                  }
-                  if (!dueDate) {
-                    Alert.alert("Validation", "Please select due date");
-                    return;
-                  }
-                  try {
-                    setCreating(true);
-                    setError(null);
-                    const due = {
-                      date: new Date(
-                        dueDate.getFullYear(),
-                        dueDate.getMonth(),
-                        dueDate.getDate()
-                      ).toISOString(),
-                      time: `${String(dueDate.getHours()).padStart(
-                        2,
-                        "0"
-                      )}:${String(dueDate.getMinutes()).padStart(2, "0")}`,
-                      dateTime: dueDate.toISOString(),
-                    };
-                    const res = lessonId
-                      ? await createDiscussionForLesson({
-                          course: courseId,
-                          topic: topic.trim(),
-                          description: description.trim(),
-                          category: selectedCategory?._id,
-                          type: "lesson",
-                          dueDate: due,
-                          totalMarks: Number(totalMarks),
-                          semester: semesterId,
-                          quarter: quarterId,
-                          lesson: lessonId,
-                          file,
-                        })
-                      : await createDiscussionForChapter({
-                          course: courseId,
-                          topic: topic.trim(),
-                          description: description.trim(),
-                          category: selectedCategory?._id,
-                          type: "chapter",
-                          dueDate: due,
-                          totalMarks: Number(totalMarks),
-                          semester: semesterId,
-                          quarter: quarterId,
-                          chapter: chapterId,
-                          file,
-                        });
-                    Toast.show(
-                      res.message || "Discussion created successfully",
-                      Toast.LONG
-                    );
-                    setShowCreate(false);
-                    setTopic("");
-                    setDescription("");
-                    setTotalMarks("");
-                    setSelectedCategory(null);
-                    setDueDate(null);
-                    setFile(null);
-                    // refresh
-                    setLoading(true);
-                    const refreshed = lessonId
-                      ? await getDiscussionsForLesson(lessonId)
-                      : await getDiscussionsForChapter(chapterId);
-                    setItems(refreshed.discussion || []);
-                  } catch (err: any) {
-                    Toast.show(
-                      err.message || "Failed to create discussion",
-                      Toast.LONG
-                    );
-                  } finally {
-                    setCreating(false);
-                    setLoading(false);
-                  }
-                }}
+                onPress={handleCreateDiscussion}
               >
                 {creating ? (
                   <ActivityIndicator color="#fff" />
@@ -553,6 +602,8 @@ const ChapterDiscussionsPage = () => {
               </TouchableOpacity>
             </ScrollView>
           </KeyboardAvoidingView>
+
+          {/* Date/Time pickers */}
           {showDatePicker && (
             <>
               {Platform.OS === "ios" && (
@@ -651,136 +702,136 @@ const ChapterDiscussionsPage = () => {
               />
             </>
           )}
-          <Modal
-            visible={showCategoryModal}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setShowCategoryModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Select Category</Text>
-                <ScrollView style={styles.categoryList}>
-                  {loadingCategories ? (
-                    <ActivityIndicator size="large" color="#10B144" />
-                  ) : categories.length > 0 ? (
-                    categories.map((category) => (
-                      <TouchableOpacity
-                        key={category._id}
-                        style={[
-                          styles.categoryItem,
-                          selectedCategory?._id === category._id &&
-                            styles.categoryItemSelected,
-                        ]}
-                        onPress={() => {
-                          setSelectedCategory(category);
-                          setShowCategoryModal(false);
-                        }}
-                      >
-                        <Text
-                          style={[
-                            styles.categoryItemText,
-                            selectedCategory?._id === category._id &&
-                              styles.categoryItemTextSelected,
-                          ]}
-                        >
-                          {category.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))
-                  ) : (
-                    <Text style={styles.noCategoriesText}>
-                      No categories available
-                    </Text>
-                  )}
-                </ScrollView>
-                <TouchableOpacity
-                  style={styles.modalCloseButton}
-                  onPress={() => setShowCategoryModal(false)}
-                >
-                  <Text style={styles.modalCloseButtonText}>Cancel</Text>
-                </TouchableOpacity>
-
-                {/* Add New Topic CTA */}
-                <TouchableOpacity
-                  style={[styles.modalCloseButton, { backgroundColor: "#111" }]}
-                  onPress={() => {
-                    setShowCategoryModal(false);
-                    setShowAddCategoryModal(true);
-                  }}
-                >
-                  <Text
-                    style={[styles.modalCloseButtonText, { color: "#fff" }]}
-                  >
-                    + Add New Topic
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-          <Modal
-            visible={showAddCategoryModal}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setShowAddCategoryModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Add New Topic</Text>
-                <Text style={{ color: "#6b7280", marginBottom: 16 }}>
-                  Create a new assessment category for this course.
-                </Text>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Topic Name</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="e.g., Midterm Exam, Quiz, Assignment"
-                    value={newCategoryName}
-                    onChangeText={setNewCategoryName}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Weight (%)</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="0"
-                    value={newCategoryWeight}
-                    onChangeText={setNewCategoryWeight}
-                    keyboardType="numeric"
-                  />
-                </View>
-
-                <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
-                  <TouchableOpacity
-                    style={[styles.cancelQuestionButton]}
-                    onPress={() => setShowAddCategoryModal(false)}
-                    disabled={creatingCategory}
-                  >
-                    <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.saveQuestionButton]}
-                    onPress={handleCreateCategory}
-                    disabled={creatingCategory}
-                  >
-                    {creatingCategory ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <Text style={styles.saveQuestionButtonText}>
-                        Create Category
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
         </View>
       </Modal>
 
-      {/* Discussion Details Modal */}
+      {/* ========== CATEGORY SELECTION MODAL ========== */}
+      <Modal
+        visible={showCategoryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Category</Text>
+            <ScrollView style={styles.categoryList}>
+              {loadingCategories ? (
+                <ActivityIndicator size="large" color="#10B144" />
+              ) : categories.length > 0 ? (
+                categories.map((category) => (
+                  <TouchableOpacity
+                    key={category._id}
+                    style={[
+                      styles.categoryItem,
+                      selectedCategory?._id === category._id &&
+                        styles.categoryItemSelected,
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory(category);
+                      setShowCategoryModal(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryItemText,
+                        selectedCategory?._id === category._id &&
+                          styles.categoryItemTextSelected,
+                      ]}
+                    >
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.noCategoriesText}>
+                  No categories available
+                </Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowCategoryModal(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalCloseButton, { backgroundColor: "#111" }]}
+              onPress={() => {
+                setShowCategoryModal(false);
+                setShowAddCategoryModal(true);
+              }}
+            >
+              <Text style={[styles.modalCloseButtonText, { color: "#fff" }]}>
+                + Add New Topic
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ========== ADD CATEGORY MODAL ========== */}
+      <Modal
+        visible={showAddCategoryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAddCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Topic</Text>
+            <Text style={{ color: "#6b7280", marginBottom: 16 }}>
+              Create a new assessment category for this course.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Topic Name</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g., Midterm Exam, Quiz, Assignment"
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Weight (%)</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="0"
+                value={newCategoryWeight}
+                onChangeText={setNewCategoryWeight}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
+              <TouchableOpacity
+                style={[styles.cancelQuestionButton]}
+                onPress={() => setShowAddCategoryModal(false)}
+                disabled={creatingCategory}
+              >
+                <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveQuestionButton]}
+                onPress={handleCreateCategory}
+                disabled={creatingCategory}
+              >
+                {creatingCategory ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveQuestionButtonText}>
+                    Create Category
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ========== DISCUSSION DETAILS MODAL ========== */}
       <Modal
         visible={showDiscussionModal}
         transparent={false}
@@ -788,6 +839,7 @@ const ChapterDiscussionsPage = () => {
         onRequestClose={() => setShowDiscussionModal(false)}
       >
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
+          {/* Header */}
           <View style={[styles.header, { paddingTop: insets.top }]}>
             <TouchableOpacity
               onPress={() => setShowDiscussionModal(false)}
@@ -862,11 +914,47 @@ const ChapterDiscussionsPage = () => {
                     </View>
                   )}
 
-                {/* Comments Section */}
+                {/* ========== COMMENT SECTION ========== */}
                 <View style={styles.commentsSection}>
-                  <Text style={styles.commentsTitle}>Comments</Text>
+                  <Text style={styles.commentsTitle}>
+                    Comments ({comments.length})
+                  </Text>
                   <View style={styles.commentsDivider} />
 
+                  {/* Comment Input */}
+                  <View style={styles.commentInputBox}>
+                    <TextInput
+                      style={styles.commentInput}
+                      placeholder="Add a comment..."
+                      placeholderTextColor="#A0AEC0"
+                      value={comment}
+                      onChangeText={setComment}
+                      multiline
+                    />
+                    <View style={{ alignItems: "flex-end", marginTop: 8 }}>
+                      <TouchableOpacity
+                        style={[
+                          styles.postCommentButton,
+                          (!comment.trim() || isSubmittingComment) &&
+                            styles.postCommentButtonDisabled,
+                        ]}
+                        disabled={!comment.trim() || isSubmittingComment}
+                        onPress={handlePostComment}
+                      >
+                        <SimpleIcon
+                          name="send"
+                          size={18}
+                          color="#fff"
+                          style={{ marginRight: 6 }}
+                        />
+                        <Text style={styles.postCommentButtonText}>
+                          Post Comment
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Comment List */}
                   {comments.length > 0 ? (
                     comments.map((comment, index) => (
                       <View key={index} style={styles.commentItem}>
@@ -956,13 +1044,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginBottom: 8,
   },
-  dropdownLike: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 8,
-    maxHeight: 160,
-    backgroundColor: "#fff",
-  },
   dropdownTrigger: {
     borderWidth: 1,
     borderColor: "#d1d5db",
@@ -975,16 +1056,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dropdownTriggerText: { color: "#111" },
-  dropdownMenu: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 8,
-    backgroundColor: "#fff",
-    maxHeight: 180,
-    marginTop: 6,
-  },
-  dropdownItem: { paddingHorizontal: 12, paddingVertical: 10 },
-  dropdownItemActive: { backgroundColor: "#eef2ff" },
+  dropdownPlaceholder: { color: "#7b8794" },
   filePickerButton: {
     borderWidth: 1,
     borderColor: "#d1d5db",
@@ -1005,6 +1077,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   cancelText: { color: "#111", fontWeight: "bold", fontSize: 16 },
+
   // Discussion Modal Styles
   discussionBanner: {
     backgroundColor: "#10B144",
@@ -1095,6 +1168,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#e5e7eb",
     marginBottom: 16,
   },
+  commentInputBox: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 16,
+    marginBottom: 16,
+  },
+  commentInput: {
+    minHeight: 60,
+    fontSize: 16,
+    color: "#222",
+    padding: 0,
+    textAlignVertical: "top",
+  },
+  postCommentButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#10B144",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  postCommentButtonDisabled: { backgroundColor: "#A0E7B2" },
+  postCommentButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   commentItem: {
     backgroundColor: "#f9fafb",
     borderRadius: 8,
@@ -1117,11 +1215,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   noCommentsText: {
-    color: "#9ca3af",
+    color: "#A0AEC0",
     fontSize: 14,
     textAlign: "center",
     fontStyle: "italic",
+    marginTop: 16,
   },
+
+  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -1135,9 +1236,6 @@ const styles = StyleSheet.create({
     width: "90%",
     maxWidth: 400,
     maxHeight: "80%",
-  },
-  questionModalContent: {
-    maxHeight: "90%",
   },
   modalTitle: {
     fontSize: 20,
@@ -1185,17 +1283,6 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 16,
   },
-
-  textArea: {
-    height: 100,
-    textAlignVertical: "top",
-  },
-  characterCount: {
-    fontSize: 12,
-    color: "#7b8794",
-    textAlign: "right",
-    marginTop: 4,
-  },
   saveQuestionButton: {
     flex: 1,
     backgroundColor: "#222",
@@ -1219,9 +1306,6 @@ const styles = StyleSheet.create({
     color: "#555",
     fontWeight: "bold",
     fontSize: 16,
-  },
-  dropdownPlaceholder: {
-    color: "#7b8794",
   },
 });
 

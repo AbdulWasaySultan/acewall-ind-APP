@@ -10,6 +10,116 @@ import {
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
 
+interface GPAManagementModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onManageGPA: () => void;
+  showGPAManagementLoader: boolean;
+  GPA: any[];
+  error?: string | null;
+  onRetry?: () => void;
+}
+
+const GPAManagementModal: React.FC<GPAManagementModalProps> = ({
+  visible,
+  onClose,
+  onManageGPA,
+  showGPAManagementLoader,
+  GPA,
+  error,
+  onRetry
+}) => {
+  return (
+    <Modal
+      visible={visible}
+      transparent={false}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.fullScreenModalContainer}>
+        <View style={styles.fullScreenModalContent}>
+          <View style={styles.fullScreenModalHeader}>
+            <TouchableOpacity onPress={onClose} style={styles.backButton}>
+              <SimpleIcon name="arrow-back" size={24} color="#10B144" />
+            </TouchableOpacity>
+            <Text style={styles.fullScreenModalTitle}>GPA</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <TouchableOpacity
+            style={styles.manageButton}
+            onPress={onManageGPA}
+          >
+            <Text style={styles.manageButtonText}>Manage GPA</Text>
+          </TouchableOpacity>
+          {showGPAManagementLoader ? (
+  <ActivityIndicator size="large" color="#10B144" style={{ marginTop: 20 }} />
+) : error ? (
+  <View style={styles.errorContainer}>
+    <SimpleIcon name="alert-circle" size={48} color="#ef4444" />
+    <Text style={styles.errorTitle}>Something went wrong</Text>
+    <Text style={styles.errorMessage}>{error}</Text>
+    {onRetry && (
+      <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+        <Text style={styles.retryButtonText}>Retry</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+): Object.keys(GPA).length > 0 ? (
+            <ScrollView style={{ flex: 1, marginTop: 20 }}>
+              {/* Table Header */}
+              <View style={styles.tableHeader}>
+                <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>
+                <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
+                <Text style={[styles.headerText, { flex: 3 }]}>
+                  Percentage
+                </Text>
+              </View>
+
+              {/* Table Rows */}
+              {GPA?.map((item: any) => {
+                const percentage =
+                  (item.maxPercentage - item.minPercentage) / 100; // simulate visual fill
+                console.log(percentage);
+                return (
+                  <View key={item._id} style={styles.tableRow}>
+                    {/* Grade */}
+                    <View style={styles.gradeBadge}>
+                      <Text style={styles.gradeText}>{item.gpa}</Text>
+                    </View>
+
+                    {/* Range */}
+                    <Text style={[styles.rangeText, { flex: 2 }]}>
+                      {item.minPercentage}% - {item.maxPercentage}%
+                    </Text>
+
+                    {/* Custom Progress Bar */}
+                    <View style={[styles.progressWrapper, { flex: 3 }]}>
+                      <View style={[styles.progressBackground]}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${percentage * 100}%` },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            <Text style={{ marginTop: 20 }}>
+              No gradescale found for this course.
+            </Text>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+export default GPAManagementModal;
+
 const styles = StyleSheet.create({
   fullScreenModalContainer: {
     flex: 1,
@@ -96,103 +206,41 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#10B144",
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111',
+    marginTop: 16,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginVertical: 8,
+    paddingHorizontal: 20,
+  },
+  retryButton: {
+    backgroundColor: '#10B144',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  emptyText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
 });
-
-interface GPAManagementModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onManageGPA: () => void;
-  showGPAManagementLoader: boolean;
-  GPA: any[];
-}
-
-const GPAManagementModal: React.FC<GPAManagementModalProps> = ({
-  visible,
-  onClose,
-  onManageGPA,
-  showGPAManagementLoader,
-  GPA,
-}) => {
-  return (
-    <Modal
-      visible={visible}
-      transparent={false}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.fullScreenModalContainer}>
-        <View style={styles.fullScreenModalContent}>
-          <View style={styles.fullScreenModalHeader}>
-            <TouchableOpacity onPress={onClose} style={styles.backButton}>
-              <SimpleIcon name="arrow-back" size={24} color="#10B144" />
-            </TouchableOpacity>
-            <Text style={styles.fullScreenModalTitle}>GPA</Text>
-            <View style={{ width: 40 }} />
-          </View>
-          <TouchableOpacity
-            style={styles.manageButton}
-            onPress={onManageGPA}
-          >
-            <Text style={styles.manageButtonText}>Manage GPA</Text>
-          </TouchableOpacity>
-          {showGPAManagementLoader ? (
-            <ActivityIndicator
-              size="large"
-              color="#10B144"
-              style={{ marginTop: 20 }}
-            />
-          ) : Object.keys(GPA).length > 0 ? (
-            <ScrollView style={{ flex: 1, marginTop: 20 }}>
-              {/* Table Header */}
-              <View style={styles.tableHeader}>
-                <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>
-                <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
-                <Text style={[styles.headerText, { flex: 3 }]}>
-                  Percentage
-                </Text>
-              </View>
-
-              {/* Table Rows */}
-              {GPA?.map((item: any) => {
-                const percentage =
-                  (item.maxPercentage - item.minPercentage) / 100; // simulate visual fill
-                console.log(percentage);
-                return (
-                  <View key={item._id} style={styles.tableRow}>
-                    {/* Grade */}
-                    <View style={styles.gradeBadge}>
-                      <Text style={styles.gradeText}>{item.gpa}</Text>
-                    </View>
-
-                    {/* Range */}
-                    <Text style={[styles.rangeText, { flex: 2 }]}>
-                      {item.minPercentage}% - {item.maxPercentage}%
-                    </Text>
-
-                    {/* Custom Progress Bar */}
-                    <View style={[styles.progressWrapper, { flex: 3 }]}>
-                      <View style={[styles.progressBackground]}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            { width: `${percentage * 100}%` },
-                          ]}
-                        />
-                      </View>
-                    </View>
-                  </View>
-                );
-              })}
-            </ScrollView>
-          ) : (
-            <Text style={{ marginTop: 20 }}>
-              No gradescale found for this course.
-            </Text>
-          )}
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-export default GPAManagementModal;

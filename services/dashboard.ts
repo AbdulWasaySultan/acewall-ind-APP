@@ -35,6 +35,7 @@ export interface PublishedCourse {
   createdAt: string;
 }
 
+
 export interface CourseStatsResponse {
   published: PublishedCourse[];
   unpublished: number;

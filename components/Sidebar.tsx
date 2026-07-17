@@ -182,11 +182,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         bounces={true}
       >
         <View style={styles.header}>
-          <Image
+          {/* <Image
             source={require("../assets/logo.png")}
             style={styles.logo}
             resizeMode="contain"
-          />
+          /> */}
           <View style={styles.userSection}>
             <TouchableOpacity
               onPress={() => handleNavigation("Account Information")}

@@ -484,7 +484,7 @@ const AssessmentDetailsModal: React.FC<Props> = ({
         {/* Action bar */}
         <View style={styles.actionBar}>
           <TouchableOpacity style={styles.iconBtn}>
-            <SimpleIcon name="edit" size={18} color="#374151" />
+            <SimpleIcon name="edit" size={14} color="#374151" />
           </TouchableOpacity>
 
           <TouchableOpacity

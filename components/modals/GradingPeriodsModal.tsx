@@ -50,6 +50,16 @@ const GradingPeriodsModal: React.FC<GradingPeriodsModalProps> = ({
   formatDateForInput,
   styles,
 }) => {
+
+const handleCreateNewSemester = () => {
+  setSemesterTitle("")
+  setSemesterStartDate("");
+  setSemesterEndDate("");
+  setShowNewSemesterModal(true);
+  setShowGradingPeriodsModal(false);
+  }
+
+  
   return (
     <Modal
       visible={visible}
@@ -77,13 +87,7 @@ const GradingPeriodsModal: React.FC<GradingPeriodsModalProps> = ({
               <Text style={styles.gradingPeriodsTitle}>Grading Periods</Text>
             </View>
             <TouchableOpacity
-              onPress={() => {
-                setSemesterTitle("");
-                setSemesterStartDate("");
-                setSemesterEndDate("");
-                setShowNewSemesterModal(true);
-                setShowGradingPeriodsModal(false);
-              }}
+              onPress={handleCreateNewSemester}
               style={styles.gradingPeriodsCreateButton}
             >
               <SimpleIcon name="add" size={20} color="#fff" />

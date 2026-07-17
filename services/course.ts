@@ -179,7 +179,7 @@ export const createCourse = async (courseData: CourseData) => {
       } as any);
     }
 
-    const response = await api.post("/course/create", formData, {
+    const response = await api.post("/api/course/create", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
@@ -192,7 +192,7 @@ export const getCategories = async () => {
   try {
     const api = await getApiInstance();
     const response = await api.get<{ categories: Category[]; message: string }>(
-      "/category/get"
+      "/api/category/get"
     );
     return { success: true, data: response.data.categories };
   } catch (error) {
@@ -206,7 +206,7 @@ export const getSubcategories = async (categoryId: string) => {
     const response = await api.get<{
       subcategories: Subcategory[];
       message: string;
-    }>(`/category/subcategories/${categoryId}`);
+    }>(`/api/category/subcategories/${categoryId}`);
     return { success: true, data: response.data.subcategories };
   } catch (error) {
     throw error;
@@ -216,7 +216,7 @@ export const getSubcategories = async (categoryId: string) => {
 export const getSemesters = async () => {
   try {
     const api = await getApiInstance();
-    const response = await api.get("/semester/get");
+    const response = await api.get("/api/semester/get");
     return response.data;
   } catch (error) {
     throw error;
@@ -226,7 +226,7 @@ export const getSemesters = async () => {
 export const getQuartersBySemesters = async (semesterIds: string[]) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post("/quarter/getquarters", {
+    const response = await api.post("/api/quarter/getquarters", {
       semesters: semesterIds,
     });
     return response.data;
@@ -238,7 +238,7 @@ export const getQuartersBySemesters = async (semesterIds: string[]) => {
 export const archiveCourse = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.put(`/course/archive/${courseId}`);
+    const response = await api.put(`/api/course/archive/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -248,7 +248,7 @@ export const archiveCourse = async (courseId: string) => {
 export const unarchiveCourse = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.put(`/course/archive/${courseId}`);
+    const response = await api.put(`/api/course/archive/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -261,10 +261,10 @@ export const getAllCourses = async (
   try {
     const api = await getApiInstance();
     const url = search
-      ? `/course/getindividualcourse?published=true&isVerified=approved&search=${encodeURIComponent(
+      ? `/api/course/getindividualcourse?published=true&isVerified=approved&search=${encodeURIComponent(
           search
         )}`
-      : `/course/getindividualcourse?published=true&isVerified=approved`;
+      : `/api/course/getindividualcourse?published=true&isVerified=approved`;
     const response = await api.get<CourseResponse>(url);
     return response.data;
   } catch (error) {
@@ -272,18 +272,51 @@ export const getAllCourses = async (
   }
 };
 
+// Add this after getAllCourses
+export const getAllPublishedCourses = async (): Promise<CourseResponse> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get<CourseResponse>(
+      "/api/course/getindividualcourse?published=true&isVerified=approved"
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getTeacherCourses = async (
-  published: boolean,
+  published: boolean | undefined,
   isVerified: string,
   search?: string
 ): Promise<CourseResponse> => {
   try {
     const api = await getApiInstance();
     const searchParam = search ? encodeURIComponent(search) : "";
-    const url =
-      isVerified === "pending" || isVerified === "rejected"
-        ? `/course/getindividualcourse?isVerified=${isVerified}&search=${searchParam}`
-        : `/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`;
+
+    // When published is undefined (all courses), fetch ALL courses regardless of verification status
+    // This matches the dashboard's "total courses" count
+    if (published === undefined) {
+      const url = searchParam
+        ? `/api/course/getindividualcourse?search=${searchParam}`
+        : `/api/course/getindividualcourse`;
+      const response = await api.get<CourseResponse>(url);
+      return response.data;
+    }
+
+    // For pending/rejected courses, only filter by verification status
+    if (isVerified === "pending" || isVerified === "rejected") {
+      const url = searchParam
+        ? `/api/course/getindividualcourse?isVerified=${isVerified}&search=${searchParam}`
+        : `/api/course/getindividualcourse?isVerified=${isVerified}`;
+      const response = await api.get<CourseResponse>(url);
+      return response.data;
+    }
+
+    // For published/unpublished with approved status
+    const url = searchParam
+      ? `/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`
+      : `/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}`;
     const response = await api.get<CourseResponse>(url);
     return response.data;
   } catch (error) {
@@ -294,7 +327,7 @@ export const getTeacherCourses = async (
 export const getCourseDetails = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/course/details/${courseId}`);
+    const response = await api.get(`/api/course/details/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -304,7 +337,7 @@ export const getCourseDetails = async (courseId: string) => {
 export const deleteCourse = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.delete(`/course/delete/${courseId}`);
+    const response = await api.delete(`/api/course/delete/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -327,7 +360,7 @@ export const editCourseBasics = async (
   try {
     const api = await getApiInstance();
     const response = await api.put(
-      `/course/editCourseBasics/${courseId}`,
+      `/api/course/editCourseBasics/${courseId}`,
       data
     );
     return response.data;
@@ -353,9 +386,13 @@ export const updateCourseThumbnail = async (
       type: mimeType,
       name: resolveImageFilename(mimeType, thumbnail.fileName, thumbnail.uri),
     } as any);
-    const response = await api.put(`/course/thumbnail/${courseId}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await api.put(
+      `/api/course/thumbnail/${courseId}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -368,7 +405,7 @@ export const getCoursesBySubcategory = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const url = `/course/${subcategoryId}${
+    const url = `/api/course/${subcategoryId}${
       search ? `?search=${encodeURIComponent(search)}` : "?search="
     }`;
     const response = await api.get(url);
@@ -389,7 +426,7 @@ export const createChapter = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const url = `/chapter/create/${courseId}`;
+    const url = `/api/chapter/create/${courseId}`;
     const body: any = { title, description };
     if (quarterId) {
       body.quarter = quarterId;
@@ -404,7 +441,7 @@ export const createChapter = async (
 export const deleteChapter = async (chapterId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.delete(`/chapter/${chapterId}`);
+    const response = await api.delete(`/api/chapter/${chapterId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -418,7 +455,7 @@ export const editChapter = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.put(`/chapter/edit/${chapterId}`, {
+    const response = await api.put(`/api/chapter/edit/${chapterId}`, {
       title,
       description,
     });
@@ -432,7 +469,7 @@ export const getChapterDetailsWithLessons = async (chapterId: string) => {
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/chapter/chapter/chapter&lessons/${chapterId}`
+      `/api/chapter/chapter/chapter&lessons/${chapterId}`
     );
     return response.data;
   } catch (error) {
@@ -463,7 +500,7 @@ export const createLesson = async (
         name: file.name || file.uri.split("/").pop() || "file.pdf",
       } as any);
     });
-    const response = await api.post("/lesson/create", formData, {
+    const response = await api.post("/api/lesson/create", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
@@ -475,7 +512,7 @@ export const createLesson = async (
 export const deleteLesson = async (lessonId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.delete(`/lesson/${lessonId}`);
+    const response = await api.delete(`/api/lesson/${lessonId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -491,7 +528,7 @@ export const editLesson = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.put(`/lesson/edit/${lessonId}`, {
+    const response = await api.put(`/api/lesson/edit/${lessonId}`, {
       title,
       description,
       youtubeLinks,
@@ -518,7 +555,7 @@ export const addMoreFilesToLesson = async (
       } as any);
     });
     const response = await api.put(
-      `/lesson/addMoreFiles/${lessonId}`,
+      `/api/lesson/addMoreFiles/${lessonId}`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
@@ -533,7 +570,9 @@ export const addMoreFilesToLesson = async (
 export const deleteLessonFile = async (lessonId: string, fileId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.delete(`/lesson/delete/${lessonId}/${fileId}`);
+    const response = await api.delete(
+      `/api/lesson/delete/${lessonId}/${fileId}`
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -550,7 +589,7 @@ export const createAssessmentCategory = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post(`/assessmentCategory/${courseId}`, {
+    const response = await api.post(`/api/assessmentCategory/${courseId}`, {
       name,
       weight,
       course: courseId,
@@ -564,7 +603,7 @@ export const createAssessmentCategory = async (
 export const getAssessmentCategories = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/assessmentCategory/${courseId}`);
+    const response = await api.get(`/api/assessmentCategory/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -579,7 +618,7 @@ export const updateAssessmentCategory = async (
   try {
     const api = await getApiInstance();
     const response = await api.put(
-      `/assessmentCategory/${courseId}/${categoryId}`,
+      `/api/assessmentCategory/${courseId}/${categoryId}`,
       { weight }
     );
     return response.data;
@@ -591,7 +630,7 @@ export const updateAssessmentCategory = async (
 export const deleteAssessmentCategory = async (categoryId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.delete(`/assessmentCategory/${categoryId}`);
+    const response = await api.delete(`/api/assessmentCategory/${categoryId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -601,7 +640,7 @@ export const deleteAssessmentCategory = async (categoryId: string) => {
 export const deleteAssessment = async (assessmentId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.delete(`/assessment/delete/${assessmentId}`);
+    const response = await api.delete(`/api/assessment/delete/${assessmentId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -620,7 +659,7 @@ export const editAssessment = async (
   try {
     const api = await getApiInstance();
     const response = await api.put(
-      `/assessment/editAssessment/${assessmentId}`,
+      `/api/assessment/editAssessment/${assessmentId}`,
       payload
     );
     return response.data;
@@ -632,7 +671,7 @@ export const editAssessment = async (
 export const getAllAssessmentsByTeacher = async () => {
   try {
     const api = await getApiInstance();
-    const response = await api.get("/assessment/allAssessmentByTeacher");
+    const response = await api.get("/api/assessment/allAssessmentByTeacher");
     return response.data;
   } catch (error) {
     throw error;
@@ -645,7 +684,7 @@ export const getAssessmentSubmissionsForTeacher = async (
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/assessmentSubmission/submission_for_Teacher/${assessmentId}`
+      `/api/assessmentSubmission/submission_for_Teacher/${assessmentId}`
     );
     return response.data;
   } catch (error) {
@@ -657,7 +696,7 @@ export const getSubmissionDetails = async (submissionId: string) => {
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/assessmentSubmission/submission/${submissionId}`
+      `/api/assessmentSubmission/submission/${submissionId}`
     );
     return response.data;
   } catch (error) {
@@ -672,7 +711,7 @@ export const submitGrades = async (
   try {
     const api = await getApiInstance();
     const response = await api.put(
-      `/assessmentSubmission/teacherGrading/${submissionId}`,
+      `/api/assessmentSubmission/teacherGrading/${submissionId}`,
       grades
     );
     return response.data;
@@ -716,7 +755,7 @@ export const submitAssessment = async (
     }
 
     const response = await api.post(
-      `/assessmentSubmission/submission/${assessmentId}`,
+      `/api/assessmentSubmission/submission/${assessmentId}`,
       formData,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
@@ -729,7 +768,9 @@ export const submitAssessment = async (
 export const getAllAssessmentForStudent = async () => {
   try {
     const api = await getApiInstance();
-    const response = await api.get("/assessment/getAllassessmentforStudent");
+    const response = await api.get(
+      "/api/assessment/getAllassessmentforStudent"
+    );
     return response.data;
   } catch (error) {
     console.error(error);
@@ -740,7 +781,7 @@ export const getAllAssessmentForStudent = async () => {
 export const getStudentAssessmentDetails = async (assessmentId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/assessment/${assessmentId}`);
+    const response = await api.get(`/api/assessment/${assessmentId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -753,7 +794,7 @@ export const getStudentAssessmentDetails = async (assessmentId: string) => {
 export const getCourseById = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/course/get/${courseId}`);
+    const response = await api.get(`/api/course/get/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -764,7 +805,7 @@ export const getStudentEnrolledCourses = async (searchQuery: string) => {
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/enrollment/studentCourses?search=${searchQuery}`
+      `/api/enrollment/studentCourses?search=${searchQuery}`
     );
     return response.data;
   } catch (error) {
@@ -776,7 +817,7 @@ export const getStudentEnrolledCourseDetails = async (enrollmentId: string) => {
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/enrollment/studentCourseDetails/${enrollmentId}`
+      `/api/enrollment/studentCourseDetails/${enrollmentId}`
     );
     return response.data?.enrolledCourse || null;
   } catch (error) {
@@ -787,7 +828,9 @@ export const getStudentEnrolledCourseDetails = async (enrollmentId: string) => {
 export const getEnrollStatus = async (enrollmentId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/enrollment/isEnrolled/${enrollmentId}`);
+    const response = await api.get(
+      `/api/enrollment/isEnrolled/${enrollmentId}`
+    );
     return response.data?.enrolled || null;
   } catch (error) {
     throw error;
@@ -797,7 +840,7 @@ export const getEnrollStatus = async (enrollmentId: string) => {
 export const enrollInCourse = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post(`/enrollment/create/${courseId}`);
+    const response = await api.post(`/api/enrollment/create/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -810,7 +853,7 @@ export const unenrollFromCourse = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.delete(`/enrollment/unenroll/${courseId}`);
+    const response = await api.delete(`/api/enrollment/unenroll/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -823,10 +866,13 @@ export const createStripeCheckoutSession = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post("/stripe/create-checkout-session-mobile", {
-      courseId,
-      studentId,
-    });
+    const response = await api.post(
+      "/api/stripe/create-checkout-session-mobile",
+      {
+        courseId,
+        studentId,
+      }
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -844,7 +890,7 @@ export const addSemesterToCourse = async (
   try {
     const api = await getApiInstance();
     const response = await api.post(
-      `/semester/selectingNewSemesterwithQuarter/${courseId}`,
+      `/api/semester/selectingNewSemesterwithQuarter/${courseId}`,
       { semester: [semesterId], quarter: [quarterId] }
     );
     return response.data;
@@ -856,7 +902,9 @@ export const addSemesterToCourse = async (
 export const getSemestersOfCourse = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/semester/getSemesterOfCourse/${courseId}`);
+    const response = await api.get(
+      `/api/semester/getSemesterOfCourse/${courseId}`
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -871,7 +919,7 @@ export const createSemester = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post(`/semester/create/${courseId}`, {
+    const response = await api.post(`/api/semester/create/${courseId}`, {
       title,
       startDate,
       endDate,
@@ -891,7 +939,7 @@ export const updateSemester = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.put(`/semester/editSemester/${semesterId}`, {
+    const response = await api.put(`/api/semester/editSemester/${semesterId}`, {
       title,
       course: courseId,
       startDate,
@@ -910,7 +958,7 @@ export const toggleSemesterArchive = async (
   try {
     const api = await getApiInstance();
     const response = await api.put(
-      `/admin/updateSemArchiveStatus/${semesterId}`,
+      `/api/admin/updateSemArchiveStatus/${semesterId}`,
       { isArchived }
     );
     return response.data;
@@ -922,7 +970,7 @@ export const toggleSemesterArchive = async (
 export const getQuartersForSemester = async (semesterId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/quarter/get/${semesterId}`);
+    const response = await api.get(`/api/quarter/get/${semesterId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -937,7 +985,7 @@ export const createQuarter = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post("/quarter/create", {
+    const response = await api.post("/api/quarter/create", {
       title,
       semester: semesterId,
       startDate,
@@ -959,7 +1007,7 @@ export const updateQuarter = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.put(`/quarter/editQuarter/${quarterId}`, {
+    const response = await api.put(`/api/quarter/editQuarter/${quarterId}`, {
       title,
       course: courseId,
       semester: semesterId,
@@ -979,7 +1027,7 @@ export const toggleQuarterArchive = async (
   try {
     const api = await getApiInstance();
     const response = await api.put(
-      `/admin/updateQtrArchiveStatus/${quarterId}`,
+      `/api/admin/updateQtrArchiveStatus/${quarterId}`,
       { isArchived }
     );
     return response.data;
@@ -994,7 +1042,7 @@ export const getChaptersForQuarter = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/chapter/${courseId}/${quarterId}`);
+    const response = await api.get(`/api/chapter/${courseId}/${quarterId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1007,7 +1055,7 @@ export const getChaptersByQuarter = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/chapter/${courseId}/${quarterId}`);
+    const response = await api.get(`/api/chapter/${courseId}/${quarterId}`);
     return response.data;
   } catch (error: any) {
     if (
@@ -1023,7 +1071,7 @@ export const getChaptersByQuarter = async (
 export const getChaptersForCourses = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/chapter/chapterofCourse/${courseId}`);
+    const response = await api.get(`/api/chapter/chapterofCourse/${courseId}`);
     return response.data;
   } catch (error: any) {
     if (
@@ -1039,7 +1087,7 @@ export const getChaptersForCourses = async (courseId: string) => {
 export const getChapterDetailsForStudent = async (chapterId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/enrollment/getChapter/${chapterId}`);
+    const response = await api.get(`/api/enrollment/getChapter/${chapterId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1049,7 +1097,7 @@ export const getChapterDetailsForStudent = async (chapterId: string) => {
 export const getChapterDiscussionsForStudent = async (chapterId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/discussion/chapter/${chapterId}`);
+    const response = await api.get(`/api/discussion/chapter/${chapterId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1059,7 +1107,7 @@ export const getChapterDiscussionsForStudent = async (chapterId: string) => {
 export const getLessonDiscussionsForStudent = async (lessonId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/discussion/lesson/${lessonId}`);
+    const response = await api.get(`/api/discussion/lesson/${lessonId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1069,7 +1117,7 @@ export const getLessonDiscussionsForStudent = async (lessonId: string) => {
 export const getChapterPagesForStudent = async (chapterId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/pages/getChapterPages/${chapterId}`);
+    const response = await api.get(`/api/pages/getChapterPages/${chapterId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1079,7 +1127,7 @@ export const getChapterPagesForStudent = async (chapterId: string) => {
 export const getLessonPagesForStudent = async (lessonId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/pages/getLessonPages/${lessonId}`);
+    const response = await api.get(`/api/pages/getLessonPages/${lessonId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1092,7 +1140,7 @@ export const getLessonPagesForStudent = async (lessonId: string) => {
 export const getStudentDiscussion = async (discussionId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/discussion/${discussionId}`);
+    const response = await api.get(`/api/discussion/${discussionId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1107,7 +1155,7 @@ export const getCommentForDiscussionStudent = async (
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/discussionComment/get/${discussionId}?page=${page}&limit=${limit}`
+      `/api/discussionComment/get/${discussionId}?page=${page}&limit=${limit}`
     );
     return response.data;
   } catch (error) {
@@ -1119,7 +1167,7 @@ export const sendComment = async (discussionId: string, comment: string) => {
   try {
     const api = await getApiInstance();
     const response = await api.post(
-      `/discussionComment/sendComment/${discussionId}`,
+      `/api/discussionComment/sendComment/${discussionId}`,
       { text: comment }
     );
     return response.data;
@@ -1132,7 +1180,7 @@ export const isCommentedInDiscussion = async (discussionId: string) => {
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/discussionComment/isCommentedInDiscussion/${discussionId}`
+      `/api/discussionComment/isCommentedInDiscussion/${discussionId}`
     );
     return response.data;
   } catch (error) {
@@ -1143,7 +1191,9 @@ export const isCommentedInDiscussion = async (discussionId: string) => {
 export const getReplyCount = async (commentId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/replyDiscussion/replycount/${commentId}`);
+    const response = await api.get(
+      `/api/replyDiscussion/replycount/${commentId}`
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -1153,7 +1203,7 @@ export const getReplyCount = async (commentId: string) => {
 export const sendReply = async (commentId: string, reply: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post(`/replyDiscussion/send/${commentId}`, {
+    const response = await api.post(`/api/replyDiscussion/send/${commentId}`, {
       text: reply,
     });
     return response.data;
@@ -1166,7 +1216,7 @@ export const getReplies = async (commentId: string, page = 1, limit = 5) => {
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/replyDiscussion/get/${commentId}?page=${page}&limit=${limit}`
+      `/api/replyDiscussion/get/${commentId}?page=${page}&limit=${limit}`
     );
     return response.data;
   } catch (error) {
@@ -1180,7 +1230,7 @@ export const getReplies = async (commentId: string, page = 1, limit = 5) => {
 export const getStudentPages = async (studentId: string) => {
   try {
     const api = await getApiInstance();
-    const res = await api.get("/pages/studentpages", {
+    const res = await api.get("/api/pages/studentpages", {
       params: { studentId },
     });
     return res.data?.pages || [];
@@ -1192,7 +1242,7 @@ export const getStudentPages = async (studentId: string) => {
 export const getStudentCourses = async () => {
   try {
     const api = await getApiInstance();
-    const res = await api.get("/enrollment/studentCourses");
+    const res = await api.get("/api/enrollment/studentCourses");
     return res.data?.enrolledCourses || [];
   } catch (error) {
     throw error;
@@ -1205,7 +1255,7 @@ export const getStudentCourses = async () => {
 export const getGradeScale = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const res = await api.get(`/gradebook/getGradingScale/${courseId}`);
+    const res = await api.get(`/api/gradebook/getGradingScale/${courseId}`);
     return res.data?.scale || [];
   } catch (error) {
     throw error;
@@ -1215,7 +1265,7 @@ export const getGradeScale = async (courseId: string) => {
 export const gradingScale = async (courseId: string, data: any) => {
   try {
     const api = await getApiInstance();
-    const res = await api.post(`/gradebook/gradingScale/${courseId}`, {
+    const res = await api.post(`/api/gradebook/gradingScale/${courseId}`, {
       scale: data,
     });
     return res.data?.scale || [];
@@ -1227,7 +1277,7 @@ export const gradingScale = async (courseId: string, data: any) => {
 export const getGPA = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const res = await api.get(`/gpa/get/${courseId}`);
+    const res = await api.get(`/api/gpa/get/${courseId}`);
     return res.data?.grade || [];
   } catch (error) {
     throw error;
@@ -1242,7 +1292,7 @@ export const gpaScale = async (courseId: string, data: any) => {
       minPercentage: elem.minPercentage,
       maxPercentage: elem.maxPercentage,
     }));
-    const res = await api.post(`/gpa/setGPAscale/${courseId}`, {
+    const res = await api.post(`/api/gpa/setGPAscale/${courseId}`, {
       gpaScale: gpaData,
     });
     return res.data?.scale || [];

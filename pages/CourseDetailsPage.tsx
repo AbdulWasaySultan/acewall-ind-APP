@@ -13,7 +13,12 @@ import {
   Linking,
   Keyboard,
 } from "react-native";
-import { useRoute, useNavigation, RouteProp, useFocusEffect } from "@react-navigation/native";
+import {
+  useRoute,
+  useNavigation,
+  RouteProp,
+  useFocusEffect,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -90,10 +95,7 @@ import {
   updateQuarter,
   toggleQuarterArchive,
 } from "../services/course";
-import {
-  getCourseRating,
-  createRating,
-} from "../services/rating";
+import { getCourseRating, createRating } from "../services/rating";
 import { getApiInstance } from "../services/apiInstance";
 import { getComments, sendComment } from "../services/comment";
 import { deletePage } from "../services/page";
@@ -107,7 +109,8 @@ const fallbackImage = require("../assets/star.png");
 const CourseDetailsPage = () => {
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<RootStackParamList, "CourseDetails">>();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { courseId } = route.params;
   const { user } = useUser();
   const { userRole } = useAuth();
@@ -126,10 +129,12 @@ const CourseDetailsPage = () => {
   const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
   const [showDeleteChapterModal, setShowDeleteChapterModal] = useState(false);
   const [showDeleteLessonModal, setShowDeleteLessonModal] = useState(false);
-  const [showDeleteAssessmentModal, setShowDeleteAssessmentModal] = useState(false);
+  const [showDeleteAssessmentModal, setShowDeleteAssessmentModal] =
+    useState(false);
   const [showGradeScaleModal, setShowGradeScaleModal] = useState(false);
   const [showGPAModal, setShowGPAModal] = useState(false);
-  const [showGradeScaleManagement, setShowGradeScaleManagement] = useState(false);
+  const [showGradeScaleManagement, setShowGradeScaleManagement] =
+    useState(false);
   const [showGPAManagement, setShowGPAManagement] = useState(false);
   const [showCouponsManagement, setShowCouponsManagement] = useState(false);
   const [showGradebookModal, setShowGradebookModal] = useState(false);
@@ -139,10 +144,15 @@ const CourseDetailsPage = () => {
   const [showLessonEditModal, setShowLessonEditModal] = useState(false);
   const [showAddFilesModal, setShowAddFilesModal] = useState(false);
   const [showEditChapterModal, setShowEditChapterModal] = useState(false);
-  const [showAssessmentDetailsModal, setShowAssessmentDetailsModal] = useState(false);
+  const [showAssessmentDetailsModal, setShowAssessmentDetailsModal] =
+    useState(false);
   const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
-  const [showManageCategoriesModal, setShowManageCategoriesModal] = useState(false);
-  const [showAddNewAssessmentCategoryModal, setShowAddNewAssessmentCategoryModal] = useState(false);
+  const [showManageCategoriesModal, setShowManageCategoriesModal] =
+    useState(false);
+  const [
+    showAddNewAssessmentCategoryModal,
+    setShowAddNewAssessmentCategoryModal,
+  ] = useState(false);
   const [showGradingPeriodsModal, setShowGradingPeriodsModal] = useState(false);
   const [showNewSemesterModal, setShowNewSemesterModal] = useState(false);
   const [showEditSemesterModal, setShowEditSemesterModal] = useState(false);
@@ -152,7 +162,8 @@ const CourseDetailsPage = () => {
   const [showSemesterPicker, setShowSemesterPicker] = useState(false);
   const [showQuarterPicker, setShowQuarterPicker] = useState(false);
   const [showQuartersModal, setShowQuartersModal] = useState(false);
-  const [showChaptersForQuarterModal, setShowChaptersForQuarterModal] = useState(false);
+  const [showChaptersForQuarterModal, setShowChaptersForQuarterModal] =
+    useState(false);
 
   // ---- Chapter / Lesson / Assessment data ----
   const [chapterTitle, setChapterTitle] = useState("");
@@ -161,15 +172,24 @@ const CourseDetailsPage = () => {
   const [chapterError, setChapterError] = useState<string | null>(null);
   const [chapterToDelete, setChapterToDelete] = useState<any>(null);
   const [deleteChapterLoading, setDeleteChapterLoading] = useState(false);
-  const [deleteChapterError, setDeleteChapterError] = useState<string | null>(null);
+  const [deleteChapterError, setDeleteChapterError] = useState<string | null>(
+    null
+  );
   const [lessonToDelete, setLessonToDelete] = useState<any>(null);
   const [deleteLessonLoading, setDeleteLessonLoading] = useState(false);
-  const [deleteLessonError, setDeleteLessonError] = useState<string | null>(null);
+  const [deleteLessonError, setDeleteLessonError] = useState<string | null>(
+    null
+  );
   const [assessmentToDelete, setAssessmentToDelete] = useState<any>(null);
   const [deleteAssessmentLoading, setDeleteAssessmentLoading] = useState(false);
-  const [deleteAssessmentError, setDeleteAssessmentError] = useState<string | null>(null);
-  const [selectedAssessmentForModal, setSelectedAssessmentForModal] = useState<any>(null);
-  const [expandedMcq, setExpandedMcq] = useState<{ [key: number]: boolean }>({ 0: true });
+  const [deleteAssessmentError, setDeleteAssessmentError] = useState<
+    string | null
+  >(null);
+  const [selectedAssessmentForModal, setSelectedAssessmentForModal] =
+    useState<any>(null);
+  const [expandedMcq, setExpandedMcq] = useState<{ [key: number]: boolean }>({
+    0: true,
+  });
 
   // ---- Assessment Categories ----
   const [assessmentCategories, setAssessmentCategories] = useState<any[]>([]);
@@ -178,14 +198,19 @@ const CourseDetailsPage = () => {
   // ---- Edit Assessment ----
   const [editAssessmentLoading, setEditAssessmentLoading] = useState(false);
   const [editAssessmentTitle, setEditAssessmentTitle] = useState("");
-  const [editAssessmentDescription, setEditAssessmentDescription] = useState("");
+  const [editAssessmentDescription, setEditAssessmentDescription] =
+    useState("");
   const [editAssessmentCategory, setEditAssessmentCategory] = useState("");
-  const [editAssessmentDueDate, setEditAssessmentDueDate] = useState<Date | null>(null);
+  const [editAssessmentDueDate, setEditAssessmentDueDate] =
+    useState<Date | null>(null);
   const [showEditCategoryMenu, setShowEditCategoryMenu] = useState(false);
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
   const [showEditTimePicker, setShowEditTimePicker] = useState(false);
   const [tempEditDate, setTempEditDate] = useState<Date | null>(null);
-  const [editQuarterDates, setEditQuarterDates] = useState<{ startDate: string; endDate: string } | null>(null);
+  const [editQuarterDates, setEditQuarterDates] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
   const [editQuarterId, setEditQuarterId] = useState<string | null>(null);
 
   // ---- Thumbnail ----
@@ -195,7 +220,8 @@ const CourseDetailsPage = () => {
   // ---- Grading Periods ----
   const [gradingPeriods, setGradingPeriods] = useState<any[]>([]);
   const [loadingGradingPeriods, setLoadingGradingPeriods] = useState(false);
-  const [selectedSemesterForQuarter, setSelectedSemesterForQuarter] = useState<any>(null);
+  const [selectedSemesterForQuarter, setSelectedSemesterForQuarter] =
+    useState<any>(null);
   const [editingSemester, setEditingSemester] = useState<any>(null);
   const [editingQuarter, setEditingQuarter] = useState<any>(null);
   const [semesterTitle, setSemesterTitle] = useState("");
@@ -204,8 +230,12 @@ const CourseDetailsPage = () => {
   const [quarterTitle, setQuarterTitle] = useState("");
   const [quarterStartDate, setQuarterStartDate] = useState<string>("");
   const [quarterEndDate, setQuarterEndDate] = useState<string>("");
-  const [showSemesterDatePicker, setShowSemesterDatePicker] = useState<"start" | "end" | null>(null);
-  const [showQuarterDatePicker, setShowQuarterDatePicker] = useState<"start" | "end" | null>(null);
+  const [showSemesterDatePicker, setShowSemesterDatePicker] = useState<
+    "start" | "end" | null
+  >(null);
+  const [showQuarterDatePicker, setShowQuarterDatePicker] = useState<
+    "start" | "end" | null
+  >(null);
 
   // ---- Add Semester to Course ----
   const [allSemesters, setAllSemesters] = useState<any[]>([]);
@@ -220,26 +250,39 @@ const CourseDetailsPage = () => {
   const [semesterQuarters, setSemesterQuarters] = useState<any[]>([]);
   const [loadingSemesterQuarters, setLoadingSemesterQuarters] = useState(false);
   const [chaptersForQuarter, setChaptersForQuarter] = useState<any[]>([]);
-  const [loadingChaptersForQuarter, setLoadingChaptersForQuarter] = useState(false);
+  const [loadingChaptersForQuarter, setLoadingChaptersForQuarter] =
+    useState(false);
   const [chaptersMessage, setChaptersMessage] = useState("");
-  const [selectedQuarterId, setSelectedQuarterId] = useState<string | null>(null);
+  const [selectedQuarterId, setSelectedQuarterId] = useState<string | null>(
+    null
+  );
   const [expandedChapter, setExpandedChapter] = useState<string | null>(null);
 
   // ---- Chapter Details ----
   const [chapterDetails, setChapterDetails] = useState<any>(null);
   const [chapterDetailsLoading, setChapterDetailsLoading] = useState(false);
-  const [chapterDetailsError, setChapterDetailsError] = useState<string | null>(null);
-  const [currentChapterForLesson, setCurrentChapterForLesson] = useState<string | null>(null);
-  const [currentChapterForEdit, setCurrentChapterForEdit] = useState<string | null>(null);
+  const [chapterDetailsError, setChapterDetailsError] = useState<string | null>(
+    null
+  );
+  const [currentChapterForLesson, setCurrentChapterForLesson] = useState<
+    string | null
+  >(null);
+  const [currentChapterForEdit, setCurrentChapterForEdit] = useState<
+    string | null
+  >(null);
 
   // ---- Lesson Creation ----
   const [lessonCreationTitle, setLessonCreationTitle] = useState("");
-  const [lessonCreationDescription, setLessonCreationDescription] = useState("");
-  const [lessonCreationYoutubeLink, setLessonCreationYoutubeLink] = useState("");
+  const [lessonCreationDescription, setLessonCreationDescription] =
+    useState("");
+  const [lessonCreationYoutubeLink, setLessonCreationYoutubeLink] =
+    useState("");
   const [lessonCreationOtherLink, setLessonCreationOtherLink] = useState("");
   const [lessonCreationFiles, setLessonCreationFiles] = useState<any[]>([]);
   const [lessonCreationLoading, setLessonCreationLoading] = useState(false);
-  const [lessonCreationError, setLessonCreationError] = useState<string | null>(null);
+  const [lessonCreationError, setLessonCreationError] = useState<string | null>(
+    null
+  );
 
   // ---- Lesson Edit ----
   const [lessonEditTitle, setLessonEditTitle] = useState("");
@@ -248,7 +291,9 @@ const CourseDetailsPage = () => {
   const [lessonEditOtherLink, setLessonEditOtherLink] = useState("");
   const [lessonEditLoading, setLessonEditLoading] = useState(false);
   const [lessonEditError, setLessonEditError] = useState<string | null>(null);
-  const [currentLessonForEdit, setCurrentLessonForEdit] = useState<string | null>(null);
+  const [currentLessonForEdit, setCurrentLessonForEdit] = useState<
+    string | null
+  >(null);
 
   // ---- Add Files ----
   const [selectedFiles, setSelectedFiles] = useState<any[]>([]);
@@ -267,9 +312,12 @@ const CourseDetailsPage = () => {
   // ---- Grade Scale & GPA ----
   const [gradeScale, setGradeScale] = useState<any[]>([]);
   const [GPA, setGPA] = useState<any[]>([]);
-  const [showGradeScaleManagementLoader, setShowGradeScaleManagementLoader] = useState(false);
+  const [gpaError, setGpaError] = useState<string | null>(null);
+  const [showGradeScaleManagementLoader, setShowGradeScaleManagementLoader] =
+    useState(false);
   const [showGPAManagementLoader, setShowGPAManagementLoader] = useState(false);
-  const [showCouponsManagementLoader, setShowCouponsManagementLoader] = useState(false);
+  const [showCouponsManagementLoader, setShowCouponsManagementLoader] =
+    useState(false);
   const [coupons, setCoupons] = useState<any[]>([]);
 
   // ---- Ratings & Comments ----
@@ -286,9 +334,15 @@ const CourseDetailsPage = () => {
   const [gradebookData, setGradebookData] = useState<any>(null);
   const [gradebookLoading, setGradebookLoading] = useState(false);
   const [gradebookError, setGradebookError] = useState<string | null>(null);
-  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
-  const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(new Set());
-  const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(new Set());
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
+    new Set()
+  );
+  const [expandedSemesters, setExpandedSemesters] = useState<Set<string>>(
+    new Set()
+  );
+  const [expandedQuarters, setExpandedQuarters] = useState<Set<string>>(
+    new Set()
+  );
 
   // ---- Edit Course ----
   const [editCourseLoading, setEditCourseLoading] = useState(false);
@@ -310,7 +364,8 @@ const CourseDetailsPage = () => {
   const [showPlusDropdown, setShowPlusDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
   const [showLessonsPlusDropdown, setShowLessonsPlusDropdown] = useState(false);
-  const [currentLessonForAssessment, setCurrentLessonForAssessment] = useState<any>(null);
+  const [currentLessonForAssessment, setCurrentLessonForAssessment] =
+    useState<any>(null);
   const [showMore, setShowMore] = useState(false);
   const [keyboardPadding, setKeyboardPadding] = useState(16);
 
@@ -318,15 +373,22 @@ const CourseDetailsPage = () => {
   const formatDateWithOrdinal = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getUTCDate();
-    const month = date.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
+    const month = date.toLocaleDateString("en-US", {
+      month: "long",
+      timeZone: "UTC",
+    });
     const year = date.getUTCFullYear();
     const getOrdinal = (d: number) => {
       if (d > 3 && d < 21) return "th";
       switch (d % 10) {
-        case 1: return "st";
-        case 2: return "nd";
-        case 3: return "rd";
-        default: return "th";
+        case 1:
+          return "st";
+        case 2:
+          return "nd";
+        case 3:
+          return "rd";
+        default:
+          return "th";
       }
     };
     return `${month} ${day}${getOrdinal(day)}, ${year}`;
@@ -361,7 +423,8 @@ const CourseDetailsPage = () => {
     return sorted[0].endDate;
   };
 
-  const isLong = course?.courseDescription && course.courseDescription.length > 500;
+  const isLong =
+    course?.courseDescription && course.courseDescription.length > 500;
   const courseDescription = course?.courseDescription
     ? showMore
       ? course.courseDescription
@@ -370,8 +433,12 @@ const CourseDetailsPage = () => {
 
   // ---- Effects ----
   useEffect(() => {
-    const keyboardDidShow = Keyboard.addListener("keyboardDidShow", () => setKeyboardPadding(17));
-    const keyboardDidHide = Keyboard.addListener("keyboardDidHide", () => setKeyboardPadding(16));
+    const keyboardDidShow = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardPadding(17)
+    );
+    const keyboardDidHide = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardPadding(16)
+    );
     return () => {
       keyboardDidHide.remove();
       keyboardDidShow.remove();
@@ -428,7 +495,10 @@ const CourseDetailsPage = () => {
       const res = await getSemestersOfCourse(courseId);
       setGradingPeriods(res.semesters || []);
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch grading periods.", Toast.LONG);
+      Toast.show(
+        error.message || "Failed to fetch grading periods.",
+        Toast.LONG
+      );
     } finally {
       setLoadingGradingPeriods(false);
     }
@@ -458,7 +528,10 @@ const CourseDetailsPage = () => {
         }))
       );
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch assessment categories", Toast.LONG);
+      Toast.show(
+        error.message || "Failed to fetch assessment categories",
+        Toast.LONG
+      );
     } finally {
       setLoadingCategories(false);
     }
@@ -539,7 +612,19 @@ const CourseDetailsPage = () => {
       const res = await getGradeScale(courseId);
       setGradeScale(res);
     } catch (err: any) {
-      Toast.show(err?.message || "Failed to get gradeScale", Toast.LONG);
+      // Check if error is a 404 (no grade scale found)
+      const is404 =
+        err?.response?.status === 404 ||
+        err?.message?.toLowerCase().includes("not found") ||
+        err?.response?.data?.message?.toLowerCase().includes("not found");
+
+      if (is404) {
+        Toast.show("No grade scale found. You can create one.", Toast.LONG);
+        // Optionally set gradeScale to empty array so management modal shows "empty" state
+        setGradeScale([]);
+      } else {
+        Toast.show(err?.message || "Failed to load grade scale", Toast.LONG);
+      }
     } finally {
       setShowGradeScaleManagementLoader(false);
     }
@@ -548,14 +633,32 @@ const CourseDetailsPage = () => {
   const loadGPA = async () => {
     setShowGPAManagement(true);
     setShowGPAManagementLoader(true);
+    setGpaError(null); // clear previous errors
     try {
       const res = await getGPA(courseId);
       setGPA(res);
     } catch (err: any) {
-      Toast.show(err?.message || "Failed to get GPA", Toast.LONG);
+      // Check for 404 vs other errors
+      const status = err?.response?.status;
+      if (status === 404) {
+        // No GPA scale found – this is not an error, just empty state
+        setGPA([]);
+        setGpaError(null);
+        Toast.show("No GPA scale found. You can create one.", Toast.LONG);
+      } else if (status === 500) {
+        setGpaError("Server error. Please try again later.");
+        Toast.show("Failed to load GPA due to server error.", Toast.LONG);
+      } else {
+        setGpaError(err?.message || "Failed to load GPA");
+        Toast.show(err?.message || "Failed to load GPA", Toast.LONG);
+      }
     } finally {
       setShowGPAManagementLoader(false);
     }
+  };
+
+  const retryLoadGPA = () => {
+    loadGPA(); // re-run the fetch
   };
 
   // ---- Handlers ----
@@ -606,7 +709,12 @@ const CourseDetailsPage = () => {
     setChapterLoading(true);
     setChapterError(null);
     try {
-      await createChapter(courseId, chapterTitle.trim(), chapterDescription.trim(), selectedQuarterId);
+      await createChapter(
+        courseId,
+        chapterTitle.trim(),
+        chapterDescription.trim(),
+        selectedQuarterId
+      );
       Toast.show("Chapter created successfully!", Toast.LONG);
       setChapterTitle("");
       setChapterDescription("");
@@ -656,7 +764,9 @@ const CourseDetailsPage = () => {
       setChapterDetails(res.chapter);
       setCurrentChapterForLesson(chapterId);
     } catch (error: any) {
-      setChapterDetailsError(error.message || "Failed to fetch chapter details");
+      setChapterDetailsError(
+        error.message || "Failed to fetch chapter details"
+      );
     } finally {
       setChapterDetailsLoading(false);
     }
@@ -672,29 +782,49 @@ const CourseDetailsPage = () => {
     }
   };
 
-  const handleUpdateChapter = async () => {
-    if (!editChapterTitle.trim() || !editChapterDescription.trim()) {
-      Toast.show("Chapter title and description are required", Toast.LONG);
-      return;
+  // const handleUpdateChapter = async () => {
+  //   if (!editChapterTitle.trim() || !editChapterDescription.trim()) {
+  //     Toast.show("Chapter title and description are required", Toast.LONG);
+  //     return;
+  //   }
+  //   if (!currentChapterForEdit) {
+  //     Toast.show("Chapter not found", Toast.LONG);
+  //     return;
+  //   }
+  //   setEditChapterLoading(true);
+  //   setEditChapterError(null);
+  //   try {
+  //     await editChapter(
+  //       currentChapterForEdit,
+  //       editChapterTitle,
+  //       editChapterDescription
+  //     );
+  //     Toast.show("Chapter updated successfully", Toast.LONG);
+  //     setShowEditChapterModal(false);
+  //     const updated = await getChapterDetailsWithLessons(currentChapterForEdit);
+  //     setChapterDetails(updated.chapter);
+  //     setShowChapterDetailsModal(true);
+  //   } catch (error: any) {
+  //     setEditChapterError(error.message || "Failed to update chapter");
+  //   } finally {
+  //     setEditChapterLoading(false);
+  //   }
+  // };
+
+  const handleChapterUpdated = (updatedChapter: any) => {
+    console.log("Received in parent:", updatedChapter);
+
+    setChapterDetails(updatedChapter);
+
+    // Optional: refresh chapter list if it's open
+    if (course?.semesterbased && selectedQuarterId) {
+      refreshChaptersForQuarter(selectedQuarterId);
+    } else {
+      refreshChaptersForCourse(courseId);
     }
-    if (!currentChapterForEdit) {
-      Toast.show("Chapter not found", Toast.LONG);
-      return;
-    }
-    setEditChapterLoading(true);
-    setEditChapterError(null);
-    try {
-      await editChapter(currentChapterForEdit, editChapterTitle, editChapterDescription);
-      Toast.show("Chapter updated successfully", Toast.LONG);
-      setShowEditChapterModal(false);
-      const updated = await getChapterDetailsWithLessons(currentChapterForEdit);
-      setChapterDetails(updated.chapter);
-      setShowChapterDetailsModal(true);
-    } catch (error: any) {
-      setEditChapterError(error.message || "Failed to update chapter");
-    } finally {
-      setEditChapterLoading(false);
-    }
+
+    setShowEditChapterModal(false);
+    setShowChapterDetailsModal(true);
   };
 
   const handleAddLesson = () => {
@@ -732,7 +862,9 @@ const CourseDetailsPage = () => {
       setLessonCreationOtherLink("");
       setLessonCreationFiles([]);
       setShowLessonCreationModal(false);
-      const updated = await getChapterDetailsWithLessons(currentChapterForLesson);
+      const updated = await getChapterDetailsWithLessons(
+        currentChapterForLesson
+      );
       setChapterDetails(updated.chapter);
       setShowChapterDetailsModal(true);
     } catch (error: any) {
@@ -774,7 +906,9 @@ const CourseDetailsPage = () => {
       Toast.show("Lesson updated successfully", Toast.LONG);
       setShowLessonEditModal(false);
       if (currentChapterForLesson) {
-        const updated = await getChapterDetailsWithLessons(currentChapterForLesson);
+        const updated = await getChapterDetailsWithLessons(
+          currentChapterForLesson
+        );
         setChapterDetails(updated.chapter);
       }
       setShowChapterDetailsModal(true);
@@ -800,7 +934,10 @@ const CourseDetailsPage = () => {
       return;
     }
     if (totalFileSize > MAX_PDF_SIZE_BYTES) {
-      Toast.show(`Total file size must not exceed ${MAX_PDF_SIZE_MB}MB`, Toast.LONG);
+      Toast.show(
+        `Total file size must not exceed ${MAX_PDF_SIZE_MB}MB`,
+        Toast.LONG
+      );
       return;
     }
     if (!currentLessonForEdit) {
@@ -814,7 +951,9 @@ const CourseDetailsPage = () => {
       Toast.show("Files added successfully", Toast.LONG);
       setShowAddFilesModal(false);
       if (currentChapterForLesson) {
-        const updated = await getChapterDetailsWithLessons(currentChapterForLesson);
+        const updated = await getChapterDetailsWithLessons(
+          currentChapterForLesson
+        );
         setChapterDetails(updated.chapter);
       }
       setShowChapterDetailsModal(true);
@@ -839,7 +978,9 @@ const CourseDetailsPage = () => {
               await deleteLessonFile(lessonId, fileId);
               Toast.show("File deleted successfully", Toast.LONG);
               if (currentChapterForLesson) {
-                const updated = await getChapterDetailsWithLessons(currentChapterForLesson);
+                const updated = await getChapterDetailsWithLessons(
+                  currentChapterForLesson
+                );
                 setChapterDetails(updated.chapter);
               }
             } catch (error: any) {
@@ -893,11 +1034,16 @@ const CourseDetailsPage = () => {
               await deleteLesson(lessonId);
               Toast.show("Lesson deleted successfully", Toast.LONG);
               if (currentChapterForLesson) {
-                const updated = await getChapterDetailsWithLessons(currentChapterForLesson);
+                const updated = await getChapterDetailsWithLessons(
+                  currentChapterForLesson
+                );
                 setChapterDetails(updated.chapter);
               }
             } catch (error: any) {
-              Toast.show(error.message || "Failed to delete lesson", Toast.LONG);
+              Toast.show(
+                error.message || "Failed to delete lesson",
+                Toast.LONG
+              );
             }
           },
         },
@@ -961,7 +1107,9 @@ const CourseDetailsPage = () => {
       const end = new Date(editQuarterDates.endDate).getTime();
       if (due < start || due > end) {
         Toast.show(
-          `Due date must be between ${formatDate(new Date(start))} and ${formatDate(new Date(end))}`,
+          `Due date must be between ${formatDate(
+            new Date(start)
+          )} and ${formatDate(new Date(end))}`,
           Toast.LONG
         );
         return;
@@ -1016,8 +1164,11 @@ const CourseDetailsPage = () => {
           weight: cat.weight.toString(),
         }))
       );
-    } catch (error) { /* ignore */ }
-    const quarterId = assessment.quarter || chapterDetails?.quarter || selectedQuarterId;
+    } catch (error) {
+      /* ignore */
+    }
+    const quarterId =
+      assessment.quarter || chapterDetails?.quarter || selectedQuarterId;
     if (quarterId) {
       setEditQuarterId(quarterId);
       await fetchQuarterDatesForEdit(quarterId);
@@ -1034,7 +1185,9 @@ const CourseDetailsPage = () => {
         startDate: res.data.startDate,
         endDate: res.data.endDate,
       });
-    } catch (error) { /* ignore */ }
+    } catch (error) {
+      /* ignore */
+    }
   };
 
   const handleDeletePage = async (pageId: string) => {
@@ -1128,14 +1281,21 @@ const CourseDetailsPage = () => {
     }
     setIsSavingSemester(true);
     try {
-      await addSemesterToCourse(courseId, selectedSemester._id, selectedQuarter._id);
+      await addSemesterToCourse(
+        courseId,
+        selectedSemester._id,
+        selectedQuarter._id
+      );
       Toast.show("Semester and quarter added to the course.", Toast.LONG);
       setShowAddSemesterModal(false);
       setSelectedSemester(null);
       setSelectedQuarter(null);
       await fetchCourseDetails();
     } catch (error: any) {
-      Toast.show(error.message || "Failed to add semester to course.", Toast.LONG);
+      Toast.show(
+        error.message || "Failed to add semester to course.",
+        Toast.LONG
+      );
     } finally {
       setIsSavingSemester(false);
     }
@@ -1148,11 +1308,14 @@ const CourseDetailsPage = () => {
       const res = await getQuartersForSemester(semester._id);
       const fetched = res.quarters || [];
       const assignedIds = Array.isArray(course?.quarter)
-        ? course.quarter.map((q: any) => q?._id || q?.quarterId || q?.quarter || q).filter(Boolean)
+        ? course.quarter
+            .map((q: any) => q?._id || q?.quarterId || q?.quarter || q)
+            .filter(Boolean)
         : [];
-      const quartersToShow = assignedIds.length > 0
-        ? fetched.filter((q: any) => assignedIds.includes(q._id))
-        : fetched;
+      const quartersToShow =
+        assignedIds.length > 0
+          ? fetched.filter((q: any) => assignedIds.includes(q._id))
+          : fetched;
       setSemesterQuarters(quartersToShow);
     } catch (error: any) {
       Toast.show(error.message || "Failed to fetch quarters.", Toast.LONG);
@@ -1169,6 +1332,7 @@ const CourseDetailsPage = () => {
   };
 
   const handleChapterPress = async () => {
+    console.log("this is the end, hold your breathe and count till death");
     setShowChaptersForQuarterModal(true);
     await refreshChaptersForCourse(courseId);
   };
@@ -1183,7 +1347,10 @@ const CourseDetailsPage = () => {
       const start = new Date(parseDateFromInput(semesterStartDate));
       const last = new Date(lastEnd);
       if (start <= last) {
-        Toast.show("New semester must start after the last semester ends", Toast.LONG);
+        Toast.show(
+          "New semester must start after the last semester ends",
+          Toast.LONG
+        );
         return;
       }
     }
@@ -1257,7 +1424,10 @@ const CourseDetailsPage = () => {
     const quarterStart = new Date(parseDateFromInput(quarterStartDate));
     const quarterEnd = new Date(parseDateFromInput(quarterEndDate));
     if (quarterStart < semesterStart || quarterEnd > semesterEnd) {
-      Toast.show("Quarter dates must be within the semester duration", Toast.LONG);
+      Toast.show(
+        "Quarter dates must be within the semester duration",
+        Toast.LONG
+      );
       return;
     }
     if (quarterStart >= quarterEnd) {
@@ -1302,7 +1472,10 @@ const CourseDetailsPage = () => {
     const quarterStart = new Date(parseDateFromInput(quarterStartDate));
     const quarterEnd = new Date(parseDateFromInput(quarterEndDate));
     if (quarterStart < semesterStart || quarterEnd > semesterEnd) {
-      Toast.show("Quarter dates must be within the semester duration", Toast.LONG);
+      Toast.show(
+        "Quarter dates must be within the semester duration",
+        Toast.LONG
+      );
       return;
     }
     if (quarterStart >= quarterEnd) {
@@ -1335,7 +1508,10 @@ const CourseDetailsPage = () => {
   const handleToggleSemesterArchive = async (semester: any) => {
     try {
       await toggleSemesterArchive(semester._id, !semester.isArchived);
-      Toast.show(semester.isArchived ? "Semester unarchived" : "Semester archived", Toast.LONG);
+      Toast.show(
+        semester.isArchived ? "Semester unarchived" : "Semester archived",
+        Toast.LONG
+      );
       await fetchGradingPeriods();
       await fetchCourseDetails();
     } catch (error: any) {
@@ -1346,7 +1522,10 @@ const CourseDetailsPage = () => {
   const handleToggleQuarterArchive = async (quarter: any) => {
     try {
       await toggleQuarterArchive(quarter._id, !quarter.isArchived);
-      Toast.show(quarter.isArchived ? "Quarter unarchived" : "Quarter archived", Toast.LONG);
+      Toast.show(
+        quarter.isArchived ? "Quarter unarchived" : "Quarter archived",
+        Toast.LONG
+      );
       await fetchGradingPeriods();
       await fetchCourseDetails();
     } catch (error: any) {
@@ -1403,9 +1582,14 @@ const CourseDetailsPage = () => {
   };
 
   const handleThumbnailUpload = () => {
-    const options = { mediaType: "photo" as const, quality: 0.8 as const, includeBase64: false };
+    const options = {
+      mediaType: "photo" as const,
+      quality: 0.8 as const,
+      includeBase64: false,
+    };
     ImagePicker.launchImageLibrary(options, (response) => {
-      if (response.didCancel || response.errorMessage || !response.assets?.[0]) return;
+      if (response.didCancel || response.errorMessage || !response.assets?.[0])
+        return;
       uploadThumbnail(response.assets[0]);
     });
   };
@@ -1417,7 +1601,10 @@ const CourseDetailsPage = () => {
       await updateCourseThumbnail(courseId, asset);
       setCourse((prev: any) => ({
         ...prev,
-        thumbnail: { url: asset.uri, filename: asset.fileName || "thumbnail.jpg" },
+        thumbnail: {
+          url: asset.uri,
+          filename: asset.fileName || "thumbnail.jpg",
+        },
       }));
       Toast.show("Thumbnail updated successfully!", Toast.SHORT);
     } catch (err: any) {
@@ -1430,7 +1617,10 @@ const CourseDetailsPage = () => {
 
   const handleFilePickForLessonCreation = async () => {
     try {
-      const result = await pick({ type: [types.pdf], copyTo: "cachesDirectory" });
+      const result = await pick({
+        type: [types.pdf],
+        copyTo: "cachesDirectory",
+      });
       if (result?.length) {
         const file = result[0];
         const sizeMB = file.size ? file.size / (1024 * 1024) : 0;
@@ -1455,7 +1645,10 @@ const CourseDetailsPage = () => {
 
   const handleFilePickForAddFiles = async () => {
     try {
-      const result = await pick({ type: [types.pdf], copyTo: "cachesDirectory" });
+      const result = await pick({
+        type: [types.pdf],
+        copyTo: "cachesDirectory",
+      });
       if (result?.length) {
         const file = result[0];
         const sizeMB = file.size ? file.size / (1024 * 1024) : 0;
@@ -1472,7 +1665,10 @@ const CourseDetailsPage = () => {
         const updated = [...selectedFiles, newFile];
         const total = updated.reduce((sum, f) => sum + (f.fileSize || 0), 0);
         if (total > MAX_PDF_SIZE_BYTES) {
-          Toast.show(`Total file size cannot exceed ${MAX_PDF_SIZE_MB}MB`, Toast.LONG);
+          Toast.show(
+            `Total file size cannot exceed ${MAX_PDF_SIZE_MB}MB`,
+            Toast.LONG
+          );
           return;
         }
         setSelectedFiles(updated);
@@ -1492,16 +1688,24 @@ const CourseDetailsPage = () => {
 
   // ---- Dropdown handlers ----
   const handlePlusButtonPress = () => {
-    if (!showPlusDropdown && plusButtonRef.current) {
-      plusButtonRef.current.measure(
-        (fx: number, fy: number, width: number, height: number, px: number, py: number) => {
-          setDropdownPosition({ x: px, y: py + height });
-          setShowPlusDropdown(true);
-        }
-      );
-    } else {
-      setShowPlusDropdown(false);
-    }
+    // if (!showPlusDropdown && plusButtonRef.current) {
+    //   plusButtonRef.current.measure(
+    //     (
+    //       fx: number,
+    //       fy: number,
+    //       width: number,
+    //       height: number,
+    //       px: number,
+    //       py: number
+    //     ) => {
+    //       setDropdownPosition({ x: px, y: py + height });
+    //       setShowPlusDropdown(true);
+    //     }
+    //   );
+    // } else {
+    //   setShowPlusDropdown(false);
+    // }
+    setShowPlusDropdown((prev) => !prev);
   };
 
   const handleLessonsPlusButtonPress = (lesson: any) => {
@@ -1518,14 +1722,16 @@ const CourseDetailsPage = () => {
       case "assessment":
         setShowChapterDetailsModal(false);
         if (chapterDetails) {
-          const semesterId = selectedQuarter?.semester || course?.semester?.[0]?._id;
+          const semesterId =
+            selectedQuarter?.semester || course?.semester?.[0]?._id;
           // Using any to bypass type restriction for lessonId
           (navigation as any).navigate("CreateAssessment", {
             courseId,
             chapterId: chapterDetails._id,
-            semesterId: semesterId || "",
-            quarterId: selectedQuarterId || "",
-            refreshAssessments: () => handleViewChapterDetails(chapterDetails._id),
+            semesterId: semesterId || undefined,
+            quarterId: selectedQuarterId || undefined,
+            refreshAssessments: () =>
+              handleViewChapterDetails(chapterDetails._id),
             navigateBack: () => {
               setShowChapterDetailsModal(true);
               navigation.goBack();
@@ -1584,9 +1790,10 @@ const CourseDetailsPage = () => {
             courseId,
             chapterId: chapterDetails._id,
             lessonId: currentLessonForAssessment._id,
-            semesterId: semesterId || "",
-            quarterId: selectedQuarterId,
-            refreshAssessments: () => handleViewChapterDetails(chapterDetails._id),
+            semesterId: semesterId || undefined,
+            quarterId: selectedQuarterId || undefined,
+            refreshAssessments: () =>
+              handleViewChapterDetails(chapterDetails._id),
             navigateBack: () => {
               setShowChapterDetailsModal(true);
               navigation.goBack();
@@ -1677,10 +1884,15 @@ const CourseDetailsPage = () => {
           shadowRadius: 2,
         }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4, marginRight: 12 }}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{ padding: 4, marginRight: 12 }}
+        >
           <SimpleIcon name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold", flex: 1 }}>
+        <Text
+          style={{ color: "#fff", fontSize: 20, fontWeight: "bold", flex: 1 }}
+        >
           Course Details
         </Text>
       </View>
@@ -1778,7 +1990,11 @@ const CourseDetailsPage = () => {
       <ScrollView contentContainerStyle={{ padding: keyboardPadding }}>
         <View style={styles.thumbnailContainer}>
           <Image
-            source={course.thumbnail?.url ? { uri: course.thumbnail.url } : fallbackImage}
+            source={
+              course.thumbnail?.url
+                ? { uri: course.thumbnail.url }
+                : fallbackImage
+            }
             style={styles.image}
           />
           <TouchableOpacity
@@ -1789,7 +2005,7 @@ const CourseDetailsPage = () => {
             {thumbnailUploading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <SimpleIcon name="camera" size={24} color="#fff" />
+              <SimpleIcon name="camera" size={20} color="#fff" />
             )}
           </TouchableOpacity>
         </View>
@@ -1799,7 +2015,9 @@ const CourseDetailsPage = () => {
             onPress={() => setShowManageCategoriesModal(true)}
             style={[styles.topActionButton, { backgroundColor: "#808080" }]}
           >
-            <Text style={styles.topActionButtonText}>Manage Assessment Categories</Text>
+            <Text style={styles.topActionButtonText}>
+              Manage Assessment Categories
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() =>
@@ -1808,34 +2026,63 @@ const CourseDetailsPage = () => {
                 fromAdmin: true,
               })
             }
-            style={[styles.topActionButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" }]}
+            style={[
+              styles.topActionButton,
+              { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
+            ]}
           >
-            <Text style={[styles.topActionButtonText, { color: "#000" }]}>Preview as Student</Text>
+            <Text style={[styles.topActionButtonText, { color: "#000" }]}>
+              Preview as Student
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={loadGradeScale}
-            style={[styles.topActionButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" }]}
+            style={[
+              styles.topActionButton,
+              { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
+            ]}
           >
-            <Text style={[styles.topActionButtonText, { color: "#000" }]}>Manage GradeScale</Text>
+            <Text style={[styles.topActionButtonText, { color: "#000" }]}>
+              Manage GradeScale
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
-  onPress={() => navigation.navigate('Coupons', { courseId })}
-  style={[styles.topActionButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" }]}
->
-  <Text style={[styles.topActionButtonText, { color: "#000" }]}>Coupons</Text>
-</TouchableOpacity>
+            onPress={() => navigation.navigate("Coupons", { courseId })}
+            style={[
+              styles.topActionButton,
+              { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
+            ]}
+          >
+            <Text style={[styles.topActionButtonText, { color: "#000" }]}>
+              Coupons
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={loadGPA}
-            style={[styles.topActionButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" }]}
+            style={[
+              styles.topActionButton,
+              { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
+            ]}
           >
-            <Text style={[styles.topActionButtonText, { color: "#000" }]}>Manage GPA</Text>
+            <Text style={[styles.topActionButtonText, { color: "#000" }]}>
+              Manage GPA
+            </Text>
           </TouchableOpacity>
           {course.semesterbased && (
             <TouchableOpacity
               onPress={() => setShowGradingPeriodsModal(true)}
-              style={[styles.topActionButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" }]}
+              style={[
+                styles.topActionButton,
+                {
+                  backgroundColor: "#fff",
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                },
+              ]}
             >
-              <Text style={[styles.topActionButtonText, { color: "#000" }]}>Manage semesters & Quarters</Text>
+              <Text style={[styles.topActionButtonText, { color: "#000" }]}>
+                Manage semesters & Quarters
+              </Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -1898,21 +2145,32 @@ const CourseDetailsPage = () => {
         </View>
 
         <View style={styles.headerRow}>
-          <Text style={styles.uploadedText}>Uploaded: {course.createdAt?.slice(0, 10)}</Text>
-          <Text style={styles.updatedText}>Last Updated: {course.updatedAt?.slice(0, 10)}</Text>
+          <Text style={styles.uploadedText}>
+            Uploaded: {course.createdAt?.slice(0, 10)}
+          </Text>
+          <Text style={styles.updatedText}>
+            Last Updated: {course.updatedAt?.slice(0, 10)}
+          </Text>
         </View>
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={[styles.title, { flex: 1 }]}>{course.courseTitle?.toUpperCase()}</Text>
+          <Text style={[styles.title, { flex: 1 }]}>
+            {course.courseTitle?.toUpperCase()}
+          </Text>
           {user?.email !== "testaccount@yopmail.com" && (
-            <Text style={{ fontSize: 22, color: "#10B144", lineHeight: 26 }}>${course?.price}</Text>
+            <Text style={{ fontSize: 22, color: "#10B144", lineHeight: 26 }}>
+              ${course?.price}
+            </Text>
           )}
         </View>
 
         <Text style={styles.chapterDetailsDescription}>
           {courseDescription}
           {isLong && (
-            <Text onPress={() => setShowMore(!showMore)} style={{ color: "#10B144", fontWeight: "600" }}>
+            <Text
+              onPress={() => setShowMore(!showMore)}
+              style={{ color: "#10B144", fontWeight: "600" }}
+            >
               {showMore ? " Read Less" : "Read More"}
             </Text>
           )}
@@ -1920,7 +2178,9 @@ const CourseDetailsPage = () => {
 
         <View style={styles.infoCard}>
           <Text style={styles.infoLabel}>Category:</Text>
-          <Text style={styles.infoValue}>{course.category?.title || "N/A"}</Text>
+          <Text style={styles.infoValue}>
+            {course.category?.title || "N/A"}
+          </Text>
         </View>
         <View style={styles.infoCard}>
           <Text style={styles.infoLabel}>Semester:</Text>
@@ -1928,29 +2188,43 @@ const CourseDetailsPage = () => {
         </View>
         <View style={styles.infoCard}>
           <Text style={styles.infoLabel}>Students Enrolled:</Text>
-          <Text style={styles.infoValue}>{course.enrollments?.length || 0}</Text>
+          <Text style={styles.infoValue}>
+            {course.enrollments?.length || 0}
+          </Text>
         </View>
 
         {course.semesterbased ? (
           course.semester && course.semester.length > 0 ? (
             <View style={styles.semesterSection}>
               {course.semester.map((sem: any, idx: number) => (
-                <TouchableOpacity key={sem._id} style={styles.semesterCard} onPress={() => handleSemesterPress(sem)}>
-                  <Text style={styles.semesterTitle}>{`Semester ${idx + 1}: ${sem.title}`}</Text>
+                <TouchableOpacity
+                  key={sem._id}
+                  style={styles.semesterCard}
+                  onPress={() => handleSemesterPress(sem)}
+                >
+                  <Text style={styles.semesterTitle}>{`Semester ${idx + 1}: ${
+                    sem.title
+                  }`}</Text>
                   <Text style={styles.semesterDates}>
-                    {formatDateWithOrdinal(sem.startDate)} - {formatDateWithOrdinal(sem.endDate)}
+                    {formatDateWithOrdinal(sem.startDate)} -{" "}
+                    {formatDateWithOrdinal(sem.endDate)}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           ) : (
             <View style={styles.semesterCard}>
-              <Text style={styles.semesterTitle}>No semesters found for this course.</Text>
+              <Text style={styles.semesterTitle}>
+                No semesters found for this course.
+              </Text>
             </View>
           )
         ) : (
           <View style={styles.semesterSection}>
-            <TouchableOpacity style={styles.semesterCard} onPress={handleChapterPress}>
+            <TouchableOpacity
+              style={styles.semesterCard}
+              onPress={handleChapterPress}
+            >
               <Text style={styles.semesterTitle}>Course Chapters</Text>
               <Text style={styles.semesterDates}>Chapters</Text>
             </TouchableOpacity>
@@ -1971,13 +2245,17 @@ const CourseDetailsPage = () => {
                 />
               ))}
             </View>
-            <Text style={styles.ratingCountText}>{`(${ratingCount} Ratings)`}</Text>
+            <Text
+              style={styles.ratingCountText}
+            >{`(${ratingCount} Ratings)`}</Text>
           </View>
         </View>
 
         {/* Comments */}
         <View style={styles.section}>
-          <Text style={styles.commentsSectionTitle}>Comments ({comments.length})</Text>
+          <Text style={styles.commentsSectionTitle}>
+            Comments ({comments.length})
+          </Text>
           <View style={styles.commentInputBox}>
             <TextInput
               style={styles.commentInput}
@@ -1991,12 +2269,18 @@ const CourseDetailsPage = () => {
               <TouchableOpacity
                 style={[
                   styles.postCommentButton,
-                  (!comment.trim() || isSubmittingComment) && styles.postCommentButtonDisabled,
+                  (!comment.trim() || isSubmittingComment) &&
+                    styles.postCommentButtonDisabled,
                 ]}
                 disabled={!comment.trim() || isSubmittingComment}
                 onPress={handlePostComment}
               >
-                <SimpleIcon name="send" size={18} color="#fff" style={{ marginRight: 6 }} />
+                <SimpleIcon
+                  name="send"
+                  size={18}
+                  color="#fff"
+                  style={{ marginRight: 6 }}
+                />
                 <Text style={styles.postCommentButtonText}>Post Comment</Text>
               </TouchableOpacity>
             </View>
@@ -2006,29 +2290,80 @@ const CourseDetailsPage = () => {
           ) : comments.length > 0 ? (
             comments.map((c: any) => {
               const date = new Date(c.createdAt);
-              const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+              const formattedDate = `${date
+                .getDate()
+                .toString()
+                .padStart(2, "0")}/${(date.getMonth() + 1)
                 .toString()
                 .padStart(2, "0")}/${date.getFullYear()}`;
-              const userName = c.createdby ? `${c.createdby.firstName} ${c.createdby.lastName}` : c.user?.firstName || "User";
+              const userName = c.createdby
+                ? `${c.createdby.firstName} ${c.createdby.lastName}`
+                : c.user?.firstName || "User";
               const userRole = c.createdby?.role;
               return (
-                <View key={c._id} style={{ marginTop: 16, backgroundColor: "#f5f5f5", borderRadius: 8, padding: 12 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-                    <SimpleIcon name="account-circle" size={28} color="#888" style={{ marginRight: 8 }} />
-                    <Text style={{ fontWeight: "bold", color: "#222", marginRight: 8 }}>{userName}</Text>
+                <View
+                  key={c._id}
+                  style={{
+                    marginTop: 16,
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: 8,
+                    padding: 12,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <SimpleIcon
+                      name="account-circle"
+                      size={28}
+                      color="#888"
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      style={{
+                        fontWeight: "bold",
+                        color: "#222",
+                        marginRight: 8,
+                      }}
+                    >
+                      {userName}
+                    </Text>
                     {userRole && (
-                      <View style={{ backgroundColor: "#e0e7ff", borderRadius: 6, paddingHorizontal: 6, marginRight: 8 }}>
-                        <Text style={{ color: "#3730a3", fontWeight: "bold", fontSize: 10 }}>{userRole.toUpperCase()}</Text>
+                      <View
+                        style={{
+                          backgroundColor: "#e0e7ff",
+                          borderRadius: 6,
+                          paddingHorizontal: 6,
+                          marginRight: 8,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#3730a3",
+                            fontWeight: "bold",
+                            fontSize: 10,
+                          }}
+                        >
+                          {userRole.toUpperCase()}
+                        </Text>
                       </View>
                     )}
-                    <Text style={{ color: "#888", fontSize: 12 }}>{formattedDate}</Text>
+                    <Text style={{ color: "#888", fontSize: 12 }}>
+                      {formattedDate}
+                    </Text>
                   </View>
                   <Text style={{ color: "#333", fontSize: 15 }}>{c.text}</Text>
                 </View>
               );
             })
           ) : (
-            <Text style={styles.noCommentsText}>No comments yet. Be the first to comment!</Text>
+            <Text style={styles.noCommentsText}>
+              No comments yet. Be the first to comment!
+            </Text>
           )}
         </View>
       </ScrollView>
@@ -2186,7 +2521,9 @@ const CourseDetailsPage = () => {
       <ChaptersForQuarterModal
         visible={showChaptersForQuarterModal}
         onClose={() => setShowChaptersForQuarterModal(false)}
-        onBackToQuarters={() => course?.semesterbased && setShowQuartersModal(true)}
+        onBackToQuarters={() =>
+          course?.semesterbased && setShowQuartersModal(true)
+        }
         onCreateChapter={() => {
           setShowChaptersForQuarterModal(false);
           setShowCreateChapterModal(true);
@@ -2309,6 +2646,7 @@ const CourseDetailsPage = () => {
       />
 
       <ChapterDetailsModal
+        // ref={plusButtonRef}
         visible={showChapterDetailsModal}
         onClose={() => setShowChapterDetailsModal(false)}
         chapterDetails={chapterDetails}
@@ -2331,7 +2669,9 @@ const CourseDetailsPage = () => {
         onDeleteAssessmentDirect={handleDeleteAssessmentDirect}
         onSelectAssessmentForModal={setSelectedAssessmentForModal}
         onAssessmentDetailsModalOpen={() => setShowAssessmentDetailsModal(true)}
-        onChaptersForQuarterModalOpen={() => setShowChaptersForQuarterModal(true)}
+        onChaptersForQuarterModalOpen={() =>
+          setShowChaptersForQuarterModal(true)
+        }
       />
 
       <LessonCreationModal
@@ -2362,7 +2702,7 @@ const CourseDetailsPage = () => {
           setShowChapterDetailsModal(true);
         }}
         chapterDetails={chapterDetails}
-        onUpdated={handleUpdateChapter}
+        onUpdated={handleChapterUpdated}
       />
 
       <LessonEditModal
@@ -2438,6 +2778,8 @@ const CourseDetailsPage = () => {
         }}
         showGPAManagementLoader={showGPAManagementLoader}
         GPA={GPA}
+        error={gpaError}
+        onRetry={retryLoadGPA}
       />
 
       <GPAModal
@@ -2549,7 +2891,6 @@ const CourseDetailsPage = () => {
 //   chapterDetailsDescription: { fontSize: 16, color: "#6b7280", lineHeight: 24 },
 // });
 
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 16 },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
@@ -2557,12 +2898,12 @@ const styles = StyleSheet.create({
   thumbnailContainer: { position: "relative", marginBottom: 16 },
   thumbnailUploadButton: {
     position: "absolute",
-    bottom: 8,
+    bottom: 22,
     right: 8,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    borderRadius: 18,
+    width: 36,
+    height: 36,
     justifyContent: "center",
     alignItems: "center",
     elevation: 3,
@@ -2570,10 +2911,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    resizeMode: "cover",
   },
   cameraIconText: { fontSize: 20, color: "#fff" },
   backIconText: { fontSize: 28, color: "#fff", fontWeight: "bold" },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
   uploadedText: { color: "#888", fontSize: 12 },
   updatedText: { color: "#888", fontSize: 12 },
   title: { fontSize: 26, fontWeight: "bold", color: "#222" },
@@ -2586,7 +2932,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  infoLabel: { fontWeight: "bold", color: "#5e35b1", marginRight: 8, fontSize: 15 },
+  infoLabel: {
+    fontWeight: "bold",
+    color: "#5e35b1",
+    marginRight: 8,
+    fontSize: 15,
+  },
   infoValue: { color: "#333", fontSize: 15 },
   section: { marginTop: 18, marginBottom: 8 },
   sectionTitle: {
@@ -2638,7 +2989,12 @@ const styles = StyleSheet.create({
     width: "90%",
     maxHeight: "80%",
   },
-  modalTitle: { fontSize: 20, fontWeight: "bold", color: "#333", marginBottom: 12 },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 12,
+  },
   modalText: { fontSize: 16, color: "#666", marginBottom: 20, lineHeight: 22 },
   modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
   modalButton: {
@@ -2664,12 +3020,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   modalBody: { flex: 1 },
   label: { fontSize: 16, fontWeight: "bold", marginBottom: 10 },
-  input: { borderWidth: 1, borderColor: "#ccc", padding: 10, marginBottom: 20, borderRadius: 5 },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    marginBottom: 20,
+    borderRadius: 5,
+  },
   textArea: { height: 100, textAlignVertical: "top" },
-  uploadButton: { backgroundColor: "#10B144", padding: 10, borderRadius: 5, alignItems: "center", marginBottom: 20 },
+  uploadButton: {
+    backgroundColor: "#10B144",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginBottom: 20,
+  },
   uploadButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
   manageCategoriesModalContent: {
     backgroundColor: "#fff",
@@ -2678,8 +3051,18 @@ const styles = StyleSheet.create({
     width: "95%",
     maxHeight: "80%",
   },
-  manageCategoriesModalTitle: { fontSize: 22, fontWeight: "bold", marginBottom: 8, textAlign: "center" },
-  manageCategoriesModalSubtitle: { fontSize: 14, color: "#666", marginBottom: 20, textAlign: "center" },
+  manageCategoriesModalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  manageCategoriesModalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   categoriesListContainer: { marginBottom: 20 },
   categoryItemHeader: {
     flexDirection: "row",
@@ -2689,7 +3072,11 @@ const styles = StyleSheet.create({
     borderBottomColor: "#dee2e6",
     marginBottom: 10,
   },
-  categoryItemHeaderText: { fontWeight: "bold", fontSize: 14, color: "#495057" },
+  categoryItemHeaderText: {
+    fontWeight: "bold",
+    fontSize: 14,
+    color: "#495057",
+  },
   categoryItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -2706,7 +3093,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
   },
-  categoryActions: { flexDirection: "row", justifyContent: "space-around", alignItems: "center" },
+  categoryActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
   addNewCategoryContainer: {
     padding: 16,
     paddingTop: 20,
@@ -2717,17 +3108,29 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   addNewCategoryTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 15 },
-  inputLabel: { fontSize: 14, color: "#495057", marginBottom: 8, fontWeight: "600" },
-  textInput: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ced4da",
-    borderRadius: 4,
-    padding: 10,
+  inputLabel: {
     fontSize: 14,
-    marginBottom: 15,
+    color: "#495057",
+    marginBottom: 8,
+    fontWeight: "600",
   },
-  addButton: { backgroundColor: "#6c757d", padding: 12, borderRadius: 4, alignItems: "center", alignSelf: "flex-end" },
+  // textInput: {
+  //   backgroundColor: "#fff",
+  //   borderWidth: 1,
+  //   borderColor: "#ced4da",
+  //   borderRadius: 4,
+  //   padding: 10,
+  //   fontSize: 14,
+  //   marginBottom: 15,
+  // color: '#000'
+  // },
+  addButton: {
+    backgroundColor: "#6c757d",
+    padding: 12,
+    borderRadius: 4,
+    alignItems: "center",
+    alignSelf: "flex-end",
+  },
   addButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   totalWeightContainer: {
     flexDirection: "row",
@@ -2739,9 +3142,18 @@ const styles = StyleSheet.create({
   },
   totalWeightText: { fontSize: 16, fontWeight: "bold" },
   totalWeightValue: { fontSize: 16, fontWeight: "bold", color: "#10B144" },
-  addSemesterButton: { backgroundColor: "#10B144", paddingVertical: 12, borderRadius: 8, alignItems: "center", marginVertical: 20 },
+  addSemesterButton: {
+    backgroundColor: "#10B144",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginVertical: 20,
+  },
   addSemesterButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-  semesterSection: { marginTop: 10 },
+  semesterSection: {
+    //  backgroundColor: "pink",
+    marginTop: 10,
+  },
   semesterCard: {
     backgroundColor: "#f8f9fa",
     borderRadius: 8,
@@ -2759,9 +3171,24 @@ const styles = StyleSheet.create({
     width: "90%",
     alignItems: "stretch",
   },
-  editProfileTitle: { fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 8 },
-  editProfileSubtitle: { fontSize: 16, color: "#666", textAlign: "center", marginBottom: 24 },
-  dropdownLabel: { fontSize: 16, fontWeight: "600", color: "#333", marginBottom: 8 },
+  editProfileTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  editProfileSubtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  dropdownLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
   dropdown: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -2791,7 +3218,12 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
   },
   cancelProfileButtonText: { color: "#333", fontSize: 16, fontWeight: "bold" },
-  pickerModalContent: { backgroundColor: "white", borderRadius: 8, padding: 16, width: "80%" },
+  pickerModalContent: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 16,
+    width: "80%",
+  },
   pickerItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -2811,7 +3243,12 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === "ios" ? 40 : 10,
   },
   quartersModalTitle: { fontSize: 28, fontWeight: "bold" },
-  quarterCard: { backgroundColor: "#eef2f9", borderRadius: 12, padding: 16, marginBottom: 12 },
+  quarterCard: {
+    backgroundColor: "#eef2f9",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
   quarterTitle: { fontSize: 18, fontWeight: "bold", color: "#000" },
   quarterDates: { fontSize: 14, color: "#6c757d", marginTop: 4 },
   chaptersModalContainer: { flex: 1, backgroundColor: "white", padding: 16 },
@@ -2834,11 +3271,31 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginBottom: 16,
   },
-  chaptersHeaderButtonText: { fontSize: 18, fontWeight: "600", paddingLeft: 20 },
-  createChapterButton: { backgroundColor: "#00C853", borderRadius: 8, paddingVertical: 14, alignItems: "center", marginBottom: 24 },
+  chaptersHeaderButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
+    paddingLeft: 20,
+  },
+  createChapterButton: {
+    backgroundColor: "#00C853",
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 24,
+  },
   createChapterButtonText: { color: "white", fontSize: 18, fontWeight: "bold" },
-  chapterItem: { backgroundColor: "#f8f9fa", borderRadius: 8, padding: 16, marginBottom: 12 },
-  createChapterModalTitle: { fontSize: 22, fontWeight: "bold", textAlign: "center", marginBottom: 24 },
+  chapterItem: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+  },
+  createChapterModalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 24,
+  },
   inputGroup: { marginBottom: 16 },
   createChapterInput: {
     borderWidth: 1,
@@ -2849,12 +3306,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#f8f9fa",
   },
-  charCounter: { textAlign: "right", color: "#666", fontSize: 12, marginTop: 4 },
-  createChapterModalButton: { borderRadius: 8, paddingVertical: 14, alignItems: "center", marginBottom: 12 },
+  charCounter: {
+    textAlign: "right",
+    color: "#666",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  createChapterModalButton: {
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 12,
+  },
   createChapterModalButtonPrimary: { backgroundColor: "#00C853" },
   createChapterModalButtonSecondary: { borderWidth: 1, borderColor: "#ccc" },
-  createChapterModalButtonTextPrimary: { color: "white", fontSize: 16, fontWeight: "bold" },
-  createChapterModalButtonTextSecondary: { color: "#333", fontSize: 16, fontWeight: "bold" },
+  createChapterModalButtonTextPrimary: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  createChapterModalButtonTextSecondary: {
+    color: "#333",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   chapterItemContainer: {
     backgroundColor: "white",
     borderRadius: 12,
@@ -2873,9 +3348,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
-  chapterNumberChip: { backgroundColor: "#ffe4c2", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, marginRight: 12 },
+  chapterNumberChip: {
+    backgroundColor: "#ffe4c2",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 12,
+  },
   chapterNumberText: { color: "#b26a00", fontWeight: "bold", fontSize: 15 },
-  chapterItemTitle: { fontWeight: "bold", fontSize: 20, color: "#222", flex: 1 },
+  chapterItemTitle: {
+    fontWeight: "bold",
+    fontSize: 20,
+    color: "#222",
+    flex: 1,
+  },
   chapterItemContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
@@ -2883,8 +3369,17 @@ const styles = StyleSheet.create({
     borderTopColor: "#e9ecef",
     marginTop: 8,
   },
-  chapterItemDescription: { color: "#444", fontSize: 16, marginBottom: 16, marginTop: 8 },
-  chapterActions: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  chapterItemDescription: {
+    color: "#444",
+    fontSize: 16,
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  chapterActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   chapterActionButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -2906,7 +3401,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   lessonItemText: { flex: 1, fontSize: 16, color: "#333" },
-  pdfSectionTitle: { fontSize: 18, fontWeight: "bold", color: "#333", marginBottom: 8, marginTop: 16 },
+  pdfSectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+    marginTop: 16,
+  },
   pdfFileItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -2965,17 +3466,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 12,
   },
-  lessonNumberChip: { backgroundColor: "#e0f2fe", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4, marginRight: 12 },
+  lessonNumberChip: {
+    backgroundColor: "#e0f2fe",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 12,
+  },
   lessonNumberText: { color: "#0284c7", fontWeight: "bold", fontSize: 14 },
-  lessonItemTitle: { fontWeight: "600", fontSize: 16, color: "#333", flexShrink: 1, marginLeft: 8 },
+  lessonItemTitle: {
+    fontWeight: "600",
+    fontSize: 16,
+    color: "#333",
+    flexShrink: 1,
+    marginLeft: 8,
+  },
   lessonItemContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: "#e9ecef",
   },
-  lessonItemDescription: { color: "#555", fontSize: 14, marginTop: 8, marginBottom: 16 },
-  resourcesTitle: { fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 12 },
+  lessonItemDescription: {
+    color: "#555",
+    fontSize: 14,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  resourcesTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 12,
+  },
   resourceButtonsContainer: { flexDirection: "row", gap: 12, flexWrap: "wrap" },
   resourceButton: {
     flexDirection: "row",
@@ -3009,8 +3532,16 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     alignSelf: "flex-start",
   },
-  assessmentCategoryChipText: { color: "#4338ca", fontWeight: "600", fontSize: 12 },
-  assessmentInfo: { paddingLeft: 12, borderLeftWidth: 3, borderLeftColor: "#3b82f6" },
+  assessmentCategoryChipText: {
+    color: "#4338ca",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  assessmentInfo: {
+    paddingLeft: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#3b82f6",
+  },
 
   // ---- Assessment Details Modal ----
   assessmentDetailsHeader: {
@@ -3023,7 +3554,13 @@ const styles = StyleSheet.create({
   assessmentDetailsBackButton: { flexDirection: "row", alignItems: "center" },
   assessmentDetailsBackText: { color: "#fff", fontSize: 18, marginLeft: 8 },
   assessmentDetailsEditButton: { padding: 8 },
-  assessmentDetailsHeaderTitle: { color: "#fff", fontSize: 20, fontWeight: "bold", flex: 1, textAlign: "center" },
+  assessmentDetailsHeaderTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+  },
   assessmentDetailsTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -3032,10 +3569,23 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
   },
-  assessmentDetailsTitle: { fontSize: 24, fontWeight: "bold", color: "#000", flex: 1 },
-  assessmentDetailsCategoryBadge: { backgroundColor: "#f3f4f6", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 },
+  assessmentDetailsTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000",
+    flex: 1,
+  },
+  assessmentDetailsCategoryBadge: {
+    backgroundColor: "#f3f4f6",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
   assessmentDetailsCategoryText: { fontSize: 14, color: "#6b7280" },
-  assessmentDetailsDueDateContainer: { paddingHorizontal: 16, paddingBottom: 16 },
+  assessmentDetailsDueDateContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
   assessmentDetailsDueDateLabel: { fontSize: 16, color: "#374151" },
   assessmentDetailsDescriptionContainer: {
     backgroundColor: "#e0f2fe",
@@ -3044,10 +3594,23 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 16,
   },
-  assessmentDetailsDescriptionTitle: { fontSize: 16, fontWeight: "bold", color: "#0369a1", marginBottom: 8 },
+  assessmentDetailsDescriptionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#0369a1",
+    marginBottom: 8,
+  },
   assessmentDetailsDescriptionText: { fontSize: 16, color: "#0369a1" },
-  assessmentDetailsQuestionsContainer: { paddingHorizontal: 16, paddingBottom: 16 },
-  assessmentDetailsQuestionsTitle: { fontSize: 18, fontWeight: "bold", color: "#000", marginBottom: 8 },
+  assessmentDetailsQuestionsContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  assessmentDetailsQuestionsTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 8,
+  },
   assessmentDetailsMcqHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -3066,17 +3629,51 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  assessmentDetailsQuestionLabel: { fontSize: 16, fontWeight: "bold", color: "#000", marginBottom: 8 },
-  assessmentDetailsQuestionText: { fontSize: 16, color: "#000", marginBottom: 16 },
-  assessmentDetailsOptionContainer: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  assessmentDetailsQuestionLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 8,
+  },
+  assessmentDetailsQuestionText: {
+    fontSize: 16,
+    color: "#000",
+    marginBottom: 16,
+  },
+  assessmentDetailsOptionContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
   assessmentDetailsBulletPoint: { fontSize: 16, color: "#000", marginRight: 8 },
   assessmentDetailsOptionText: { fontSize: 16, color: "#000", flex: 1 },
-  assessmentDetailsCorrectOption: { backgroundColor: "#dcfce7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  assessmentDetailsWrongOption: { backgroundColor: "red", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  assessmentDetailsCorrectLabel: { fontSize: 12, color: "#16a34a", fontWeight: "bold", marginLeft: 8 },
+  assessmentDetailsCorrectOption: {
+    backgroundColor: "#dcfce7",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  assessmentDetailsWrongOption: {
+    backgroundColor: "red",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  assessmentDetailsCorrectLabel: {
+    fontSize: 12,
+    color: "#16a34a",
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
 
   // ---- Edit Assessment ----
-  editAssessmentLabel: { fontSize: 16, fontWeight: "bold", color: "#000", marginBottom: 8, marginTop: 16 },
+  editAssessmentLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 8,
+    marginTop: 16,
+  },
   editAssessmentInput: {
     borderWidth: 1,
     borderColor: "#d1d5db",
@@ -3106,17 +3703,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 24,
   },
-  editAssessmentSaveButtonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-  mcqHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  editAssessmentSaveButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  mcqHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   mcqTitle: { fontSize: 18, fontWeight: "600", color: "#333" },
   mcqContent: { backgroundColor: "#f8f9fa", borderRadius: 8, padding: 16 },
   questionText: { fontSize: 16, fontWeight: "bold", marginBottom: 12 },
-  optionContainer: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  optionContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
   bulletPoint: { fontSize: 16, marginRight: 8 },
   optionText: { fontSize: 16, color: "#333" },
 
   // ---- Ratings & Comments ----
-  ratingSectionTitle: { fontSize: 22, fontWeight: "bold", color: "#111", marginBottom: 12 },
+  ratingSectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 12,
+  },
   ratingCard: {
     backgroundColor: "#EAFBF2",
     borderRadius: 16,
@@ -3124,10 +3739,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
   },
-  ratingNumber: { fontSize: 48, fontWeight: "bold", color: "#111", marginBottom: 6 },
+  ratingNumber: {
+    fontSize: 48,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 6,
+  },
   ratingStarsRow: { flexDirection: "row", justifyContent: "center" },
-  ratingCountText: { color: "#A0AEC0", fontSize: 16, marginTop: 14, fontWeight: "500" },
-  commentsSectionTitle: { fontSize: 22, fontWeight: "bold", color: "#111", marginBottom: 12 },
+  ratingCountText: {
+    color: "#A0AEC0",
+    fontSize: 16,
+    marginTop: 14,
+    fontWeight: "500",
+  },
+  commentsSectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 12,
+  },
   commentInputBox: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -3136,7 +3766,13 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
-  commentInput: { minHeight: 60, fontSize: 16, color: "#222", padding: 0, textAlignVertical: "top" },
+  commentInput: {
+    minHeight: 60,
+    fontSize: 16,
+    color: "#000",
+    padding: 0,
+    textAlignVertical: "top",
+  },
   postCommentButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -3147,7 +3783,13 @@ const styles = StyleSheet.create({
   },
   postCommentButtonDisabled: { backgroundColor: "#A0E7B2" },
   postCommentButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  noCommentsText: { color: "#A0AEC0", fontSize: 16, textAlign: "center", marginTop: 32, fontWeight: "500" },
+  noCommentsText: {
+    color: "#A0AEC0",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: 32,
+    fontWeight: "500",
+  },
 
   // ---- Chapter Cards ----
   chapterCard: {
@@ -3161,9 +3803,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  chapterCardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  chapterDeleteButton: { padding: 8, borderRadius: 6, backgroundColor: "#f5f5f5" },
-  chapterCardTitle: { fontSize: 18, fontWeight: "bold", color: "#222", marginBottom: 8 },
+  chapterCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  chapterDeleteButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: "#f5f5f5",
+  },
+  chapterCardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#222",
+    marginBottom: 8,
+  },
   chapterCardDescription: { fontSize: 14, color: "#666", marginBottom: 16 },
   chapterCardStats: { flexDirection: "row", marginBottom: 16, gap: 16 },
   chapterStatItem: { flexDirection: "row", alignItems: "center", gap: 6 },
@@ -3193,7 +3849,12 @@ const styles = StyleSheet.create({
     elevation: 3,
     zIndex: 99999999999999999,
   },
-  chapterDetailsHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  chapterDetailsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   chapterDetailsIcon: {
     width: 40,
     height: 40,
@@ -3212,24 +3873,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   plusButtonContainer: { position: "relative" },
-  dropdownMenu: {
-    position: "absolute",
-    top: 40,
-    right: 0,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    minWidth: 180,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    zIndex: 99999999999999999,
+  // dropdownMenu: {
+  //   position: "absolute",
+  //   top: 40,
+  //   right: 0,
+  //   backgroundColor: "#fff",
+  //   borderRadius: 12,
+  //   paddingVertical: 8,
+  //   paddingHorizontal: 4,
+  //   minWidth: 180,
+  //   shadowColor: "#000",
+  //   shadowOffset: { width: 0, height: 2 },
+  //   shadowOpacity: 0.1,
+  //   shadowRadius: 8,
+  //   elevation: 5,
+  //   zIndex: 99999999999999999,
+  // },
+  dropdownItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
-  dropdownItem: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8 },
-  dropdownItemText: { marginLeft: 12, fontSize: 16, fontWeight: "500", color: "#374151" },
+  dropdownItemText: {
+    marginLeft: 12,
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#374151",
+  },
   lessonsPlusButtonContainer: { position: "relative" },
   lessonsDropdownMenu: {
     position: "absolute",
@@ -3247,7 +3919,12 @@ const styles = StyleSheet.create({
     elevation: 5,
     zIndex: 9999999999,
   },
-  chapterDetailsTitle: { fontSize: 20, fontWeight: "bold", color: "#1f2937", marginBottom: 8 },
+  chapterDetailsTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1f2937",
+    marginBottom: 8,
+  },
   chapterDetailsDescription: { fontSize: 16, color: "#6b7280", lineHeight: 24 },
   lessonsCard: {
     backgroundColor: "#fff",
@@ -3261,7 +3938,11 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     marginBottom: 16,
   },
-  lessonsHeader: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
+  lessonsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   lessonsIcon: {
     width: 40,
     height: 40,
@@ -3272,7 +3953,12 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   lessonsTitle: { fontSize: 18, fontWeight: "bold", color: "#1f2937", flex: 1 },
-  lessonsCount: { backgroundColor: "#6b7280", borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+  lessonsCount: {
+    backgroundColor: "#6b7280",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   lessonsCountText: { color: "#fff", fontSize: 14, fontWeight: "600" },
   chapterLessonsList: { gap: 12 },
   chapterLessonItem: {
@@ -3283,10 +3969,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9fafb",
     borderRadius: 8,
   },
-  chapterLessonTitle: { fontSize: 16, color: "#374151", marginLeft: 12, flex: 1 },
+  chapterLessonTitle: {
+    fontSize: 16,
+    color: "#374151",
+    marginLeft: 12,
+    flex: 1,
+  },
   noLessonsContainer: { alignItems: "center", paddingVertical: 40 },
-  noLessonsTitle: { fontSize: 18, fontWeight: "bold", color: "#1f2937", marginTop: 16, marginBottom: 8 },
-  noLessonsDescription: { fontSize: 14, color: "#6b7280", textAlign: "center", marginBottom: 24, lineHeight: 20 },
+  noLessonsTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1f2937",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  noLessonsDescription: {
+    fontSize: 14,
+    color: "#6b7280",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
   addLessonButton: { alignSelf: "flex-start" },
   addLessonButtonText: { color: "#10B144", fontSize: 16, fontWeight: "600" },
 
@@ -3303,13 +4006,33 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e5e7eb",
   },
   backButton: { padding: 8, borderRadius: 8, backgroundColor: "#f0f9ff" },
-  fullScreenModalTitle: { fontSize: 24, fontWeight: "bold", color: "#1f2937", textAlign: "center", flex: 1 },
+  fullScreenModalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#1f2937",
+    textAlign: "center",
+    flex: 1,
+  },
 
   // ---- Lesson Creation ----
-  lessonFormInstruction: { fontSize: 16, color: "#6b7280", marginBottom: 24, lineHeight: 24 },
+  lessonFormInstruction: {
+    fontSize: 16,
+    color: "#6b7280",
+    marginBottom: 24,
+    lineHeight: 24,
+  },
   lessonFormField: { marginBottom: 24 },
-  lessonFormLabel: { fontSize: 16, fontWeight: "600", color: "#374151", marginBottom: 8 },
-  lessonTitleContainer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  lessonFormLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  lessonTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   lessonTitleInput: {
     flex: 1,
     borderWidth: 1,
@@ -3374,7 +4097,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 8,
   },
-  addAnotherFileText: { fontSize: 14, color: "#10B144", marginLeft: 4, fontWeight: "600" },
+  addAnotherFileText: {
+    fontSize: 14,
+    color: "#10B144",
+    marginLeft: 4,
+    fontWeight: "600",
+  },
   lessonFileSizeText: { fontSize: 12, color: "#6b7280" },
   lessonCreationActionButtons: {
     flexDirection: "row",
@@ -3405,7 +4133,12 @@ const styles = StyleSheet.create({
   },
   lessonSaveButtonText: { fontSize: 16, fontWeight: "600", color: "#fff" },
   lessonDisabledButton: { opacity: 0.6 },
-  lessonErrorText: { fontSize: 14, color: "#ef4444", marginTop: 8, textAlign: "center" },
+  lessonErrorText: {
+    fontSize: 14,
+    color: "#ef4444",
+    marginTop: 8,
+    textAlign: "center",
+  },
 
   // ---- Lesson Card ----
   lessonCard: {
@@ -3421,13 +4154,32 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  lessonCardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  lessonNumberBadge: { backgroundColor: "#10B144", borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+  lessonCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  lessonNumberBadge: {
+    backgroundColor: "#10B144",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   lessonCardNumberText: { color: "#fff", fontSize: 12, fontWeight: "600" },
   lessonCardActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   lessonActionIcon: { padding: 4 },
-  lessonCardActionButton: { backgroundColor: "#10B144", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  lessonCardActionButtonText: { color: "#fff", fontSize: 12, fontWeight: "600" },
+  lessonCardActionButton: {
+    backgroundColor: "#10B144",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  lessonCardActionButtonText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
   lessonAddButton: {
     width: 24,
     height: 24,
@@ -3436,16 +4188,46 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  lessonCardTitle: { fontSize: 16, fontWeight: "bold", color: "#1f2937", marginBottom: 4 },
+  lessonCardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1f2937",
+    marginBottom: 4,
+  },
   lessonCardDescription: { fontSize: 14, color: "#6b7280", lineHeight: 20 },
-  filesSection: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: "#e5e7eb" },
-  filesHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  filesSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  filesHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   filesTitle: { fontSize: 14, fontWeight: "600", color: "#374151" },
-  lessonAddFileButton: { backgroundColor: "#10B144", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
+  lessonAddFileButton: {
+    backgroundColor: "#10B144",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   lessonAddFileButtonText: { color: "#fff", fontSize: 12, fontWeight: "600" },
   fileDate: { fontSize: 12, color: "#6b7280", marginLeft: 8 },
-  resourcesSection: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: "#e5e7eb" },
-  lessonResourcesTitle: { fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 8 },
+  resourcesSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  lessonResourcesTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
   resourcesList: { flexDirection: "row", gap: 8 },
   youtubeResource: {
     flexDirection: "row",
@@ -3463,12 +4245,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  resourceText: { color: "#fff", fontSize: 12, fontWeight: "600", marginLeft: 4 },
+  resourceText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 4,
+  },
 
   // ---- Edit Chapter ----
   editChapterForm: { flex: 1, padding: 20 },
   editChapterField: { marginBottom: 20 },
-  editChapterLabel: { fontSize: 16, fontWeight: "600", color: "#374151", marginBottom: 8 },
+  editChapterLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
   editChapterTitleContainer: { position: "relative" },
   editChapterTitleInput: {
     borderWidth: 1,
@@ -3492,7 +4284,13 @@ const styles = StyleSheet.create({
     minHeight: 100,
     paddingBottom: 30,
   },
-  editChapterCharacterCount: { position: "absolute", bottom: 8, right: 8, fontSize: 12, color: "#6b7280" },
+  editChapterCharacterCount: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    fontSize: 12,
+    color: "#6b7280",
+  },
   editChapterActionButtons: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -3512,18 +4310,37 @@ const styles = StyleSheet.create({
     borderColor: "#d1d5db",
     backgroundColor: "#fff",
   },
-  editChapterCancelButtonText: { fontSize: 16, fontWeight: "600", color: "#374151" },
-  editChapterSaveButton: { paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, backgroundColor: "#10B144" },
+  editChapterCancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  editChapterSaveButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    backgroundColor: "#10B144",
+  },
   editChapterSaveButtonText: { fontSize: 16, fontWeight: "600", color: "#fff" },
   editChapterDisabledButton: { opacity: 0.6 },
-  editChapterErrorText: { fontSize: 14, color: "#ef4444", marginTop: 8, textAlign: "center" },
+  editChapterErrorText: {
+    fontSize: 14,
+    color: "#ef4444",
+    marginTop: 8,
+    textAlign: "center",
+  },
 
   closeButton: { padding: 4 },
 
   // ---- Lesson Edit ----
   lessonEditForm: { flex: 1, padding: 20 },
   lessonEditField: { marginBottom: 20 },
-  lessonEditLabel: { fontSize: 16, fontWeight: "600", color: "#374151", marginBottom: 8 },
+  lessonEditLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
   lessonEditTitleContainer: { position: "relative" },
   lessonEditTitleInput: {
     borderWidth: 1,
@@ -3556,7 +4373,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#fff",
   },
-  lessonEditCharacterCount: { position: "absolute", bottom: 8, right: 8, fontSize: 12, color: "#6b7280" },
+  lessonEditCharacterCount: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    fontSize: 12,
+    color: "#6b7280",
+  },
   lessonEditActionButtons: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -3576,11 +4399,25 @@ const styles = StyleSheet.create({
     borderColor: "#d1d5db",
     backgroundColor: "#fff",
   },
-  lessonEditCancelButtonText: { fontSize: 16, fontWeight: "600", color: "#374151" },
-  lessonEditSaveButton: { paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, backgroundColor: "#10B144" },
+  lessonEditCancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  lessonEditSaveButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    backgroundColor: "#10B144",
+  },
   lessonEditSaveButtonText: { fontSize: 16, fontWeight: "600", color: "#fff" },
   lessonEditDisabledButton: { opacity: 0.6 },
-  lessonEditErrorText: { fontSize: 14, color: "#ef4444", marginTop: 8, textAlign: "center" },
+  lessonEditErrorText: {
+    fontSize: 14,
+    color: "#ef4444",
+    marginTop: 8,
+    textAlign: "center",
+  },
 
   // ---- Add Files ----
   addFilesContent: { padding: 20 },
@@ -3594,7 +4431,12 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     backgroundColor: "#f9fafb",
   },
-  fileInputButtonText: { fontSize: 16, fontWeight: "600", color: "#10B144", marginBottom: 4 },
+  fileInputButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#10B144",
+    marginBottom: 4,
+  },
   fileInputSubtext: { fontSize: 14, color: "#6b7280" },
   addFilesActionButtons: {
     flexDirection: "row",
@@ -3611,17 +4453,47 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d1d5db",
   },
-  addFilesCancelButtonText: { fontSize: 16, fontWeight: "600", color: "#374151" },
-  addFilesAddButton: { paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, backgroundColor: "#374151" },
+  addFilesCancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  addFilesAddButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    backgroundColor: "#374151",
+  },
   addFilesAddButtonText: { fontSize: 16, fontWeight: "600", color: "#fff" },
   addFilesDisabledButton: { opacity: 0.6 },
-  addFilesErrorText: { fontSize: 14, color: "#ef4444", marginTop: 8, textAlign: "center" },
+  addFilesErrorText: {
+    fontSize: 14,
+    color: "#ef4444",
+    marginTop: 8,
+    textAlign: "center",
+  },
   fileItemContent: { flex: 1, flexDirection: "row", alignItems: "center" },
-  noFilesText: { fontSize: 14, color: "#6b7280", fontStyle: "italic", textAlign: "center", paddingVertical: 8 },
+  noFilesText: {
+    fontSize: 14,
+    color: "#6b7280",
+    fontStyle: "italic",
+    textAlign: "center",
+    paddingVertical: 8,
+  },
 
   // ---- Lesson Assessments / Pages (commented in older) ----
-  lessonAssessmentsSection: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: "#e5e7eb" },
-  lessonAssessmentsTitle: { fontSize: 16, fontWeight: "bold", color: "#111", marginBottom: 12 },
+  lessonAssessmentsSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  lessonAssessmentsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 12,
+  },
   assessmentCard: {
     backgroundColor: "#fff",
     borderRadius: 8,
@@ -3635,15 +4507,52 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  assessmentHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  assessmentBadge: { backgroundColor: "#374151", borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+  assessmentHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  assessmentBadge: {
+    backgroundColor: "#374151",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   assessmentBadgeText: { fontSize: 12, color: "#fff", fontWeight: "500" },
-  assessmentDeleteButton: { padding: 8, backgroundColor: "#f3f4f6", borderRadius: 6, alignItems: "center", justifyContent: "center" },
-  assessmentTitle: { fontSize: 16, fontWeight: "bold", color: "#111", marginBottom: 4 },
+  assessmentDeleteButton: {
+    padding: 8,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  assessmentTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 4,
+  },
   assessmentDescription: { fontSize: 14, color: "#374151" },
-  noAssessmentsText: { color: "#9ca3af", fontSize: 14, fontStyle: "italic", textAlign: "center", paddingVertical: 20 },
-  lessonPagesSection: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: "#e5e7eb" },
-  lessonPagesTitle: { fontSize: 16, fontWeight: "bold", color: "#111", marginBottom: 12 },
+  noAssessmentsText: {
+    color: "#9ca3af",
+    fontSize: 14,
+    fontStyle: "italic",
+    textAlign: "center",
+    paddingVertical: 20,
+  },
+  lessonPagesSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  lessonPagesTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 12,
+  },
   pageCard: {
     backgroundColor: "#fff",
     borderRadius: 8,
@@ -3657,18 +4566,58 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  pageHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  pageBadge: { backgroundColor: "#374151", borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+  pageHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  pageBadge: {
+    backgroundColor: "#374151",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   pageBadgeText: { fontSize: 12, color: "#fff", fontWeight: "500" },
-  pageDeleteButton: { padding: 8, backgroundColor: "#f3f4f6", borderRadius: 6, width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-  pageTitle: { fontSize: 16, fontWeight: "bold", color: "#111", marginBottom: 4 },
+  pageDeleteButton: {
+    padding: 8,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 6,
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pageTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 4,
+  },
   pageDescription: { fontSize: 14, color: "#374151" },
-  noPagesText: { color: "#9ca3af", fontSize: 14, fontStyle: "italic", textAlign: "center", paddingVertical: 20 },
+  noPagesText: {
+    color: "#9ca3af",
+    fontSize: 14,
+    fontStyle: "italic",
+    textAlign: "center",
+    paddingVertical: 20,
+  },
 
   // ---- Grade Scale & GPA Tables ----
-  tableHeader: { flexDirection: "row", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#eee" },
+  tableHeader: {
+    flexDirection: "row",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
   headerText: { fontSize: 15, fontWeight: "600", color: "#6B7280" },
-  tableRow: { flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#f0f0f0" },
+  tableRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
   gradeBadge: {
     backgroundColor: "#6EE7B7",
     borderRadius: 10,
@@ -3681,13 +4630,30 @@ const styles = StyleSheet.create({
   gradeText: { color: "#fff", fontSize: 14, fontWeight: "700" },
   rangeText: { fontSize: 16, fontWeight: "500", color: "#111" },
   progressWrapper: { justifyContent: "center" },
-  progressBackground: { height: 10, backgroundColor: "#E5E7EB", borderRadius: 10, overflow: "hidden" },
-  progressFill: { height: "100%", backgroundColor: "#10B144", borderRadius: 10 },
-  manageButton: { backgroundColor: "#10B144", paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 },
+  progressBackground: {
+    height: 10,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#10B144",
+    borderRadius: 10,
+  },
+  manageButton: {
+    backgroundColor: "#10B144",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
   manageButtonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 
   // ---- Grading Periods Modal ----
-  gradingPeriodsModalOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)" },
+  gradingPeriodsModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
   gradingPeriodsModalContent: { flex: 1, backgroundColor: "#fff", padding: 10 },
   gradingPeriodsHeader: {
     flexDirection: "row",
@@ -3708,8 +4674,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   gradingPeriodsBackText: { marginLeft: 4, fontSize: 16, color: "#000" },
-  gradingPeriodsTitleContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
-  gradingPeriodsTitle: { fontSize: 20, fontWeight: "bold", color: "#000", marginLeft: 8 },
+  gradingPeriodsTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gradingPeriodsTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000",
+    marginLeft: 8,
+  },
   gradingPeriodsCreateButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -3718,10 +4693,24 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
-  gradingPeriodsCreateText: { color: "#fff", fontSize: 14, fontWeight: "600", marginLeft: 4 },
-  gradingPeriodsLoadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  gradingPeriodsCreateText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 4,
+  },
+  gradingPeriodsLoadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   gradingPeriodsList: { flex: 1, padding: 16 },
-  gradingPeriodsEmptyText: { textAlign: "center", color: "#6b7280", fontSize: 16, marginTop: 40 },
+  gradingPeriodsEmptyText: {
+    textAlign: "center",
+    color: "#6b7280",
+    fontSize: 16,
+    marginTop: 40,
+  },
   gradingPeriodItem: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -3730,14 +4719,37 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 16,
   },
-  gradingPeriodRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  gradingPeriodRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   gradingPeriodInfo: { flex: 1 },
-  gradingPeriodTitleText: { fontSize: 16, fontWeight: "600", color: "#000", marginBottom: 4 },
-  gradingPeriodQuarterTitle: { fontSize: 15, fontWeight: "600", color: "#000", marginBottom: 4, marginLeft: 16 },
+  gradingPeriodTitleText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 4,
+  },
+  gradingPeriodQuarterTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 4,
+    marginLeft: 16,
+  },
   gradingPeriodDates: { fontSize: 14, color: "#6b7280" },
   gradingPeriodActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  gradingPeriodSwitchContainer: { flexDirection: "row", alignItems: "center", gap: 8 },
-  gradingPeriodSwitchLabel: { fontSize: 12, color: "#374151", fontWeight: "500" },
+  gradingPeriodSwitchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  gradingPeriodSwitchLabel: {
+    fontSize: 12,
+    color: "#374151",
+    fontWeight: "500",
+  },
   gradingPeriodItemDisabled: { opacity: 0.8, backgroundColor: "#f9fafb" },
   gradingPeriodTextDisabled: { color: "#9ca3af" },
   gradingPeriodButtonDisabled: { opacity: 0.8 },
@@ -3749,7 +4761,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
   },
-  gradingPeriodAddButtonText: { color: "#10B144", fontSize: 12, fontWeight: "600", marginLeft: 4 },
+  gradingPeriodAddButtonText: {
+    color: "#10B144",
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 4,
+  },
   gradingPeriodEditButton: {
     backgroundColor: "#374151",
     width: 36,
@@ -3758,11 +4775,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  gradingPeriodQuarters: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "#f3f4f6" },
+  gradingPeriodQuarters: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+  },
   gradingPeriodQuarterItem: { marginTop: 8 },
 
   // ---- Semester / Quarter Modals ----
-  semesterModalOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.5)", justifyContent: "center", alignItems: "center" },
+  semesterModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   semesterModalContent: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -3770,7 +4797,12 @@ const styles = StyleSheet.create({
     width: "85%",
     maxWidth: 400,
   },
-  semesterModalTitle: { fontSize: 20, fontWeight: "bold", color: "#000", marginBottom: 16 },
+  semesterModalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 16,
+  },
   semesterModalInfo: { fontSize: 14, color: "#6b7280", marginBottom: 16 },
   semesterModalInput: {
     borderWidth: 1,
@@ -3785,8 +4817,18 @@ const styles = StyleSheet.create({
   },
   semesterModalInputText: { fontSize: 16, color: "#000" },
   semesterModalPlaceholder: { fontSize: 16, color: "#9ca3af" },
-  semesterModalContainer: { flexDirection: "row", justifyContent: "space-around", alignItems: "center" },
-  semesterModalButton: { backgroundColor: "#374151", padding: 12, borderRadius: 8, alignItems: "center", marginTop: 8 },
+  semesterModalContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  semesterModalButton: {
+    backgroundColor: "#374151",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
   semesterModalButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 
   // ---- Edit Category Dropdown ----
@@ -3808,10 +4850,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  editCourseModalTitle: { fontSize: 22, fontWeight: "bold", flex: 1, textAlign: "center" },
+  editCourseModalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+  },
   editCourseModalCloseButton: { padding: 4 },
   editCourseModalLabel: { fontWeight: "bold", marginBottom: 4 },
-  editCourseModalDropdownButton: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  editCourseModalDropdownButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   editCourseModalDropdownText: { color: "#333" },
   editCourseModalDropdownPlaceholder: { color: "#999" },
   editCourseModalDropdownOverlay: {
@@ -3831,10 +4882,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  editCourseModalDropdownItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: "#eee" },
+  editCourseModalDropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
   editCourseModalDropdownItemActive: { backgroundColor: "#e3f2fd" },
   editCourseModalDropdownItemText: { color: "#333" },
-  editCourseModalDropdownItemTextActive: { color: "#1976d2", fontWeight: "bold" },
+  editCourseModalDropdownItemTextActive: {
+    color: "#1976d2",
+    fontWeight: "bold",
+  },
   editCourseModalDropdownItemTextInactive: { fontWeight: "normal" },
   editCourseModalLanguageDropdownOverlay: {
     position: "absolute",
@@ -3853,7 +4911,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  editCourseModalSectionTitle: { fontWeight: "bold", marginBottom: 8, fontSize: 16 },
+  editCourseModalSectionTitle: {
+    fontWeight: "bold",
+    marginBottom: 8,
+    fontSize: 16,
+  },
   editCourseModalEntryLabel: { fontSize: 14, color: "#666", marginBottom: 4 },
   editCourseModalEntryRow: { flexDirection: "row", alignItems: "flex-start" },
   editCourseModalCharacterCount: { fontSize: 12, color: "#999", marginTop: 4 },
@@ -3864,7 +4926,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 2,
   },
-  editCourseModalRemoveButtonText: { color: "white", fontSize: 12, fontWeight: "bold" },
+  editCourseModalRemoveButtonText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
   editCourseModalAddButton: {
     backgroundColor: "#007AFF",
     paddingHorizontal: 16,
@@ -3875,7 +4941,11 @@ const styles = StyleSheet.create({
   },
   editCourseModalAddButtonText: { color: "white", fontWeight: "bold" },
   editCourseModalErrorText: { color: "red", marginVertical: 8 },
-  editCourseModalNoSubcategoriesText: { padding: 12, color: "#666", textAlign: "center" },
+  editCourseModalNoSubcategoriesText: {
+    padding: 12,
+    color: "#666",
+    textAlign: "center",
+  },
 
   // ---- Gradebook Modal styles (required by GradebookModal) ----
   gradebookModalContainer: { flex: 1, backgroundColor: "#fff", padding: 0 },
@@ -3924,9 +4994,24 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f5f5f5",
   },
   gradebookStudentInfo: { flex: 2, flexDirection: "row", alignItems: "center" },
-  gradebookExpandIcon: { fontSize: 16, marginRight: 8, color: "#6b7280", fontWeight: "bold" },
-  gradebookStudentName: { flex: 1, fontSize: 16, fontWeight: "bold", color: "#1E293B" },
-  gradebookGradeText: { flex: 1, textAlign: "center", fontSize: 16, color: "#1E293B" },
+  gradebookExpandIcon: {
+    fontSize: 16,
+    marginRight: 8,
+    color: "#6b7280",
+    fontWeight: "bold",
+  },
+  gradebookStudentName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1E293B",
+  },
+  gradebookGradeText: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 16,
+    color: "#1E293B",
+  },
   gradebookLetterGradeContainer: { flex: 1, alignItems: "center" },
   gradebookLetterGradeBadge: {
     backgroundColor: "#dbeafe",
@@ -3936,8 +5021,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  gradebookLetterGradeText: { color: "#1E293B", fontWeight: "bold", fontSize: 14 },
-  gradebookGpaText: { flex: 1, textAlign: "right", fontSize: 16, color: "#1E293B" },
+  gradebookLetterGradeText: {
+    color: "#1E293B",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  gradebookGpaText: {
+    flex: 1,
+    textAlign: "right",
+    fontSize: 16,
+    color: "#1E293B",
+  },
   gradebookStudentExpanded: {
     backgroundColor: "#f9fafb",
     paddingLeft: 24,
@@ -3945,7 +5039,12 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderLeftColor: "#e5e7eb",
   },
-  gradebookPerformanceTitle: { color: "#6b7280", fontSize: 14, fontWeight: "600", marginBottom: 12 },
+  gradebookPerformanceTitle: {
+    color: "#6b7280",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
   gradebookSemesterItem: { marginBottom: 8 },
   gradebookSemesterButton: {
     flexDirection: "row",
@@ -3957,8 +5056,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
-  gradebookSemesterTitle: { flex: 1, fontSize: 14, fontWeight: "600", color: "#374151" },
-  gradebookSemesterExpanded: { marginTop: 8, marginLeft: 12, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: "#d1d5db" },
+  gradebookSemesterTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  gradebookSemesterExpanded: {
+    marginTop: 8,
+    marginLeft: 12,
+    paddingLeft: 12,
+    borderLeftWidth: 2,
+    borderLeftColor: "#d1d5db",
+  },
   gradebookQuarterButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -3969,7 +5079,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d1d5db",
   },
-  gradebookQuarterTitle: { flex: 1, fontSize: 13, fontWeight: "600", color: "#374151" },
+  gradebookQuarterTitle: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+  },
   gradebookQuarterGrade: { fontSize: 12, color: "#6b7280", marginRight: 8 },
   gradebookQuarterBadge: {
     backgroundColor: "#dbeafe",
@@ -3980,7 +5095,11 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     marginRight: 8,
   },
-  gradebookQuarterBadgeText: { color: "#1E293B", fontWeight: "bold", fontSize: 11 },
+  gradebookQuarterBadgeText: {
+    color: "#1E293B",
+    fontWeight: "bold",
+    fontSize: 11,
+  },
   gradebookQuarterGpa: { fontSize: 12, color: "#6b7280" },
   gradebookQuarterExpanded: {
     marginTop: 8,
@@ -3999,11 +5118,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
   },
-  gradebookAssessmentHeaderText: { flex: 1, fontSize: 12, fontWeight: "600", color: "#6b7280" },
-  gradebookAssessmentRow: { flexDirection: "row", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
+  gradebookAssessmentHeaderText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+  gradebookAssessmentRow: {
+    flexDirection: "row",
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
   gradebookAssessmentText: { flex: 1, fontSize: 12, color: "#374151" },
-  gradebookNoDataText: { fontSize: 12, color: "#9ca3af", textAlign: "center", paddingVertical: 8 },
-  gradebookNoSemestersText: { fontSize: 12, color: "#9ca3af", paddingVertical: 8 },
+  gradebookNoDataText: {
+    fontSize: 12,
+    color: "#9ca3af",
+    textAlign: "center",
+    paddingVertical: 8,
+  },
+  gradebookNoSemestersText: {
+    fontSize: 12,
+    color: "#9ca3af",
+    paddingVertical: 8,
+  },
   gradebookDirectAssessments: {
     marginTop: 8,
     marginLeft: 12,

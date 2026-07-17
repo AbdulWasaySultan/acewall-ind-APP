@@ -3,7 +3,7 @@ import Toast from "react-native-simple-toast";
 
 export const loadReminderSetting = async (assessmentId: string) => {
   const api = await getApiInstance();
-  const res = await api.get(`/assessment/findReminderTime/${assessmentId}`);
+  const res = await api.get(`/api/assessment/findReminderTime/${assessmentId}`);
   return res.data.reminderTime || "noReminder";
 };
 
@@ -12,11 +12,11 @@ export const saveReminderSetting = async (
   reminder: string
 ) => {
   const api = await getApiInstance();
-  await api.put(`/assessment/setReminder/${assessmentId}`, { reminder });
+  await api.put(`/api/assessment/setReminder/${assessmentId}`, { reminder });
 };
 
 export const sendManualReminder = async (assessmentId: string) => {
   const api = await getApiInstance();
-  const res = await api.post(`/assessment/${assessmentId}/send-reminder`);
+  const res = await api.post(`/api/assessment/${assessmentId}/send-reminder`);
   return res.data; // contains message, enrolledStudents, etc.
 };

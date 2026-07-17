@@ -30,7 +30,7 @@ export const fetchCouponsByCourse = async (
 ): Promise<Coupon[]> => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/coupon/getBycourse/${courseId}`);
+    const response = await api.get(`/api/coupon/getBycourse/${courseId}`);
     return response.data.coupons;
   } catch (error: any) {
     console.error("Failed to fetch coupons:", error);
@@ -44,7 +44,7 @@ export const createCouponsByCourse = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post("/coupon/createCoupon", {
+    const response = await api.post("/api/coupon/createCoupon", {
       ...payload,
       courseId,
     });
@@ -61,7 +61,7 @@ export const updateCouponStatus = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.patch(`/coupon/updateCoupon/${couponId}`, {
+    const response = await api.patch(`/api/coupon/updateCoupon/${couponId}`, {
       isActive,
     });
     return response.data;
