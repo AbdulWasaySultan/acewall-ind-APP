@@ -66,12 +66,97 @@ const MyCoursesPage = () => {
   );
   const [subcategoryItems, setSubcategoryItems] = useState<any[]>([]);
 
-  const [selectedTab, setSelectedTab] = useState<
-    "published" | "unpublished" | "all"
-  >("published");
+  const [selectedTab, setSelectedTab] = useState<"published" | "unpublished">(
+    "published"
+  );
+  const [isVerified, setIsVerified] = useState<
+    "approved" | "pending" | "rejected"
+  >("approved");
+  const [isTotalView, setIsTotalView] = useState(false);
 
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const route = useRoute<any>();
+
+  const dedupeCoursesById = (courses: any[]) => {
+    const map = new Map<string, any>();
+    courses.forEach((course) => map.set(course._id, course));
+    return Array.from(map.values());
+  };
+
+  const isPublishedCourse = (course: any) =>
+    course.published === true || course.published === "true";
+
+  // Dashboard counts include approved + pending + rejected courses.
+  // A single approved-only API call misses unpublished/pending items, so we
+  // compose the list from all verification buckets and filter client-side.
+  const fetchCombinedCourses = useCallback(
+    async (publishFilter: boolean | null, search: string) => {
+      const [approvedPublished, approvedUnpublished, pending, rejected] =
+        await Promise.all([
+          getTeacherCourses(true, "approved", search),
+          getTeacherCourses(false, "approved", search),
+          getTeacherCourses(true, "pending", search),
+          getTeacherCourses(true, "rejected", search),
+        ]);
+
+      const allCourses = dedupeCoursesById([
+        ...(approvedPublished.courses || []),
+        ...(approvedUnpublished.courses || []),
+        ...(pending.courses || []),
+        ...(rejected.courses || []),
+      ]);
+
+      if (publishFilter === true) {
+        return allCourses.filter(isPublishedCourse);
+      }
+      if (publishFilter === false) {
+        return allCourses.filter((course) => !isPublishedCourse(course));
+      }
+      return allCourses;
+    },
+    []
+  );
+
+  const loadTeacherCoursesWithParams = useCallback(
+    async (params: {
+      isVerified: "approved" | "pending" | "rejected";
+      isTotalView: boolean;
+      selectedTab: "published" | "unpublished";
+      search: string;
+    }) => {
+      if (params.isVerified === "pending" || params.isVerified === "rejected") {
+        const response = await getTeacherCourses(
+          true,
+          params.isVerified,
+          params.search
+        );
+        return response.courses || [];
+      }
+      if (params.isTotalView) {
+        return fetchCombinedCourses(null, params.search);
+      }
+      if (params.selectedTab === "published") {
+        return fetchCombinedCourses(true, params.search);
+      }
+      return fetchCombinedCourses(false, params.search);
+    },
+    [fetchCombinedCourses]
+  );
+
+  const loadTeacherCourses = useCallback(async () => {
+    return loadTeacherCoursesWithParams({
+      isVerified,
+      isTotalView,
+      selectedTab,
+      search: searchQuery,
+    });
+  }, [
+    isVerified,
+    isTotalView,
+    selectedTab,
+    searchQuery,
+    loadTeacherCoursesWithParams,
+  ]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -108,97 +193,55 @@ const MyCoursesPage = () => {
     }
   }, []);
 
-  // getTeacherCourses only reliably supports 4 real combinations:
-  //   (published: true,  isVerified: "approved")
-  //   (published: false, isVerified: "approved")
-  //   (isVerified: "pending")   -> published is ignored by the service, returns ALL pending
-  //   (isVerified: "rejected")  -> published is ignored by the service, returns ALL rejected
-  // "Total Courses" / "Unpublished Courses" on the Dashboard count courses
-  // regardless of verification status, so to match those numbers we fetch
-  // all 4 combinations and compose the tab we need client-side, instead of
-  // trusting the untested published=undefined "fetch everything" shortcut.
-  const fetchTeacherCourses = useCallback(
-    async (tab: "published" | "unpublished" | "all", search: string) => {
-      const [
-        approvedPublishedRes,
-        approvedUnpublishedRes,
-        pendingRes,
-        rejectedRes,
-      ] = await Promise.all([
-        getTeacherCourses(true, "approved", search),
-        getTeacherCourses(false, "approved", search),
-        getTeacherCourses(true, "pending", search),
-        getTeacherCourses(true, "rejected", search),
-      ]);
-
-      const approvedPublished = approvedPublishedRes.courses || [];
-      const approvedUnpublished = approvedUnpublishedRes.courses || [];
-      const pending = pendingRes.courses || [];
-      const rejected = rejectedRes.courses || [];
-
-      const dedupe = (list: any[]) => {
-        const map = new Map<string, any>();
-        list.forEach((c) => map.set(c._id, c));
-        return Array.from(map.values());
-      };
-
-      if (tab === "published") {
-        return dedupe([
-          ...approvedPublished,
-          ...pending.filter((c) => c.published === true),
-          ...rejected.filter((c) => c.published === true),
-        ]);
-      }
-      if (tab === "unpublished") {
-        return dedupe([
-          ...approvedUnpublished,
-          ...pending.filter((c) => c.published === false),
-          ...rejected.filter((c) => c.published === false),
-        ]);
-      }
-      // "all"
-      return dedupe([
-        ...approvedPublished,
-        ...approvedUnpublished,
-        ...pending,
-        ...rejected,
-      ]);
-    },
-    []
-  );
-
   // Use useFocusEffect to fetch data every time the page comes into focus
   useFocusEffect(
     useCallback(() => {
-      // If the Dashboard sent us here with a specific filter (Total /
-      // Published / Unpublished Courses card), adopt it as the active tab.
-      // Important: we do NOT return early here - the fetch below always
-      // has to run, otherwise the page shows no courses until an unrelated
-      // re-render happens to trigger it.
       const routeFilter = route.params?.filter as
         | "published"
         | "unpublished"
-        | "all"
+        | "total"
         | undefined;
-      const activeTab = routeFilter ?? selectedTab;
+
+      let nextIsTotalView = isTotalView;
+      let nextSelectedTab = selectedTab;
+      let nextIsVerified = isVerified;
+
+      if (routeFilter === "total") {
+        nextIsTotalView = true;
+        nextSelectedTab = "published";
+        nextIsVerified = "approved";
+        setIsTotalView(true);
+        setSelectedTab("published");
+        setIsVerified("approved");
+      } else if (routeFilter === "published") {
+        nextIsTotalView = false;
+        nextSelectedTab = "published";
+        nextIsVerified = "approved";
+        setIsTotalView(false);
+        setSelectedTab("published");
+        setIsVerified("approved");
+      } else if (routeFilter === "unpublished") {
+        nextIsTotalView = false;
+        nextSelectedTab = "unpublished";
+        nextIsVerified = "approved";
+        setIsTotalView(false);
+        setSelectedTab("unpublished");
+        setIsVerified("approved");
+      }
 
       if (routeFilter) {
-        setSelectedTab(routeFilter);
         navigation.setParams({ filter: undefined });
       }
 
       const fetchData = async () => {
-        // Fetch categories for students if not already loaded
         if (userRole === "student" && categoryItems.length === 0) {
           await fetchCategories();
         }
 
-        // Always refresh course data when page comes into focus
         setLoading(true);
         setError(null);
         try {
           if (userRole === "student") {
-            // If a subcategory is selected, get courses for that subcategory
             const enrolledResponse = await getStudentEnrolledCourses(
               searchQuery
             );
@@ -216,22 +259,20 @@ const MyCoursesPage = () => {
                 selectedSubcategory,
                 searchQuery
               );
-              console.log(response);
               setCourses(response.courses || []);
             } else {
-              // Otherwise, get the student's enrolled courses
               const enrolledCoursesList =
                 enrolledResponse.enrolledCourses?.map((e: any) => e.course) ||
                 [];
               setCourses(enrolledCoursesList);
             }
           } else {
-            // For teacher/admin, get courses based on the active tab,
-            // composed from the real approved/pending/rejected combinations.
-            const teacherCourses = await fetchTeacherCourses(
-              activeTab,
-              searchQuery
-            );
+            const teacherCourses = await loadTeacherCoursesWithParams({
+              isVerified: nextIsVerified,
+              isTotalView: nextIsTotalView,
+              selectedTab: nextSelectedTab,
+              search: searchQuery,
+            });
             setCourses(teacherCourses);
           }
         } catch (err: any) {
@@ -246,8 +287,6 @@ const MyCoursesPage = () => {
       fetchData();
 
       return () => {
-        // This cleanup runs when the page is unfocused
-        // setSearchQuery('');
         setSelectedCategory(null);
         setSelectedSubcategory(null);
         setSubcategoryItems([]);
@@ -257,8 +296,10 @@ const MyCoursesPage = () => {
       selectedSubcategory,
       searchQuery,
       selectedTab,
+      isVerified,
+      isTotalView,
       fetchCategories,
-      fetchTeacherCourses,
+      loadTeacherCoursesWithParams,
       categoryItems.length,
       route.params?.filter,
       navigation,
@@ -331,12 +372,7 @@ const MyCoursesPage = () => {
           setCourses(enrolledCoursesList);
         }
       } else {
-        // For teacher/admin, get courses based on selected tab, composed
-        // from the real approved/pending/rejected combinations.
-        const teacherCourses = await fetchTeacherCourses(
-          selectedTab,
-          searchQuery
-        );
+        const teacherCourses = await loadTeacherCourses();
         setCourses(teacherCourses);
       }
 
@@ -352,8 +388,10 @@ const MyCoursesPage = () => {
     selectedSubcategory,
     searchQuery,
     selectedTab,
+    isVerified,
+    isTotalView,
     fetchCategories,
-    fetchTeacherCourses,
+    loadTeacherCourses,
     categoryItems.length,
   ]);
 
@@ -364,6 +402,15 @@ const MyCoursesPage = () => {
       {/* TEACHER UI: Tab Switcher, Search, and Filtered Courses */}
       {userRole === "teacher" && (
         <>
+          {(isVerified === "pending" || isVerified === "rejected") && (
+            <TouchableOpacity
+              onPress={() => setIsVerified("approved")}
+              style={styles.backButton}
+            >
+              <SimpleIcon name="arrow-back" size={18} color="#000" />
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+          )}
           <View
             style={{
               flexDirection: "row",
@@ -372,40 +419,112 @@ const MyCoursesPage = () => {
               marginBottom: 16,
             }}
           >
-            <View style={styles.tabSwitcherContainer}>
+            {isVerified === "pending" || isVerified === "rejected" ? (
+              <View style={styles.tabSwitcherContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.tabButton,
+                    isVerified === "pending" && styles.tabButtonActive,
+                  ]}
+                  onPress={() => setIsVerified("pending")}
+                >
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      isVerified === "pending" && styles.tabButtonTextActive,
+                    ]}
+                  >
+                    Pending courses
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.tabButton,
+                    isVerified === "rejected" && styles.tabButtonActive,
+                  ]}
+                  onPress={() => setIsVerified("rejected")}
+                >
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      isVerified === "rejected" && styles.tabButtonTextActive,
+                    ]}
+                  >
+                    Rejected courses
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.tabSwitcherContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.tabButton,
+                    !isTotalView &&
+                      selectedTab === "published" &&
+                      styles.tabButtonActive,
+                  ]}
+                  onPress={() => {
+                    setIsTotalView(false);
+                    setSelectedTab("published");
+                    setIsVerified("approved");
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      !isTotalView &&
+                        selectedTab === "published" &&
+                        styles.tabButtonTextActive,
+                    ]}
+                  >
+                    Published
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.tabButton,
+                    !isTotalView &&
+                      selectedTab === "unpublished" &&
+                      styles.tabButtonActive,
+                  ]}
+                  onPress={() => {
+                    setIsTotalView(false);
+                    setSelectedTab("unpublished");
+                    setIsVerified("approved");
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      !isTotalView &&
+                        selectedTab === "unpublished" &&
+                        styles.tabButtonTextActive,
+                    ]}
+                  >
+                    Unpublished
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {isVerified === "approved" && (
               <TouchableOpacity
                 style={[
                   styles.tabButton,
-                  selectedTab === "published" && styles.tabButtonActive,
+                  {
+                    backgroundColor: "#66bb6a",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  },
                 ]}
-                onPress={() => setSelectedTab("published")}
+                onPress={() => {
+                  setIsTotalView(false);
+                  setIsVerified("pending");
+                }}
               >
-                <Text
-                  style={[
-                    styles.tabButtonText,
-                    selectedTab === "published" && styles.tabButtonTextActive,
-                  ]}
-                >
-                  Published
-                </Text>
+                <Text style={[styles.tabButtonText]}>Unverified Courses</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  selectedTab === "unpublished" && styles.tabButtonActive,
-                ]}
-                onPress={() => setSelectedTab("unpublished")}
-              >
-                <Text
-                  style={[
-                    styles.tabButtonText,
-                    selectedTab === "unpublished" && styles.tabButtonTextActive,
-                  ]}
-                >
-                  Unpublished
-                </Text>
-              </TouchableOpacity>
-            </View>
+            )}
           </View>
 
           <View style={styles.searchContainer}>
@@ -672,6 +791,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 16,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#000",
+    marginLeft: 8,
   },
   dropdownContainer: {
     marginBottom: 16,

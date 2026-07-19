@@ -497,9 +497,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
   },
-  filterWrapper: { flex: 1 },
+  filterWrapper: { flex: 1, backgroundColor: "cyan" },
   dropdownContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "#000",
     // You can add more styling if needed
   },
   dropDownContainerStyle: {

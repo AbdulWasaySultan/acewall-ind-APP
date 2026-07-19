@@ -227,7 +227,7 @@ const DashboardPage = () => {
           <TouchableOpacity
             style={styles.card}
             onPress={() =>
-              navigation.navigate("MyCourses", { filter: "all" })
+              navigation.navigate("MyCourses", { filter: "total" })
             }
           >
             <Text style={styles.cardTitle}>Total Courses</Text>

@@ -309,37 +309,17 @@ export const getAllPublishedCourses = async (): Promise<CourseResponse> => {
 
 
 export const getTeacherCourses = async (
-  published: boolean | undefined,
+  published: boolean,
   isVerified: string,
   search?: string
 ): Promise<CourseResponse> => {
   try {
     const api = await getApiInstance();
     const searchParam = search ? encodeURIComponent(search) : "";
-    
-    // When published is undefined (all courses), fetch ALL courses regardless of verification status
-    // This matches the dashboard's "total courses" count
-    if (published === undefined) {
-      const url = searchParam
-        ? `/api/course/getindividualcourse?search=${searchParam}`
-        : `/api/course/getindividualcourse`;
-      const response = await api.get<CourseResponse>(url);
-      return response.data;
-    }
-    
-    // For pending/rejected courses, only filter by verification status
-    if (isVerified === "pending" || isVerified === "rejected") {
-      const url = searchParam
+    const url =
+      isVerified === "pending" || isVerified === "rejected"
         ? `/api/course/getindividualcourse?isVerified=${isVerified}&search=${searchParam}`
-        : `/api/course/getindividualcourse?isVerified=${isVerified}`;
-      const response = await api.get<CourseResponse>(url);
-      return response.data;
-    }
-    
-    // For published/unpublished with approved status
-    const url = searchParam
-      ? `/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`
-      : `/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}`;
+        : `/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`;
     const response = await api.get<CourseResponse>(url);
     return response.data;
   } catch (error) {
