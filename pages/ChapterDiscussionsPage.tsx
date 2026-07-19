@@ -198,20 +198,17 @@ const ChapterDiscussionsPage = () => {
 
     setIsSubmittingComment(true);
     try {
-      const response = await sendComment(
+      await sendComment(selectedDiscussion._id, comment.trim());
+      setComment("");
+      // Re-fetch comments from the server to get the updated list
+      const commentsRes = await getDiscussionComments(
         selectedDiscussion._id,
-        comment.trim()
+        1,
+        100
       );
-      const newComment = response.comment || response.data || response;
-      if (newComment?._id) {
-        // Add new comment to the top of the list
-        setComments((prev) => [newComment, ...prev]);
-        setComment("");
-        setRefreshKey((prev) => prev + 1); // triggers re-fetch if needed
-        Toast.show("Comment posted!", Toast.SHORT);
-      } else {
-        Toast.show("Failed to post comment", Toast.SHORT);
-      }
+      setComments(commentsRes.discussionComments || []);
+      setRefreshKey((prev) => prev + 1);
+      Toast.show("Comment posted!", Toast.SHORT);
     } catch (err: any) {
       Toast.show(err.message || "Failed to post comment.", Toast.LONG);
     } finally {
@@ -272,31 +269,31 @@ const ChapterDiscussionsPage = () => {
 
       const res = lessonId
         ? await createDiscussionForLesson({
-            course: courseId,
-            topic: topic.trim(),
-            description: description.trim(),
-            category: selectedCategory._id,
-            type: "lesson",
-            dueDate: due,
-            totalMarks: Number(totalMarks),
-            semester: semesterId,
-            quarter: quarterId,
-            lesson: lessonId,
-            file,
-          })
+          course: courseId,
+          topic: topic.trim(),
+          description: description.trim(),
+          category: selectedCategory._id,
+          type: "lesson",
+          dueDate: due,
+          totalMarks: Number(totalMarks),
+          semester: semesterId,
+          quarter: quarterId,
+          lesson: lessonId,
+          file,
+        })
         : await createDiscussionForChapter({
-            course: courseId,
-            topic: topic.trim(),
-            description: description.trim(),
-            category: selectedCategory._id,
-            type: "chapter",
-            dueDate: due,
-            totalMarks: Number(totalMarks),
-            semester: semesterId,
-            quarter: quarterId,
-            chapter: chapterId,
-            file,
-          });
+          course: courseId,
+          topic: topic.trim(),
+          description: description.trim(),
+          category: selectedCategory._id,
+          type: "chapter",
+          dueDate: due,
+          totalMarks: Number(totalMarks),
+          semester: semesterId,
+          quarter: quarterId,
+          chapter: chapterId,
+          file,
+        });
 
       Toast.show(res.message || "Discussion created successfully", Toast.LONG);
       setShowCreate(false);
@@ -725,7 +722,7 @@ const ChapterDiscussionsPage = () => {
                     style={[
                       styles.categoryItem,
                       selectedCategory?._id === category._id &&
-                        styles.categoryItemSelected,
+                      styles.categoryItemSelected,
                     ]}
                     onPress={() => {
                       setSelectedCategory(category);
@@ -736,7 +733,7 @@ const ChapterDiscussionsPage = () => {
                       style={[
                         styles.categoryItemText,
                         selectedCategory?._id === category._id &&
-                          styles.categoryItemTextSelected,
+                        styles.categoryItemTextSelected,
                       ]}
                     >
                       {category.name}
@@ -936,7 +933,7 @@ const ChapterDiscussionsPage = () => {
                         style={[
                           styles.postCommentButton,
                           (!comment.trim() || isSubmittingComment) &&
-                            styles.postCommentButtonDisabled,
+                          styles.postCommentButtonDisabled,
                         ]}
                         disabled={!comment.trim() || isSubmittingComment}
                         onPress={handlePostComment}

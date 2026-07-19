@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -27,8 +27,12 @@ const GPAManagementModal: React.FC<GPAManagementModalProps> = ({
   showGPAManagementLoader,
   GPA,
   error,
-  onRetry
+  onRetry,
 }) => {
+  useEffect(() => {
+    console.log("GPA data:", GPA);
+  }, []);
+
   return (
     <Modal
       visible={visible}
@@ -45,34 +49,33 @@ const GPAManagementModal: React.FC<GPAManagementModalProps> = ({
             <Text style={styles.fullScreenModalTitle}>GPA</Text>
             <View style={{ width: 40 }} />
           </View>
-          <TouchableOpacity
-            style={styles.manageButton}
-            onPress={onManageGPA}
-          >
+          <TouchableOpacity style={styles.manageButton} onPress={onManageGPA}>
             <Text style={styles.manageButtonText}>Manage GPA</Text>
           </TouchableOpacity>
           {showGPAManagementLoader ? (
-  <ActivityIndicator size="large" color="#10B144" style={{ marginTop: 20 }} />
-) : error ? (
-  <View style={styles.errorContainer}>
-    <SimpleIcon name="alert-circle" size={48} color="#ef4444" />
-    <Text style={styles.errorTitle}>Something went wrong</Text>
-    <Text style={styles.errorMessage}>{error}</Text>
-    {onRetry && (
-      <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-        <Text style={styles.retryButtonText}>Retry</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-): Object.keys(GPA).length > 0 ? (
+            <ActivityIndicator
+              size="large"
+              color="#10B144"
+              style={{ marginTop: 20 }}
+            />
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <SimpleIcon name="alert-circle" size={48} color="#ef4444" />
+              <Text style={styles.errorTitle}>Something went wrong</Text>
+              <Text style={styles.errorMessage}>{error}</Text>
+              {onRetry && (
+                <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : Object.keys(GPA).length > 0 ? (
             <ScrollView style={{ flex: 1, marginTop: 20 }}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
                 <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>
                 <Text style={[styles.headerText, { flex: 2 }]}>Range</Text>
-                <Text style={[styles.headerText, { flex: 3 }]}>
-                  Percentage
-                </Text>
+                <Text style={[styles.headerText, { flex: 3 }]}>Percentage</Text>
               </View>
 
               {/* Table Rows */}
@@ -208,39 +211,39 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
   },
   errorTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111',
+    fontWeight: "bold",
+    color: "#111",
     marginTop: 16,
   },
   errorMessage: {
     fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: "#6b7280",
+    textAlign: "center",
     marginVertical: 8,
     paddingHorizontal: 20,
   },
   retryButton: {
-    backgroundColor: '#10B144',
+    backgroundColor: "#10B144",
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 8,
     marginTop: 12,
   },
   retryButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 16,
   },
   emptyText: {
     marginTop: 20,
     fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: "#6b7280",
+    textAlign: "center",
   },
 });

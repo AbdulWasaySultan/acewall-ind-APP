@@ -10,12 +10,13 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  SafeAreaView,
   StatusBar,
   ActivityIndicator,
   Alert,
   ViewToken,
 } from "react-native";
+// SafeAreaView removed — the header handles top inset manually via paddingTop: insets.top
+// and the FlatList handles bottom inset via contentContainerStyle
 import { Comment, Post } from "../components/spillTheTea";
 import { COLORS } from "../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/constants";
 import { toggleLike } from "../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/helpers";
@@ -27,6 +28,8 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 // ── API ──────────────────────────────────────────────────────────────────────
 import {
   fetchAllPosts,
@@ -116,6 +119,8 @@ const attachCommentCounts = (
 // SPILL THE TEA PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SpillTheTeaPage: React.FC = () => {
+
+  const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -269,10 +274,10 @@ const SpillTheTeaPage: React.FC = () => {
         prev.map((p) =>
           p._id === postId
             ? {
-                ...p,
-                totalLikes: response.totalLikes,
-                userReaction: response.userReaction,
-              }
+              ...p,
+              totalLikes: response.totalLikes,
+              userReaction: response.userReaction,
+            }
             : p
         )
       );
@@ -384,11 +389,11 @@ const SpillTheTeaPage: React.FC = () => {
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerIcon}>☕</Text>
           <Text style={styles.headerTitle}>Spill The Tea</Text>
@@ -418,7 +423,7 @@ const SpillTheTeaPage: React.FC = () => {
         <FlatList
           data={posts}
           keyExtractor={(p) => p._id}
-          contentContainerStyle={styles.feed}
+          contentContainerStyle={[styles.feed, { paddingBottom: insets.bottom + 16 }]}
           showsVerticalScrollIndicator={false}
           refreshing={refreshing}
           onRefresh={() => fetchPosts(true)}
@@ -476,7 +481,7 @@ const SpillTheTeaPage: React.FC = () => {
           });
         }}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

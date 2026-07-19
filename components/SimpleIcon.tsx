@@ -122,6 +122,7 @@ const SimpleIcon: React.FC<SimpleIconProps> = ({
     "alert-circle": "⚠️",
     "menu-book": "📚",
     "clipboard-outline": "",
+    "file-based": ""
   };
 
   const icon = iconMap[name] || "?";

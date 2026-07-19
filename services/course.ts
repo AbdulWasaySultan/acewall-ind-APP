@@ -235,6 +235,27 @@ export const getQuartersBySemesters = async (semesterIds: string[]) => {
   }
 };
 
+
+export const getQuarterDetails = async (quarterId: string) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get(`/api/quarter/getDatesofQuarter/${quarterId}`);
+    // Normalize: the backend may return dates at the top level ({startDate, endDate})
+    // or nested ({quarter: {startDate, endDate}}) — support both so callers can
+    // always safely read data.quarter.startDate / data.quarter.endDate.
+    const raw = response.data;
+    const quarter = raw?.quarter ?? raw;
+    return {
+      quarter: {
+        startDate: quarter?.startDate,
+        endDate: quarter?.endDate,
+      },
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const archiveCourse = async (courseId: string) => {
   try {
     const api = await getApiInstance();
@@ -277,13 +298,15 @@ export const getAllPublishedCourses = async (): Promise<CourseResponse> => {
   try {
     const api = await getApiInstance();
     const response = await api.get<CourseResponse>(
-      "/api/course/getindividualcourse?published=true&isVerified=approved"
+      '/api/course/getindividualcourse?published=true&isVerified=approved'
     );
     return response.data;
   } catch (error) {
     throw error;
   }
 };
+
+
 
 export const getTeacherCourses = async (
   published: boolean | undefined,
@@ -293,7 +316,7 @@ export const getTeacherCourses = async (
   try {
     const api = await getApiInstance();
     const searchParam = search ? encodeURIComponent(search) : "";
-
+    
     // When published is undefined (all courses), fetch ALL courses regardless of verification status
     // This matches the dashboard's "total courses" count
     if (published === undefined) {
@@ -303,7 +326,7 @@ export const getTeacherCourses = async (
       const response = await api.get<CourseResponse>(url);
       return response.data;
     }
-
+    
     // For pending/rejected courses, only filter by verification status
     if (isVerified === "pending" || isVerified === "rejected") {
       const url = searchParam
@@ -312,7 +335,7 @@ export const getTeacherCourses = async (
       const response = await api.get<CourseResponse>(url);
       return response.data;
     }
-
+    
     // For published/unpublished with approved status
     const url = searchParam
       ? `/api/course/getindividualcourse?published=${published}&isVerified=${isVerified}&search=${searchParam}`
@@ -386,13 +409,9 @@ export const updateCourseThumbnail = async (
       type: mimeType,
       name: resolveImageFilename(mimeType, thumbnail.fileName, thumbnail.uri),
     } as any);
-    const response = await api.put(
-      `/api/course/thumbnail/${courseId}`,
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
-    );
+    const response = await api.put(`/api/course/thumbnail/${courseId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -570,9 +589,7 @@ export const addMoreFilesToLesson = async (
 export const deleteLessonFile = async (lessonId: string, fileId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.delete(
-      `/api/lesson/delete/${lessonId}/${fileId}`
-    );
+    const response = await api.delete(`/api/lesson/delete/${lessonId}/${fileId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -768,9 +785,7 @@ export const submitAssessment = async (
 export const getAllAssessmentForStudent = async () => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(
-      "/api/assessment/getAllassessmentforStudent"
-    );
+    const response = await api.get("/api/assessment/getAllassessmentforStudent");
     return response.data;
   } catch (error) {
     console.error(error);
@@ -828,9 +843,7 @@ export const getStudentEnrolledCourseDetails = async (enrollmentId: string) => {
 export const getEnrollStatus = async (enrollmentId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(
-      `/api/enrollment/isEnrolled/${enrollmentId}`
-    );
+    const response = await api.get(`/api/enrollment/isEnrolled/${enrollmentId}`);
     return response.data?.enrolled || null;
   } catch (error) {
     throw error;
@@ -866,13 +879,10 @@ export const createStripeCheckoutSession = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post(
-      "/api/stripe/create-checkout-session-mobile",
-      {
-        courseId,
-        studentId,
-      }
-    );
+    const response = await api.post("/api/stripe/create-checkout-session-mobile", {
+      courseId,
+      studentId,
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -902,9 +912,7 @@ export const addSemesterToCourse = async (
 export const getSemestersOfCourse = async (courseId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(
-      `/api/semester/getSemesterOfCourse/${courseId}`
-    );
+    const response = await api.get(`/api/semester/getSemesterOfCourse/${courseId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1191,9 +1199,7 @@ export const isCommentedInDiscussion = async (discussionId: string) => {
 export const getReplyCount = async (commentId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(
-      `/api/replyDiscussion/replycount/${commentId}`
-    );
+    const response = await api.get(`/api/replyDiscussion/replycount/${commentId}`);
     return response.data;
   } catch (error) {
     throw error;

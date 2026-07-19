@@ -44,6 +44,10 @@ interface AddAssessmentFormProps {
   lessonId?: string;
   semesterId?: string;
   quarterId?: string;
+  // Optional: if the parent screen already fetched these (e.g. CreateAssessmentPage),
+  // pass them down so this component doesn't make a duplicate network call.
+  quarterStartDate?: Date | null;
+  quarterEndDate?: Date | null;
   onAssessmentCreated: () => void;
   onCancel: () => void;
 }
@@ -54,6 +58,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
   lessonId,
   semesterId,
   quarterId,
+  quarterStartDate,
+  quarterEndDate,
   onAssessmentCreated,
   onCancel,
 }) => {
@@ -95,6 +101,10 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
     startDate: string;
     endDate: string;
   } | null>(null);
+  const [quarterDatesLoading, setQuarterDatesLoading] = useState(false);
+  const [quarterDatesError, setQuarterDatesError] = useState<string | null>(
+    null
+  );
 
   // Questions
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -115,13 +125,23 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-    fetchQuarterDates();
-    console.log("quarterdates", quarterDates);
-    console.log("quarterId", quarterId);
-  }, []);
+  // ── Helper: format date for display ──
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // ── Fetch categories ──
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true);
@@ -197,10 +217,6 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         setSelectedCategory(mappedCategories[0]);
       }
     } catch (error: any) {
-      // console.error(error);
-      // console.error("Response data:", error.response?.data);
-      // console.error("Status code:", error.response?.status);
-
       const defaultCategories = [
         { _id: "default1", name: "Quiz" },
         { _id: "default2", name: "Assignment" },
@@ -261,30 +277,87 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
     }
   };
 
+  // ── Apply resolved quarter dates (from props or our own fetch) ──
+  // Uses a functional setState for dueDate so this doesn't need dueDate as
+  // a dependency anywhere it's called from.
+  const applyQuarterDates = (start: Date, end: Date) => {
+    setQuarterDates({
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+    });
+    setQuarterDatesError(null);
+    setDueDate((prevDueDate) => {
+      if (prevDueDate && (prevDueDate < start || prevDueDate > end)) {
+        Toast.show(
+          `Previous due date was outside the quarter range. Please select a new date within ${formatDate(
+            start
+          )} – ${formatDate(end)}`,
+          Toast.LONG
+        );
+        return null;
+      }
+      return prevDueDate;
+    });
+  };
+
+  // ── Fetch quarter dates ourselves (fallback when no props are given) ──
   const fetchQuarterDates = async () => {
     if (!quarterId) {
-      Toast.show(
-        "Quarter ID is missing. Unable to fetch quarter dates.",
-        Toast.LONG
+      setQuarterDatesError(
+        "No quarter selected — due date won't be restricted to a quarter range."
       );
       return;
     }
+    setQuarterDatesLoading(true);
+    setQuarterDatesError(null);
     try {
       const api = await createApiInstance();
       addAuthInterceptor(api);
       const response = await api.get(
         `/api/quarter/getDatesofQuarter/${quarterId}`
       );
-      setQuarterDates({
-        startDate: response.data.startDate,
-        endDate: response.data.endDate,
-      });
+      const start = new Date(response.data.startDate);
+      const end = new Date(response.data.endDate);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        throw new Error("Quarter dates were missing or invalid.");
+      }
+
+      applyQuarterDates(start, end);
     } catch (error) {
-      //   console.error("Error fetching quarter dates:", error);
-      Toast.show("Failed to fetch quarter dates", Toast.LONG);
+      console.error("Failed to fetch quarter dates:", error);
+      setQuarterDatesError(
+        "Couldn't load the quarter's date range. You can still pick a due date, but it won't be checked against the quarter."
+      );
+    } finally {
+      setQuarterDatesLoading(false);
     }
   };
 
+  // ── Effects ──
+  useEffect(() => {
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Prefer dates already resolved by the parent screen — avoids a
+    // duplicate network call for the same quarter.
+    if (quarterStartDate && quarterEndDate) {
+      applyQuarterDates(quarterStartDate, quarterEndDate);
+      setQuarterDatesLoading(false);
+      return;
+    }
+    if (quarterId) {
+      fetchQuarterDates();
+    } else {
+      setQuarterDatesLoading(false);
+      setQuarterDatesError(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quarterId, quarterStartDate, quarterEndDate]);
+
+  // ── Handlers ──
   const handleAssessmentTypeChange = (type: "question" | "file") => {
     setAssessmentType(type);
     if (type === "file") {
@@ -457,13 +530,13 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
       const normalizedQuestions =
         assessmentType === "question"
           ? questions.map((q) => ({
-              type: q.type,
-              concept: q.concept || "",
-              question: q.question,
-              options: (q.options || []).filter(Boolean),
-              correctAnswer: q.correctAnswer,
-              points: q.points,
-            }))
+            type: q.type,
+            concept: q.concept || "",
+            question: q.question,
+            options: (q.options || []).filter(Boolean),
+            correctAnswer: q.correctAnswer,
+            points: q.points,
+          }))
           : [];
 
       const formData = new FormData();
@@ -512,11 +585,11 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
       onAssessmentCreated();
       onCancel();
     } catch (error: any) {
-      console.error("Error creating assessment:", error);
+      // console.error("Error creating assessment:", error);
       Toast.show(
         error?.response?.data?.message ||
-          error?.message ||
-          "Failed to create assessment",
+        error?.message ||
+        "Failed to create assessment",
         Toast.LONG
       );
     } finally {
@@ -524,21 +597,9 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
     }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
+  // ────────────────────────────────────────────────────────────────
+  // RENDER
+  // ────────────────────────────────────────────────────────────────
   return (
     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
       {/* Assessment Type Selection */}
@@ -681,6 +742,31 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                 : "Select Due Date"}
             </Text>
           </TouchableOpacity>
+
+          {quarterDatesLoading && (
+            <View style={styles.quarterStatusRow}>
+              <ActivityIndicator size="small" color="#10B144" />
+              <Text style={styles.quarterHint}>Loading quarter dates…</Text>
+            </View>
+          )}
+
+          {quarterDatesError && !quarterDatesLoading && (
+            <View style={styles.quarterErrorRow}>
+              <Text style={styles.quarterErrorText}>{quarterDatesError}</Text>
+              {quarterId && (
+                <TouchableOpacity onPress={fetchQuarterDates}>
+                  <Text style={styles.quarterRetryText}>Retry</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {quarterDates && !quarterDatesLoading && !quarterDatesError && (
+            <Text style={styles.quarterHint}>
+              Quarter: {formatDate(new Date(quarterDates.startDate))} –{" "}
+              {formatDate(new Date(quarterDates.endDate))}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -737,8 +823,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                     {question.type === "mcq"
                       ? "Multiple Choice"
                       : question.type === "truefalse"
-                      ? "True/False"
-                      : "Question & Answer"}
+                        ? "True/False"
+                        : "Question & Answer"}
                   </Text>
                 </View>
                 {question.concept && (
@@ -818,7 +904,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
             !selectedCategory ||
             (assessmentType === "question" && questions.length === 0) ||
             (assessmentType === "file" && selectedFiles.length === 0)) &&
-            styles.submitButtonDisabled,
+          styles.submitButtonDisabled,
         ]}
         onPress={handleSubmitAssessment}
         disabled={
@@ -857,7 +943,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                     style={[
                       styles.categoryItem,
                       selectedCategory?._id === category._id &&
-                        styles.categoryItemSelected,
+                      styles.categoryItemSelected,
                     ]}
                     onPress={() => {
                       setSelectedCategory(category);
@@ -868,7 +954,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                       style={[
                         styles.categoryItemText,
                         selectedCategory?._id === category._id &&
-                          styles.categoryItemTextSelected,
+                        styles.categoryItemTextSelected,
                       ]}
                     >
                       {category.name}
@@ -977,7 +1063,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                   style={[
                     styles.categoryItem,
                     currentQuestion?.type === type.type &&
-                      styles.categoryItemSelected,
+                    styles.categoryItemSelected,
                   ]}
                   onPress={() => {
                     setCurrentQuestion({
@@ -992,7 +1078,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                     style={[
                       styles.categoryItemText,
                       currentQuestion?.type === type.type &&
-                        styles.categoryItemTextSelected,
+                      styles.categoryItemTextSelected,
                     ]}
                   >
                     {type.name}
@@ -1037,8 +1123,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                     {currentQuestion.type === "mcq"
                       ? "Multiple Choice"
                       : currentQuestion.type === "truefalse"
-                      ? "True/False"
-                      : "Question & Answer"}
+                        ? "True/False"
+                        : "Question & Answer"}
                   </Text>
                   <SimpleIcon name="chevron-down" size={20} color="#7b8794" />
                 </TouchableOpacity>
@@ -1108,7 +1194,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                         style={[
                           styles.optionRadio,
                           currentQuestion.correctAnswer === option &&
-                            styles.optionRadioSelected,
+                          styles.optionRadioSelected,
                         ]}
                         onPress={() =>
                           setCurrentQuestion({
@@ -1188,7 +1274,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                       style={[
                         styles.trueFalseOption,
                         currentQuestion.correctAnswer === "true" &&
-                          styles.trueFalseOptionSelected,
+                        styles.trueFalseOptionSelected,
                       ]}
                       onPress={() =>
                         setCurrentQuestion({
@@ -1201,7 +1287,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                         style={[
                           styles.trueFalseText,
                           currentQuestion.correctAnswer === "true" &&
-                            styles.trueFalseTextSelected,
+                          styles.trueFalseTextSelected,
                         ]}
                       >
                         True
@@ -1211,7 +1297,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                       style={[
                         styles.trueFalseOption,
                         currentQuestion.correctAnswer === "false" &&
-                          styles.trueFalseOptionSelected,
+                        styles.trueFalseOptionSelected,
                       ]}
                       onPress={() =>
                         setCurrentQuestion({
@@ -1224,7 +1310,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                         style={[
                           styles.trueFalseText,
                           currentQuestion.correctAnswer === "false" &&
-                            styles.trueFalseTextSelected,
+                          styles.trueFalseTextSelected,
                         ]}
                       >
                         False
@@ -1253,6 +1339,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         </View>
       </Modal>
 
+      {/* ── Date Picker ── */}
       {showDatePicker && (
         <>
           {Platform.OS === "ios" && (
@@ -1280,6 +1367,13 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
             mode="date"
             display={Platform.OS === "ios" ? "spinner" : "default"}
             style={{ alignSelf: "center" }}
+            // ── Restrict to quarter dates ──
+            minimumDate={
+              quarterDates ? new Date(quarterDates.startDate) : undefined
+            }
+            maximumDate={
+              quarterDates ? new Date(quarterDates.endDate) : undefined
+            }
             onChange={(event, selectedDate) => {
               if (Platform.OS === "android") {
                 setShowDatePicker(false);
@@ -1300,6 +1394,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         </>
       )}
 
+      {/* ── Time Picker ── */}
       {showTimePicker && (
         <>
           {Platform.OS === "ios" && (
@@ -1470,6 +1565,38 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 16,
     color: "#333",
+  },
+  quarterHint: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginTop: 4,
+  },
+  quarterStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    gap: 6,
+  },
+  quarterErrorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 6,
+    backgroundColor: "#fef2f2",
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  quarterErrorText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#b91c1c",
+    marginRight: 8,
+  },
+  quarterRetryText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#10B144",
   },
   questionsHeader: {
     flexDirection: "row",

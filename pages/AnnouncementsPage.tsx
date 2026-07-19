@@ -11,6 +11,7 @@ import {
   Platform,
   FlatList,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { getAllCourses } from "../services/course";
@@ -617,51 +618,56 @@ const AnnouncementsPage = () => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Create New Announcement</Text>
-              <Text style={styles.modalSubtitle}>
-                Create a new announcement for your students.
-              </Text>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled
+                contentContainerStyle={styles.modalScrollContent}
+              >
+                <Text style={styles.modalTitle}>Create New Announcement</Text>
+                <Text style={styles.modalSubtitle}>
+                  Create a new announcement for your students.
+                </Text>
 
-              <Text style={styles.inputLabel}>Announcement Title</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter title"
-                placeholderTextColor="#000"
-                value={announcementTitle}
-                onChangeText={setAnnouncementTitle}
-                maxLength={100}
-              />
-              <Text style={styles.charCounter}>
-                {announcementTitle?.length}/100 characters
-              </Text>
-
-              <Text style={styles.inputLabel}>Select Course</Text>
-              <View style={styles.courseDropdownWrapper}>
-                <DropdownFilter
-                  open={courseDropdownOpen}
-                  value={selectedCourseForModal}
-                  items={courseOptions}
-                  setOpen={setCourseDropdownOpen}
-                  setValue={setSelectedCourseForModal}
-                  placeholder={
-                    coursesLoadingModal
-                      ? "Loading courses..."
-                      : "Select a course"
-                  }
-                  disabled={coursesLoadingModal || courseOptions.length === 0}
-                  zIndex={9999}
-                  zIndexInverse={1000}
-                  dropDownContainerStyle={styles.dropDownContainer}
-                  dropDownDirection="BOTTOM"
+                <Text style={styles.inputLabel}>Announcement Title</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter title"
+                  placeholderTextColor="#000"
+                  value={announcementTitle}
+                  onChangeText={setAnnouncementTitle}
+                  maxLength={100}
                 />
-              </View>
-              {coursesError ? (
-                <Text style={styles.errorText}>{coursesError}</Text>
-              ) : courseOptions.length === 0 && !coursesLoadingModal ? (
-                <Text style={styles.infoText}>No courses available</Text>
-              ) : null}
+                <Text style={styles.charCounter}>
+                  {announcementTitle?.length}/100 characters
+                </Text>
 
-              <View style={styles.belowCourseDropdown}>
+                <Text style={styles.inputLabel}>Select Course</Text>
+                <View style={styles.courseDropdownWrapper}>
+                  <DropdownFilter
+                    open={courseDropdownOpen}
+                    value={selectedCourseForModal}
+                    items={courseOptions}
+                    setOpen={setCourseDropdownOpen}
+                    setValue={setSelectedCourseForModal}
+                    placeholder={
+                      coursesLoadingModal
+                        ? "Loading courses..."
+                        : "Select a course"
+                    }
+                    disabled={coursesLoadingModal || courseOptions.length === 0}
+                    zIndex={9999}
+                    zIndexInverse={1000}
+                    dropDownContainerStyle={styles.dropDownContainer}
+                    listMode="MODAL"
+                  />
+                </View>
+                {coursesError ? (
+                  <Text style={styles.errorText}>{coursesError}</Text>
+                ) : courseOptions.length === 0 && !coursesLoadingModal ? (
+                  <Text style={styles.infoText}>No courses available</Text>
+                ) : null}
+
                 <Text style={styles.inputLabel}>Announcement Message</Text>
                 <TextInput
                   style={[styles.textInput, styles.messageInput]}
@@ -675,22 +681,22 @@ const AnnouncementsPage = () => {
                 <Text style={styles.charCounter}>
                   {announcementMessage.length}/500 characters
                 </Text>
-              </View>
 
-              <Pressable
-                style={styles.createButton}
-                onPress={handleCreateAnnouncement}
-                disabled={creatingAnnouncement}
-              >
-                {creatingAnnouncement ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.createButtonText}>Create</Text>
-                )}
-              </Pressable>
-              <Pressable style={styles.cancelButton} onPress={toggleModal}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </Pressable>
+                <Pressable
+                  style={styles.createButton}
+                  onPress={handleCreateAnnouncement}
+                  disabled={creatingAnnouncement}
+                >
+                  {creatingAnnouncement ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.createButtonText}>Create</Text>
+                  )}
+                </Pressable>
+                <Pressable style={styles.cancelButton} onPress={toggleModal}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+              </ScrollView>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -922,7 +928,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     width: "90%",
-    maxHeight: "70%",
+    maxHeight: "85%",
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 16,
   },
   modalTitle: {
     fontSize: 20,
@@ -990,7 +1000,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginBottom: 100,
+    marginBottom: 8,
   },
   cancelButtonText: {
     color: "#333",

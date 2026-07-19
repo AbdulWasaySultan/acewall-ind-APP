@@ -493,7 +493,7 @@ const AssessmentsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#cdcdcd",
+    backgroundColor: "#f8f8f8",
     paddingHorizontal: 16,
     paddingTop: 16,
   },
@@ -525,16 +525,16 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
     borderRadius: 10,
     padding: 20,
     marginBottom: 15,
     width: "100%",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 5,
+    // elevation: 0,
   },
   cardTitle: {
     fontSize: 22,

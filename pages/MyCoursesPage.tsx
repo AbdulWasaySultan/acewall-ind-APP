@@ -54,7 +54,6 @@ const MyCoursesPage = () => {
   const [enrolledCoursesMap, setEnrolledCoursesMap] = useState<
     Map<string, string>
   >(new Map());
-
   // Category dropdown states
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -120,13 +119,17 @@ const MyCoursesPage = () => {
   // trusting the untested published=undefined "fetch everything" shortcut.
   const fetchTeacherCourses = useCallback(
     async (tab: "published" | "unpublished" | "all", search: string) => {
-      const [approvedPublishedRes, approvedUnpublishedRes, pendingRes, rejectedRes] =
-        await Promise.all([
-          getTeacherCourses(true, "approved", search),
-          getTeacherCourses(false, "approved", search),
-          getTeacherCourses(true, "pending", search),
-          getTeacherCourses(true, "rejected", search),
-        ]);
+      const [
+        approvedPublishedRes,
+        approvedUnpublishedRes,
+        pendingRes,
+        rejectedRes,
+      ] = await Promise.all([
+        getTeacherCourses(true, "approved", search),
+        getTeacherCourses(false, "approved", search),
+        getTeacherCourses(true, "pending", search),
+        getTeacherCourses(true, "rejected", search),
+      ]);
 
       const approvedPublished = approvedPublishedRes.courses || [];
       const approvedUnpublished = approvedUnpublishedRes.courses || [];
@@ -396,8 +399,7 @@ const MyCoursesPage = () => {
                 <Text
                   style={[
                     styles.tabButtonText,
-                    selectedTab === "unpublished" &&
-                      styles.tabButtonTextActive,
+                    selectedTab === "unpublished" && styles.tabButtonTextActive,
                   ]}
                 >
                   Unpublished

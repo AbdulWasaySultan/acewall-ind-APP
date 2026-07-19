@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
@@ -84,9 +85,13 @@ const DashboardPage = () => {
       // Filter only published courses and take the first 3
       const limitedCourses = coursesData.published.slice(0, 3).reverse();
       setRecentCourses(limitedCourses);
-      setRecentCourses(limitedCourses);
     } catch (error: any) {
       console.error("Error fetching recent courses:", error);
+      setRecentCourses([]);
+      setPublishedCoursesCount(0);
+      setUnpublishedCoursesCount(0);
+      setTotalCoursesCount(0);
+      Alert.alert("Error", "Failed to fetch recent courses");
     } finally {
       setLoading(false);
     }
@@ -125,14 +130,14 @@ const DashboardPage = () => {
       console.log("Dashboard focused - refreshing data...");
       if (userRole === "student") {
         fetchStudentDashboard();
-      } 
+      }
       //If teacher gets login
       else {
         Promise.all([fetchRecentCourses(), fetchStudentCount()]).catch((err) => {
           console.error("Error fetching dashboard data:", err);
         });
       }
-      
+
     }, [userRole])
   );
 
