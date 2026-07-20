@@ -378,10 +378,10 @@ const typeLabel = (t: string) =>
   t === "truefalse"
     ? "TRUEFALSE"
     : t === "mcq"
-    ? "MCQ"
-    : t === "file"
-    ? "FILE UPLOAD"
-    : t.toUpperCase();
+      ? "MCQ"
+      : t === "file"
+        ? "FILE UPLOAD"
+        : t.toUpperCase();
 
 const formatFullDate = (d: string) =>
   new Date(d).toLocaleDateString("en-US", {

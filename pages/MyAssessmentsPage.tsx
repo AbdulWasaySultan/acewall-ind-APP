@@ -27,8 +27,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect } from "react";
 import CourseSelector from "../components/filters/CourseSelector";
-import SearchFilter from "../components/filters/SearchFilter";
-import FilterBar, { DropdownFilter } from "../components/filters/FilterBar";
+import SearchFilterView from "../components/filters/SearchFilter";
+import { FilterBar } from "../components/filters/FilterBar";
+import { DropdownFilter } from "../components/filters/DropDown"
 
 // ---------- INTERFACE ----------
 export interface AssessmentItem {
@@ -65,7 +66,7 @@ export interface AssessmentItem {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 // ---------- COMPONENT ----------
-const MyAssessmentsPage = async () => {
+const MyAssessmentsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<NavigationProp>();
@@ -184,10 +185,14 @@ const MyAssessmentsPage = async () => {
       const uniqueTypes = [...new Set(list.map((a) => a.type))];
       setTypeItems([
         { label: "All Types", value: "all" },
-        ...uniqueTypes.map((type) => ({
-          label: type.replace(/-/g, " "),
-          value: type,
-        })),
+        { label: "Semester Based", value: "semester-assessment" },
+        { label: "Chapter Based", value: "chapter-assessment" },
+        ...uniqueTypes
+          .filter(type => type !== "semester-assessment" && type !== "chapter-assessment")
+          .map((type) => ({
+            label: type.replace(/-/g, " "),
+            value: type,
+          })),
       ]);
     } catch (err: any) {
       console.log("[getAllAssessmentForStudent] error:", err);
@@ -232,10 +237,10 @@ const MyAssessmentsPage = async () => {
     return isNaN(date.getTime())
       ? "—"
       : date.toLocaleDateString(undefined, {
-          month: "short",
-          day: "2-digit",
-          year: "numeric",
-        });
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      });
   };
 
   const formatTime = (timeStr?: string) => {
@@ -244,9 +249,9 @@ const MyAssessmentsPage = async () => {
     return isNaN(date.getTime())
       ? "—"
       : date.toLocaleTimeString(undefined, {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        hour: "2-digit",
+        minute: "2-digit",
+      });
   };
   const getFilteredQuestions = () => {
     if (!submissionDetails?.answers) return [];
@@ -280,72 +285,41 @@ const MyAssessmentsPage = async () => {
   const getStatus = (item: AssessmentItem) =>
     item.isSubmitted ? "Submitted" : "Pending";
 
-  // Course-First Pattern: Apply filters
+  // Apply filters
   const filtered = useMemo(() => {
-    // Step 1: Filter by course (PRIMARY FILTER)
-    let courseFiltered = assessments;
-    if (selectedCourse && selectedCourse !== "all") {
-      courseFiltered = assessments.filter(
-        (a) => a.course._id === selectedCourse
-      );
-    }
+    return assessments.filter((a) => {
+      // Course filter
+      const matchesCourse =
+        !selectedCourse ||
+        selectedCourse === "all" ||
+        a.course._id === selectedCourse;
 
-    // Step 2: Apply secondary filters on course-scoped data
-    return courseFiltered.filter((a) => {
       // Search filter
       const matchesSearch =
         searchQuery.trim() === "" ||
         a.title.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Category filter
-      const matchesCategory =
-        !categoryValue ||
-        categoryValue === "all" ||
-        a.category._id === categoryValue;
-
       // Type filter
       const matchesType =
-        !typeValue || typeValue === "all" || a.type === typeValue;
+        !typeValue ||
+        typeValue === "all" ||
+        a.type === typeValue;
 
-      // Status filter
-      const matchesStatus =
-        !statusValue ||
-        statusValue === "all" ||
-        (statusValue === "submitted" && a.isSubmitted) ||
-        (statusValue === "pending" && !a.isSubmitted);
-
-      return matchesSearch && matchesCategory && matchesType && matchesStatus;
+      return matchesCourse && matchesSearch && matchesType;
     });
   }, [
     assessments,
     selectedCourse,
     searchQuery,
-    categoryValue,
     typeValue,
-    statusValue,
   ]);
 
   // Dropdown interlock to prevent multiple dropdowns from being open
   useEffect(() => {
-    if (categoryOpen) {
-      setTypeOpen(false);
-      setStatusOpen(false);
-    }
-  }, [categoryOpen]);
-
-  useEffect(() => {
     if (typeOpen) {
-      setCategoryOpen(false);
-      setStatusOpen(false);
+      // Close other dropdowns if needed
     }
   }, [typeOpen]);
-
-  useEffect(() => {
-    if (statusOpen) {
-      setCategoryOpen(false);
-      setTypeOpen(false);
-    }
-  }, [statusOpen]);
 
   // ---------- COMPONENTS ----------
   const StatusBadge = ({ status }: { status: string }) => {
@@ -481,56 +455,30 @@ const MyAssessmentsPage = async () => {
         <Text style={styles.bannerText}>Assessments</Text>
       </View>
 
-      {/* Course-First Filter Bar */}
-      <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
+      {/* Filter Bar */}
+      <FilterBar>
         <CourseSelector
           courses={courses}
           selectedCourse={selectedCourse}
           onCourseChange={handleCourseChange}
           loading={coursesLoading}
         />
+        <SearchFilterView
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search by title"
+        />
+        <DropdownFilter
+          open={typeOpen}
+          value={typeValue}
+          items={typeItems}
+          setOpen={setTypeOpen}
+          setValue={setTypeValue}
+          placeholder="All Types"
+          zIndex={2000}
+          dropDownContainerStyle={styles.dropdownContainer}
+        />
       </FilterBar>
-
-      {/* Secondary Filters (only visible after course selected) */}
-      {selectedCourse && (
-        <FilterBar>
-          <SearchFilter
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search by title"
-          />
-          <DropdownFilter
-            open={categoryOpen}
-            value={categoryValue}
-            items={categoryItems}
-            setOpen={setCategoryOpen}
-            setValue={setCategoryValue}
-            placeholder="All Categories"
-            zIndex={3000}
-            dropDownContainerStyle={styles.dropdownContainer}
-          />
-          <DropdownFilter
-            open={typeOpen}
-            value={typeValue}
-            items={typeItems}
-            setOpen={setTypeOpen}
-            setValue={setTypeValue}
-            placeholder="All Types"
-            zIndex={2000}
-            dropDownContainerStyle={styles.dropdownContainer}
-          />
-          <DropdownFilter
-            open={statusOpen}
-            value={statusValue}
-            items={statusItems}
-            setOpen={setStatusOpen}
-            setValue={setStatusValue}
-            placeholder="All Status"
-            zIndex={1000}
-            dropDownContainerStyle={styles.dropdownContainer}
-          />
-        </FilterBar>
-      )}
 
       {loading ? (
         <View style={styles.stateWrap}>
@@ -546,37 +494,44 @@ const MyAssessmentsPage = async () => {
           <Text style={styles.stateText}>No assessments available.</Text>
         </View>
       ) : (
-        <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+        <FlatList
+          data={filtered}
+          keyExtractor={(item, index) => item._id || `${index}`}
+          contentContainerStyle={{ paddingBottom: 60, paddingHorizontal: 16 }}
+          renderItem={({ item, index }) => (
             <View>
-              <TouchableOpacity style={styles.row}>
-                <Text style={[styles.td, styles.colName]}>Assessment Name</Text>
-                <Text style={[styles.td, styles.colCourse]}>Course</Text>
-                <Text style={[styles.td, styles.colDue]}>Due Date</Text>
-                <Text style={[styles.colStatus, styles.td]}>Status</Text>
-                <Text style={[styles.td, styles.colType]}>Type</Text>
+              <TouchableOpacity
+                style={styles.card}
+                onPress={() =>
+                  setExpanded((prev) => ({
+                    ...prev,
+                    [item._id]: !prev[item._id],
+                  }))
+                }
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardLeft}>
+                    <Text style={styles.cardTitle}>{getTitle(item)}</Text>
+                    <Text style={styles.cardCourse}>{getCourse(item)}</Text>
+                  </View>
+                  <View style={styles.cardRight}>
+                    <StatusBadge status={getStatus(item)} />
+                    <Text style={styles.cardArrow}>
+                      {expanded[item._id] ? "▲" : "▼"}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.cardMeta}>
+                  <Text style={styles.cardMetaText}>Due: {formatDate(getDueDate(item).date)}</Text>
+                  <Text style={styles.cardMetaText}>Type: {getType(item)}</Text>
+                </View>
               </TouchableOpacity>
-              <FlatList
-                data={filtered}
-                keyExtractor={(item, index) => item._id || `${index}`}
-                contentContainerStyle={{ paddingBottom: 60 }}
-                renderItem={({ item, index }) => (
-                  <Row
-                    item={item}
-                    rowKey={item._id}
-                    onPress={() =>
-                      setExpanded((prev) => ({
-                        ...prev,
-                        [item._id]: !prev[item._id],
-                      }))
-                    }
-                  />
-                )}
-                scrollEnabled={false}
-              />
+              {expanded[item._id] && <ExpandedDetails item={item} />}
             </View>
-          </ScrollView>
-          <Modal
+          )}
+        />
+      )}
+      <Modal
             visible={detailedModalVisible}
             animationType="slide"
             transparent={false}
@@ -647,7 +602,7 @@ const MyAssessmentsPage = async () => {
                         Submitted on:{" "}
                         {formatDateTime(
                           submissionDetails.submittedAt ||
-                            submissionDetails.createdAt
+                          submissionDetails.createdAt
                         )}
                       </Text>
                     </View>
@@ -866,7 +821,7 @@ const MyAssessmentsPage = async () => {
                                     ? `${answer.file.length} file(s) uploaded`
                                     : "No file uploaded"
                                   : answer.selectedAnswer ||
-                                    "No answer provided"}
+                                  "No answer provided"}
                               </Text>
                             </View>
 
@@ -905,8 +860,6 @@ const MyAssessmentsPage = async () => {
               ) : null}
             </View>
           </Modal>
-        </>
-      )}
     </ScrollView>
   );
 };
@@ -967,7 +920,55 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginVertical: 6,
-    width: 800,
+    marginTop: 0,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  cardLeft: {
+    flex: 1,
+  },
+  cardRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
+    marginBottom: 4,
+  },
+  cardCourse: {
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  cardMeta: {
+    flexDirection: "row",
+    gap: 16,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+  },
+  cardMetaText: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  cardArrow: {
+    fontSize: 16,
+    color: "#6B7280",
   },
   sectionTitle: { fontWeight: "700", color: COLORS.gray700 },
   sectionBody: { color: COLORS.gray700, marginTop: 2 },
@@ -1227,8 +1228,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F9FAFB",
-    borderRadius: 8,
     padding: 12,
+    borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
     borderColor: "#E5E7EB",

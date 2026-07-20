@@ -23,9 +23,9 @@ import {
 } from "../services/announcement";
 import { useFocusEffect } from "@react-navigation/native";
 import CourseSelector from "../components/filters/CourseSelector";
-import SearchFilter from "../components/filters/SearchFilter";
+import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar";
-import { DropdownFilter } from "../components/filters/FilterBar";
+import { DropdownFilter } from "../components/filters/DropDown";
 // ====================== Helper Components ======================
 
 const TeacherAnnouncementRow = ({
@@ -341,7 +341,7 @@ const AnnouncementsPage = () => {
             setStudentAnnouncementsLoading(false);
           });
       }
-      return () => {};
+      return () => { };
     }, [userRole, user?._id])
   );
 
@@ -434,11 +434,12 @@ const AnnouncementsPage = () => {
         </View>
 
         {selectedCourse && (
-          <FilterBar>
-            <SearchFilter
+          <FilterBar style={{ paddingHorizontal: 12 }}>
+            <SearchFilterView
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Search announcements..."
+              style={styles.searchFilterContainer}
             />
             <View style={styles.dropdownWrapper}>
               <DropdownFilter
@@ -544,10 +545,7 @@ const AnnouncementsPage = () => {
           <Text style={styles.studentPageTitle}>Announcements</Text>
 
           <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>
-            <FilterBar
-              resultsCount={filteredStudentAnnouncements.length}
-              resultsLabel="announcements"
-            >
+            <FilterBar>
               <CourseSelector
                 courses={courses}
                 selectedCourse={selectedCourse}
@@ -557,28 +555,27 @@ const AnnouncementsPage = () => {
             </FilterBar>
           </View>
 
-          {selectedCourse && (
-            <FilterBar>
-              <SearchFilter
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search announcements..."
+          <FilterBar style={{ paddingHorizontal: 12 }}>
+            <SearchFilterView
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search announcements..."
+              style={styles.searchFilterContainer}
+            />
+            <View style={styles.dropdownWrapper}>
+              <DropdownFilter
+                open={dateOpen}
+                value={dateValue}
+                items={dateItems}
+                setOpen={setDateOpen}
+                setValue={setDateValue}
+                placeholder="All Dates"
+                zIndex={9999}
+                zIndexInverse={1000}
+                dropDownContainerStyle={styles.dropDownContainer}
               />
-              <View style={styles.dropdownWrapper}>
-                <DropdownFilter
-                  open={dateOpen}
-                  value={dateValue}
-                  items={dateItems}
-                  setOpen={setDateOpen}
-                  setValue={setDateValue}
-                  placeholder="All Dates"
-                  zIndex={9999}
-                  zIndexInverse={1000}
-                  dropDownContainerStyle={styles.dropDownContainer} // <-- added
-                />
-              </View>
-            </FilterBar>
-          )}
+            </View>
+          </FilterBar>
         </View>
 
         <FlatList
@@ -864,7 +861,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   studentCardTitle: {
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: "bold",
     color: "#111827",
     marginBottom: 8,
@@ -876,6 +873,7 @@ const styles = StyleSheet.create({
   },
   studentCardCourseLabel: {
     fontWeight: "bold",
+    fontSize: 18
   },
   studentCardRight: {
     flexDirection: "row",
@@ -894,7 +892,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   studentCardMessage: {
-    fontSize: 18,
+    fontSize: 16,
     color: "#374151",
     marginBottom: 16,
   },
@@ -964,10 +962,24 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 16,
   },
+  // dropdownWrapper: {
+  //   flex: 0.7,
+  //   zIndex: 9999,
+  //   elevation: 9999,
+  // },
+  searchFilterContainer: {
+    paddingHorizontal: 8, // 👈 Overrides default 10
+  },
   dropdownWrapper: {
-    flex: 1,
+    width: 110, // 👈 Adjust this width to fit your layout
     zIndex: 9999,
     elevation: 9999,
+  },
+
+  // Target the picker container inside the filter bar
+  customDateDropdown: {
+    width: 130,      // 👈 Custom reduced width for Date filter
+    minWidth: 100,   // Overrides default 110 minWidth if needed
   },
   courseDropdownWrapper: {
     zIndex: 9999,

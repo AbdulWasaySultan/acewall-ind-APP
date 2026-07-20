@@ -500,272 +500,274 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
   return (
     <Modal
       visible={visible}
-      transparent={true}
-      animationType="fade"
+      transparent={false}
+      animationType="slide"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { width: "95%", maxWidth: 420 }]}>
-            <View style={styles.editCourseModalHeader}>
-              <Text style={styles.editCourseModalTitle}>Edit Course Info</Text>
-              <TouchableOpacity onPress={onClose} style={styles.editCourseModalCloseButton}>
-                <SimpleIcon name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView nestedScrollEnabled={true}>
-              <Text style={styles.editCourseModalLabel}>Course Title</Text>
-              <TextInput
-                style={styles.textInput}
-                value={editCourseTitle}
-                onChangeText={onEditCourseTitleChange}
-                placeholder="Course Title"
-              />
-              <Text style={styles.editCourseModalLabel}>Course Price</Text>
-              <TextInput
-                style={styles.textInput}
-                value={editCoursePrice}
-                onChangeText={(text) => {
-                  let numericValue = text.replace(/[^0-9]/g, "");
-                  if (/^[1-9]/.test(numericValue) && numericValue.length > 4) {
-                    numericValue = "9999";
-                  }
-                  onEditCoursePriceChange(numericValue);
-                }}
-                placeholder="Course Price"
-              />
-              <Text style={styles.editCourseModalLabel}>Sub Category</Text>
-              {subcategoriesLoading ? (
-                <View style={[styles.textInput, { justifyContent: "center", alignItems: "center" }]}>
-                  <ActivityIndicator size="small" color="#10B144" />
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={[styles.textInput, styles.editCourseModalDropdownButton]}
-                  onPress={() => onShowSubcategoryDropdownChange(!showSubcategoryDropdown)}
-                >
-                  <Text style={editCourseSubcategory ? styles.editCourseModalDropdownText : styles.editCourseModalDropdownPlaceholder}>
-                    {editCourseSubcategory
-                      ? subcategories.find((s) => s._id === editCourseSubcategory)?.title || "Select sub category"
-                      : "Select sub category"}
-                  </Text>
-                  <SimpleIcon name="chevron-down" size={16} color="#666" />
-                </TouchableOpacity>
-              )}
-
-              {showSubcategoryDropdown && (
-                <View style={styles.editCourseModalDropdownOverlay}>
-                  <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
-                    {subcategories.map((subcategory) => (
-                      <TouchableOpacity
-                        key={subcategory._id}
-                        style={[
-                          styles.editCourseModalDropdownItem,
-                          editCourseSubcategory === subcategory._id && styles.editCourseModalDropdownItemActive,
-                        ]}
-                        onPress={() => {
-                          onEditCourseSubcategoryChange(subcategory._id);
-                          onShowSubcategoryDropdownChange(false);
-                        }}
-                      >
-                        <Text
-                          style={[
-                            styles.editCourseModalDropdownItemText,
-                            editCourseSubcategory === subcategory._id
-                              ? styles.editCourseModalDropdownItemTextActive
-                              : styles.editCourseModalDropdownItemTextInactive,
-                          ]}
-                        >
-                          {subcategory.title}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                    {subcategories.length === 0 && (
-                      <Text style={styles.editCourseModalNoSubcategoriesText}>No subcategories found</Text>
-                    )}
-                  </ScrollView>
-                </View>
-              )}
-
-              <Text style={styles.editCourseModalLabel}>Language</Text>
+        <View style={styles.fullScreenContainer}>
+          <View style={styles.editCourseModalHeader}>
+            <TouchableOpacity onPress={onClose} style={styles.backButton}>
+              <SimpleIcon name="arrow-back" size={22} color="#111827" />
+            </TouchableOpacity>
+            <Text style={styles.editCourseModalTitle}>Edit Course Info</Text>
+            <View style={{ width: 38 }} />
+          </View>
+          <ScrollView
+            nestedScrollEnabled={true}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <Text style={styles.editCourseModalLabel}>Course Title</Text>
+            <TextInput
+              style={styles.textInput}
+              value={editCourseTitle}
+              onChangeText={onEditCourseTitleChange}
+              placeholder="Course Title"
+            />
+            <Text style={styles.editCourseModalLabel}>Course Price</Text>
+            <TextInput
+              style={styles.textInput}
+              value={editCoursePrice}
+              onChangeText={(text) => {
+                let numericValue = text.replace(/[^0-9]/g, "");
+                if (/^[1-9]/.test(numericValue) && numericValue.length > 4) {
+                  numericValue = "9999";
+                }
+                onEditCoursePriceChange(numericValue);
+              }}
+              placeholder="Course Price"
+            />
+            <Text style={styles.editCourseModalLabel}>Sub Category</Text>
+            {subcategoriesLoading ? (
+              <View style={[styles.textInput, { justifyContent: "center", alignItems: "center" }]}>
+                <ActivityIndicator size="small" color="#10B144" />
+              </View>
+            ) : (
               <TouchableOpacity
                 style={[styles.textInput, styles.editCourseModalDropdownButton]}
-                onPress={() => onShowLanguageDropdownChange(!showLanguageDropdown)}
+                onPress={() => onShowSubcategoryDropdownChange(!showSubcategoryDropdown)}
               >
-                <Text style={editCourseLanguage ? styles.editCourseModalDropdownText : styles.editCourseModalDropdownPlaceholder}>
-                  {editCourseLanguage || "Select language"}
+                <Text style={editCourseSubcategory ? styles.editCourseModalDropdownText : styles.editCourseModalDropdownPlaceholder}>
+                  {editCourseSubcategory
+                    ? subcategories.find((s) => s._id === editCourseSubcategory)?.title || "Select sub category"
+                    : "Select sub category"}
                 </Text>
                 <SimpleIcon name="chevron-down" size={16} color="#666" />
               </TouchableOpacity>
+            )}
 
-              {showLanguageDropdown && (
-                <View style={styles.editCourseModalLanguageDropdownOverlay}>
-                  <ScrollView style={{ maxHeight: 200 }}>
-                    {[
-                      "English",
-                      "Spanish",
-                      "French",
-                      "German",
-                      "Italian",
-                      "Portuguese",
-                      "Chinese",
-                      "Japanese",
-                      "Korean",
-                      "Arabic",
-                    ].map((language) => (
-                      <TouchableOpacity
-                        key={language}
+            {showSubcategoryDropdown && (
+              <View style={styles.editCourseModalDropdownOverlay}>
+                <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
+                  {subcategories.map((subcategory) => (
+                    <TouchableOpacity
+                      key={subcategory._id}
+                      style={[
+                        styles.editCourseModalDropdownItem,
+                        editCourseSubcategory === subcategory._id && styles.editCourseModalDropdownItemActive,
+                      ]}
+                      onPress={() => {
+                        onEditCourseSubcategoryChange(subcategory._id);
+                        onShowSubcategoryDropdownChange(false);
+                      }}
+                    >
+                      <Text
                         style={[
-                          styles.editCourseModalDropdownItem,
-                          editCourseLanguage === language && styles.editCourseModalDropdownItemActive,
+                          styles.editCourseModalDropdownItemText,
+                          editCourseSubcategory === subcategory._id
+                            ? styles.editCourseModalDropdownItemTextActive
+                            : styles.editCourseModalDropdownItemTextInactive,
                         ]}
-                        onPress={() => {
-                          onEditCourseLanguageChange(language);
-                          onShowLanguageDropdownChange(false);
-                        }}
                       >
-                        <Text
-                          style={[
-                            styles.editCourseModalDropdownItemText,
-                            editCourseLanguage === language
-                              ? styles.editCourseModalDropdownItemTextActive
-                              : styles.editCourseModalDropdownItemTextInactive,
-                          ]}
-                        >
-                          {language}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-
-              <Text style={styles.editCourseModalLabel}>Course Description</Text>
-              <TextInput
-                style={[styles.textInput, { minHeight: 80 }]}
-                value={editCourseDescription}
-                onChangeText={onEditCourseDescriptionChange}
-                placeholder="Course Description"
-                multiline
-              />
-
-              <Text style={styles.editCourseModalSectionTitle}>What you will teach in this course (max 12)</Text>
-              {editTeachingPoints.map((point, index) => (
-                <View key={index} style={{ marginBottom: 12 }}>
-                  <Text style={styles.editCourseModalEntryLabel}>Entry {String(index + 1).padStart(2, "0")}</Text>
-                  <View style={styles.editCourseModalEntryRow}>
-                    <View style={{ flex: 1, marginRight: 8 }}>
-                      <TextInput
-                        style={[styles.textInput, { minHeight: 40 }]}
-                        value={point}
-                        onChangeText={(text) => {
-                          const newPoints = [...editTeachingPoints];
-                          newPoints[index] = text;
-                          onEditTeachingPointsChange(newPoints);
-                        }}
-                        placeholder="What you will teach in this course..."
-                        multiline
-                      />
-                      <Text style={styles.editCourseModalCharacterCount}>
-                        {120 - point.length} characters remaining
+                        {subcategory.title}
                       </Text>
-                    </View>
-                    {editTeachingPoints.length > 1 && (
-                      <TouchableOpacity
-                        style={styles.editCourseModalRemoveButton}
-                        onPress={() => {
-                          const newPoints = editTeachingPoints.filter((_, i) => i !== index);
-                          onEditTeachingPointsChange(newPoints);
-                        }}
-                      >
-                        <Text style={styles.editCourseModalRemoveButtonText}>Remove</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              ))}
-              {editTeachingPoints.length < 12 && (
-                <TouchableOpacity
-                  style={styles.editCourseModalAddButton}
-                  onPress={() => {
-                    if (editTeachingPoints.length < 12) {
-                      onEditTeachingPointsChange([...editTeachingPoints, ""]);
-                    }
-                  }}
-                >
-                  <Text style={styles.editCourseModalAddButtonText}>+ Add Teaching Point</Text>
-                </TouchableOpacity>
-              )}
+                    </TouchableOpacity>
+                  ))}
+                  {subcategories.length === 0 && (
+                    <Text style={styles.editCourseModalNoSubcategoriesText}>No subcategories found</Text>
+                  )}
+                </ScrollView>
+              </View>
+            )}
 
-              <Text style={styles.editCourseModalSectionTitle}>Course Requirements (max 12)</Text>
-              {editRequirements.map((requirement, index) => (
-                <View key={index} style={{ marginBottom: 12 }}>
-                  <Text style={styles.editCourseModalEntryLabel}>Entry {String(index + 1).padStart(2, "0")}</Text>
-                  <View style={styles.editCourseModalEntryRow}>
-                    <View style={{ flex: 1, marginRight: 8 }}>
-                      <TextInput
-                        style={[styles.textInput, { minHeight: 40 }]}
-                        value={requirement}
-                        onChangeText={(text) => {
-                          const newRequirements = [...editRequirements];
-                          newRequirements[index] = text;
-                          onEditRequirementsChange(newRequirements);
-                        }}
-                        placeholder="Course requirement..."
-                        multiline
-                      />
-                      <Text style={styles.editCourseModalCharacterCount}>
-                        {120 - requirement.length} characters remaining
+            <Text style={styles.editCourseModalLabel}>Language</Text>
+            <TouchableOpacity
+              style={[styles.textInput, styles.editCourseModalDropdownButton]}
+              onPress={() => onShowLanguageDropdownChange(!showLanguageDropdown)}
+            >
+              <Text style={editCourseLanguage ? styles.editCourseModalDropdownText : styles.editCourseModalDropdownPlaceholder}>
+                {editCourseLanguage || "Select language"}
+              </Text>
+              <SimpleIcon name="chevron-down" size={16} color="#666" />
+            </TouchableOpacity>
+
+            {showLanguageDropdown && (
+              <View style={styles.editCourseModalLanguageDropdownOverlay}>
+                <ScrollView style={{ maxHeight: 200 }}>
+                  {[
+                    "English",
+                    "Spanish",
+                    "French",
+                    "German",
+                    "Italian",
+                    "Portuguese",
+                    "Chinese",
+                    "Japanese",
+                    "Korean",
+                    "Arabic",
+                  ].map((language) => (
+                    <TouchableOpacity
+                      key={language}
+                      style={[
+                        styles.editCourseModalDropdownItem,
+                        editCourseLanguage === language && styles.editCourseModalDropdownItemActive,
+                      ]}
+                      onPress={() => {
+                        onEditCourseLanguageChange(language);
+                        onShowLanguageDropdownChange(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.editCourseModalDropdownItemText,
+                          editCourseLanguage === language
+                            ? styles.editCourseModalDropdownItemTextActive
+                            : styles.editCourseModalDropdownItemTextInactive,
+                        ]}
+                      >
+                        {language}
                       </Text>
-                    </View>
-                    {editRequirements.length > 1 && (
-                      <TouchableOpacity
-                        style={styles.editCourseModalRemoveButton}
-                        onPress={() => {
-                          const newRequirements = editRequirements.filter((_, i) => i !== index);
-                          onEditRequirementsChange(newRequirements);
-                        }}
-                      >
-                        <Text style={styles.editCourseModalRemoveButtonText}>Remove</Text>
-                      </TouchableOpacity>
-                    )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            <Text style={styles.editCourseModalLabel}>Course Description</Text>
+            <TextInput
+              style={[styles.textInput, { minHeight: 80 }]}
+              value={editCourseDescription}
+              onChangeText={onEditCourseDescriptionChange}
+              placeholder="Course Description"
+              multiline
+            />
+
+            <Text style={styles.editCourseModalSectionTitle}>What you will teach in this course (max 12)</Text>
+            {editTeachingPoints.map((point, index) => (
+              <View key={index} style={{ marginBottom: 12 }}>
+                <Text style={styles.editCourseModalEntryLabel}>Entry {String(index + 1).padStart(2, "0")}</Text>
+                <View style={styles.editCourseModalEntryRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <TextInput
+                      style={[styles.textInput, { minHeight: 40 }]}
+                      value={point}
+                      onChangeText={(text) => {
+                        const newPoints = [...editTeachingPoints];
+                        newPoints[index] = text;
+                        onEditTeachingPointsChange(newPoints);
+                      }}
+                      placeholder="What you will teach in this course..."
+                      multiline
+                    />
+                    <Text style={styles.editCourseModalCharacterCount}>
+                      {120 - point.length} characters remaining
+                    </Text>
                   </View>
+                  {editTeachingPoints.length > 1 && (
+                    <TouchableOpacity
+                      style={styles.editCourseModalRemoveButton}
+                      onPress={() => {
+                        const newPoints = editTeachingPoints.filter((_, i) => i !== index);
+                        onEditTeachingPointsChange(newPoints);
+                      }}
+                    >
+                      <Text style={styles.editCourseModalRemoveButtonText}>Remove</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
-              ))}
-              {editRequirements.length < 12 && (
-                <TouchableOpacity
-                  style={styles.editCourseModalAddButton}
-                  onPress={() => {
-                    if (editRequirements.length < 12) {
-                      onEditRequirementsChange([...editRequirements, ""]);
-                    }
-                  }}
-                >
-                  <Text style={styles.editCourseModalAddButtonText}>+ Add Requirement</Text>
-                </TouchableOpacity>
-              )}
-
-              {editCourseError && <Text style={styles.editCourseModalErrorText}>{editCourseError}</Text>}
-
+              </View>
+            ))}
+            {editTeachingPoints.length < 12 && (
               <TouchableOpacity
-                style={[styles.saveChangesButton, editCourseLoading && styles.disabledButton]}
-                onPress={onSave}
-                disabled={editCourseLoading}
+                style={styles.editCourseModalAddButton}
+                onPress={() => {
+                  if (editTeachingPoints.length < 12) {
+                    onEditTeachingPointsChange([...editTeachingPoints, ""]);
+                  }
+                }}
               >
-                {editCourseLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveChangesButtonText}>Update Course Info</Text>
-                )}
+                <Text style={styles.editCourseModalAddButtonText}>+ Add Teaching Point</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelProfileButton} onPress={onClose}>
-                <Text style={styles.cancelProfileButtonText}>Cancel</Text>
+            )}
+
+            <Text style={styles.editCourseModalSectionTitle}>Course Requirements (max 12)</Text>
+            {editRequirements.map((requirement, index) => (
+              <View key={index} style={{ marginBottom: 12 }}>
+                <Text style={styles.editCourseModalEntryLabel}>Entry {String(index + 1).padStart(2, "0")}</Text>
+                <View style={styles.editCourseModalEntryRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <TextInput
+                      style={[styles.textInput, { minHeight: 40 }]}
+                      value={requirement}
+                      onChangeText={(text) => {
+                        const newRequirements = [...editRequirements];
+                        newRequirements[index] = text;
+                        onEditRequirementsChange(newRequirements);
+                      }}
+                      placeholder="Course requirement..."
+                      multiline
+                    />
+                    <Text style={styles.editCourseModalCharacterCount}>
+                      {120 - requirement.length} characters remaining
+                    </Text>
+                  </View>
+                  {editRequirements.length > 1 && (
+                    <TouchableOpacity
+                      style={styles.editCourseModalRemoveButton}
+                      onPress={() => {
+                        const newRequirements = editRequirements.filter((_, i) => i !== index);
+                        onEditRequirementsChange(newRequirements);
+                      }}
+                    >
+                      <Text style={styles.editCourseModalRemoveButtonText}>Remove</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            ))}
+            {editRequirements.length < 12 && (
+              <TouchableOpacity
+                style={styles.editCourseModalAddButton}
+                onPress={() => {
+                  if (editRequirements.length < 12) {
+                    onEditRequirementsChange([...editRequirements, ""]);
+                  }
+                }}
+              >
+                <Text style={styles.editCourseModalAddButtonText}>+ Add Requirement</Text>
               </TouchableOpacity>
-            </ScrollView>
-          </View>
+            )}
+
+            {editCourseError && <Text style={styles.editCourseModalErrorText}>{editCourseError}</Text>}
+
+            <TouchableOpacity
+              style={[styles.saveChangesButton, editCourseLoading && styles.disabledButton]}
+              onPress={onSave}
+              disabled={editCourseLoading}
+            >
+              {editCourseLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.saveChangesButtonText}>Update Course Info</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelProfileButton} onPress={onClose}>
+              <Text style={styles.cancelProfileButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -773,32 +775,36 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  fullScreenContainer: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 16,
-    maxHeight: "80%",
+    backgroundColor: "#f9fafb",
   },
   editCourseModalHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  backButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+    justifyContent: "center",
   },
   editCourseModalTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "bold",
-    flex: 1,
-    textAlign: "center",
+    color: "#111827",
   },
-  editCourseModalCloseButton: {
-    padding: 4,
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 40,
   },
   editCourseModalLabel: {
     fontWeight: "bold",
@@ -825,21 +831,12 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   editCourseModalDropdownOverlay: {
-    position: "absolute",
-    top: 200,
-    left: 16,
-    right: 16,
     backgroundColor: "white",
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 8,
     maxHeight: 200,
-    zIndex: 1000,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    marginBottom: 12,
   },
   editCourseModalDropdownItem: {
     padding: 12,
@@ -860,21 +857,12 @@ const styles = StyleSheet.create({
     fontWeight: "normal",
   },
   editCourseModalLanguageDropdownOverlay: {
-    position: "absolute",
-    top: 280,
-    left: 16,
-    right: 16,
     backgroundColor: "white",
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 8,
     maxHeight: 200,
-    zIndex: 1000,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    marginBottom: 12,
   },
   editCourseModalSectionTitle: {
     fontWeight: "bold",

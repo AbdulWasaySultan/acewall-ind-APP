@@ -1,7 +1,8 @@
 // SubmissionsModal.tsx
 // On "More Details" press → opens AssessmentDetailsModal
+// On "View Analytics" press → opens a separate AnalyticsModal
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -50,6 +52,295 @@ const gradingItems = [
   { label: "Not Graded", value: "not_graded" },
 ];
 
+// ── Analytics Modal (separate full-screen modal) ────────────────────────────
+const AnalyticsModal: React.FC<{
+  visible: boolean;
+  onClose: () => void;
+  analytics: any;
+  assessmentTitle: string;
+}> = ({ visible, onClose, analytics, assessmentTitle }) => {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+      <ScrollView style={analyticsStyles.container}>
+        {/* Header */}
+        <View style={[analyticsStyles.header, { paddingTop: insets.top + 8 }]}>
+          <TouchableOpacity onPress={onClose} style={analyticsStyles.backBtn}>
+            <SimpleIcon name="arrow-back" size={22} color="#111827" />
+          </TouchableOpacity>
+          <Text style={analyticsStyles.headerTitle}>Assessment Analytics</Text>
+          <View style={{ width: 38 }} />
+        </View>
+
+        <ScrollView contentContainerStyle={analyticsStyles.scrollContent}>
+          {/* Assessment name */}
+          <Text style={analyticsStyles.assessmentName}>{assessmentTitle}</Text>
+
+          {/* Summary Cards */}
+          <Text style={analyticsStyles.sectionTitle}>Overview</Text>
+          <View style={analyticsStyles.cardsRow}>
+            <View style={[analyticsStyles.statCard, { backgroundColor: "#EFF6FF" }]}>
+              <Text style={[analyticsStyles.statValue, { color: "#2563EB" }]}>
+                {analytics.total}
+              </Text>
+              <Text style={analyticsStyles.statLabel}>Total Submissions</Text>
+            </View>
+            <View style={[analyticsStyles.statCard, { backgroundColor: "#F0FDF4" }]}>
+              <Text style={[analyticsStyles.statValue, { color: "#16A34A" }]}>
+                {analytics.graded}
+              </Text>
+              <Text style={analyticsStyles.statLabel}>Graded</Text>
+            </View>
+            <View style={[analyticsStyles.statCard, { backgroundColor: "#FEF3C7" }]}>
+              <Text style={[analyticsStyles.statValue, { color: "#D97706" }]}>
+                {analytics.notGraded}
+              </Text>
+              <Text style={analyticsStyles.statLabel}>Not Graded</Text>
+            </View>
+          </View>
+
+          {/* Grading Progress */}
+          <Text style={analyticsStyles.sectionTitle}>Grading Progress</Text>
+          <View style={analyticsStyles.progressCard}>
+            <View style={analyticsStyles.progressBarContainer}>
+              <View
+                style={[
+                  analyticsStyles.progressBarFill,
+                  {
+                    flex: analytics.graded || 0.01,
+                    backgroundColor: "#16A34A",
+                    borderTopLeftRadius: 6,
+                    borderBottomLeftRadius: 6,
+                  },
+                ]}
+              />
+              <View
+                style={[
+                  analyticsStyles.progressBarFill,
+                  {
+                    flex: analytics.notGraded || 0.01,
+                    backgroundColor: "#E5E7EB",
+                    borderTopRightRadius: 6,
+                    borderBottomRightRadius: 6,
+                  },
+                ]}
+              />
+            </View>
+            <Text style={analyticsStyles.progressText}>
+              {analytics.total > 0
+                ? `${Math.round((analytics.graded / analytics.total) * 100)}% graded`
+                : "No submissions yet"}
+            </Text>
+          </View>
+
+          {/* Timing Breakdown */}
+          {analytics.hasDueDate && (
+            <>
+              <Text style={analyticsStyles.sectionTitle}>Submission Timing</Text>
+              <View style={analyticsStyles.cardsRow}>
+                <View style={[analyticsStyles.statCard, { backgroundColor: "#F0FDF4" }]}>
+                  <Text style={[analyticsStyles.statValue, { color: "#16A34A" }]}>
+                    {analytics.onTime}
+                  </Text>
+                  <Text style={analyticsStyles.statLabel}>On Time</Text>
+                </View>
+                <View style={[analyticsStyles.statCard, { backgroundColor: "#FEF2F2" }]}>
+                  <Text style={[analyticsStyles.statValue, { color: "#DC2626" }]}>
+                    {analytics.late}
+                  </Text>
+                  <Text style={analyticsStyles.statLabel}>Late</Text>
+                </View>
+              </View>
+              {analytics.total > 0 && (
+                <View style={analyticsStyles.progressCard}>
+                  <View style={analyticsStyles.progressBarContainer}>
+                    <View
+                      style={[
+                        analyticsStyles.progressBarFill,
+                        { flex: analytics.onTime || 0.01, backgroundColor: "#16A34A" },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        analyticsStyles.progressBarFill,
+                        { flex: analytics.late || 0.01, backgroundColor: "#DC2626" },
+                      ]}
+                    />
+                  </View>
+                  <View style={analyticsStyles.legendRow}>
+                    <View style={analyticsStyles.legendItem}>
+                      <View style={[analyticsStyles.legendDot, { backgroundColor: "#16A34A" }]} />
+                      <Text style={analyticsStyles.legendText}>
+                        On Time ({analytics.total > 0 ? Math.round((analytics.onTime / analytics.total) * 100) : 0}%)
+                      </Text>
+                    </View>
+                    <View style={analyticsStyles.legendItem}>
+                      <View style={[analyticsStyles.legendDot, { backgroundColor: "#DC2626" }]} />
+                      <Text style={analyticsStyles.legendText}>
+                        Late ({analytics.total > 0 ? Math.round((analytics.late / analytics.total) * 100) : 0}%)
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Score Statistics */}
+          {analytics.gradedCount > 0 && (
+            <>
+              <Text style={analyticsStyles.sectionTitle}>Score Statistics</Text>
+              <View style={analyticsStyles.cardsRow}>
+                <View style={[analyticsStyles.statCard, { backgroundColor: "#EFF6FF" }]}>
+                  <Text style={[analyticsStyles.statValue, { color: "#2563EB" }]}>
+                    {analytics.avgScore}
+                  </Text>
+                  <Text style={analyticsStyles.statLabel}>Average Score</Text>
+                </View>
+                <View style={[analyticsStyles.statCard, { backgroundColor: "#F0FDF4" }]}>
+                  <Text style={[analyticsStyles.statValue, { color: "#16A34A" }]}>
+                    {analytics.highestScore}
+                  </Text>
+                  <Text style={analyticsStyles.statLabel}>Highest</Text>
+                </View>
+                <View style={[analyticsStyles.statCard, { backgroundColor: "#FEF2F2" }]}>
+                  <Text style={[analyticsStyles.statValue, { color: "#DC2626" }]}>
+                    {analytics.lowestScore}
+                  </Text>
+                  <Text style={analyticsStyles.statLabel}>Lowest</Text>
+                </View>
+              </View>
+            </>
+          )}
+
+          {analytics.total === 0 && (
+            <View style={analyticsStyles.emptyState}>
+              <Text style={analyticsStyles.emptyIcon}>📭</Text>
+              <Text style={analyticsStyles.emptyTitle}>No Submissions Yet</Text>
+              <Text style={analyticsStyles.emptyDesc}>
+                Analytics will appear once students start submitting.
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </ScrollView>
+    </Modal>
+  );
+};
+
+const analyticsStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#f9fafb" },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#111827" },
+  scrollContent: { padding: 20, paddingBottom: 40 },
+  assessmentName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#374151",
+    marginBottom: 10,
+    marginTop: 8,
+  },
+  cardsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: 26,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "#6B7280",
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  progressCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  progressBarContainer: {
+    flexDirection: "row",
+    height: 10,
+    borderRadius: 6,
+    overflow: "hidden",
+    backgroundColor: "#E5E7EB",
+  },
+  progressBarFill: { height: 10 },
+  progressText: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  legendRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 20,
+    marginTop: 10,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendText: { fontSize: 12, color: "#6B7280" },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyIcon: { fontSize: 48, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: "bold", color: "#374151", marginBottom: 6 },
+  emptyDesc: { fontSize: 14, color: "#6B7280", textAlign: "center" },
+});
+
+// ── Main SubmissionsModal ───────────────────────────────────────────────────
 const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
   visible,
   onClose,
@@ -72,12 +363,59 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
 
-  // ── Details modal state — managed here ────────────────────────────────────
+  // ── Details modal state ───────────────────────────────────────────────────
   const [detailsVisible, setDetailsVisible] = useState(false);
 
-  useEffect(() => {
-    console.log("hi this is submission modal screen!");
-  }, []);
+  // ── Analytics modal state ─────────────────────────────────────────────────
+  const [analyticsVisible, setAnalyticsVisible] = useState(false);
+
+  // ── Compute analytics from submissions ────────────────────────────────────
+  const analytics = useMemo(() => {
+    const total = filteredSubmissions.length;
+    const graded = filteredSubmissions.filter((s) => s.graded === true).length;
+    const notGraded = total - graded;
+
+    let onTime = 0;
+    let late = 0;
+    const dueDate = selectedAssessment?.dueDate?.date
+      ? new Date(selectedAssessment.dueDate.date)
+      : null;
+
+    filteredSubmissions.forEach((s) => {
+      const subDate = new Date(s.submissionDate || s.submittedAt || s.createdAt);
+      if (dueDate) {
+        if (subDate <= dueDate) onTime++;
+        else late++;
+      }
+    });
+
+    const gradedSubs = filteredSubmissions.filter(
+      (s) => s.graded && typeof s.totalScore === "number"
+    );
+    let avgScore = 0;
+    let highestScore = 0;
+    let lowestScore = 0;
+    if (gradedSubs.length > 0) {
+      const scores = gradedSubs.map((s) => s.totalScore);
+      const sum = scores.reduce((a: number, b: number) => a + b, 0);
+      avgScore = sum / scores.length;
+      highestScore = Math.max(...scores);
+      lowestScore = Math.min(...scores);
+    }
+
+    return {
+      total,
+      graded,
+      notGraded,
+      onTime,
+      late,
+      hasDueDate: !!dueDate,
+      avgScore: avgScore.toFixed(1),
+      highestScore,
+      lowestScore,
+      gradedCount: gradedSubs.length,
+    };
+  }, [filteredSubmissions, selectedAssessment]);
 
   return (
     <Modal
@@ -87,9 +425,8 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={[styles.container, { paddingTop: 20 }]}>
-        {/* ── Top bar: ← back  |  [📊 Analytics] [☰ More Details] ── */}
+        {/* ── Top bar ── */}
         <View style={styles.topBar}>
-          {/* Back */}
           <TouchableOpacity
             style={styles.backBtn}
             onPress={onClose}
@@ -98,18 +435,16 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
             <SimpleIcon name="arrow-back" size={22} color="#111827" />
           </TouchableOpacity>
 
-          {/* Right buttons */}
           <View style={styles.actionBtns}>
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={onViewAnalytics}
+              onPress={() => setAnalyticsVisible(true)}
               activeOpacity={0.7}
             >
               <Text style={styles.actionIcon}>📊</Text>
               <Text style={styles.actionText}>View Analytics</Text>
             </TouchableOpacity>
 
-            {/* ✅ More Details — opens AssessmentDetailsModal */}
             <TouchableOpacity
               style={styles.actionBtn}
               onPress={() => setDetailsVisible(true)}
@@ -191,7 +526,6 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
                   onPress={() => onSubmissionPress(item)}
                   activeOpacity={0.8}
                 >
-                  {/* Student */}
                   <View style={styles.studentRow}>
                     <View style={styles.avatar}>
                       <Text style={styles.avatarText}>
@@ -208,7 +542,6 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
                     </View>
                   </View>
 
-                  {/* Status */}
                   <View style={styles.row}>
                     <Text style={styles.label}>Status:</Text>
                     <Text
@@ -226,7 +559,6 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
                     </Text>
                   </View>
 
-                  {/* Grading */}
                   <View style={styles.row}>
                     <Text style={styles.label}>Grading:</Text>
                     <Text
@@ -239,7 +571,6 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
                     </Text>
                   </View>
 
-                  {/* Submitted At */}
                   <View style={styles.row}>
                     <Text style={styles.label}>Submitted At:</Text>
                     <Text style={styles.value}>
@@ -247,7 +578,6 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
                     </Text>
                   </View>
 
-                  {/* Score */}
                   {item.graded && (
                     <View style={styles.row}>
                       <Text style={styles.label}>Score:</Text>
@@ -267,7 +597,15 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
           )}
         </View>
 
-        {/* ── Assessment Details Modal — opens on More Details ── */}
+        {/* ── Analytics Modal (separate full-screen) ── */}
+        <AnalyticsModal
+          visible={analyticsVisible}
+          onClose={() => setAnalyticsVisible(false)}
+          analytics={analytics}
+          assessmentTitle={selectedAssessment?.title ?? ""}
+        />
+
+        {/* ── Assessment Details Modal ── */}
         <AssessmentDetailsModal
           visible={detailsVisible}
           onClose={() => setDetailsVisible(false)}

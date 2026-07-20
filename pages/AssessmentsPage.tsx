@@ -18,8 +18,10 @@ import {
 import SubmissionsModal from "../components/assessment/Submissionsmodal";
 import SubmissionDetailModal from "../components/assessment/Submissiondetailmodal";
 import CourseSelector from "../components/filters/CourseSelector";
-import SearchFilter from "../components/filters/SearchFilter";
-import { FilterBar, DropdownFilter } from "../components/filters/FilterBar"; // ✅ fixed import
+import SearchFilterView from "../components/filters/SearchFilter";
+import { FilterBar } from "../components/filters/FilterBar"; // ✅ fixed import
+import { DropdownFilter } from "../components/filters/DropDown"; // ✅ fixed import
+
 
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString("en-US", {
@@ -62,28 +64,6 @@ const AssessmentsPage = () => {
   ]);
 
   const [courseOpen, setCourseOpen] = useState(false);
-  const anyDropdownOpen = courseOpen || categoryOpen || datesOpen;
-
-  const dropdownSpacerHeight = useMemo(() => {
-    if (!anyDropdownOpen) return 0;
-    let itemCount = 0;
-    if (courseOpen) {
-      itemCount = courses.length + 1;
-    } else if (categoryOpen) {
-      itemCount = categoryItems.length;
-    } else if (datesOpen) {
-      itemCount = datesItems.length;
-    }
-    return itemCount * 25;
-  }, [
-    anyDropdownOpen,
-    courseOpen,
-    categoryOpen,
-    datesOpen,
-    courses,
-    categoryItems,
-    datesItems,
-  ]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
@@ -156,11 +136,11 @@ const AssessmentsPage = () => {
 
         console.log(`✅ Found ${assessments.length} assessments`);
 
-        const missingCategory = assessments.filter((a) => !a.category);
+        const missingCategory = assessments.filter((a: any) => !a.category);
         if (missingCategory.length > 0) {
           console.warn(
             "⚠️ Assessments without category:",
-            missingCategory.map((a) => a._id)
+            missingCategory.map((a: any) => a._id)
           );
         }
 
@@ -347,7 +327,8 @@ const AssessmentsPage = () => {
       nestedScrollEnabled
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.filterWrapper}>
+      {/* ── Course Selector — highest zIndex so its dropdown renders above everything ── */}
+      <View style={{ zIndex: 3000 }}>
         <FilterBar
           resultsCount={filteredAssessments.length}
           resultsLabel="assessments"
@@ -360,45 +341,45 @@ const AssessmentsPage = () => {
             onOpenChange={setCourseOpen}
           />
         </FilterBar>
+      </View>
 
-        {selectedCourse && (
+      {/* ── Search + Category + Dates — medium zIndex ── */}
+      {selectedCourse && (
+        <View style={{ zIndex: 2000 }}>
           <FilterBar>
-            <SearchFilter
+            <SearchFilterView
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Search by title"
+              style={styles.searchFilterContainer}
             />
-            <View style={styles.dropdownContainer}>
-              <DropdownFilter
-                open={categoryOpen}
-                value={categoryValue}
-                items={categoryItems}
-                setOpen={setCategoryOpen}
-                setValue={setCategoryValue}
-                placeholder="Select Category"
-                zIndex={1000}
-                zIndexInverse={1000}
-                dropDownContainerStyle={styles.dropDownContainerStyle} // ✅ added
-              />
-              <DropdownFilter
-                open={datesOpen}
-                value={datesValue}
-                items={datesItems}
-                setOpen={setDatesOpen}
-                setValue={setDatesValue}
-                placeholder="All Dates"
-                zIndex={2000}
-                zIndexInverse={1000}
-                dropDownContainerStyle={styles.dropDownContainerStyle} // ✅ added
-              />
-            </View>
+            <DropdownFilter
+              open={categoryOpen}
+              value={categoryValue}
+              items={categoryItems}
+              setOpen={setCategoryOpen}
+              setValue={setCategoryValue}
+              placeholder="Select Category"
+              zIndex={2000}
+              zIndexInverse={1000}
+              style={{}}
+            />
+            <DropdownFilter
+              open={datesOpen}
+              value={datesValue}
+              items={datesItems}
+              setOpen={setDatesOpen}
+              setValue={setDatesValue}
+              placeholder="All Dates"
+              zIndex={1000}
+              zIndexInverse={2000}
+            />
           </FilterBar>
-        )}
-      </View>
+        </View>
+      )}
 
-      {anyDropdownOpen && <View style={{ height: dropdownSpacerHeight }} />}
-
-      <View style={styles.cardsContainer}>
+      {/* ── Assessment Cards — lowest zIndex so dropdowns render above ── */}
+      <View style={[styles.cardsContainer, { zIndex: 1 }]}>
         {loading ? (
           <ActivityIndicator
             size="large"
@@ -497,15 +478,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
   },
-  filterWrapper: { flex: 1, backgroundColor: "cyan" },
-  dropdownContainer: {
-    backgroundColor: "#000",
-    // You can add more styling if needed
-  },
-  dropDownContainerStyle: {
-    zIndex: 9999,
-    elevation: 9999,
-  },
   cardsContainer: {
     flex: 1,
     justifyContent: "center",
@@ -528,13 +500,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderRadius: 10,
     padding: 20,
-    marginBottom: 15,
+    marginBottom: 12,
     width: "100%",
     shadowColor: "#000",
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 5,
-    // elevation: 0,
   },
   cardTitle: {
     fontSize: 22,
@@ -567,6 +535,11 @@ const styles = StyleSheet.create({
   courseTitle: { fontSize: 16, color: "#555", fontWeight: "600" },
   cardDesc: { fontSize: 16, color: "#444", marginBottom: 10 },
   cardDate: { fontSize: 13, color: "#777", fontStyle: "italic" },
+  searchFilterContainer: {
+    // width: "50%",
+    // backgroundColor: '#000'
+  },
 });
 
 export default AssessmentsPage;
+
