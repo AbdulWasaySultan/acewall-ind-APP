@@ -41,6 +41,7 @@ export const getStoredUserId = async (): Promise<string | null> => {
   try {
     const userDataString = await AsyncStorage.getItem("userData");
     if (!userDataString) {
+      console.log('couldnt fetch the userid')
       return null;
     }
     const userData = JSON.parse(userDataString);
@@ -95,9 +96,12 @@ export const getStoredUserData = async (): Promise<any | null> => {
 
 // Set USER TOKEN
 
-export const setUserToken = async (token: any): Promise<boolean> => {
+export const setUserToken = async (token: string): Promise<boolean> => {
   try {
-    await AsyncStorage.setItem("token", JSON.stringify(token));
+    // Store the raw JWT string - apiInstance.ts reads this back verbatim and
+    // sends it as `Bearer ${token}`, so it must NOT be JSON-stringified
+    // (that would wrap it in quote characters and break verification).
+    await AsyncStorage.setItem("token", token);
     return true;
   } catch (error) {
     console.error("Error saving token:", error);

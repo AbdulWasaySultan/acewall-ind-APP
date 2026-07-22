@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getStoredBaseUrl, getStoredUserId } from "../utils/storage";
+import { ToastAndroid } from "react-native";
 
 // Types
 export interface DashboardStats {
@@ -325,9 +326,9 @@ export const dashboardService = {
   getStudentAnnouncements: async (): Promise<Announcement[]> => {
     try {
       const api = await createDashboardApiInstance();
+      // const api = await getApiInstance();
       const studentId = await getStoredUserId();
       console.log("Student ID for announcements:", studentId);
-
       // if (!studentId) {
       //   console.error('No student ID found');
       //   return [];
@@ -338,10 +339,18 @@ export const dashboardService = {
       );
       console.log("Student announcements response:", response.data);
 
-      // Response: { success: true, announcements: [] }
+      // Response is directly the announcements array: []
+      if (Array.isArray(response.data)) {
+        return response.data.map((a: any) => ({
+          id: a._id || a.id || "",
+          title: a.title || "",
+          content: a.message || a.content || "",
+          date: a.createdAt || a.date || "",
+        }));
+      }
+      // Fallback: if response has announcements property
       if (
         response.data &&
-        response.data.success &&
         Array.isArray(response.data.announcements)
       ) {
         return response.data.announcements.map((a: any) => ({

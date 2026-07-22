@@ -1,10 +1,11 @@
 import React from 'react';
 import {
   Modal, KeyboardAvoidingView, View, Text,
-  TouchableOpacity, StyleSheet, Platform,
+  TouchableOpacity, StyleSheet, Platform, Dimensions,
 } from 'react-native';
 import { COLORS } from './mnt/user-data/outputs/SpillTheTea/constants';
 
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface BottomSheetProps {
   visible:  boolean;
@@ -14,11 +15,23 @@ interface BottomSheetProps {
 }
 
 const BottomSheet: React.FC<BottomSheetProps> = ({ visible, onClose, title, children }) => (
-  <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+  <Modal
+    visible={visible}
+    animationType="slide"
+    transparent
+    statusBarTranslucent
+    onRequestClose={onClose}
+  >
     <KeyboardAvoidingView
       style={styles.overlay}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Tap outside the sheet to dismiss */}
+      <TouchableOpacity
+        style={StyleSheet.absoluteFillObject}
+        activeOpacity={1}
+        onPress={onClose}
+      />
       <View style={styles.sheet}>
         <View style={styles.handle} />
 
@@ -46,6 +59,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    maxHeight: SCREEN_HEIGHT * 0.85,
+    overflow: 'hidden',
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,

@@ -1,69 +1,85 @@
+"use client";
 
-
-"use client"
-
-import { useEffect, useState } from "react"
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native"
-import { getOverallGradeReport } from "../services/gradebook"
+import { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+import { getOverallGradeReport } from "../services/gradebook";
 const getGradeColor = (grade?: string) => {
   switch (grade) {
-    case 'A': return 'green';
-    case 'B': return 'blue';
-    case 'C':
-    case 'D': return 'orange';
-    case 'E':
-    case 'F': return 'red';
-    default: return 'black';
+    case "A":
+      return "green";
+    case "B":
+      return "blue";
+    case "C":
+    case "D":
+      return "orange";
+    case "E":
+    case "F":
+      return "red";
+    default:
+      return "black";
   }
 };
 const GradebookPage = () => {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [data, setData] = useState<any>(null)
-  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
-  const [expandedSemesters, setExpandedSemesters] = useState<Record<string, boolean>>({})
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any>(null);
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(
+    new Set()
+  );
+  const [expandedSemesters, setExpandedSemesters] = useState<
+    Record<string, boolean>
+  >({});
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        const res = await getOverallGradeReport()
-        setData(res)
+        const res = await getOverallGradeReport();
+        setData(res);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch grade report")
+        setError(err.message || "Failed to fetch grade report");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchData()
-  }, [])
+    };
+    fetchData();
+  }, []);
 
   const toggleCourse = (courseId: string) => {
     setExpandedCourses((prev) => {
-      const newSet = new Set(prev)
+      const newSet = new Set(prev);
       if (newSet.has(courseId)) {
-        newSet.delete(courseId)
+        newSet.delete(courseId);
       } else {
-        newSet.add(courseId)
+        newSet.add(courseId);
       }
-      return newSet
-    })
-  }
+      return newSet;
+    });
+  };
 
-  const getSemesterId = (sem: any, idx: number) => sem?.semesterId || sem?._id || `sem-${idx}`
-  const toggleSemester = (semId: string) => setExpandedSemesters((prev) => ({ ...prev, [semId]: !prev[semId] }))
+  const getSemesterId = (sem: any, idx: number) =>
+    sem?.semesterId || sem?._id || `sem-${idx}`;
+  const toggleSemester = (semId: string) =>
+    setExpandedSemesters((prev) => ({ ...prev, [semId]: !prev[semId] }));
 
   const getLetterGrade = (average: number) => {
-    if (average >= 90) return "A"
-    if (average >= 80) return "B"
-    if (average >= 70) return "C"
-    if (average >= 60) return "D"
-    return "F"
-  }
+    if (average >= 90) return "A";
+    if (average >= 80) return "B";
+    if (average >= 70) return "C";
+    if (average >= 60) return "D";
+    return "F";
+  };
   const renderAssessment = (a: any) => {
-    const max = Number(a.maxPoints ?? 0)
-    const pts = Number(a.studentPoints ?? 0)
-    const pct = max > 0 ? (pts / max) * 100 : 0
+    const max = Number(a.maxPoints ?? 0);
+    const pts = Number(a.studentPoints ?? 0);
+    const pct = max > 0 ? (pts / max) * 100 : 0;
     return (
       <View key={a.assessmentId} style={styles.assessmentItemCard}>
         <View style={styles.assessmentItemRow}>
@@ -88,7 +104,12 @@ const GradebookPage = () => {
             {isNaN(max) ? "0" : String(max)}
           </Text>
         </View>
-        <View style={[styles.assessmentItemRow, { marginBottom: 0, borderBottomWidth: 0 }]}>
+        <View
+          style={[
+            styles.assessmentItemRow,
+            { marginBottom: 0, borderBottomWidth: 0 },
+          ]}
+        >
           <Text style={styles.assessmentLabel}>Percentage</Text>
           <Text
             style={[
@@ -100,21 +121,27 @@ const GradebookPage = () => {
           </Text>
         </View>
       </View>
-    )
-  }
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.performanceCard}>
-          <Text style={styles.performanceTitle}>Overall Academic Performance</Text>
+          <Text style={styles.performanceTitle}>
+            Overall Academic Performance
+          </Text>
           <View style={styles.performanceRow}>
             <Text style={styles.gpaLabel}>Overall GPA</Text>
             <Text style={styles.gpaValue}>
-              {data?.overallGPA != null ? Number(data.overallGPA).toFixed(2) : "0.00"}
+              {data?.overallGPA != null
+                ? Number(data.overallGPA).toFixed(2)
+                : "0.00"}
             </Text>
             <Text style={styles.coursesCount}>
-              {Array.isArray(data?.courses) ? `${data.courses.length} Courses` : "0 Courses"}
+              {Array.isArray(data?.courses)
+                ? `${data.courses.length} Courses`
+                : "0 Courses"}
             </Text>
           </View>
         </View>
@@ -133,26 +160,39 @@ const GradebookPage = () => {
             <Text style={styles.noDataText}>{error}</Text>
           ) : data && data.courses && data.courses.length > 0 ? (
             data.courses.map((course: any) => (
-              <View key={course.courseId || course._id} style={styles.courseItem}>
+              <View
+                key={course.courseId || course._id}
+                style={styles.courseItem}
+              >
                 <View style={styles.courseHeaderRow}>
                   <View style={styles.courseInfo}>
                     <Text style={styles.courseLabel}>Course</Text>
-                    <Text style={styles.courseName}>{course.courseName || "Untitled Course"}</Text>
+                    <Text style={styles.courseName}>
+                      {course.courseName || "Untitled Course"}
+                    </Text>
                   </View>
                   <View style={styles.semesterInfo}>
                     <Text style={styles.courseLabel}>
-                      {Array.isArray(course.semesters) && course.semesters.length > 0
+                      {Array.isArray(course.semesters) &&
+                      course.semesters.length > 0
                         ? "Semesters"
-                        : Array.isArray(course.assessments) && course.assessments.length > 0
-                          ? "Assessments"
-                          : "Semesters"}
+                        : Array.isArray(course.assessments) &&
+                          course.assessments.length > 0
+                        ? "Assessments"
+                        : "Semesters"}
                     </Text>
                     <Text style={styles.semesterText}>
-                      {Array.isArray(course.semesters) && course.semesters.length > 0
-                        ? `${course.semesters.length} semester${course.semesters.length === 1 ? "" : "s"}`
-                        : Array.isArray(course.assessments) && course.assessments.length > 0
-                          ? `${course.assessments.length} assessment${course.assessments.length === 1 ? "" : "s"}`
-                          : "0 semesters"}
+                      {Array.isArray(course.semesters) &&
+                      course.semesters.length > 0
+                        ? `${course.semesters.length} semester${
+                            course.semesters.length === 1 ? "" : "s"
+                          }`
+                        : Array.isArray(course.assessments) &&
+                          course.assessments.length > 0
+                        ? `${course.assessments.length} assessment${
+                            course.assessments.length === 1 ? "" : "s"
+                          }`
+                        : "0 semesters"}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -160,30 +200,40 @@ const GradebookPage = () => {
                     onPress={() => toggleCourse(course.courseId || course._id)}
                   >
                     <Text style={styles.actionText}>
-                      {expandedCourses.has(course.courseId || course._id) ? "▴ Hide Details" : "▾ Show Details"}
+                      {expandedCourses.has(course.courseId || course._id)
+                        ? "▴ Hide Details"
+                        : "▾ Show Details"}
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 {expandedCourses.has(course.courseId || course._id) && (
                   <View style={styles.courseDetails}>
-                    {Array.isArray(course.semesters) && course.semesters.length > 0 ? (
+                    {Array.isArray(course.semesters) &&
+                    course.semesters.length > 0 ? (
                       course.semesters.map((sem: any, sIdx: number) => {
-                        const semId = getSemesterId(sem, sIdx)
-                        const quartersCount = Array.isArray(sem.quarters) ? sem.quarters.length : 0
-                        const isOpen = !!expandedSemesters[semId]
+                        const semId = getSemesterId(sem, sIdx);
+                        const quartersCount = Array.isArray(sem.quarters)
+                          ? sem.quarters.length
+                          : 0;
+                        const isOpen = !!expandedSemesters[semId];
                         return (
                           <View key={semId} style={{ marginBottom: 16 }}>
                             <View style={styles.semesterSection}>
-                              <Text style={styles.semesterTitle}>{sem.semesterTitle || "Semester"}</Text>
+                              <Text style={styles.semesterTitle}>
+                                {sem.semesterTitle || "Semester"}
+                              </Text>
                               <TouchableOpacity
                                 onPress={() => toggleSemester(semId)}
                                 style={styles.quarterToggle}
                                 accessibilityRole="button"
-                                accessibilityLabel={isOpen ? "Hide quarters" : "Show quarters"}
+                                accessibilityLabel={
+                                  isOpen ? "Hide quarters" : "Show quarters"
+                                }
                               >
                                 <Text style={styles.quarterToggleText}>
-                                  {isOpen ? "▾" : "▸"} {quartersCount} Quarter{quartersCount === 1 ? "" : "s"}
+                                  {isOpen ? "▾" : "▸"} {quartersCount} Quarter
+                                  {quartersCount === 1 ? "" : "s"}
                                 </Text>
                               </TouchableOpacity>
                             </View>
@@ -191,65 +241,107 @@ const GradebookPage = () => {
                             {isOpen ? (
                               quartersCount > 0 ? (
                                 sem.quarters.map((qtr: any) => (
-                                  <View key={qtr.quarterId} style={styles.quarterCard}>
+                                  <View
+                                    key={qtr.quarterId}
+                                    style={styles.quarterCard}
+                                  >
                                     <View style={styles.quarterHeader}>
-                                      <Text style={styles.quarterTitle}>{qtr.quarterTitle || "Quarter"}</Text>
+                                      <Text style={styles.quarterTitle}>
+                                        {qtr.quarterTitle || "Quarter"}
+                                      </Text>
                                       <View style={styles.gradeInfo}>
-                                        <Text style={styles.gradeLabel}>Grade: </Text>
-                                        <Text style={styles.gradeValue}>
-                                          {qtr.grade != null ? `${Number(qtr.grade).toFixed(2)}%` : "—"}
+                                        <Text style={styles.gradeLabel}>
+                                          Grade:{" "}
                                         </Text>
-                                        <Text style={styles.gpaLabel}>GPA: </Text>
-                                        <Text style={styles.gpaNumber}>{qtr.gpa != null ? String(qtr.gpa) : "—"}</Text>
+                                        <Text style={styles.gradeValue}>
+                                          {qtr.grade != null
+                                            ? `${Number(qtr.grade).toFixed(2)}%`
+                                            : "—"}
+                                        </Text>
+                                        <Text style={styles.gpaLabel}>
+                                          GPA:{" "}
+                                        </Text>
+                                        <Text style={styles.gpaNumber}>
+                                          {qtr.gpa != null
+                                            ? String(qtr.gpa)
+                                            : "—"}
+                                        </Text>
                                         <View
                                           style={[
                                             styles.letterGrade,
-                                            (qtr.grade ?? 0) >= 60 ? styles.letterGradePass : styles.letterGradeFail,
+                                            (qtr.grade ?? 0) >= 60
+                                              ? styles.letterGradePass
+                                              : styles.letterGradeFail,
                                           ]}
                                         >
-                                          <Text style={[styles.letterGradeText, { color: getGradeColor(qtr.letterGrade) }]}>{qtr.letterGrade || "—"}</Text>
+                                          <Text
+                                            style={[
+                                              styles.letterGradeText,
+                                              {
+                                                color: getGradeColor(
+                                                  qtr.letterGrade
+                                                ),
+                                              },
+                                            ]}
+                                          >
+                                            {qtr.letterGrade || "—"}
+                                          </Text>
                                         </View>
                                       </View>
                                     </View>
 
                                     <View style={styles.assessmentsList}>
-                                      {Array.isArray(qtr.assessments) && qtr.assessments.length > 0 ? (
+                                      {Array.isArray(qtr.assessments) &&
+                                      qtr.assessments.length > 0 ? (
                                         qtr.assessments.map(renderAssessment)
                                       ) : (
-                                        <Text style={styles.noAssessments}>No assessments available</Text>
+                                        <Text style={styles.noAssessments}>
+                                          No assessments available
+                                        </Text>
                                       )}
                                     </View>
                                   </View>
                                 ))
                               ) : (
-                                <Text style={styles.noDataText}>No quarters available</Text>
+                                <Text style={styles.noDataText}>
+                                  No quarters available
+                                </Text>
                               )
                             ) : null}
                           </View>
-                        )
+                        );
                       })
-                    ) : Array.isArray(course.assessments) && course.assessments.length > 0 ? (
+                    ) : Array.isArray(course.assessments) &&
+                      course.assessments.length > 0 ? (
                       <View style={styles.quarterCard}>
-                        <Text style={[styles.quarterTitle, { marginBottom: 12 }]}>Assessments</Text>
+                        <Text
+                          style={[styles.quarterTitle, { marginBottom: 12 }]}
+                        >
+                          Assessments
+                        </Text>
                         <View style={styles.assessmentsList}>
                           {course.assessments.map(renderAssessment)}
                         </View>
                       </View>
                     ) : (
-                      <Text style={styles.noDataText}>No semesters available</Text>
+                      <Text style={styles.noDataText}>
+                        No semesters available
+                      </Text>
                     )}
                   </View>
                 )}
               </View>
             ))
           ) : (
-            <Text style={styles.noDataText}>No courses or assessments found matching your search.</Text>
+            <Text style={styles.noDataText}>
+              No courses or assessments found matching your search.
+            </Text>
           )}
         </View>
       </View>
     </ScrollView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -456,6 +548,7 @@ const styles = StyleSheet.create({
     color: "#f44336",
   },
   assessmentsList: {
+    // backgroundColor: "#000",
     // container for the list; spacing handled by card margins
   },
   assessmentItemCard: {
@@ -472,7 +565,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee'
+    borderBottomColor: "#eee",
   },
   assessmentLabel: {
     fontSize: 12,
@@ -512,6 +605,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: 24,
   },
-})
+});
 
-export default GradebookPage
+export default GradebookPage;

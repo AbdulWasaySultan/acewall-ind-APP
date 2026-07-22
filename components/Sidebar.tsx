@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   navigation,
   onLogout,
 }) => {
-  const { userRole } = useAuth();
+  const { userRole, isPreviewMode } = useAuth();
   const { user, setUser } = useUser();
   const drawerStatus = useDrawerStatus();
   const isFetchingRef = useRef(false);
@@ -110,7 +110,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       try {
         const response = await getUserInfo();
         if (!cancelled && response?.user) {
-          setUser(response.user);
+          // getUserInfo() returns the persisted DB role ("teacher"), which
+          // would otherwise clobber the transient "teacherAsStudent" role
+          // while previewing.
+          setUser(
+            isPreviewMode
+              ? { ...response.user, role: "teacherAsStudent" }
+              : response.user
+          );
         }
       } catch (error) {
         if (!cancelled) {
@@ -129,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       cancelled = true;
       isFetchingRef.current = false;
     };
-  }, [drawerStatus, setUser]);
+  }, [drawerStatus, setUser, isPreviewMode]);
 
   const handleNavigation = (label: string) => {
     onSelect(label);
@@ -203,7 +210,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Text style={styles.username}>{getFullName(user)}</Text>
             <Text style={styles.email}>{user?.email || "No Email"}</Text>
             <Text style={styles.role}>
-              {user?.role
+              {isPreviewMode
+                ? "Student (Preview)"
+                : user?.role
                 ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
                 : ""}
             </Text>

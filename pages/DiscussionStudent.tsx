@@ -13,6 +13,7 @@ import {
   Keyboard,
   Linking,
   Image,
+  Modal,
 } from "react-native";
 import {
   useRoute,
@@ -20,6 +21,7 @@ import {
   type RouteProp,
 } from "@react-navigation/native";
 import SimpleIcon from "../components/SimpleIcon";
+import { useAuth } from "../contexts/AuthContext";
 import {
   getStudentDiscussion,
   getCommentForDiscussionStudent,
@@ -28,6 +30,7 @@ import {
   getReplyCount,
   sendReply,
   getReplies,
+  gradeDiscussionComment,
 } from "../services/course";
 
 interface DiscussionDetailParams {
@@ -129,8 +132,14 @@ const DiscussionStudent = () => {
     useRoute<RouteProp<Record<string, DiscussionDetailParams>, string>>();
   const navigation = useNavigation();
   const { discussionId } = route.params;
+  const { userRole } = useAuth();
+  const isTeacher = userRole === "teacher";
 
   const [discussion, setDiscussion] = useState<Discussion | null>(null);
+  const [gradingComment, setGradingComment] = useState<Comment | null>(null);
+  const [marksInput, setMarksInput] = useState("");
+  const [gradingLoading, setGradingLoading] = useState(false);
+  const [gradingError, setGradingError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -260,6 +269,54 @@ const DiscussionStudent = () => {
       console.error("Error checking if commented:", error);
     } finally {
       setCheckingCommented(false);
+    }
+  };
+
+  const openGradeModal = (comment: Comment) => {
+    setGradingComment(comment);
+    setMarksInput("");
+    setGradingError(null);
+  };
+
+  const closeGradeModal = () => {
+    if (gradingLoading) return;
+    setGradingComment(null);
+    setMarksInput("");
+    setGradingError(null);
+  };
+
+  const handleSubmitGrade = async () => {
+    if (!gradingComment) return;
+
+    const trimmed = marksInput.trim();
+    if (!trimmed) {
+      setGradingError("Marks are required");
+      return;
+    }
+    const marks = Number(trimmed);
+    if (isNaN(marks) || marks < 0) {
+      setGradingError("Marks cannot be negative");
+      return;
+    }
+    if (discussion?.totalMarks != null && marks > discussion.totalMarks) {
+      setGradingError(`Marks cannot exceed total (${discussion.totalMarks})`);
+      return;
+    }
+
+    setGradingLoading(true);
+    setGradingError(null);
+    try {
+      await gradeDiscussionComment(discussionId, gradingComment._id, marks);
+      setGradingComment(null);
+      setMarksInput("");
+      fetchComments(1);
+      checkIfCommented();
+    } catch (error: any) {
+      setGradingError(
+        error?.response?.data?.message || "Error giving marks"
+      );
+    } finally {
+      setGradingLoading(false);
     }
   };
 
@@ -442,9 +499,19 @@ const DiscussionStudent = () => {
             </TouchableOpacity>
           )}
 
-          <Text style={styles.notGradedText}>
-            {item.isGraded ? "Graded" : "Not Graded"}
-          </Text>
+          {isTeacher && item.createdby.role !== "teacher" && !item.isGraded && (
+            <TouchableOpacity onPress={() => openGradeModal(item)}>
+              <Text style={styles.giveMarksText}>Give Marks</Text>
+            </TouchableOpacity>
+          )}
+
+          {item.createdby.role !== "teacher" && (
+            <Text style={styles.notGradedText}>
+              {item.isGraded
+                ? `Obtained Marks: ${item.marksObtained}`
+                : "Not Graded"}
+            </Text>
+          )}
         </View>
 
         {item.showReplyInput && (
@@ -718,6 +785,54 @@ const DiscussionStudent = () => {
           </TouchableOpacity>
         </View>
       )}
+
+      <Modal
+        visible={!!gradingComment}
+        transparent
+        animationType="fade"
+        onRequestClose={closeGradeModal}
+      >
+        <View style={styles.gradeModalOverlay}>
+          <View style={styles.gradeModalCard}>
+            <Text style={styles.gradeModalTitle}>Give Marks</Text>
+            <Text style={styles.gradeModalLabel}>
+              Marks (total: {discussion?.totalMarks ?? 0})
+            </Text>
+            <TextInput
+              style={styles.gradeModalInput}
+              placeholder="Enter marks"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+              value={marksInput}
+              onChangeText={setMarksInput}
+              editable={!gradingLoading}
+            />
+            {gradingError && (
+              <Text style={styles.gradeModalError}>{gradingError}</Text>
+            )}
+            <View style={styles.gradeModalButtonRow}>
+              <TouchableOpacity
+                style={styles.gradeModalCancelButton}
+                onPress={closeGradeModal}
+                disabled={gradingLoading}
+              >
+                <Text style={styles.gradeModalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.gradeModalSaveButton}
+                onPress={handleSubmitGrade}
+                disabled={gradingLoading}
+              >
+                {gradingLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.gradeModalSaveText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -942,6 +1057,80 @@ const styles = StyleSheet.create({
   notGradedText: {
     fontSize: 13,
     color: "#999",
+  },
+  giveMarksText: {
+    fontSize: 13,
+    color: "#3b82f6",
+    fontWeight: "600",
+  },
+  gradeModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  gradeModalCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    width: "100%",
+    maxWidth: 380,
+  },
+  gradeModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 16,
+  },
+  gradeModalLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
+  },
+  gradeModalInput: {
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#333",
+  },
+  gradeModalError: {
+    fontSize: 12,
+    color: "#ef4444",
+    marginTop: 6,
+  },
+  gradeModalButtonRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 20,
+  },
+  gradeModalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+  },
+  gradeModalCancelText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+  gradeModalSaveButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: "#10B144",
+    alignItems: "center",
+  },
+  gradeModalSaveText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#fff",
   },
   loadingMore: {
     marginVertical: 16,

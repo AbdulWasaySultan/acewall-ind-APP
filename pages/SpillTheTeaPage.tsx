@@ -119,7 +119,6 @@ const attachCommentCounts = (
 // SPILL THE TEA PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SpillTheTeaPage: React.FC = () => {
-
   const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -274,10 +273,10 @@ const SpillTheTeaPage: React.FC = () => {
         prev.map((p) =>
           p._id === postId
             ? {
-              ...p,
-              totalLikes: response.totalLikes,
-              userReaction: response.userReaction,
-            }
+                ...p,
+                totalLikes: response.totalLikes,
+                userReaction: response.userReaction,
+              }
             : p
         )
       );
@@ -390,7 +389,7 @@ const SpillTheTeaPage: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <View style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      {/* <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} /> */}
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
@@ -417,13 +416,16 @@ const SpillTheTeaPage: React.FC = () => {
         <ActivityIndicator
           style={styles.loader}
           size="large"
-          color={COLORS.primary}
+          color={COLORS.secondary}
         />
       ) : (
         <FlatList
           data={posts}
           keyExtractor={(p) => p._id}
-          contentContainerStyle={[styles.feed, { paddingBottom: insets.bottom + 16 }]}
+          contentContainerStyle={[
+            styles.feed,
+            { paddingBottom: insets.bottom + 16 },
+          ]}
           showsVerticalScrollIndicator={false}
           refreshing={refreshing}
           onRefresh={() => fetchPosts(true)}
@@ -439,7 +441,7 @@ const SpillTheTeaPage: React.FC = () => {
             loadingMore ? (
               <ActivityIndicator
                 style={styles.loadMoreSpinner}
-                color={COLORS.primary}
+                color={COLORS.secondary}
               />
             ) : null
           }

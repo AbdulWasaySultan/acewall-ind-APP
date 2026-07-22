@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// AIModal component
+// AIModal component (local)
 const AIModal: React.FC<AIModalProps> = ({
   visible,
   onClose,
@@ -629,6 +629,11 @@ const CreateCoursePage = () => {
   const [aiRequirementsPrompt, setAiRequirementsPrompt] = useState("");
   const [isGeneratingRequirements, setIsGeneratingRequirements] =
     useState(false);
+
+  // AI States for Title
+  const [showAITitleModal, setShowAITitleModal] = useState(false);
+  const [aiTitlePrompt, setAiTitlePrompt] = useState("");
+  const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -967,7 +972,7 @@ const CreateCoursePage = () => {
     );
   };
 
-  // ✅ Helper function for normalizing generated images
+  // Helper function for normalizing generated images
   const normalizeGeneratedImage = (data: any) => {
     if (!data) {
       return {
@@ -998,7 +1003,7 @@ const CreateCoursePage = () => {
     return { uri: null, filename: null, type: null };
   };
 
-  // ✅ Handle Thumbnail Generation
+  // Handle Thumbnail Generation
   const handleGenerateThumbnail = async () => {
     if (!aiPrompt.trim()) {
       Toast.show("Please describe what you want to create", Toast.LONG);
@@ -1044,7 +1049,46 @@ const CreateCoursePage = () => {
     }
   };
 
-  // ✅ Handle Description Generation
+  // Handle Title Generation
+  const handleGenerateTitle = async () => {
+    if (!aiTitlePrompt.trim()) {
+      Toast.show(
+        "Please describe what the course title should be about.",
+        Toast.LONG
+      );
+      return;
+    }
+
+    try {
+      setIsGeneratingTitle(true);
+      const api = await getApiInstance();
+
+      const response = await api.post("/api/aichat/generateContentForTeacher", {
+        command: aiTitlePrompt,
+        usedfor: "title",
+        difficulty: "medium",
+      });
+
+      if (response.data && response.data.content) {
+        setCourseTitle(response.data.content);
+        Toast.show("Course title generated!", Toast.SHORT);
+        setShowAITitleModal(false);
+        setAiTitlePrompt("");
+      } else {
+        Toast.show("Failed to generate title", Toast.LONG);
+      }
+    } catch (error: any) {
+      console.error("Error generating course title:", error);
+      Toast.show(
+        error.response?.data?.message || "Failed to generate title",
+        Toast.LONG
+      );
+    } finally {
+      setIsGeneratingTitle(false);
+    }
+  };
+
+  // Handle Description Generation
   const handleGenerateDescription = async () => {
     if (!aiDescriptionPrompt.trim()) {
       Toast.show("Please describe what you want to create", Toast.LONG);
@@ -1080,7 +1124,7 @@ const CreateCoursePage = () => {
     }
   };
 
-  // ✅ Handle Teaching Points Generation
+  // Handle Teaching Points Generation
   const handleGenerateTeachingPoints = async () => {
     if (!aiTeachingPointsPrompt.trim()) {
       Toast.show("Please describe what you want to create", Toast.LONG);
@@ -1118,7 +1162,7 @@ const CreateCoursePage = () => {
     }
   };
 
-  // ✅ Handle Requirements Generation
+  // Handle Requirements Generation
   const handleGenerateRequirements = async () => {
     if (!aiRequirementsPrompt.trim()) {
       Toast.show("Please describe what you want to create", Toast.LONG);
@@ -1264,6 +1308,11 @@ const CreateCoursePage = () => {
     setAiRequirementsPrompt("");
   };
 
+  const openAITitleModal = () => {
+    setShowAITitleModal(true);
+    setAiTitlePrompt("");
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.pageTitle}>Create New Course</Text>
@@ -1293,6 +1342,18 @@ const CreateCoursePage = () => {
           </View>
         )}
       </View>
+
+      {/* AI Title Modal */}
+      <AIModal
+        visible={showAITitleModal}
+        onClose={() => setShowAITitleModal(false)}
+        onGenerate={handleGenerateTitle}
+        prompt={aiTitlePrompt}
+        setPrompt={setAiTitlePrompt}
+        isGenerating={isGeneratingTitle}
+        placeholder="Describe the course title you need..."
+      />
+
       {errors.thumbnail && (
         <Text style={styles.errorText}>{errors.thumbnail}</Text>
       )}
@@ -1451,6 +1512,7 @@ const CreateCoursePage = () => {
         </>
       )}
 
+      {/* Semester Based Selection */}
       <Text style={styles.sectionTitle}>Is this a semester-based course</Text>
       <Pressable
         style={[styles.selectButton, errors.semesterBased && styles.inputError]}
@@ -1461,7 +1523,6 @@ const CreateCoursePage = () => {
       {errors.semesterBased && (
         <Text style={styles.errorText}>{errors.semesterBased}</Text>
       )}
-
       <Modal
         visible={showSemesterBasedModal}
         transparent={true}

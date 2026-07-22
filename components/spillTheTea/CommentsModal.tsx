@@ -1,23 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  View, Text, FlatList, TextInput,
-  TouchableOpacity, StyleSheet, ActivityIndicator,
-} from 'react-native';
-import BottomSheet from './BottomSheet';
-import Avatar      from './Avatar';
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import BottomSheet from "./BottomSheet";
+import Avatar from "./Avatar";
 
-import { getPostComments }         from '../../services/socialPosts';
-import { Post } from '.';
-import { COLORS } from './mnt/user-data/outputs/SpillTheTea/constants';
-import { formatDate, getFullName } from './mnt/user-data/outputs/SpillTheTea/helpers';
+import { getPostComments } from "../../services/socialPosts";
+import { Post } from ".";
+import { COLORS } from "./mnt/user-data/outputs/SpillTheTea/constants";
+import {
+  formatDate,
+  getFullName,
+} from "./mnt/user-data/outputs/SpillTheTea/helpers";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 interface CommentsModalProps {
-  visible:      boolean;
-  post:         Post | null;
-  onClose:      () => void;
+  visible: boolean;
+  post: Post | null;
+  onClose: () => void;
   onAddComment: (postId: string, text: string) => void;
 }
 
@@ -25,11 +33,14 @@ interface CommentsModalProps {
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const CommentsModal: React.FC<CommentsModalProps> = ({
-  visible, post, onClose, onAddComment,
+  visible,
+  post,
+  onClose,
+  onAddComment,
 }) => {
-  const [text,     setText]     = useState('');
+  const [text, setText] = useState("");
   const [comments, setComments] = useState<any[]>([]);
-  const [loading,  setLoading]  = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // ── Fetch comments from API when modal opens ──────────────────────────────
   useEffect(() => {
@@ -42,7 +53,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
         // API returns { comments: [] } or plain []
         setComments(data.comments ?? data ?? []);
       } catch (e) {
-        console.warn('Failed to load comments:', e);
+        console.warn("Failed to load comments:", e);
         // Fall back to comments already on the post object
         setComments(post.comments ?? []);
       } finally {
@@ -56,7 +67,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
   // ── Reset when modal closes ───────────────────────────────────────────────
   useEffect(() => {
     if (!visible) {
-      setText('');
+      setText("");
       setComments([]);
     }
   }, [visible]);
@@ -67,16 +78,16 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
 
     // Optimistic — add to local list immediately
     const optimisticComment = {
-      _id:       Date.now().toString(),
-      text:      text.trim(),
-      author:    { _id: 'me', firstName: 'You', lastName: '' },
+      _id: Date.now().toString(),
+      text: text.trim(),
+      author: { _id: "me", firstName: "You", lastName: "" },
       createdAt: new Date().toISOString(),
     };
     setComments((prev) => [...prev, optimisticComment]);
 
     // Call parent handler → API
     onAddComment(post._id, text.trim());
-    setText('');
+    setText("");
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -84,13 +95,12 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Comments">
-
       {/* ── Comment list ── */}
       {loading ? (
         <ActivityIndicator
           style={styles.loader}
           size="small"
-          color={COLORS.primary}
+          color={COLORS.secondary}
         />
       ) : (
         <FlatList
@@ -105,16 +115,12 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
             <View style={styles.row}>
               <Avatar uri={item.author?.profileImg?.url} size={34} />
               <View style={styles.bubble}>
-                <Text style={styles.author}>
-                  {getFullName(item.author)}
-                </Text>
+                <Text style={styles.author}>{getFullName(item.author)}</Text>
                 {/* API uses "text" field — fallback to "content" for safety */}
                 <Text style={styles.commentText}>
                   {item.text ?? item.content}
                 </Text>
-                <Text style={styles.date}>
-                  {formatDate(item.createdAt)}
-                </Text>
+                <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
               </View>
             </View>
           )}
@@ -139,7 +145,6 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
           <Text style={styles.sendText}>Send</Text>
         </TouchableOpacity>
       </View>
-
     </BottomSheet>
   );
 };
@@ -148,22 +153,54 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
 // STYLES
 // ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  loader:          { marginVertical: 24 },
-  empty:           { textAlign: 'center', color: COLORS.textFaint, marginVertical: 24, fontSize: 14 },
-  row:             { flexDirection: 'row', marginBottom: 14, alignItems: 'flex-start' },
-  bubble:          { flex: 1, marginLeft: 10, backgroundColor: COLORS.commentBg, borderRadius: 10, padding: 10 },
-  author:          { fontWeight: '700', fontSize: 13, color: COLORS.textDark, marginBottom: 2 },
-  commentText:     { fontSize: 14, color: '#333', lineHeight: 20 },
-  date:            { fontSize: 11, color: COLORS.textFaint, marginTop: 4 },
-  inputRow:        { flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginTop: 12 },
-  input: {
-    flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: '#333', maxHeight: 100,
+  loader: { marginVertical: 24 },
+  empty: {
+    textAlign: "center",
+    color: COLORS.textFaint,
+    marginVertical: 24,
+    fontSize: 14,
   },
-  sendBtn:         { backgroundColor: COLORS.primary, paddingHorizontal: 18, paddingVertical: 12, borderRadius: 12 },
+  row: { flexDirection: "row", marginBottom: 14, alignItems: "flex-start" },
+  bubble: {
+    flex: 1,
+    marginLeft: 10,
+    backgroundColor: COLORS.commentBg,
+    borderRadius: 10,
+    padding: 10,
+  },
+  author: {
+    fontWeight: "700",
+    fontSize: 13,
+    color: COLORS.textDark,
+    marginBottom: 2,
+  },
+  commentText: { fontSize: 14, color: "#333", lineHeight: 20 },
+  date: { fontSize: 11, color: COLORS.textFaint, marginTop: 4 },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 10,
+    marginTop: 12,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#333",
+    maxHeight: 100,
+  },
+  sendBtn: {
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
   sendBtnDisabled: { opacity: 0.4 },
-  sendText:        { color: COLORS.white, fontWeight: '700', fontSize: 14 },
+  sendText: { color: COLORS.white, fontWeight: "700", fontSize: 14 },
 });
 
 export default CommentsModal;

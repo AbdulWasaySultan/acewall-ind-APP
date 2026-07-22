@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, Linking, Alert, Platform, AppState } from 'react-native';
 import SimpleIcon from '../components/SimpleIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { getCourseById, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse, createStripeCheckoutSession, getEnrollStatus } from '../services/course';
+import { getCourseById, getCourseForStudentPreview, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse, createStripeCheckoutSession, getEnrollStatus } from '../services/course';
 import { useUser } from '../contexts/UserContext';
 import Toast from 'react-native-simple-toast'
 import { getCourseRating } from '../services/rating';
@@ -69,6 +69,23 @@ const CourseDetailStudentPage = () => {
           // For enrolled courses, get the enrolled course details
           const enrolledCourseData = await getStudentEnrolledCourseDetails(enrollmentId);
           setCourse(enrolledCourseData?.courseDetails || null);
+        } else if (fromAdmin) {
+          // Teacher "Preview as Student" - use the preview endpoint which
+          // includes semester data (unlike getCourseById, which is chapter-only)
+          const res = await getCourseForStudentPreview(courseId);
+          console.log('Course data from getCourseForStudentPreview API:', res.course);
+          let previewCourse = res.course;
+          if (!previewCourse?.semesterbased) {
+            // The preview endpoint's chapters don't include nested lessons -
+            // fetch those separately so the Curriculum tab still works.
+            try {
+              const chapterRes = await getCourseById(courseId);
+              previewCourse = { ...previewCourse, chapters: chapterRes.course?.chapters || [] };
+            } catch (chapterErr) {
+              console.warn('Failed to load chapter lessons for preview:', chapterErr);
+            }
+          }
+          setCourse(previewCourse);
         } else {
           // For regular course details - use getCourseById API which includes chapters
           const res = await getCourseById(courseId);
@@ -226,6 +243,13 @@ const CourseDetailStudentPage = () => {
       <TouchableOpacity style={[styles.closeButton,{top:insets.top||16}]} onPress={() => navigation.goBack()}>
         <SimpleIcon name="close" size={32} color="#222" />
       </TouchableOpacity>
+      {/* Preview Mode Banner */}
+      {fromAdmin && (
+        <View style={[styles.previewBanner, { marginTop: (insets.top || 16) + 40 }]}>
+          <Text style={styles.previewText}>👁 Student Preview Mode</Text>
+          <Text style={styles.previewSubtext}>Viewing as student sees it</Text>
+        </View>
+      )}
       {/* Enroll Modal */}
       <Modal
         visible={showEnrollModal}
@@ -517,25 +541,34 @@ const CourseDetailStudentPage = () => {
           </View>
 
           {/* Semester Information */}
-          {/* {course.semester && course.semester.length > 0 && (
-            <TouchableOpacity
-              style={styles.semesterCard}
-              onPress={() => handleSemesterClick(course.semester[0]._id)}
-            >
-              <Text style={styles.semesterTitle}>Semester: {course.semester[0].title}</Text>
-              <Text style={styles.semesterDate}>
-                {new Date(course.semester[0].startDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })} - {new Date(course.semester[0].endDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </Text>
-            </TouchableOpacity>
-          )} */}
+          {course.semesterbased && (
+            course.semester && course.semester.length > 0 ? (
+              course.semester.map((semester: any) => (
+                <TouchableOpacity
+                  key={semester._id}
+                  style={styles.semesterCard}
+                  onPress={() => handleSemesterClick(semester._id)}
+                >
+                  <Text style={styles.semesterTitle}>Semester: {semester.title}</Text>
+                  <Text style={styles.semesterDate}>
+                    {new Date(semester.startDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })} - {new Date(semester.endDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.semesterCard}>
+                <Text style={styles.semesterTitle}>No semesters found for this course.</Text>
+              </View>
+            )
+          )}
 
           {/* Tabs */}
           <ScrollView
@@ -742,6 +775,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   closeButton: { position: 'absolute', top: 16, right: 16, zIndex: 10, backgroundColor: '#fff', borderRadius: 20, padding: 2, elevation: 2 },
+  previewBanner: {
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    marginBottom: 12,
+    marginTop: 40,
+  },
+  previewText: { color: '#92400E', fontWeight: 'bold', textAlign: 'center', fontSize: 15 },
+  previewSubtext: { color: '#92400E', textAlign: 'center', fontSize: 12, marginTop: 2 },
   title: { fontSize: 32, fontWeight: 'bold', color: '#111', marginTop: 8 },
   subtitle: { color: '#888', fontSize: 18, marginBottom: 8 },
   instructorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },

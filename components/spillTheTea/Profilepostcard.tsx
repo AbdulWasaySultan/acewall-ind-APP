@@ -26,13 +26,14 @@ interface ProfilePostCardProps {
   currentUserId: string;
   onDelete:      (postId: string) => void;
   onLike:        (postId: string) => void;
+  onCommentPress: (post: Post) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
-  post, currentUserId, onDelete, onLike,
+  post, currentUserId, onDelete, onLike, onCommentPress,
 }) => {
   const isLiked      = (post.likes    ?? []).includes(currentUserId);
   const commentCount = (post.comments ?? []).length;
@@ -80,7 +81,7 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
         totalComments={post.totalComments}
         isLiked={isLiked}
         onLike={() => onLike(post._id)}
-        onComment={() => {}}   // no comment modal on profile page
+        onComment={() => onCommentPress(post)}
       />
 
     </View>

@@ -1,6 +1,5 @@
-"use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -25,7 +24,6 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect } from "react";
 import CourseSelector from "../components/filters/CourseSelector";
 import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar";
@@ -90,7 +88,12 @@ const MyAssessmentsPage = () => {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [coursesLoading, setCoursesLoading] = useState(false);
 
-  // Secondary filters (only active after course selection)
+  // Chapter state
+  const [chapters, setChapters] = useState<any[]>([]);
+  const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
+  const [chaptersLoading, setChaptersLoading] = useState(false);
+
+  // Secondary filters
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categoryValue, setCategoryValue] = useState<string | null>(null);
   const [categoryItems, setCategoryItems] = useState<
@@ -122,30 +125,52 @@ const MyAssessmentsPage = () => {
     return [];
   };
 
-  // Fetch courses for Course-First pattern
   const fetchCourses = async () => {
     try {
       setCoursesLoading(true);
       const res = await getAllCourses();
       if (res && Array.isArray(res.courses)) {
         setCourses(res.courses);
+      } else {
+        setCourses([]);
       }
     } catch (err: any) {
       console.error("Error fetching courses:", err);
+      setCourses([]);
     } finally {
       setCoursesLoading(false);
     }
   };
 
-  // Handle course change - resets secondary filters
   const handleCourseChange = async (courseId: string | null) => {
     setSelectedCourse(courseId);
-    // Reset secondary filters when course changes
-    setCategoryValue(null);
-    setTypeValue(null);
-    setStatusValue(null);
+    setSelectedChapter(null);
     setSearchQuery("");
+    setTypeValue(null);
+    setCategoryValue(null);
+    setStatusValue(null);
   };
+
+  const extractChapters = (assessmentList: AssessmentItem[]) => {
+    const uniqueChapters = assessmentList.reduce((acc: any[], assessment) => {
+      if (assessment.chapter && assessment.chapter._id) {
+        const exists = acc.find(c => c._id === assessment.chapter._id);
+        if (!exists) {
+          acc.push({
+            _id: assessment.chapter._id,
+            title: assessment.chapter.title,
+          });
+        }
+      }
+      return acc;
+    }, []);
+    setChapters(uniqueChapters);
+  };
+
+  const handleChapterChange = async (chapterId: string | null) => {
+    setSelectedChapter(chapterId);
+  };
+
   const formatDateTime = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -157,6 +182,7 @@ const MyAssessmentsPage = () => {
     };
     return new Date(dateString).toLocaleDateString("en-US", options);
   };
+
   const fetchAssessments = async () => {
     try {
       setLoading(true);
@@ -194,6 +220,9 @@ const MyAssessmentsPage = () => {
             value: type,
           })),
       ]);
+
+      // Extract chapters from loaded assessments
+      extractChapters(list);
     } catch (err: any) {
       console.log("[getAllAssessmentForStudent] error:", err);
       setError(err?.message || "Failed to load assessments");
@@ -203,14 +232,11 @@ const MyAssessmentsPage = () => {
     }
   };
 
-  // useEffect(() => {
-  //   console.log(`Bearer token:`);
-  //   console.log(token);
-  // }, []);
-
-  // useEffect(() => {
-  //   fetchAssessments();
-  // }, []);
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchAssessments();
+    fetchCourses();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -253,6 +279,7 @@ const MyAssessmentsPage = () => {
         minute: "2-digit",
       });
   };
+
   const getFilteredQuestions = () => {
     if (!submissionDetails?.answers) return [];
 
@@ -269,6 +296,7 @@ const MyAssessmentsPage = () => {
         return submissionDetails.answers;
     }
   };
+
   const getTitle = (item: AssessmentItem) => item.title || "Untitled";
   const getCourse = (item: AssessmentItem) => item?.course?.courseTitle || "—";
   const getChapter = (item: AssessmentItem) => item?.chapter?.title || "—";
@@ -285,15 +313,21 @@ const MyAssessmentsPage = () => {
   const getStatus = (item: AssessmentItem) =>
     item.isSubmitted ? "Submitted" : "Pending";
 
-  // Apply filters
+  // Course-First Pattern: Apply ALL filters
   const filtered = useMemo(() => {
-    return assessments.filter((a) => {
-      // Course filter
-      const matchesCourse =
-        !selectedCourse ||
-        selectedCourse === "all" ||
-        a.course._id === selectedCourse;
+    // Step 1: Filter by course (PRIMARY FILTER)
+    let result = assessments;
+    if (selectedCourse && selectedCourse !== "all") {
+      result = result.filter((a) => a.course._id === selectedCourse);
+    }
 
+    // Step 2: Filter by chapter
+    if (selectedChapter && selectedChapter !== "all") {
+      result = result.filter((a) => a.chapter?._id === selectedChapter);
+    }
+
+    // Step 3: Apply remaining secondary filters
+    return result.filter((a) => {
       // Search filter
       const matchesSearch =
         searchQuery.trim() === "" ||
@@ -301,25 +335,54 @@ const MyAssessmentsPage = () => {
 
       // Type filter
       const matchesType =
-        !typeValue ||
-        typeValue === "all" ||
-        a.type === typeValue;
+        !typeValue || typeValue === "all" || a.type === typeValue;
 
-      return matchesCourse && matchesSearch && matchesType;
+      // Category filter
+      const matchesCategory =
+        !categoryValue ||
+        categoryValue === "all" ||
+        a.category?._id === categoryValue;
+
+      // Status filter
+      const matchesStatus =
+        !statusValue ||
+        statusValue === "all" ||
+        (statusValue === "submitted" && a.isSubmitted) ||
+        (statusValue === "pending" && !a.isSubmitted);
+
+      return matchesSearch && matchesType && matchesCategory && matchesStatus;
     });
   }, [
     assessments,
     selectedCourse,
+    selectedChapter,
     searchQuery,
     typeValue,
+    categoryValue,
+    statusValue,
   ]);
 
-  // Dropdown interlock to prevent multiple dropdowns from being open
+  // Dropdown interlock - close others when one opens
   useEffect(() => {
     if (typeOpen) {
-      // Close other dropdowns if needed
+      setCategoryOpen(false);
+      setStatusOpen(false);
     }
   }, [typeOpen]);
+
+  useEffect(() => {
+    if (categoryOpen) {
+      setTypeOpen(false);
+      setStatusOpen(false);
+    }
+  }, [categoryOpen]);
+
+  useEffect(() => {
+    if (statusOpen) {
+      setTypeOpen(false);
+      setCategoryOpen(false);
+    }
+  }, [statusOpen]);
 
   // ---------- COMPONENTS ----------
   const StatusBadge = ({ status }: { status: string }) => {
@@ -362,7 +425,6 @@ const MyAssessmentsPage = () => {
           {formatDate(due.date)} at {formatTime(due.time)}
         </Text>
 
-        {/* {!item?.isSubmitted && ( */}
         <TouchableOpacity
           style={styles.submitBtn}
           onPress={async () => {
@@ -401,44 +463,6 @@ const MyAssessmentsPage = () => {
             {item?.isSubmitted ? "See Result" : "Submit Assessment"}
           </Text>
         </TouchableOpacity>
-        {/* )} */}
-      </View>
-    );
-  };
-
-  const Row = ({
-    item,
-    rowKey,
-    onPress,
-  }: {
-    item: AssessmentItem;
-    rowKey: string;
-    onPress: () => void;
-  }) => {
-    const title = getTitle(item);
-    const course = getCourse(item);
-    const status = getStatus(item);
-    const type = getType(item);
-    const due = getDueDate(item);
-    const isOpen = !!expanded[rowKey];
-
-    return (
-      <View>
-        <TouchableOpacity style={styles.row} onPress={onPress}>
-          <Text style={[styles.td, styles.colName]}>
-            {isOpen ? "⌄ " : "› "} {title}
-          </Text>
-          <Text style={[styles.td, styles.colCourse]}>{course}</Text>
-          <Text style={[styles.td, styles.colDue, { fontSize: 13 }]}>
-            {formatDate(due.date)} {formatTime(due.time)}
-          </Text>
-          <View style={[styles.colStatus, styles.centered]}>
-            <StatusBadge status={status} />
-          </View>
-          <Text style={[styles.td, styles.colType]}>{type}</Text>
-        </TouchableOpacity>
-
-        {isOpen && <ExpandedDetails item={item} />}
       </View>
     );
   };
@@ -455,30 +479,65 @@ const MyAssessmentsPage = () => {
         <Text style={styles.bannerText}>Assessments</Text>
       </View>
 
-      {/* Filter Bar */}
-      <FilterBar>
+      {/* Primary Filter: Course Selector */}
+      <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
         <CourseSelector
           courses={courses}
           selectedCourse={selectedCourse}
           onCourseChange={handleCourseChange}
           loading={coursesLoading}
         />
-        <SearchFilterView
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Search by title"
-        />
-        <DropdownFilter
-          open={typeOpen}
-          value={typeValue}
-          items={typeItems}
-          setOpen={setTypeOpen}
-          setValue={setTypeValue}
-          placeholder="All Types"
-          zIndex={2000}
-          dropDownContainerStyle={styles.dropdownContainer}
-        />
       </FilterBar>
+
+      {/* Secondary Filters */}
+      <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>
+        <FilterBar>
+          <SearchFilterView
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by title"
+            style={{ flex: 1 }}
+          />
+        </FilterBar>
+
+        {selectedCourse && (
+          <FilterBar>
+            <DropdownFilter
+              open={typeOpen}
+              value={typeValue}
+              items={typeItems}
+              setOpen={setTypeOpen}
+              setValue={setTypeValue}
+              placeholder="All Types"
+              zIndex={3000}
+              dropDownContainerStyle={styles.dropdownContainer}
+              style={{ flex: 1 }}
+            />
+            <DropdownFilter
+              open={categoryOpen}
+              value={categoryValue}
+              items={categoryItems}
+              setOpen={setCategoryOpen}
+              setValue={setCategoryValue}
+              placeholder="All Categories"
+              zIndex={2000}
+              dropDownContainerStyle={styles.dropdownContainer}
+              style={{ flex: 1 }}
+            />
+            <DropdownFilter
+              open={statusOpen}
+              value={statusValue}
+              items={statusItems}
+              setOpen={setStatusOpen}
+              setValue={setStatusValue}
+              placeholder="All Status"
+              zIndex={1000}
+              dropDownContainerStyle={styles.dropdownContainer}
+              style={{ flex: 1 }}
+            />
+          </FilterBar>
+        )}
+      </View>
 
       {loading ? (
         <View style={styles.stateWrap}>
@@ -532,334 +591,333 @@ const MyAssessmentsPage = () => {
         />
       )}
       <Modal
-            visible={detailedModalVisible}
-            animationType="slide"
-            transparent={false}
-            onRequestClose={() => {
-              setDetailedModalVisible(false);
-            }}
-          >
-            <View
-              style={[
-                styles.detailedModalContainer,
-                { paddingTop: insets.top || 20 },
-              ]}
+        visible={detailedModalVisible}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => {
+          setDetailedModalVisible(false);
+        }}
+      >
+        <View
+          style={[
+            styles.detailedModalContainer,
+            { paddingTop: insets.top || 20 },
+          ]}
+        >
+          {/* Header */}
+          <View style={[styles.detailedModalHeader]}>
+            <Text style={styles.detailedModalTitle}>
+              Submission Details
+            </Text>
+            <TouchableOpacity
+              style={styles.detailedModalCloseButton}
+              onPress={() => {
+                setDetailedModalVisible(false);
+              }}
             >
-              {/* Header */}
-              <View style={[styles.detailedModalHeader]}>
-                <Text style={styles.detailedModalTitle}>
-                  Submission Details
+              <SimpleIcon name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+
+          {submissionDetailsLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007bff" />
+            </View>
+          ) : submissionDetailsError ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{submissionDetailsError}</Text>
+            </View>
+          ) : submissionDetails ? (
+            <ScrollView style={styles.detailedModalContent}>
+              {submissionDetails && console.log(submissionDetails)}
+
+              {/* Student and Submission Overview */}
+              <View style={styles.submissionOverview}>
+                <View style={styles.studentOverviewDetails}>
+                  <View style={styles.statusTags}>
+                    <View
+                      style={[
+                        styles.statusTag,
+                        { backgroundColor: "#E5E7EB" },
+                      ]}
+                    >
+                      <Text style={styles.statusTagText}>
+                        {submissionDetails.status}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusTag,
+                        { backgroundColor: "#E5E7EB" },
+                      ]}
+                    >
+                      <Text style={styles.statusTagText}>
+                        {submissionDetails.graded ? "Graded" : "Not Graded"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.submissionTime}>
+                    Submitted on:{" "}
+                    {formatDateTime(
+                      submissionDetails.submittedAt ||
+                      submissionDetails.createdAt
+                    )}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Assessment Summary */}
+              <View style={styles.assessmentSummary}>
+                <Text style={styles.assessmentSummaryTitle}>
+                  Assessment Summary
                 </Text>
+                <View style={styles.assessmentSummaryCard}>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Assessment ID</Text>
+                    <Text style={styles.summaryValue}>
+                      {submissionDetails.assessment}
+                    </Text>
+                  </View>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Total Points</Text>
+                    <Text style={styles.summaryValue}>
+                      {submissionDetails.totalScore} points
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Question Tabs */}
+              <View style={styles.questionTabs}>
                 <TouchableOpacity
-                  style={styles.detailedModalCloseButton}
-                  onPress={() => {
-                    setDetailedModalVisible(false);
-                  }}
+                  style={[
+                    styles.tab,
+                    activeTab === "all" && styles.activeTab,
+                  ]}
+                  onPress={() => setActiveTab("all")}
                 >
-                  <SimpleIcon name="close" size={24} color="#333" />
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "all" && styles.activeTabText,
+                    ]}
+                  >
+                    All Questions ({submissionDetails.answers?.length || 0})
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.tab,
+                    activeTab === "needs_grading" && styles.activeTab,
+                  ]}
+                  onPress={() => setActiveTab("needs_grading")}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "needs_grading" && styles.activeTabText,
+                    ]}
+                  >
+                    Needs Grading (
+                    {submissionDetails.answers?.filter(
+                      (a: any) => a.requiresManualCheck
+                    ).length || 0}
+                    )
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.tab,
+                    activeTab === "graded" && styles.activeTab,
+                  ]}
+                  onPress={() => setActiveTab("graded")}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "graded" && styles.activeTabText,
+                    ]}
+                  >
+                    Graded (
+                    {submissionDetails.answers?.filter(
+                      (a: any) => !a.requiresManualCheck
+                    ).length || 0}
+                    )
+                  </Text>
                 </TouchableOpacity>
               </View>
 
-              {submissionDetailsLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#007bff" />
-                </View>
-              ) : submissionDetailsError ? (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>{submissionDetailsError}</Text>
-                </View>
-              ) : submissionDetails ? (
-                <ScrollView style={styles.detailedModalContent}>
-                  {submissionDetails && console.log(submissionDetails)}
-
-                  {/* Student and Submission Overview */}
-                  <View style={styles.submissionOverview}>
-                    <View style={styles.studentOverviewDetails}>
-                      <View style={styles.statusTags}>
-                        <View
-                          style={[
-                            styles.statusTag,
-                            { backgroundColor: "#E5E7EB" },
-                          ]}
-                        >
-                          <Text style={styles.statusTagText}>
-                            {submissionDetails.status}
+              {/* Questions List */}
+              <View style={styles.questionsContainer}>
+                {getFilteredQuestions().map(
+                  (answer: any, index: number) => (
+                    <View key={answer._id} style={styles.questionCard}>
+                      <View style={styles.questionHeader}>
+                        <View style={styles.questionHeaderLeft}>
+                          <Text style={styles.questionNumber}>
+                            Question {index + 1}
                           </Text>
                         </View>
-                        <View
-                          style={[
-                            styles.statusTag,
-                            { backgroundColor: "#E5E7EB" },
-                          ]}
-                        >
-                          <Text style={styles.statusTagText}>
-                            {submissionDetails.graded ? "Graded" : "Not Graded"}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <Text style={styles.submissionTime}>
-                        Submitted on:{" "}
-                        {formatDateTime(
-                          submissionDetails.submittedAt ||
-                          submissionDetails.createdAt
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Assessment Summary */}
-                  <View style={styles.assessmentSummary}>
-                    <Text style={styles.assessmentSummaryTitle}>
-                      Assessment Summary
-                    </Text>
-                    <View style={styles.assessmentSummaryCard}>
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Assessment ID</Text>
-                        <Text style={styles.summaryValue}>
-                          {submissionDetails.assessment}
-                        </Text>
-                      </View>
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Total Points</Text>
-                        <Text style={styles.summaryValue}>
-                          {submissionDetails.totalScore} points
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Question Tabs */}
-                  <View style={styles.questionTabs}>
-                    <TouchableOpacity
-                      style={[
-                        styles.tab,
-                        activeTab === "all" && styles.activeTab,
-                      ]}
-                      onPress={() => setActiveTab("all")}
-                    >
-                      <Text
-                        style={[
-                          styles.tabText,
-                          activeTab === "all" && styles.activeTabText,
-                        ]}
-                      >
-                        All Questions ({submissionDetails.answers?.length || 0})
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.tab,
-                        activeTab === "needs_grading" && styles.activeTab,
-                      ]}
-                      onPress={() => setActiveTab("needs_grading")}
-                    >
-                      <Text
-                        style={[
-                          styles.tabText,
-                          activeTab === "needs_grading" && styles.activeTabText,
-                        ]}
-                      >
-                        Needs Grading (
-                        {submissionDetails.answers?.filter(
-                          (a: any) => a.requiresManualCheck
-                        ).length || 0}
-                        )
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.tab,
-                        activeTab === "graded" && styles.activeTab,
-                      ]}
-                      onPress={() => setActiveTab("graded")}
-                    >
-                      <Text
-                        style={[
-                          styles.tabText,
-                          activeTab === "graded" && styles.activeTabText,
-                        ]}
-                      >
-                        Graded (
-                        {submissionDetails.answers?.filter(
-                          (a: any) => !a.requiresManualCheck
-                        ).length || 0}
-                        )
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Questions List */}
-                  <View style={styles.questionsContainer}>
-                    {getFilteredQuestions().map(
-                      (answer: any, index: number) => (
-                        <View key={answer._id} style={styles.questionCard}>
-                          <View style={styles.questionHeader}>
-                            <View style={styles.questionHeaderLeft}>
-                              <Text style={styles.questionNumber}>
-                                Question {index + 1}
-                              </Text>
-                              {/* <Text style={styles.questionType}>{answer.question?.type == "truefalse" ? "True/False" : answer.question?.type}</Text> */}
-                            </View>
-                            <View style={styles.questionTags}>
-                              {answer.requiresManualCheck ? (
-                                <View
-                                  style={[
-                                    styles.questionTag,
-                                    {
-                                      backgroundColor: "#FEF3C7",
-                                      borderColor: "#F59E0B",
-                                      borderWidth: 1,
-                                    },
-                                  ]}
-                                >
-                                  <Text
-                                    style={[
-                                      styles.questionTagText,
-                                      { color: "#92400E" },
-                                    ]}
-                                  >
-                                    Needs Manual Grading
-                                  </Text>
-                                </View>
-                              ) : (
-                                <View
-                                  style={[
-                                    styles.questionTag,
-                                    {
-                                      backgroundColor: answer.isCorrect
-                                        ? "#D1FAE5"
-                                        : "#FEE2E2",
-                                    },
-                                  ]}
-                                >
-                                  <Text
-                                    style={[
-                                      styles.questionTagText,
-                                      {
-                                        color: answer.isCorrect
-                                          ? "#065F46"
-                                          : "#991B1B",
-                                      },
-                                    ]}
-                                  >
-                                    {answer.isCorrect
-                                      ? "✓ Correct"
-                                      : "✗ Incorrect"}
-                                  </Text>
-                                </View>
-                              )}
-                              <View
+                        <View style={styles.questionTags}>
+                          {answer.requiresManualCheck ? (
+                            <View
+                              style={[
+                                styles.questionTag,
+                                {
+                                  backgroundColor: "#FEF3C7",
+                                  borderColor: "#F59E0B",
+                                  borderWidth: 1,
+                                },
+                              ]}
+                            >
+                              <Text
                                 style={[
-                                  styles.questionTag,
-                                  { backgroundColor: "#F3F4F6" },
+                                  styles.questionTagText,
+                                  { color: "#92400E" },
                                 ]}
                               >
-                                <Text
-                                  style={[
-                                    styles.questionTagText,
-                                    { color: "#374151" },
-                                  ]}
-                                >
-                                  {answer.pointsAwarded}/
-                                  {answer.questionDetails?.points} pts
-                                </Text>
-                              </View>
-                            </View>
-                          </View>
-
-                          <View style={styles.questionContent}>
-                            <Text style={styles.questionLabel}>Question:</Text>
-                            <View style={styles.questionTextContainer}>
-                              <Text style={styles.questionText}>
-                                {answer.question?.question?.replace(
-                                  /<[^>]*>/g,
-                                  ""
-                                ) || "No question text"}
+                                Needs Manual Grading
                               </Text>
                             </View>
-
-                            {/* Teacher uploaded files */}
-                            {answer.questionDetails?.file &&
-                              answer.questionDetails.file.length > 0 && (
-                                <View style={styles.teacherFilesContainer}>
-                                  <Text style={styles.filesLabel}>
-                                    Teacher Files:
-                                  </Text>
-                                  {answer.questionDetails.file.map(
-                                    (file: any, fileIndex: number) => (
-                                      <TouchableOpacity
-                                        key={fileIndex}
-                                        style={styles.fileCard}
-                                        onPress={() =>
-                                          Linking.openURL(file.url)
-                                        }
-                                      >
-                                        <SimpleIcon
-                                          name="description"
-                                          size={20}
-                                          color="#4285F4"
-                                        />
-                                        <Text style={styles.fileName}>
-                                          {file.filename}
-                                        </Text>
-                                      </TouchableOpacity>
-                                    )
-                                  )}
-                                </View>
-                              )}
-                          </View>
-
-                          <View style={styles.answerContent}>
-                            <Text style={styles.answerLabel}>
-                              Student's Answer:
+                          ) : (
+                            <View
+                              style={[
+                                styles.questionTag,
+                                {
+                                  backgroundColor: answer.isCorrect
+                                    ? "#D1FAE5"
+                                    : "#FEE2E2",
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.questionTagText,
+                                  {
+                                    color: answer.isCorrect
+                                      ? "#065F46"
+                                      : "#991B1B",
+                                  },
+                                ]}
+                              >
+                                {answer.isCorrect
+                                  ? "✓ Correct"
+                                  : "✗ Incorrect"}
+                              </Text>
+                            </View>
+                          )}
+                          <View
+                            style={[
+                              styles.questionTag,
+                              { backgroundColor: "#F3F4F6" },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.questionTagText,
+                                { color: "#374151" },
+                              ]}
+                            >
+                              {answer.pointsAwarded}/
+                              {answer.questionDetails?.points} pts
                             </Text>
-                            <View style={styles.answerTextContainer}>
-                              <Text style={styles.answerText}>
-                                {answer.questionDetails?.type === "file"
-                                  ? answer.file && answer.file.length > 0
-                                    ? `${answer.file.length} file(s) uploaded`
-                                    : "No file uploaded"
-                                  : answer.selectedAnswer ||
-                                  "No answer provided"}
-                              </Text>
-                            </View>
-
-                            {/* Student uploaded files */}
-                            {answer.file && answer.file.length > 0 && (
-                              <View style={styles.studentFilesContainer}>
-                                <Text style={styles.filesLabel}>
-                                  Student Files:
-                                </Text>
-                                {answer.file.map(
-                                  (file: any, fileIndex: number) => (
-                                    <TouchableOpacity
-                                      key={fileIndex}
-                                      style={styles.fileCard}
-                                      onPress={() => Linking.openURL(file.url)}
-                                    >
-                                      <SimpleIcon
-                                        name="description"
-                                        size={20}
-                                        color="#10B144"
-                                      />
-                                      <Text style={styles.fileName}>
-                                        {file.filename}
-                                      </Text>
-                                    </TouchableOpacity>
-                                  )
-                                )}
-                              </View>
-                            )}
                           </View>
                         </View>
-                      )
-                    )}
-                  </View>
-                </ScrollView>
-              ) : null}
-            </View>
-          </Modal>
+                      </View>
+
+                      <View style={styles.questionContent}>
+                        <Text style={styles.questionLabel}>Question:</Text>
+                        <View style={styles.questionTextContainer}>
+                          <Text style={styles.questionText}>
+                            {answer.question?.question?.replace(
+                              /<[^>]*>/g,
+                              ""
+                            ) || "No question text"}
+                          </Text>
+                        </View>
+
+                        {/* Teacher uploaded files */}
+                        {answer.questionDetails?.file &&
+                          answer.questionDetails.file.length > 0 && (
+                            <View style={styles.teacherFilesContainer}>
+                              <Text style={styles.filesLabel}>
+                                Teacher Files:
+                              </Text>
+                              {answer.questionDetails.file.map(
+                                (file: any, fileIndex: number) => (
+                                  <TouchableOpacity
+                                    key={fileIndex}
+                                    style={styles.fileCard}
+                                    onPress={() =>
+                                      Linking.openURL(file.url)
+                                    }
+                                  >
+                                    <SimpleIcon
+                                      name="description"
+                                      size={20}
+                                      color="#4285F4"
+                                    />
+                                    <Text style={styles.fileName}>
+                                      {file.filename}
+                                    </Text>
+                                  </TouchableOpacity>
+                                )
+                              )}
+                            </View>
+                          )}
+                      </View>
+
+                      <View style={styles.answerContent}>
+                        <Text style={styles.answerLabel}>
+                          Student's Answer:
+                        </Text>
+                        <View style={styles.answerTextContainer}>
+                          <Text style={styles.answerText}>
+                            {answer.questionDetails?.type === "file"
+                              ? answer.file && answer.file.length > 0
+                                ? `${answer.file.length} file(s) uploaded`
+                                : "No file uploaded"
+                              : answer.selectedAnswer ||
+                              "No answer provided"}
+                          </Text>
+                        </View>
+
+                        {/* Student uploaded files */}
+                        {answer.file && answer.file.length > 0 && (
+                          <View style={styles.studentFilesContainer}>
+                            <Text style={styles.filesLabel}>
+                              Student Files:
+                            </Text>
+                            {answer.file.map(
+                              (file: any, fileIndex: number) => (
+                                <TouchableOpacity
+                                  key={fileIndex}
+                                  style={styles.fileCard}
+                                  onPress={() => Linking.openURL(file.url)}
+                                >
+                                  <SimpleIcon
+                                    name="description"
+                                    size={20}
+                                    color="#10B144"
+                                  />
+                                  <Text style={styles.fileName}>
+                                    {file.filename}
+                                  </Text>
+                                </TouchableOpacity>
+                              )
+                            )}
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )
+                )}
+              </View>
+            </ScrollView>
+          ) : null}
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -1313,7 +1371,7 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     zIndex: 9999,
-    elevation: 9999, // Android fix
+    elevation: 9999,
   },
 });
 

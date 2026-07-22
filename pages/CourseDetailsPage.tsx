@@ -56,6 +56,8 @@ import QuartersModal from "../components/modals/QuartersModal";
 import GPAModal from "../components/modals/GPAModal";
 import GradeScaleModal from "../components/modals/GradeScaleModal";
 
+import { VideoIcon } from "../assets/components/VideoIcon";
+
 import {
   getCourseDetails,
   deleteCourse,
@@ -631,6 +633,11 @@ const CourseDetailsPage = () => {
   };
 
   const loadGPA = async () => {
+    if (!courseId) {
+      Toast.show("Course ID is missing", Toast.LONG);
+      return;
+    }
+    console.log(courseId);
     setShowGPAManagement(true);
     setShowGPAManagementLoader(true);
     setGpaError(null); // clear previous errors
@@ -660,6 +667,11 @@ const CourseDetailsPage = () => {
   const retryLoadGPA = () => {
     loadGPA(); // re-run the fetch
   };
+
+  const loadStandardGradeScale = () => {
+    navigation.navigate("StandardGradeScaleManagement", { courseId: course._id });
+
+  }
 
   // ---- Handlers ----
   const handleDelete = async () => {
@@ -1842,6 +1854,151 @@ const CourseDetailsPage = () => {
     }
   };
 
+  // ---- Stable handler refs for ChapterDetailsModal ----
+  // These handlers close over state that changes on nearly every render of
+  // this (very large) component, so passing them directly as props would
+  // give ChapterDetailsModal a new function reference every time and defeat
+  // its React.memo (causing the modal's lesson/assessment list to re-render
+  // - and stutter - on any unrelated state change elsewhere on this page).
+  // Routing calls through a ref keeps the prop identity stable while still
+  // always invoking the latest version of each handler (no stale closures).
+  const handleBackToQuarters = () => {
+    course?.semesterbased && setShowQuartersModal(true);
+  };
+
+  const handleDeleteChapterPress = (chapter: any) => {
+    setChapterToDelete(chapter);
+    setShowChaptersForQuarterModal(false);
+    setShowDeleteChapterModal(true);
+  };
+
+  const chapterModalHandlersRef = useRef({
+    handleEditChapter,
+    handleAddLesson,
+    handlePlusButtonPress,
+    handleLessonsPlusButtonPress,
+    handleDropdownOption,
+    handleLessonsDropdownOption,
+    handleEditLesson,
+    handleDeleteLessonFromChapter,
+    handleDeleteFile,
+    handleAddFilesToLesson,
+    handleOpenLink,
+    handleDeleteAssessmentDirect,
+    handleBackToQuarters,
+    handleViewChapterDetails,
+    handleDeleteChapterPress,
+  });
+  chapterModalHandlersRef.current = {
+    handleEditChapter,
+    handleAddLesson,
+    handlePlusButtonPress,
+    handleLessonsPlusButtonPress,
+    handleDropdownOption,
+    handleLessonsDropdownOption,
+    handleEditLesson,
+    handleDeleteLessonFromChapter,
+    handleDeleteFile,
+    handleAddFilesToLesson,
+    handleOpenLink,
+    handleDeleteAssessmentDirect,
+    handleBackToQuarters,
+    handleViewChapterDetails,
+    handleDeleteChapterPress,
+  };
+
+  const stableOnCloseChapterDetailsModal = useCallback(
+    () => setShowChapterDetailsModal(false),
+    []
+  );
+  const stableOnAssessmentDetailsModalOpen = useCallback(
+    () => setShowAssessmentDetailsModal(true),
+    []
+  );
+  const stableOnChaptersForQuarterModalOpen = useCallback(
+    () => setShowChaptersForQuarterModal(true),
+    []
+  );
+  const stableOnEditChapter = useCallback(
+    () => chapterModalHandlersRef.current.handleEditChapter(),
+    []
+  );
+  const stableOnAddLesson = useCallback(
+    () => chapterModalHandlersRef.current.handleAddLesson(),
+    []
+  );
+  const stableOnPlusButtonPress = useCallback(
+    () => chapterModalHandlersRef.current.handlePlusButtonPress(),
+    []
+  );
+  const stableOnLessonsPlusButtonPress = useCallback(
+    (lesson: any) =>
+      chapterModalHandlersRef.current.handleLessonsPlusButtonPress(lesson),
+    []
+  );
+  const stableOnDropdownOption = useCallback(
+    (option: string) =>
+      chapterModalHandlersRef.current.handleDropdownOption(option),
+    []
+  );
+  const stableOnLessonsDropdownOption = useCallback(
+    (option: string) =>
+      chapterModalHandlersRef.current.handleLessonsDropdownOption(option),
+    []
+  );
+  const stableOnEditLesson = useCallback(
+    (lesson: any) => chapterModalHandlersRef.current.handleEditLesson(lesson),
+    []
+  );
+  const stableOnDeleteLessonFromChapter = useCallback(
+    (lessonId: string) =>
+      chapterModalHandlersRef.current.handleDeleteLessonFromChapter(lessonId),
+    []
+  );
+  const stableOnDeleteFile = useCallback(
+    (lessonId: string, fileId: string) =>
+      chapterModalHandlersRef.current.handleDeleteFile(lessonId, fileId),
+    []
+  );
+  const stableOnAddFilesToLesson = useCallback(
+    (lessonId: string) =>
+      chapterModalHandlersRef.current.handleAddFilesToLesson(lessonId),
+    []
+  );
+  const stableOnOpenLink = useCallback(
+    (url: string) => chapterModalHandlersRef.current.handleOpenLink(url),
+    []
+  );
+  const stableOnDeleteAssessmentDirect = useCallback(
+    (assessmentId: string) =>
+      chapterModalHandlersRef.current.handleDeleteAssessmentDirect(
+        assessmentId
+      ),
+    []
+  );
+  const stableOnCloseChaptersForQuarterModal = useCallback(
+    () => setShowChaptersForQuarterModal(false),
+    []
+  );
+  const stableOnBackToQuarters = useCallback(
+    () => chapterModalHandlersRef.current.handleBackToQuarters(),
+    []
+  );
+  const stableOnCreateChapter = useCallback(() => {
+    setShowChaptersForQuarterModal(false);
+    setShowCreateChapterModal(true);
+  }, []);
+  const stableOnViewChapterDetails = useCallback(
+    (chapterId: string) =>
+      chapterModalHandlersRef.current.handleViewChapterDetails(chapterId),
+    []
+  );
+  const stableOnDeleteChapterPress = useCallback(
+    (chapter: any) =>
+      chapterModalHandlersRef.current.handleDeleteChapterPress(chapter),
+    []
+  );
+
   // ---- Render ----
   if (loading) {
     return (
@@ -2020,22 +2177,6 @@ const CourseDetailsPage = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("CourseDetailStudentPage", {
-                courseId: course._id,
-                fromAdmin: true,
-              })
-            }
-            style={[
-              styles.topActionButton,
-              { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
-            ]}
-          >
-            <Text style={[styles.topActionButtonText, { color: "#000" }]}>
-              Preview as Student
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
             onPress={loadGradeScale}
             style={[
               styles.topActionButton,
@@ -2085,6 +2226,38 @@ const CourseDetailsPage = () => {
               </Text>
             </TouchableOpacity>
           )}
+
+          <TouchableOpacity
+            onPress={loadStandardGradeScale}
+            style={[
+              styles.topActionButton,
+              { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
+            ]}
+          >
+            <Text style={[styles.topActionButtonText, { color: "#000" }]}>
+              Standard GradeScale
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("ScheduleMeeting", { courseId: course._id })
+            }
+            style={[
+              styles.topActionButton,
+              {
+                backgroundColor: "#fff",
+                borderWidth: 1,
+                borderColor: "#ccc",
+              },
+            ]}
+          >
+            <VideoIcon />
+            <Text style={[styles.topActionButtonText, { color: "#2238c7" }]}>
+              Schedule Meeting
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={async () => {
               setShowGradebookModal(true);
@@ -2520,23 +2693,14 @@ const CourseDetailsPage = () => {
 
       <ChaptersForQuarterModal
         visible={showChaptersForQuarterModal}
-        onClose={() => setShowChaptersForQuarterModal(false)}
-        onBackToQuarters={() =>
-          course?.semesterbased && setShowQuartersModal(true)
-        }
-        onCreateChapter={() => {
-          setShowChaptersForQuarterModal(false);
-          setShowCreateChapterModal(true);
-        }}
+        onClose={stableOnCloseChaptersForQuarterModal}
+        onBackToQuarters={stableOnBackToQuarters}
+        onCreateChapter={stableOnCreateChapter}
         loadingChaptersForQuarter={loadingChaptersForQuarter}
         chaptersForQuarter={chaptersForQuarter}
         chaptersMessage={chaptersMessage}
-        onViewChapterDetails={handleViewChapterDetails}
-        onDeleteChapter={(chapter) => {
-          setChapterToDelete(chapter);
-          setShowChaptersForQuarterModal(false);
-          setShowDeleteChapterModal(true);
-        }}
+        onViewChapterDetails={stableOnViewChapterDetails}
+        onDeleteChapter={stableOnDeleteChapterPress}
       />
 
       <AssessmentDetailsModal
@@ -2648,30 +2812,28 @@ const CourseDetailsPage = () => {
       <ChapterDetailsModal
         // ref={plusButtonRef}
         visible={showChapterDetailsModal}
-        onClose={() => setShowChapterDetailsModal(false)}
+        onClose={stableOnCloseChapterDetailsModal}
         chapterDetails={chapterDetails}
         chapterDetailsLoading={chapterDetailsLoading}
         chapterDetailsError={chapterDetailsError}
         showPlusDropdown={showPlusDropdown}
         showLessonsPlusDropdown={showLessonsPlusDropdown}
         currentLessonForAssessment={currentLessonForAssessment}
-        onEditChapter={handleEditChapter}
-        onAddLesson={handleAddLesson}
-        onPlusButtonPress={handlePlusButtonPress}
-        onLessonsPlusButtonPress={handleLessonsPlusButtonPress}
-        onDropdownOption={handleDropdownOption}
-        onLessonsDropdownOption={handleLessonsDropdownOption}
-        onEditLesson={handleEditLesson}
-        onDeleteLessonFromChapter={handleDeleteLessonFromChapter}
-        onDeleteFile={handleDeleteFile}
-        onAddFilesToLesson={handleAddFilesToLesson}
-        onOpenLink={handleOpenLink}
-        onDeleteAssessmentDirect={handleDeleteAssessmentDirect}
+        onEditChapter={stableOnEditChapter}
+        onAddLesson={stableOnAddLesson}
+        onPlusButtonPress={stableOnPlusButtonPress}
+        onLessonsPlusButtonPress={stableOnLessonsPlusButtonPress}
+        onDropdownOption={stableOnDropdownOption}
+        onLessonsDropdownOption={stableOnLessonsDropdownOption}
+        onEditLesson={stableOnEditLesson}
+        onDeleteLessonFromChapter={stableOnDeleteLessonFromChapter}
+        onDeleteFile={stableOnDeleteFile}
+        onAddFilesToLesson={stableOnAddFilesToLesson}
+        onOpenLink={stableOnOpenLink}
+        onDeleteAssessmentDirect={stableOnDeleteAssessmentDirect}
         onSelectAssessmentForModal={setSelectedAssessmentForModal}
-        onAssessmentDetailsModalOpen={() => setShowAssessmentDetailsModal(true)}
-        onChaptersForQuarterModalOpen={() =>
-          setShowChaptersForQuarterModal(true)
-        }
+        onAssessmentDetailsModalOpen={stableOnAssessmentDetailsModalOpen}
+        onChaptersForQuarterModalOpen={stableOnChaptersForQuarterModalOpen}
       />
 
       <LessonCreationModal

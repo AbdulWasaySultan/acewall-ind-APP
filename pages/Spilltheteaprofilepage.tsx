@@ -18,6 +18,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 
 import ProfileHeader from "../components/spillTheTea/ProfileHeader";
 import ProfilePostCard from "../components/spillTheTea/Profilepostcard";
+import CommentsModal from "../components/spillTheTea/CommentsModal";
 import { Author, Post } from "../components/spillTheTea";
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ import {
   getLikeCount,
   getCommentCount,
   deletePost,
+  addComment,
 } from "../services/socialPosts";
 import { toggleLike } from "../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/helpers";
 
@@ -115,6 +117,8 @@ const SpillTheTeaProfilePage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   // ── Update helpers — same as SpillTheTeaPage ─────────────────────────────
   const updatePostLike = useCallback(
@@ -235,6 +239,37 @@ const SpillTheTeaProfilePage: React.FC = () => {
     }
   };
 
+  // ── Comments — same as SpillTheTeaPage ────────────────────────────────────
+  const openComments = (post: Post) => {
+    setSelectedPost(post);
+    setCommentsOpen(true);
+  };
+
+  const handleAddComment = async (postId: string, text: string) => {
+    const newComment = {
+      _id: Date.now().toString(),
+      content: text,
+      author: { _id: currentUserId ?? "", firstName: "You", lastName: "" },
+      createdAt: new Date().toISOString(),
+    };
+    const addCommentTo = (p: Post): Post => ({
+      ...p,
+      comments: [...(p.comments ?? []), newComment],
+      totalComments: (p.totalComments ?? p.comments?.length ?? 0) + 1,
+    });
+    setPosts((prev) =>
+      prev.map((p) => (p._id === postId ? addCommentTo(p) : p))
+    );
+    setSelectedPost((prev) =>
+      prev?._id === postId ? addCommentTo(prev) : prev
+    );
+    try {
+      await addComment(postId, text);
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to send comment.");
+    }
+  };
+
   // ─────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────
@@ -278,10 +313,19 @@ const SpillTheTeaProfilePage: React.FC = () => {
               currentUserId={currentUserId ?? ""}
               onDelete={handleDelete}
               onLike={handleLike}
+              onCommentPress={openComments}
             />
           )}
         />
       )}
+
+      {/* Comments Modal */}
+      <CommentsModal
+        visible={commentsOpen}
+        post={selectedPost}
+        onClose={() => setCommentsOpen(false)}
+        onAddComment={handleAddComment}
+      />
     </SafeAreaView>
   );
 };

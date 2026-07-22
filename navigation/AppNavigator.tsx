@@ -8,6 +8,7 @@ import {
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../contexts/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { navigationRef } from "./navigationRef";
 
 // Import pages
 // import LandingPage from '../pages/LandingPage';
@@ -50,6 +51,8 @@ import SpillTheTeaProfilePage from "../pages/Spilltheteaprofilepage";
 import AIAssistantScreen from "../pages/AIAssistantScreen";
 import CourseImportPage from "../pages/ImportCourses";
 import CouponsPage from "../pages/CouponsPage";
+import { ScheduleMeetingPage } from "../pages/ScheduleMeetingPage";
+import StandardGradeScaleManagementPage from "../pages/StandardGradeScaleManagementPage";
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -64,6 +67,8 @@ export type RootStackParamList = {
   EditCredentials: { userData: UserData };
   CourseDetails: { courseId: string };
   Coupons: { courseId: string };
+  StandardGradeScaleManagement: { courseId: string };
+  ScheduleMeeting: { courseId: string };
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;
   CourseDetailStudentPageEnrolled: { enrollmentId: string };
@@ -85,7 +90,7 @@ export type RootStackParamList = {
     semesterId?: string;
     quarterId?: string;
     lessonId?: string;
-    discussionId? : string;
+    discussionId?: string;
     navigateBack?: () => void;
   };
   AssessmentScreenStudent: { assessmentId: string };
@@ -286,7 +291,7 @@ const AppNavigator = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
@@ -341,6 +346,16 @@ const AppNavigator = () => {
             <Stack.Screen
               name="Coupons"
               component={CouponsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="StandardGradeScaleManagement"
+              component={StandardGradeScaleManagementPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ScheduleMeeting"
+              component={ScheduleMeetingPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen

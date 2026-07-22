@@ -7,38 +7,49 @@ export interface Assessment {
   isDiscussion: boolean;
 }
 
+export interface StandardGradeBlock {
+  finalGrade?: number;
+  grade?: number;
+  points: number;
+  remarks: string;
+}
+
 export interface Quarter {
   quarterId: string;
   quarterTitle: string;
-grade: number;
-  gpa: number;
-  letterGrade: string;
+  grade?: number;
+  gpa?: number;
+  letterGrade?: string;
+  standardGrade?: StandardGradeBlock;
   assessments: Assessment[];
 }
 
 export interface Semester {
   semesterId: string;
   semesterTitle: string;
+  grade?: number;
+  letterGrade?: string;
+  standardGrade?: StandardGradeBlock;
   quarters: Quarter[];
 }
 
 export interface Student {
   studentId: string;
   studentName: string;
-  gpa: number;
-  finalGrade: number;
-  letterGrade: string;
-  semesters: Semester[];
-  assessments: Assessment[];
-  hasSemesterStructure: boolean;
+  gradingSystem: "normalGrading" | "StandardGrading";
+  courseType: "semester-based" | "chapter-based";
+  gpa?: number;
+  finalGrade?: number;
+  letterGrade?: string;
+  standardGrade?: StandardGradeBlock;
+  semesters?: Semester[];
+  chapters?: Assessment[];
 }
 
 export interface GradebookData {
-  courseId: string;
-  total: number;
-  page: number;
-  limit: number;
   gradebook: Student[];
+  gradingSystem: "normalGrading" | "StandardGrading";
+  courseType: "semester-based" | "chapter-based";
 }
 
 export interface GradeScaleItem {
@@ -53,4 +64,12 @@ export interface GPAItem {
   gpa: number;
   minPercentage: number;
   maxPercentage: number;
+}
+
+export interface SBLItem {
+  _id?: string;
+  points: number;
+  minPercentage: number;
+  maxPercentage: number;
+  remarks: string;
 }

@@ -234,6 +234,34 @@ export const checkAuth = async () => {
   }
 };
 
+// Switch the current session into "preview as student" mode
+export const previewSignIn = async () => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.post("/api/auth/previewSignIn");
+    if (response.data?.token) {
+      await setUserToken(response.data.token);
+    }
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Switch back from "preview as student" mode to the real teacher session
+export const previewSignOut = async () => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.post("/api/auth/previewSignOut");
+    if (response.data?.token) {
+      await setUserToken(response.data.token);
+    }
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export interface UpdateUserProfileData {
   firstName: string;
   middleName: string;

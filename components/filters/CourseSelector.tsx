@@ -38,8 +38,9 @@ const CourseSelector: React.FC<CourseSelectorProps> = ({
   };
 
   const courseItems = React.useMemo(() => {
+    console.log("CourseSelector courses:", courses);
     return [
-      { label: "All Enrolled Courses", value: "all" },
+      { label: "All Courses", value: "all" },
       ...courses.map((course) => ({
         label: course.courseTitle,
         value: course._id,
@@ -64,7 +65,7 @@ const CourseSelector: React.FC<CourseSelectorProps> = ({
         }}
         setItems={() => { }}
         placeholder={loading ? "Loading courses..." : placeholder}
-        disabled={disabled || loading || courses.length === 0}
+        disabled={disabled || loading}
         style={styles.dropdownPicker}
         containerStyle={styles.dropdownContainerStyle}
         dropDownContainerStyle={styles.dropdownListStyle}

@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   View,
   Text,
   Modal,
   TouchableOpacity,
-  ScrollView,
+  FlatList,
   ActivityIndicator,
   Alert,
   Linking,
@@ -39,6 +39,306 @@ interface ChapterDetailsModalProps {
   plusButtonRef?: React.RefObject<any>;
 }
 
+// ─── Memoized assessment row ───
+// Only re-renders when its own assessment data changes, regardless of what
+// else changes elsewhere in the (very large) parent tree.
+interface AssessmentItemProps {
+  assessment: any;
+  index: number;
+  onClose: () => void;
+  onDeleteAssessmentDirect: (assessmentId: string) => void;
+  onSelectAssessmentForModal: (assessment: any) => void;
+  onAssessmentDetailsModalOpen: () => void;
+}
+
+const AssessmentItem = React.memo<AssessmentItemProps>(
+  ({
+    assessment,
+    index,
+    onClose,
+    onDeleteAssessmentDirect,
+    onSelectAssessmentForModal,
+    onAssessmentDetailsModalOpen,
+  }) => {
+    const categoryLabel =
+      typeof assessment.category === "string"
+        ? assessment.category
+        : assessment.category && assessment.category.name
+        ? assessment.category.name
+        : "Uncategorized";
+
+    return (
+      <View style={styles.assessmentItemContainer}>
+        <View style={styles.assessmentItemHeader}>
+          {assessment.category ? (
+            <View style={styles.assessmentCategoryChip}>
+              <Text style={styles.assessmentCategoryChipText}>
+                {categoryLabel}
+              </Text>
+            </View>
+          ) : null}
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert(
+                "Delete Assessment",
+                `Are you sure you want to delete "${
+                  assessment.title || "this assessment"
+                }"?`,
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => onDeleteAssessmentDirect(assessment._id),
+                  },
+                ]
+              );
+            }}
+            style={styles.assessmentDeleteButton}
+          >
+            <SimpleIcon name="trash" size={25} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.assessmentContent}
+          activeOpacity={0.8}
+          onPress={() => {
+            onClose();
+            onSelectAssessmentForModal(assessment);
+            onAssessmentDetailsModalOpen();
+          }}
+        >
+          <View style={styles.assessmentInfo}>
+            <Text style={styles.assessmentTitle}>
+              {assessment.title || `Assessment ${index + 1}`}
+            </Text>
+            {assessment.description ? (
+              <Text style={styles.assessmentDescription}>
+                {assessment.description}
+              </Text>
+            ) : null}
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+);
+
+// ─── Memoized lesson row ───
+// `isDropdownOpen` is a plain boolean computed by the parent per-lesson, so
+// toggling one lesson's dropdown doesn't force every other lesson card to
+// re-render (which is what caused the scroll/interaction stutter on chapters
+// with many lessons).
+interface LessonCardProps {
+  lesson: any;
+  index: number;
+  isDropdownOpen: boolean;
+  onEditLesson: (lesson: any) => void;
+  onDeleteLessonFromChapter: (lessonId: string) => void;
+  onLessonsPlusButtonPress: (lesson: any) => void;
+  onLessonsDropdownOption: (option: string) => void;
+  onAddFilesToLesson: (lessonId: string) => void;
+  onDeleteFile: (lessonId: string, fileId: string) => void;
+  onOpenLink: (url: string) => void;
+  onClose: () => void;
+  onDeleteAssessmentDirect: (assessmentId: string) => void;
+  onSelectAssessmentForModal: (assessment: any) => void;
+  onAssessmentDetailsModalOpen: () => void;
+}
+
+const LessonCard = React.memo<LessonCardProps>(
+  ({
+    lesson,
+    index,
+  isDropdownOpen,
+    onEditLesson,
+    onDeleteLessonFromChapter,
+    onLessonsPlusButtonPress,
+    onLessonsDropdownOption,
+    onAddFilesToLesson,
+    onDeleteFile,
+    onOpenLink,
+    onClose,
+    onDeleteAssessmentDirect,
+    onSelectAssessmentForModal,
+    onAssessmentDetailsModalOpen,
+  }) => {
+    const strippedDescription = useMemo(
+      () => lesson.description?.replace(/<[^>]*>/g, "") || "No description",
+      [lesson.description]
+    );
+
+    return (
+      <View style={styles.lessonCard}>
+        {/* Header row: number badge + action icons — dropdown lives ONLY here */}
+        <View style={styles.lessonCardHeader}>
+          <View style={styles.lessonNumberBadge}>
+            <Text style={styles.lessonCardNumberText}>Lesson {index + 1}</Text>
+          </View>
+          <View style={styles.lessonCardActions}>
+            <TouchableOpacity
+              style={styles.lessonActionIcon}
+              onPress={() => onEditLesson(lesson)}
+            >
+              <SimpleIcon name="pencil" size={30} color="#10B144" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.lessonActionIcon}
+              onPress={() => onDeleteLessonFromChapter(lesson._id)}
+            >
+              <SimpleIcon name="trash" size={30} color="#ef4444" />
+            </TouchableOpacity>
+
+            {/* add lesson button */}
+
+            <View style={styles.lessonsPlusButtonContainer}>
+              <TouchableOpacity
+                style={styles.lessonAddButton}
+                onPress={() => onLessonsPlusButtonPress(lesson)}
+              >
+                <SimpleIcon name="plus" size={22} color="#fff" />
+              </TouchableOpacity>
+
+              {isDropdownOpen ? (
+                <View style={styles.lessonsDropdownMenu}>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => onLessonsDropdownOption("assessment")}
+                  >
+                    <SimpleIcon name="clipboard" size={16} color="#10b981" />
+                    <Text style={styles.dropdownItemText}>
+                      + Add Assessment
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => onLessonsDropdownOption("page")}
+                  >
+                    <SimpleIcon name="description" size={16} color="#6b7280" />
+                    <Text style={styles.dropdownItemText}>+ Add Page</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => onLessonsDropdownOption("discussion")}
+                  >
+                    <SimpleIcon name="chat" size={16} color="#6b7280" />
+                    <Text style={styles.dropdownItemText}>+ Discussion</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+            </View>
+          </View>
+        </View>
+
+        {/* Title & description — ALWAYS rendered, independent of dropdown state */}
+        <View collapsable={false}>
+          <Text style={styles.lessonCardTitle}>
+            {lesson.title || "Untitled Lesson"}
+          </Text>
+          <Text style={styles.lessonCardDescription}>
+            {strippedDescription}
+          </Text>
+
+          {/* Files Section */}
+          <View style={styles.filesSection}>
+            <View style={styles.filesHeader}>
+              <Text style={styles.filesTitle}>Files</Text>
+              <TouchableOpacity
+                style={styles.lessonAddFileButton}
+                onPress={() => onAddFilesToLesson(lesson._id)}
+              >
+                <Text style={styles.lessonAddFileButtonText}>+ Add</Text>
+              </TouchableOpacity>
+            </View>
+            {lesson.pdfFiles && lesson.pdfFiles.length > 0 ? (
+              lesson.pdfFiles.map((file: any, fileIndex: number) => (
+                <View key={fileIndex} style={styles.fileItem}>
+                  <TouchableOpacity
+                    style={styles.fileItemContent}
+                    onPress={() => onOpenLink(file.url)}
+                  >
+                    <SimpleIcon name="description" size={16} color="#10B144" />
+                    <Text style={styles.fileName}>{file.filename}</Text>
+                    <Text style={styles.fileDate}>
+                      {new Date(file.uploadedAt).toLocaleDateString("en-US", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => onDeleteFile(lesson._id, file._id)}
+                  >
+                    <SimpleIcon name="trash" size={16} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noFilesText}>no files</Text>
+            )}
+          </View>
+
+          {/* Lesson Assessments Section */}
+          {lesson.lesson_assessments && lesson.lesson_assessments.length > 0 && (
+            <View style={styles.filesSection}>
+              <View style={styles.filesHeader}>
+                <Text style={styles.filesTitle}>
+                  Lesson Assessments ({lesson.lesson_assessments.length})
+                </Text>
+              </View>
+              {lesson.lesson_assessments.map(
+                (assessment: any, assessmentIndex: number) => (
+                  <AssessmentItem
+                    key={assessment._id || assessmentIndex}
+                    assessment={assessment}
+                    index={assessmentIndex}
+                    onClose={onClose}
+                    onDeleteAssessmentDirect={onDeleteAssessmentDirect}
+                    onSelectAssessmentForModal={onSelectAssessmentForModal}
+                    onAssessmentDetailsModalOpen={onAssessmentDetailsModalOpen}
+                  />
+                )
+              )}
+            </View>
+          )}
+
+          {/* Resources Section */}
+          {(lesson.youtubeLinks || lesson.otherLink) && (
+            <View style={styles.resourcesSection}>
+              <Text style={styles.lessonResourcesTitle}>Resources</Text>
+              <View style={styles.resourcesList}>
+                {lesson.youtubeLinks && (
+                  <TouchableOpacity
+                    style={styles.youtubeResource}
+                    onPress={() => onOpenLink(lesson.youtubeLinks)}
+                  >
+                    <SimpleIcon name="play" size={16} color="#fff" />
+                    <Text style={styles.resourceText}>YouTube Video</Text>
+                  </TouchableOpacity>
+                )}
+                {lesson.otherLink && (
+                  <TouchableOpacity
+                    style={styles.linkResource}
+                    onPress={() => onOpenLink(lesson.otherLink)}
+                  >
+                    <SimpleIcon name="link" size={16} color="#fff" />
+                    <Text style={styles.resourceText}>External Link</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  }
+);
+
 const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
   visible,
   onClose,
@@ -68,6 +368,231 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
     onClose();
     onChaptersForQuarterModalOpen();
   };
+
+  // Virtualized so chapters with many lessons don't mount everything at
+  // once (was the source of the scroll stutter/freeze).
+  const renderLesson = useCallback(
+    ({ item, index }: { item: any; index: number }) => (
+      <LessonCard
+        lesson={item}
+        index={index}
+        isDropdownOpen={
+          showLessonsPlusDropdown &&
+          currentLessonForAssessment?._id === item._id
+        }
+        onEditLesson={onEditLesson}
+        onDeleteLessonFromChapter={onDeleteLessonFromChapter}
+        onLessonsPlusButtonPress={onLessonsPlusButtonPress}
+        onLessonsDropdownOption={onLessonsDropdownOption}
+        onAddFilesToLesson={onAddFilesToLesson}
+        onDeleteFile={onDeleteFile}
+        onOpenLink={onOpenLink}
+        onClose={onClose}
+        onDeleteAssessmentDirect={onDeleteAssessmentDirect}
+        onSelectAssessmentForModal={onSelectAssessmentForModal}
+        onAssessmentDetailsModalOpen={onAssessmentDetailsModalOpen}
+      />
+    ),
+    [
+      showLessonsPlusDropdown,
+      currentLessonForAssessment,
+      onEditLesson,
+      onDeleteLessonFromChapter,
+      onLessonsPlusButtonPress,
+      onLessonsDropdownOption,
+      onAddFilesToLesson,
+      onDeleteFile,
+      onOpenLink,
+      onClose,
+      onDeleteAssessmentDirect,
+      onSelectAssessmentForModal,
+      onAssessmentDetailsModalOpen,
+    ]
+  );
+
+  const lessonKeyExtractor = useCallback(
+    (lesson: any, index: number) => lesson._id || String(index),
+    []
+  );
+
+  const lessonsListHeader = useMemo(() => {
+    if (!chapterDetails) return null;
+    return (
+      <>
+        {/* ─── Chapter Info Card ─── */}
+        <View style={styles.chapterDetailsCard}>
+          <View style={styles.chapterDetailsHeader}>
+            <View style={styles.chapterDetailsIcon}>
+              <SimpleIcon name="menu-book" size={24} color="#10B144" />
+            </View>
+            <View style={styles.chapterDetailsActions}>
+              <TouchableOpacity
+                style={styles.chapterDetailsActionButton}
+                onPress={onEditChapter}
+              >
+                <SimpleIcon name="pencil" size={25} color="#fff" />
+              </TouchableOpacity>
+              <View style={styles.plusButtonContainer}>
+                <TouchableOpacity
+                  style={styles.chapterDetailsActionButton}
+                  onPress={onPlusButtonPress}
+                  activeOpacity={0.8}
+                >
+                  <SimpleIcon name="plus" size={25} color="#000" />
+
+                  {showPlusDropdown && (
+                    <View style={styles.dropdownMenu}>
+                      <TouchableOpacity
+                        style={styles.dropdownItem}
+                        onPress={() => onDropdownOption("lesson")}
+                      >
+                        <SimpleIcon
+                          name="menu-book"
+                          size={16}
+                          color="#10B144"
+                        />
+                        <Text style={styles.dropdownItemText}>
+                          + Add Lesson
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.dropdownItem}
+                        onPress={() => onDropdownOption("assessment")}
+                      >
+                        <SimpleIcon
+                          name="clipboard"
+                          size={16}
+                          color="#10B144"
+                        />
+                        <Text style={styles.dropdownItemText}>
+                          + Add Assessment
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.dropdownItem}
+                        onPress={() => onDropdownOption("page")}
+                      >
+                        <SimpleIcon
+                          name="description"
+                          size={16}
+                          color="#6b7280"
+                        />
+                        <Text style={styles.dropdownItemText}>
+                          + Add Page
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.dropdownItem}
+                        onPress={() => onDropdownOption("discussion")}
+                      >
+                        <SimpleIcon name="chat" size={16} color="#6b7280" />
+                        <Text style={styles.dropdownItemText}>
+                          + Discussion
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          <Text style={styles.chapterDetailsTitle}>
+            {chapterDetails.title}
+          </Text>
+          <Text style={styles.chapterDetailsDescription}>
+            {chapterDetails.description}
+          </Text>
+        </View>
+
+        {/* ─── Chapter Assessments Card ─── */}
+        <View style={styles.lessonsCard}>
+          <View style={styles.lessonsHeader}>
+            <View style={styles.lessonsIcon}>
+              <SimpleIcon name="clipboard" size={22} color="#10B144" />
+            </View>
+            <Text style={styles.lessonsTitle}>Chapter Assessments</Text>
+            <View style={styles.lessonsCount}>
+              <Text style={styles.lessonsCountText}>
+                {chapterDetails.chapter_assessments
+                  ? chapterDetails.chapter_assessments.length
+                  : 0}
+              </Text>
+            </View>
+          </View>
+
+          {chapterDetails.chapter_assessments &&
+          chapterDetails.chapter_assessments.length > 0 ? (
+            <View style={styles.chapterLessonsList}>
+              {chapterDetails.chapter_assessments.map(
+                (assessment: any, index: number) => (
+                  <AssessmentItem
+                    key={assessment._id || index}
+                    assessment={assessment}
+                    index={index}
+                    onClose={onClose}
+                    onDeleteAssessmentDirect={onDeleteAssessmentDirect}
+                    onSelectAssessmentForModal={onSelectAssessmentForModal}
+                    onAssessmentDetailsModalOpen={
+                      onAssessmentDetailsModalOpen
+                    }
+                  />
+                )
+              )}
+            </View>
+          ) : (
+            <View style={styles.noLessonsContainer}>
+              <SimpleIcon name="clipboard" size={48} color="#ccc" />
+              <Text style={styles.noLessonsTitle}>No assessments yet</Text>
+              <Text style={styles.noLessonsDescription}>
+                Create your first assessment for this chapter.
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ─── Lessons header (rows are virtualized below) ─── */}
+        <View style={[styles.lessonsCard, styles.lessonsSectionHeaderCard]}>
+          <View style={styles.lessonsHeader}>
+            <View style={styles.lessonsIcon}>
+              <SimpleIcon name="menu-book" size={24} color="#10B144" />
+            </View>
+            <Text style={styles.lessonsTitle}>Lessons</Text>
+            <View style={styles.lessonsCount}>
+              <Text style={styles.lessonsCountText}>
+                {chapterDetails.lessons ? chapterDetails.lessons.length : 0}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </>
+    );
+  }, [
+    chapterDetails,
+    showPlusDropdown,
+    onEditChapter,
+    onPlusButtonPress,
+    onDropdownOption,
+    onClose,
+    onDeleteAssessmentDirect,
+    onSelectAssessmentForModal,
+    onAssessmentDetailsModalOpen,
+  ]);
+
+  const lessonsListEmpty = useMemo(
+    () => (
+      <View style={styles.noLessonsContainer}>
+        <SimpleIcon name="menu-book" size={48} color="#ccc" />
+        <Text style={styles.noLessonsTitle}>No lessons yet</Text>
+        <Text style={styles.noLessonsDescription}>
+          Create your first lesson to start building your chapter content.
+        </Text>
+        <TouchableOpacity style={styles.addLessonButton} onPress={onAddLesson}>
+          <Text style={styles.addLessonButtonText}>+ Add Lesson</Text>
+        </TouchableOpacity>
+      </View>
+    ),
+    [onAddLesson]
+  );
 
   return (
     <Modal
@@ -110,473 +635,18 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
               </TouchableOpacity>
             </View>
           ) : chapterDetails ? (
-            <ScrollView
+            <FlatList
+              data={chapterDetails.lessons || []}
+              keyExtractor={lessonKeyExtractor}
+              renderItem={renderLesson}
+              ListHeaderComponent={lessonsListHeader}
+              ListFooterComponent={<View style={styles.lessonsListFooterSpacer} />}
+              ListEmptyComponent={lessonsListEmpty}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
-            >
-              {/* ─── Chapter Info Card ─── */}
-              <View style={styles.chapterDetailsCard}>
-                <View style={styles.chapterDetailsHeader}>
-                  <View style={styles.chapterDetailsIcon}>
-                    <SimpleIcon name="menu-book" size={24} color="#10B144" />
-                  </View>
-                  <View style={styles.chapterDetailsActions}>
-                    <TouchableOpacity
-                      style={styles.chapterDetailsActionButton}
-                      onPress={onEditChapter}
-                    >
-                      <SimpleIcon name="pencil" size={25} color="#fff" />
-                    </TouchableOpacity>
-                    <View style={styles.plusButtonContainer}>
-                      <TouchableOpacity
-                        style={styles.chapterDetailsActionButton}
-                        onPress={onPlusButtonPress}
-                        activeOpacity={0.8}
-                      >
-                        <SimpleIcon name="plus" size={25} color="#000" />
-
-                        {showPlusDropdown && (
-                          <View style={styles.dropdownMenu}>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => onDropdownOption("lesson")}
-                            >
-                              <SimpleIcon
-                                name="menu-book"
-                                size={16}
-                                color="#10B144"
-                              />
-                              <Text style={styles.dropdownItemText}>
-                                + Add Lesson
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => onDropdownOption("assessment")}
-                            >
-                              <SimpleIcon
-                                name="clipboard"
-                                size={16}
-                                color="#10B144"
-                              />
-                              <Text style={styles.dropdownItemText}>
-                                + Add Assessment
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => onDropdownOption("page")}
-                            >
-                              <SimpleIcon
-                                name="description"
-                                size={16}
-                                color="#6b7280"
-                              />
-                              <Text style={styles.dropdownItemText}>
-                                + Add Page
-                              </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={styles.dropdownItem}
-                              onPress={() => onDropdownOption("discussion")}
-                            >
-                              <SimpleIcon
-                                name="chat"
-                                size={16}
-                                color="#6b7280"
-                              />
-                              <Text style={styles.dropdownItemText}>
-                                + Discussion
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-                <Text style={styles.chapterDetailsTitle}>
-                  {chapterDetails.title}
-                </Text>
-                <Text style={styles.chapterDetailsDescription}>
-                  {chapterDetails.description}
-                </Text>
-              </View>
-
-              {/* ─── Chapter Assessments Card ─── */}
-              <View style={styles.lessonsCard}>
-                <View style={styles.lessonsHeader}>
-                  <View style={styles.lessonsIcon}>
-                    <SimpleIcon name="clipboard" size={22} color="#10B144" />
-                  </View>
-                  <Text style={styles.lessonsTitle}>Chapter Assessments</Text>
-                  <View style={styles.lessonsCount}>
-                    <Text style={styles.lessonsCountText}>
-                      {chapterDetails.chapter_assessments
-                        ? chapterDetails.chapter_assessments.length
-                        : 0}
-                    </Text>
-                  </View>
-                </View>
-
-                {chapterDetails.chapter_assessments &&
-                chapterDetails.chapter_assessments.length > 0 ? (
-                  <View style={styles.chapterLessonsList}>
-                    {chapterDetails.chapter_assessments.map(
-                      (assessment: any, index: number) => (
-                        <View
-                          key={assessment._id || index}
-                          style={styles.assessmentItemContainer}
-                        >
-                          <View style={styles.assessmentItemHeader}>
-                            {assessment.category ? (
-                              <View style={styles.assessmentCategoryChip}>
-                                <Text style={styles.assessmentCategoryChipText}>
-                                  {typeof assessment.category === "string"
-                                    ? assessment.category
-                                    : assessment.category &&
-                                      assessment.category.name
-                                    ? assessment.category.name
-                                    : "Uncategorized"}
-                                </Text>
-                              </View>
-                            ) : null}
-                            <TouchableOpacity
-                              onPress={() => {
-                                Alert.alert(
-                                  "Delete Assessment",
-                                  `Are you sure you want to delete "${
-                                    assessment.title || "this assessment"
-                                  }"?`,
-                                  [
-                                    { text: "Cancel", style: "cancel" },
-                                    {
-                                      text: "Delete",
-                                      style: "destructive",
-                                      onPress: () =>
-                                        onDeleteAssessmentDirect(
-                                          assessment._id
-                                        ),
-                                    },
-                                  ]
-                                );
-                              }}
-                              style={styles.assessmentDeleteButton}
-                            >
-                              <SimpleIcon
-                                name="trash"
-                                size={25}
-                                color="#ef4444"
-                              />
-                            </TouchableOpacity>
-                          </View>
-
-                          <TouchableOpacity
-                            style={styles.assessmentContent}
-                            activeOpacity={0.8}
-                            onPress={() => {
-                              onClose();
-                              onSelectAssessmentForModal(assessment);
-                              onAssessmentDetailsModalOpen();
-                            }}
-                          >
-                            <View style={styles.assessmentInfo}>
-                              <Text style={styles.assessmentTitle}>
-                                {assessment.title || `Assessment ${index + 1}`}
-                              </Text>
-                              {assessment.description ? (
-                                <Text style={styles.assessmentDescription}>
-                                  {assessment.description}
-                                </Text>
-                              ) : null}
-                            </View>
-                          </TouchableOpacity>
-                        </View>
-                      )
-                    )}
-                  </View>
-                ) : (
-                  <View style={styles.noLessonsContainer}>
-                    <SimpleIcon name="clipboard" size={48} color="#ccc" />
-                    <Text style={styles.noLessonsTitle}>
-                      No assessments yet
-                    </Text>
-                    <Text style={styles.noLessonsDescription}>
-                      Create your first assessment for this chapter.
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* ─── Lessons Card ─── */}
-              <View style={styles.lessonsCard}>
-                <View style={styles.lessonsHeader}>
-                  <View style={styles.lessonsIcon}>
-                    <SimpleIcon name="menu-book" size={24} color="#10B144" />
-                  </View>
-                  <Text style={styles.lessonsTitle}>Lessons</Text>
-                  <View style={styles.lessonsCount}>
-                    <Text style={styles.lessonsCountText}>
-                      {chapterDetails.lessons
-                        ? chapterDetails.lessons.length
-                        : 0}
-                    </Text>
-                  </View>
-                </View>
-
-                {chapterDetails.lessons && chapterDetails.lessons.length > 0 ? (
-                  <View style={styles.chapterLessonsList}>
-                    {chapterDetails.lessons.map(
-                      (lesson: any, index: number) => (
-                        <View
-                          key={lesson._id || index}
-                          style={styles.lessonCard}
-                        >
-                          {/* Header row: number badge + action icons — dropdown lives ONLY here */}
-                          <View style={styles.lessonCardHeader}>
-                            <View style={styles.lessonNumberBadge}>
-                              <Text style={styles.lessonCardNumberText}>
-                                Lesson {index + 1}
-                              </Text>
-                            </View>
-                            <View style={styles.lessonCardActions}>
-                              <TouchableOpacity
-                                style={styles.lessonActionIcon}
-                                onPress={() => onEditLesson(lesson)}
-                              >
-                                <SimpleIcon
-                                  name="pencil"
-                                  size={30}
-                                  color="#10B144"
-                                />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={styles.lessonActionIcon}
-                                onPress={() =>
-                                  onDeleteLessonFromChapter(lesson._id)
-                                }
-                              >
-                                <SimpleIcon
-                                  name="trash"
-                                  size={30}
-                                  color="#ef4444"
-                                />
-                              </TouchableOpacity>
-
-                              {/* add lesson button */}
-
-                              <View style={styles.lessonsPlusButtonContainer}>
-                                <TouchableOpacity
-                                  style={styles.lessonAddButton}
-                                  onPress={() =>
-                                    onLessonsPlusButtonPress(lesson)
-                                  }
-                                >
-                                  <SimpleIcon
-                                    name="plus"
-                                    size={22}
-                                    color="#fff"
-                                  />
-                                </TouchableOpacity>
-
-                                {showLessonsPlusDropdown &&
-                                currentLessonForAssessment?._id ===
-                                  lesson._id ? (
-                                  <View style={styles.lessonsDropdownMenu}>
-                                    <TouchableOpacity
-                                      style={styles.dropdownItem}
-                                      onPress={() =>
-                                        onLessonsDropdownOption("assessment")
-                                      }
-                                    >
-                                      <SimpleIcon
-                                        name="clipboard"
-                                        size={16}
-                                        color="#10b981"
-                                      />
-                                      <Text style={styles.dropdownItemText}>
-                                        + Add Assessment
-                                      </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                      style={styles.dropdownItem}
-                                      onPress={() =>
-                                        onLessonsDropdownOption("page")
-                                      }
-                                    >
-                                      <SimpleIcon
-                                        name="description"
-                                        size={16}
-                                        color="#6b7280"
-                                      />
-                                      <Text style={styles.dropdownItemText}>
-                                        + Add Page
-                                      </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                      style={styles.dropdownItem}
-                                      onPress={() =>
-                                        onLessonsDropdownOption("discussion")
-                                      }
-                                    >
-                                      <SimpleIcon
-                                        name="chat"
-                                        size={16}
-                                        color="#6b7280"
-                                      />
-                                      <Text style={styles.dropdownItemText}>
-                                        + Discussion
-                                      </Text>
-                                    </TouchableOpacity>
-                                  </View>
-                                ) : null}
-                              </View>
-                            </View>
-                          </View>
-
-                          {/* Title & description — ALWAYS rendered, independent of dropdown state */}
-                          <View collapsable={false}>
-                            <Text style={styles.lessonCardTitle}>
-                              {lesson.title || "Untitled Lesson"}
-                            </Text>
-                            <Text style={styles.lessonCardDescription}>
-                              {lesson.description?.replace(/<[^>]*>/g, "") ||
-                                "No description"}
-                            </Text>
-
-                            {/* Files Section */}
-                            <View style={styles.filesSection}>
-                              <View style={styles.filesHeader}>
-                                <Text style={styles.filesTitle}>Files</Text>
-                                <TouchableOpacity
-                                  style={styles.lessonAddFileButton}
-                                  onPress={() => onAddFilesToLesson(lesson._id)}
-                                >
-                                  <Text style={styles.lessonAddFileButtonText}>
-                                    + Add
-                                  </Text>
-                                </TouchableOpacity>
-                              </View>
-                              {lesson.pdfFiles && lesson.pdfFiles.length > 0 ? (
-                                lesson.pdfFiles.map(
-                                  (file: any, fileIndex: number) => (
-                                    <View
-                                      key={fileIndex}
-                                      style={styles.fileItem}
-                                    >
-                                      <TouchableOpacity
-                                        style={styles.fileItemContent}
-                                        onPress={() => onOpenLink(file.url)}
-                                      >
-                                        <SimpleIcon
-                                          name="description"
-                                          size={16}
-                                          color="#10B144"
-                                        />
-                                        <Text style={styles.fileName}>
-                                          {file.filename}
-                                        </Text>
-                                        <Text style={styles.fileDate}>
-                                          {new Date(
-                                            file.uploadedAt
-                                          ).toLocaleDateString("en-US", {
-                                            month: "2-digit",
-                                            day: "2-digit",
-                                            year: "numeric",
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                            hour12: true,
-                                          })}
-                                        </Text>
-                                      </TouchableOpacity>
-                                      <TouchableOpacity
-                                        onPress={() =>
-                                          onDeleteFile(lesson._id, file._id)
-                                        }
-                                      >
-                                        <SimpleIcon
-                                          name="trash"
-                                          size={16}
-                                          color="#ef4444"
-                                        />
-                                      </TouchableOpacity>
-                                    </View>
-                                  )
-                                )
-                              ) : (
-                                <Text style={styles.noFilesText}>no files</Text>
-                              )}
-                            </View>
-
-                            {/* Resources Section */}
-                            {(lesson.youtubeLinks || lesson.otherLink) && (
-                              <View style={styles.resourcesSection}>
-                                <Text style={styles.lessonResourcesTitle}>
-                                  Resources
-                                </Text>
-                                <View style={styles.resourcesList}>
-                                  {lesson.youtubeLinks && (
-                                    <TouchableOpacity
-                                      style={styles.youtubeResource}
-                                      onPress={() =>
-                                        onOpenLink(lesson.youtubeLinks)
-                                      }
-                                    >
-                                      <SimpleIcon
-                                        name="play"
-                                        size={16}
-                                        color="#fff"
-                                      />
-                                      <Text style={styles.resourceText}>
-                                        YouTube Video
-                                      </Text>
-                                    </TouchableOpacity>
-                                  )}
-                                  {lesson.otherLink && (
-                                    <TouchableOpacity
-                                      style={styles.linkResource}
-                                      onPress={() =>
-                                        onOpenLink(lesson.otherLink)
-                                      }
-                                    >
-                                      <SimpleIcon
-                                        name="link"
-                                        size={16}
-                                        color="#fff"
-                                      />
-                                      <Text style={styles.resourceText}>
-                                        External Link
-                                      </Text>
-                                    </TouchableOpacity>
-                                  )}
-                                </View>
-                              </View>
-                            )}
-                          </View>
-                        </View>
-                      )
-                    )}
-                  </View>
-                ) : (
-                  <View style={styles.noLessonsContainer}>
-                    <SimpleIcon name="menu-book" size={48} color="#ccc" />
-                    <Text style={styles.noLessonsTitle}>No lessons yet</Text>
-                    <Text style={styles.noLessonsDescription}>
-                      Create your first lesson to start building your chapter
-                      content.
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.addLessonButton}
-                      onPress={onAddLesson}
-                    >
-                      <Text style={styles.addLessonButtonText}>
-                        + Add Lesson
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            </ScrollView>
+              removeClippedSubviews={false}
+              contentContainerStyle={styles.lessonsListContent}
+            />
           ) : null}
         </View>
       </View>
@@ -736,6 +806,9 @@ const styles = StyleSheet.create({
   },
   lessonsCountText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
   chapterLessonsList: { marginTop: 12 },
+  lessonsSectionHeaderCard: { marginBottom: 4 },
+  lessonsListContent: { flexGrow: 1 },
+  lessonsListFooterSpacer: { height: 20 },
   assessmentItemContainer: {
     backgroundColor: "#f9f9f9",
     borderRadius: 8,
@@ -897,4 +970,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChapterDetailsModal;
+export default React.memo(ChapterDetailsModal);

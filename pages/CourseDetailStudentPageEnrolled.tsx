@@ -196,9 +196,7 @@ const CourseDetailStudentPageEnrolled = () => {
     fetchReviews();
   }, [segment, enrolledCourse]);
 
-  const handleRateCourse = async (newRating: number) => {
-    if (userRating > 0 || isSubmittingRating || !enrolledCourse?.course) return;
-
+  const submitRating = async (newRating: number) => {
     setIsSubmittingRating(true);
     setRating(newRating); // Optimistically update UI
 
@@ -224,6 +222,19 @@ const CourseDetailStudentPageEnrolled = () => {
     } finally {
       setIsSubmittingRating(false);
     }
+  };
+
+  const handleRateCourse = (newRating: number) => {
+    if (userRating > 0 || isSubmittingRating || !enrolledCourse?.course) return;
+
+    Alert.alert(
+      "Confirm Rating",
+      `Submit a rating of ${newRating} star${newRating > 1 ? "s" : ""} for this course?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Submit", onPress: () => submitRating(newRating) },
+      ]
+    );
   };
 
   const handlePostComment = async () => {

@@ -990,6 +990,8 @@ const styles = StyleSheet.create({
     // flexDirection: "row",
     justifyContent: "center",
     flexWrap: "wrap",
+    // backgroundColor: "#000",
+    marginBottom: 30,
   },
   discussionCard: {
     width: "100%",

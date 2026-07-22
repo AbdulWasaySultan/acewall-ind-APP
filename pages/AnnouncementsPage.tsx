@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -21,11 +20,13 @@ import {
   deleteAnnouncement,
   getAnnouncementsByStudent,
 } from "../services/announcement";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import CourseSelector from "../components/filters/CourseSelector";
 import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar";
 import { DropdownFilter } from "../components/filters/DropDown";
+
 // ====================== Helper Components ======================
 
 const TeacherAnnouncementRow = ({
@@ -272,10 +273,7 @@ const AnnouncementsPage = () => {
     });
   }, [studentAnnouncements, selectedCourse, searchQuery, dateValue]);
 
-  useEffect(() => {
-    console.warn("yehi announcement page ha teacher ke liye");
-  }, []);
-
+  // Teacher: fetch on mount and when role changes
   useEffect(() => {
     if (userRole === "teacher") {
       fetchAnnouncements();
@@ -296,6 +294,7 @@ const AnnouncementsPage = () => {
     }
   };
 
+  // Modal: fetch courses when opened
   useEffect(() => {
     if (isModalVisible) {
       setCoursesLoadingModal(true);
@@ -321,27 +320,37 @@ const AnnouncementsPage = () => {
     }
   }, [isModalVisible]);
 
+  // Student: fetch on mount AND on focus
+  const fetchStudentAnnouncements = async () => {
+    if (!user?._id) return;
+    setStudentAnnouncementsLoading(true);
+    setStudentAnnouncementsError("");
+    try {
+      const res = await getAnnouncementsByStudent(user._id);
+      setStudentAnnouncements(res.announcements || []);
+    } catch (err: any) {
+      setStudentAnnouncementsError(
+        err.message || "Failed to load announcements"
+      );
+    } finally {
+      setStudentAnnouncementsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userRole === "student" && user?._id) {
+      fetchStudentAnnouncements();
+      fetchCourses();
+    }
+  }, [userRole, user?._id]);
+
   useFocusEffect(
     useCallback(() => {
       if (userRole === "student" && user?._id) {
-        setStudentAnnouncementsLoading(true);
-        setStudentAnnouncementsError("");
+        fetchStudentAnnouncements();
         fetchCourses();
-
-        getAnnouncementsByStudent(user._id)
-          .then((res) => {
-            setStudentAnnouncements(res.announcements || []);
-          })
-          .catch((err) => {
-            setStudentAnnouncementsError(
-              err.message || "Failed to load announcements"
-            );
-          })
-          .finally(() => {
-            setStudentAnnouncementsLoading(false);
-          });
       }
-      return () => { };
+      return () => {};
     }, [userRole, user?._id])
   );
 
@@ -451,7 +460,7 @@ const AnnouncementsPage = () => {
                 placeholder="All Dates"
                 zIndex={9999}
                 zIndexInverse={1000}
-                dropDownContainerStyle={styles.dropDownContainer} // <-- added
+                dropDownContainerStyle={styles.dropDownContainer}
               />
             </View>
           </FilterBar>
@@ -656,7 +665,7 @@ const AnnouncementsPage = () => {
                     zIndex={9999}
                     zIndexInverse={1000}
                     dropDownContainerStyle={styles.dropDownContainer}
-                    listMode="MODAL"
+                    listMode="SCROLLVIEW" // <-- FIX: changed from "MODAL" to "SCROLLVIEW"
                   />
                 </View>
                 {coursesError ? (
@@ -665,7 +674,14 @@ const AnnouncementsPage = () => {
                   <Text style={styles.infoText}>No courses available</Text>
                 ) : null}
 
-                <Text style={styles.inputLabel}>Announcement Message</Text>
+                <Text
+                  style={[
+                    styles.inputLabel,
+                    { marginLeft: 4, marginBottom: 6 },
+                  ]}
+                >
+                  Announcement Message
+                </Text>
                 <TextInput
                   style={[styles.textInput, styles.messageInput]}
                   placeholder="Enter message"
@@ -719,8 +735,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   fixedFiltersContainer: {
-    // backgroundColor: "#f5f5f5",
-
     zIndex: 20,
     elevation: 20,
   },
@@ -733,7 +747,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 24,
-    // backgroundColor: "cyan",
   },
   headerTitle: {
     fontSize: 24,
@@ -873,7 +886,7 @@ const styles = StyleSheet.create({
   },
   studentCardCourseLabel: {
     fontWeight: "bold",
-    fontSize: 18
+    fontSize: 18,
   },
   studentCardRight: {
     flexDirection: "row",
@@ -962,30 +975,26 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 16,
   },
-  // dropdownWrapper: {
-  //   flex: 0.7,
-  //   zIndex: 9999,
-  //   elevation: 9999,
-  // },
   searchFilterContainer: {
-    paddingHorizontal: 8, // 👈 Overrides default 10
+    paddingHorizontal: 8,
   },
   dropdownWrapper: {
-    width: 110, // 👈 Adjust this width to fit your layout
+    width: 110,
     zIndex: 9999,
     elevation: 9999,
   },
-
-  // Target the picker container inside the filter bar
   customDateDropdown: {
-    width: 130,      // 👈 Custom reduced width for Date filter
-    minWidth: 100,   // Overrides default 110 minWidth if needed
+    width: 130,
+    minWidth: 100,
   },
   courseDropdownWrapper: {
     zIndex: 9999,
     elevation: 9999,
-    marginBottom: 8,
     minHeight: 50,
+    marginLeft: -5,
+    // backgroundColor: "#cdcdcd",
+    marginTop: 3,
+    marginBottom: 16,
   },
   belowCourseDropdown: {
     zIndex: 1,
@@ -994,6 +1003,7 @@ const styles = StyleSheet.create({
   dropDownContainer: {
     zIndex: 9999,
     elevation: 9999,
+    width: "100%",
   },
   createButton: {
     backgroundColor: "#4CAF50",

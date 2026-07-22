@@ -17,7 +17,7 @@ export interface Student {
   middleName?: string;
   lastName: string;
   Bio?: string | null;
-  profileImg?: string | null;
+  profileImg?: { url?: string; filename?: string; publicId?: string } | null;
   gender?: string;
   email: string;
   createdAt: string;

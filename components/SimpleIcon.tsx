@@ -110,6 +110,7 @@ const SimpleIcon: React.FC<SimpleIconProps> = ({
     "document-text-outline": "📄",
     "open-outline": "🔗",
     "chevron-forward": "→",
+    "chevron-right": "→",
     "check-circle": "✅",
     "check-circle-outline": "⭕",
     "play-circle-outline": "⭕",
@@ -122,7 +123,10 @@ const SimpleIcon: React.FC<SimpleIconProps> = ({
     "alert-circle": "⚠️",
     "menu-book": "📚",
     "clipboard-outline": "",
-    "file-based": ""
+    "file-based": "",
+    calendar: "📅",
+    school: "🏫",
+    book: "📘",
   };
 
   const icon = iconMap[name] || "?";
