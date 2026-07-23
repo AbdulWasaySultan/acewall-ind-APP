@@ -8,19 +8,21 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
 import {
   getAllAssessmentsByTeacher,
   getAssessmentSubmissionsForTeacher,
   getSubmissionDetails,
   submitGrades,
-  getAllCourses,
 } from "../services/course";
 import SubmissionsModal from "../components/assessment/Submissionsmodal";
 import SubmissionDetailModal from "../components/assessment/Submissiondetailmodal";
-import CourseSelector from "../components/filters/CourseSelector";
 import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar"; // ✅ fixed import
 import { DropdownFilter } from "../components/filters/DropDown"; // ✅ fixed import
+import SimpleIcon from "../components/SimpleIcon";
 
 
 const formatDate = (dateString: string) =>
@@ -40,14 +42,17 @@ const formatDateTime = (dateString: string) =>
     second: "2-digit",
   });
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type ScreenRouteProp = RouteProp<RootStackParamList, "TeacherAssessmentsByCourse">;
+
 const AssessmentsPage = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<ScreenRouteProp>();
+  const { courseId, courseTitle } = route.params;
+
   const [rawAssessments, setRawAssessments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [courses, setCourses] = useState<any[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [coursesLoading, setCoursesLoading] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -62,8 +67,6 @@ const AssessmentsPage = () => {
   const [datesItems, setDatesItems] = useState([
     { label: "All Dates", value: "all" },
   ]);
-
-  const [courseOpen, setCourseOpen] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
@@ -99,27 +102,6 @@ const AssessmentsPage = () => {
     if (datesOpen) setCategoryOpen(false);
   }, [datesOpen]);
 
-  const fetchCourses = async () => {
-    try {
-      setCoursesLoading(true);
-      const res = await getAllCourses();
-      if (res && Array.isArray(res.courses)) {
-        setCourses(res.courses);
-      }
-    } catch (err: any) {
-      console.error("Error fetching courses:", err);
-    } finally {
-      setCoursesLoading(false);
-    }
-  };
-
-  const handleCourseChange = async (courseId: string | null) => {
-    setSelectedCourse(courseId);
-    setCategoryValue(null);
-    setDatesValue(null);
-    setSearchQuery("");
-  };
-
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -146,8 +128,15 @@ const AssessmentsPage = () => {
 
         setRawAssessments(assessments);
 
+        // Scope filter options to just this course (matches web's
+        // CourseAssessmentList.jsx, which derives categories from the
+        // already course-filtered set).
+        const courseAssessments = assessments.filter(
+          (a: any) => a.course?._id === courseId
+        );
+
         const categoryMap = new Map();
-        assessments.forEach((a: any) => {
+        courseAssessments.forEach((a: any) => {
           if (a.category && a.category._id) {
             categoryMap.set(a.category._id, {
               label: a.category.name || "Unnamed",
@@ -166,7 +155,7 @@ const AssessmentsPage = () => {
         console.log("📂 Categories:", uniqueCategories.length);
 
         const dateMap = new Map();
-        assessments.forEach((a: any) => {
+        courseAssessments.forEach((a: any) => {
           if (a.createdAt) {
             const formatted = formatDate(a.createdAt);
             if (!dateMap.has(formatted)) {
@@ -192,14 +181,10 @@ const AssessmentsPage = () => {
     };
 
     fetchInitialData();
-    fetchCourses();
   }, []);
 
   const filteredAssessments = useMemo(() => {
-    let result = rawAssessments;
-    if (selectedCourse && selectedCourse !== "all") {
-      result = result.filter((a) => a.course?._id === selectedCourse);
-    }
+    const result = rawAssessments.filter((a) => a.course?._id === courseId);
 
     return result.filter((a) => {
       const matchesCategory =
@@ -213,7 +198,7 @@ const AssessmentsPage = () => {
         a.title?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesDate && matchesSearch;
     });
-  }, [rawAssessments, selectedCourse, categoryValue, datesValue, searchQuery]);
+  }, [rawAssessments, courseId, categoryValue, datesValue, searchQuery]);
 
   const handleAssessmentPress = async (assessment: any) => {
     setSelectedAssessment(assessment);
@@ -327,56 +312,54 @@ const AssessmentsPage = () => {
       nestedScrollEnabled
       keyboardShouldPersistTaps="handled"
     >
-      {/* ── Course Selector — highest zIndex so its dropdown renders above everything ── */}
-      <View style={{ zIndex: 3000 }}>
+      {/* ── Course header — course itself is fixed via route params ── */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <SimpleIcon name="arrow-back" size={22} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {courseTitle || "Assessments for this Course"}
+        </Text>
+      </View>
+
+      {/* ── Search + Category + Dates ── */}
+      <View style={{ zIndex: 2000 }}>
         <FilterBar
           resultsCount={filteredAssessments.length}
           resultsLabel="assessments"
         >
-          <CourseSelector
-            courses={courses}
-            selectedCourse={selectedCourse}
-            onCourseChange={handleCourseChange}
-            loading={coursesLoading}
-            onOpenChange={setCourseOpen}
+          <SearchFilterView
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by title"
+            style={styles.searchFilterContainer}
+          />
+          <DropdownFilter
+            open={categoryOpen}
+            value={categoryValue}
+            items={categoryItems}
+            setOpen={setCategoryOpen}
+            setValue={setCategoryValue}
+            placeholder="Select Category"
+            zIndex={2000}
+            zIndexInverse={1000}
+            style={{}}
+          />
+          <DropdownFilter
+            open={datesOpen}
+            value={datesValue}
+            items={datesItems}
+            setOpen={setDatesOpen}
+            setValue={setDatesValue}
+            placeholder="All Dates"
+            zIndex={1000}
+            zIndexInverse={2000}
           />
         </FilterBar>
       </View>
-
-      {/* ── Search + Category + Dates — medium zIndex ── */}
-      {selectedCourse && (
-        <View style={{ zIndex: 2000 }}>
-          <FilterBar>
-            <SearchFilterView
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search by title"
-              style={styles.searchFilterContainer}
-            />
-            <DropdownFilter
-              open={categoryOpen}
-              value={categoryValue}
-              items={categoryItems}
-              setOpen={setCategoryOpen}
-              setValue={setCategoryValue}
-              placeholder="Select Category"
-              zIndex={2000}
-              zIndexInverse={1000}
-              style={{}}
-            />
-            <DropdownFilter
-              open={datesOpen}
-              value={datesValue}
-              items={datesItems}
-              setOpen={setDatesOpen}
-              setValue={setDatesValue}
-              placeholder="All Dates"
-              zIndex={1000}
-              zIndexInverse={2000}
-            />
-          </FilterBar>
-        </View>
-      )}
 
       {/* ── Assessment Cards — lowest zIndex so dropdowns render above ── */}
       <View style={[styles.cardsContainer, { zIndex: 1 }]}>
@@ -477,6 +460,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f8f8",
     paddingHorizontal: 16,
     paddingTop: 16,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  backButton: {
+    marginRight: 10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    flex: 1,
   },
   cardsContainer: {
     flex: 1,

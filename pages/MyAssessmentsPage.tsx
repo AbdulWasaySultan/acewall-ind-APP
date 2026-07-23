@@ -16,15 +16,18 @@ import {
 import {
   getAllAssessmentForStudent,
   getStudentAssessmentDetails,
-  getStudentEnrolledCourses,
 } from "../services/course";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  RouteProp,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import CourseSelector from "../components/filters/CourseSelector";
 import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar";
 import { DropdownFilter } from "../components/filters/DropDown"
@@ -63,11 +66,15 @@ export interface AssessmentItem {
 }
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type ScreenRouteProp = RouteProp<RootStackParamList, "StudentAssessmentsByCourse">;
+
 // ---------- COMPONENT ----------
 const MyAssessmentsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<ScreenRouteProp>();
+  const { courseId, courseTitle } = route.params;
   const [error, setError] = useState<string | null>(null);
   const [assessments, setAssessments] = useState<AssessmentItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -82,11 +89,6 @@ const MyAssessmentsPage = () => {
   const [activeTab, setActiveTab] = useState<
     "all" | "needs_grading" | "graded"
   >("all");
-
-  // Course-First Pattern: Course state
-  const [courses, setCourses] = useState<any[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [coursesLoading, setCoursesLoading] = useState(false);
 
   // Chapter state
   const [chapters, setChapters] = useState<any[]>([]);
@@ -123,41 +125,6 @@ const MyAssessmentsPage = () => {
     if (Array.isArray(res?.assessments)) return res.assessments;
     if (Array.isArray(res?.items)) return res.items;
     return [];
-  };
-
-  const fetchCourses = async () => {
-    try {
-      setCoursesLoading(true);
-      // Students only pick from courses they're actually enrolled in - not
-      // the teacher-scoped "all courses" catalog (which is always empty for
-      // a student, leaving just the "All Courses" placeholder).
-      const res = await getStudentEnrolledCourses("");
-      if (res && Array.isArray(res.enrolledCourses)) {
-        const mapped = res.enrolledCourses
-          .filter((enrollment: any) => enrollment.course)
-          .map((enrollment: any) => ({
-            _id: enrollment.course._id,
-            courseTitle: enrollment.course.courseTitle,
-          }));
-        setCourses(mapped);
-      } else {
-        setCourses([]);
-      }
-    } catch (err: any) {
-      console.error("Error fetching enrolled courses:", err);
-      setCourses([]);
-    } finally {
-      setCoursesLoading(false);
-    }
-  };
-
-  const handleCourseChange = async (courseId: string | null) => {
-    setSelectedCourse(courseId);
-    setSelectedChapter(null);
-    setSearchQuery("");
-    setTypeValue(null);
-    setCategoryValue(null);
-    setStatusValue(null);
   };
 
   const extractChapters = (assessmentList: AssessmentItem[]) => {
@@ -200,10 +167,14 @@ const MyAssessmentsPage = () => {
       const list = normalizeArray(res);
       setAssessments(list);
 
-      // Extract unique categories for filter dropdown
+      // Scope category/type/chapter filter options to just this course's
+      // assessments (matches web's Assignment.jsx, which derives its filter
+      // options from the already course-filtered set, not the full list).
+      const courseList = list.filter((a) => a.course?._id === courseId);
+
       const uniqueCategories = Array.from(
         new Map(
-          list
+          courseList
             .filter((a) => a.category?._id)
             .map((a) => [a.category._id, a.category])
         ).values()
@@ -217,7 +188,7 @@ const MyAssessmentsPage = () => {
       ]);
 
       // Extract unique types
-      const uniqueTypes = [...new Set(list.map((a) => a.type))];
+      const uniqueTypes = [...new Set(courseList.map((a) => a.type))];
       setTypeItems([
         { label: "All Types", value: "all" },
         { label: "Semester Based", value: "semester-assessment" },
@@ -230,8 +201,8 @@ const MyAssessmentsPage = () => {
           })),
       ]);
 
-      // Extract chapters from loaded assessments
-      extractChapters(list);
+      // Extract chapters from loaded assessments (scoped to this course)
+      extractChapters(courseList);
     } catch (err: any) {
       console.log("[getAllAssessmentForStudent] error:", err);
       setError(err?.message || "Failed to load assessments");
@@ -244,13 +215,11 @@ const MyAssessmentsPage = () => {
   // Initial fetch on mount
   useEffect(() => {
     fetchAssessments();
-    fetchCourses();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       fetchAssessments();
-      fetchCourses();
 
       return () => {
         console.log("Screen unfocused");
@@ -261,7 +230,6 @@ const MyAssessmentsPage = () => {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchAssessments();
-    await fetchCourses();
     setRefreshing(false);
   }, []);
 
@@ -322,13 +290,10 @@ const MyAssessmentsPage = () => {
   const getStatus = (item: AssessmentItem) =>
     item.isSubmitted ? "Submitted" : "Pending";
 
-  // Course-First Pattern: Apply ALL filters
+  // Apply ALL filters, always scoped to the course passed in via route params
   const filtered = useMemo(() => {
-    // Step 1: Filter by course (PRIMARY FILTER)
-    let result = assessments;
-    if (selectedCourse && selectedCourse !== "all") {
-      result = result.filter((a) => a.course._id === selectedCourse);
-    }
+    // Step 1: Filter by course (fixed for this screen instance)
+    let result = assessments.filter((a) => a.course?._id === courseId);
 
     // Step 2: Filter by chapter
     if (selectedChapter && selectedChapter !== "all") {
@@ -363,7 +328,7 @@ const MyAssessmentsPage = () => {
     });
   }, [
     assessments,
-    selectedCourse,
+    courseId,
     selectedChapter,
     searchQuery,
     typeValue,
@@ -484,25 +449,22 @@ const MyAssessmentsPage = () => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <View style={styles.banner}>
-        <Text style={styles.bannerText}>Assessments</Text>
+      <View style={[styles.banner, styles.bannerRow]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <SimpleIcon name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.bannerText} numberOfLines={1}>
+          {courseTitle || "Course Assessment Details"}
+        </Text>
+        <View style={{ width: 22 }} />
       </View>
 
-      {/* Primary Filter: Course Selector */}
-      <View style={{ overflow: "visible", zIndex: 10000, elevation: 10000 }}>
-        <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
-          <CourseSelector
-            courses={courses}
-            selectedCourse={selectedCourse}
-            onCourseChange={handleCourseChange}
-            loading={coursesLoading}
-          />
-        </FilterBar>
-      </View>
-
-      {/* Secondary Filters */}
+      {/* Secondary Filters — course itself is fixed via route params */}
       <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>
-        <FilterBar>
+        <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
           <SearchFilterView
             value={searchQuery}
             onChange={setSearchQuery}
@@ -511,43 +473,41 @@ const MyAssessmentsPage = () => {
           />
         </FilterBar>
 
-        {selectedCourse && (
-          <FilterBar>
-            <DropdownFilter
-              open={typeOpen}
-              value={typeValue}
-              items={typeItems}
-              setOpen={setTypeOpen}
-              setValue={setTypeValue}
-              placeholder="All Types"
-              zIndex={3000}
-              dropDownContainerStyle={styles.dropdownContainer}
-              style={{ flex: 1 }}
-            />
-            <DropdownFilter
-              open={categoryOpen}
-              value={categoryValue}
-              items={categoryItems}
-              setOpen={setCategoryOpen}
-              setValue={setCategoryValue}
-              placeholder="All Categories"
-              zIndex={2000}
-              dropDownContainerStyle={styles.dropdownContainer}
-              style={{ flex: 1 }}
-            />
-            <DropdownFilter
-              open={statusOpen}
-              value={statusValue}
-              items={statusItems}
-              setOpen={setStatusOpen}
-              setValue={setStatusValue}
-              placeholder="All Status"
-              zIndex={1000}
-              dropDownContainerStyle={styles.dropdownContainer}
-              style={{ flex: 1 }}
-            />
-          </FilterBar>
-        )}
+        <FilterBar>
+          <DropdownFilter
+            open={typeOpen}
+            value={typeValue}
+            items={typeItems}
+            setOpen={setTypeOpen}
+            setValue={setTypeValue}
+            placeholder="All Types"
+            zIndex={3000}
+            dropDownContainerStyle={styles.dropdownContainer}
+            style={{ flex: 1 }}
+          />
+          <DropdownFilter
+            open={categoryOpen}
+            value={categoryValue}
+            items={categoryItems}
+            setOpen={setCategoryOpen}
+            setValue={setCategoryValue}
+            placeholder="All Categories"
+            zIndex={2000}
+            dropDownContainerStyle={styles.dropdownContainer}
+            style={{ flex: 1 }}
+          />
+          <DropdownFilter
+            open={statusOpen}
+            value={statusValue}
+            items={statusItems}
+            setOpen={setStatusOpen}
+            setValue={setStatusValue}
+            placeholder="All Status"
+            zIndex={1000}
+            dropDownContainerStyle={styles.dropdownContainer}
+            style={{ flex: 1 }}
+          />
+        </FilterBar>
       </View>
 
       {loading ? (
@@ -956,7 +916,9 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
   },
-  bannerText: { color: COLORS.white, fontSize: 18, fontWeight: "700" },
+  bannerText: { color: COLORS.white, fontSize: 18, fontWeight: "700", flex: 1, textAlign: "center" },
+  bannerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  backButton: { width: 22, alignItems: "flex-start" },
   row: {
     flexDirection: "row",
     alignItems: "center",
