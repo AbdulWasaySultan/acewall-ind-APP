@@ -1,415 +1,3 @@
-// import React from "react";
-// import {
-//   View,
-//   Text,
-//   Modal,
-//   TouchableOpacity,
-//   ScrollView,
-//   ActivityIndicator,
-//   Platform,
-// } from "react-native";
-// import SimpleIcon from "../SimpleIcon";
-// import { Student, Semester, Quarter, Assessment } from "../../types/course";
-
-// interface GradebookModalProps {
-//   visible: boolean;
-//   onClose: () => void;
-//   gradebookLoading: boolean;
-//   gradebookData: any;
-//   gradebookError: string | null;
-//   expandedStudents: Set<string>;
-//   expandedSemesters: Set<string>;
-//   expandedQuarters: Set<string>;
-//   onToggleStudent: (studentId: string) => void;
-//   onToggleSemester: (semesterId: string) => void;
-//   onToggleQuarter: (quarterId: string) => void;
-//   styles: any;
-// }
-
-// const GradebookModal: React.FC<GradebookModalProps> = ({
-//   visible,
-//   onClose,
-//   gradebookLoading,
-//   gradebookData,
-//   gradebookError,
-//   expandedStudents,
-//   expandedSemesters,
-//   expandedQuarters,
-//   onToggleStudent,
-//   onToggleSemester,
-//   onToggleQuarter,
-//   styles,
-// }) => {
-//   return (
-//     <Modal
-//       visible={visible}
-//       transparent={false}
-//       animationType="slide"
-//       onRequestClose={onClose}
-//     >
-//       <View style={styles.gradebookModalContainer}>
-//         <View style={styles.gradebookModalHeader}>
-//           <Text style={styles.gradebookModalTitle}>Gradebook</Text>
-//           <TouchableOpacity onPress={onClose}>
-//             <SimpleIcon name="close" size={32} color="#333" />
-//           </TouchableOpacity>
-//         </View>
-//         {gradebookLoading ? (
-//           <ActivityIndicator
-//             size="large"
-//             color="#10B144"
-//             style={styles.gradebookLoadingContainer}
-//           />
-//         ) : gradebookError ? (
-//           <Text style={styles.gradebookErrorText}>{gradebookError}</Text>
-//         ) : gradebookData ? (
-//           <ScrollView contentContainerStyle={styles.gradebookContentContainer}>
-//             <View style={styles.gradebookCard}>
-//               {/* Table Header */}
-//               <View style={styles.gradebookTableHeader}>
-//                 <Text
-//                   style={[styles.gradebookHeaderText, { flex: 2, textAlign: "left" }]}
-//                 >
-//                   Student
-//                 </Text>
-//                 <Text
-//                   style={[styles.gradebookHeaderText, { flex: 1, textAlign: "center" }]}
-//                 >
-//                   Final Grade
-//                 </Text>
-//                 <Text
-//                   style={[styles.gradebookHeaderText, { flex: 1, textAlign: "center" }]}
-//                 >
-//                   Letter Grade
-//                 </Text>
-//                 <Text
-//                   style={[styles.gradebookHeaderText, { flex: 1, textAlign: "right" }]}
-//                 >
-//                   GPA
-//                 </Text>
-//               </View>
-
-//               {/* Student Rows */}
-//               {gradebookData.gradebook && gradebookData.gradebook.length > 0 ? (
-//                 gradebookData.gradebook.map((student: Student) => (
-//                   <View key={student.studentId}>
-//                     <TouchableOpacity
-//                       onPress={() => onToggleStudent(student.studentId)}
-//                       style={styles.gradebookStudentRow}
-//                     >
-//                       <View style={styles.gradebookStudentInfo}>
-//                         <Text style={styles.gradebookExpandIcon}>
-//                           {expandedStudents.has(student.studentId) ? "▼" : "▶"}
-//                         </Text>
-//                         <Text style={styles.gradebookStudentName}>
-//                           {student.studentName || "Unknown Student"}
-//                         </Text>
-//                       </View>
-//                       <Text style={styles.gradebookGradeText}>
-//                         {student.finalGrade ? `${student.finalGrade}%` : "---"}
-//                       </Text>
-//                       <View style={styles.gradebookLetterGradeContainer}>
-//                         <View style={styles.gradebookLetterGradeBadge}>
-//                           <Text style={styles.gradebookLetterGradeText}>
-//                             {student.assessments?.length > 0
-//                               ? student.letterGrade
-//                               : "---"}
-//                           </Text>
-//                         </View>
-//                       </View>
-//                       <Text style={styles.gradebookGpaText}>
-//                         {student.assessments?.length > 0 ? student.gpa : "---"}
-//                       </Text>
-//                     </TouchableOpacity>
-
-//                     {expandedStudents.has(student.studentId) && (
-//                       <View style={styles.gradebookStudentExpanded}>
-//                         <Text style={styles.gradebookPerformanceTitle}>
-//                           Academic Performance Breakdown
-//                         </Text>
-
-//                         {/* Semesters */}
-//                         {student.hasSemesterStructure ? (
-//                           student.semesters && student.semesters.length > 0 ? (
-//                             student.semesters.map((semester: Semester) => (
-//                               <View
-//                                 key={semester.semesterId}
-//                                 style={styles.gradebookSemesterItem}
-//                               >
-//                                 <TouchableOpacity
-//                                   onPress={() =>
-//                                     onToggleSemester(semester.semesterId)
-//                                   }
-//                                   style={styles.gradebookSemesterButton}
-//                                 >
-//                                   <Text style={styles.gradebookExpandIcon}>
-//                                     {expandedSemesters.has(semester.semesterId)
-//                                       ? "▼"
-//                                       : "▶"}
-//                                   </Text>
-//                                   <Text style={styles.gradebookSemesterTitle}>
-//                                     {semester.semesterTitle}
-//                                   </Text>
-//                                 </TouchableOpacity>
-
-//                                 {expandedSemesters.has(semester.semesterId) && (
-//                                   <View style={styles.gradebookSemesterExpanded}>
-//                                     {semester.quarters &&
-//                                     semester.quarters.length > 0 ? (
-//                                       semester.quarters.map(
-//                                         (quarter: Quarter) => (
-//                                           <View
-//                                             key={quarter.quarterId}
-//                                             style={styles.gradebookSemesterItem}
-//                                           >
-//                                             <TouchableOpacity
-//                                               onPress={() =>
-//                                                 onToggleQuarter(
-//                                                   quarter.quarterId
-//                                                 )
-//                                               }
-//                                               style={styles.gradebookQuarterButton}
-//                                             >
-//                                               <Text style={styles.gradebookExpandIcon}>
-//                                                 {expandedQuarters.has(
-//                                                   quarter.quarterId
-//                                                 )
-//                                                   ? "▼"
-//                                                   : "▶"}
-//                                               </Text>
-//                                               <Text style={styles.gradebookQuarterTitle}>
-//                                                 {quarter.quarterTitle}
-//                                               </Text>
-//                                               <Text style={styles.gradebookQuarterGrade}>
-//                                                 {quarter.grade}%
-//                                               </Text>
-//                                               <View style={styles.gradebookQuarterBadge}>
-//                                                 <Text style={styles.gradebookQuarterBadgeText}>
-//                                                   {quarter.letterGrade}
-//                                                 </Text>
-//                                               </View>
-//                                               <Text style={styles.gradebookQuarterGpa}>
-//                                                 GPA: {quarter.gpa}
-//                                               </Text>
-//                                             </TouchableOpacity>
-
-//                                             {expandedQuarters.has(
-//                                               quarter.quarterId
-//                                             ) && (
-//                                               <View style={styles.gradebookQuarterExpanded}>
-//                                                 {/* Assessment Headers */}
-//                                                 <View style={styles.gradebookAssessmentHeader}>
-//                                                   <Text
-//                                                     style={[styles.gradebookAssessmentHeaderText, { flex: 2 }]}
-//                                                   >
-//                                                     Assessment
-//                                                   </Text>
-//                                                   <Text
-//                                                     style={[styles.gradebookAssessmentHeaderText, { flex: 1.5 }]}
-//                                                   >
-//                                                     Category
-//                                                   </Text>
-//                                                   <Text
-//                                                     style={[styles.gradebookAssessmentHeaderText, { flex: 1, textAlign: "center" }]}
-//                                                   >
-//                                                     Score
-//                                                   </Text>
-//                                                   <Text
-//                                                     style={[styles.gradebookAssessmentHeaderText, { flex: 1, textAlign: "center" }]}
-//                                                   >
-//                                                     %
-//                                                   </Text>
-//                                                 </View>
-
-//                                                 {/* Assessment Rows */}
-//  {quarter.assessments &&
-//                                                 quarter.assessments.length >
-//                                                   0 ? (
-//                                                   quarter.assessments.map(
-//                                                     (
-//                                                       assessment: Assessment
-//                                                     ) => (
-//                                                       <View
-//                                                         key={
-//                                                           assessment.assessmentId
-//                                                         }
-//                                                         style={styles.gradebookAssessmentRow}
-//                                                       >
-//                                                         <Text
-//                                                           style={[styles.gradebookAssessmentText, { flex: 2 }]}
-//                                                           numberOfLines={1}
-//                                                         >
-//                                                           {
-//                                                             assessment.assessmentTitle
-//                                                           }
-//                                                         </Text>
-//                                                         <Text
-//                                                           style={[styles.gradebookAssessmentText, { flex: 1.5 }]}
-//                                                           numberOfLines={1}
-//                                                         >
-//                                                           {assessment.category}
-//                                                         </Text>
-//                                                         <Text
-//                                                           style={[styles.gradebookAssessmentText, { flex: 1, textAlign: "center" }]}
-//                                                         >
-//                                                           {
-//                                                             assessment.studentPoints
-//                                                           }
-//                                                           /
-//                                                           {assessment.maxPoints}
-//                                                         </Text>
-//                                                         <Text
-//                                                           style={[styles.gradebookAssessmentText, { flex: 1, textAlign: "right", fontWeight: "600" }]}
-//                                                         >
-//                                                           {assessment.maxPoints >
-//                                                           0
-//                                                             ? (
-//                                                                 (assessment.studentPoints /
-//                                                                   assessment.maxPoints) *
-//                                                                 100
-//                                                               ).toFixed(1)
-//                                                             : 0}
-//                                                           %
-//                                                         </Text>
-//                                                       </View>
-//                                                     )
-//                                                   )
-//                                                 ) : (
-//                                                   <Text style={styles.gradebookNoDataText}>
-//                                                     No assessments found.
-//                                                   </Text>
-//                                                 )}
-//                                               </View>
-//                                             )}
-//                                           </View>
-//                                         )
-//                                       )
-//                                     ) : (
-//                                       <Text style={styles.gradebookNoDataText}>
-//                                         No quarters found.
-//                                       </Text>
-//                                     )}
-//                                   </View>
-//                                 )}
-//                               </View>
-//                             ))
-//                           ) : (
-//                             <Text style={styles.gradebookNoSemestersText}>
-//                               No semesters found.
-//                             </Text>
-//                           )
-//                         ) : (
-//                           <View style={styles.gradebookDirectAssessments}>
-//                             {/* Assessment Headers */}
-//                             <View style={styles.gradebookAssessmentHeader}>
-//                               <Text
-//                                 style={[styles.gradebookAssessmentHeaderText, { flex: 2 }]}
-//                               >
-//                                 Assessment
-//                               </Text>
-//                               <Text
-//                                 style={[styles.gradebookAssessmentHeaderText, { flex: 1.5 }]}
-//                               >
-//                                 Category
-//                               </Text>
-//                               <Text
-//                                 style={[styles.gradebookAssessmentHeaderText, { flex: 1, textAlign: "center" }]}
-//                               >
-//                                 Score
-//                               </Text>
-//                               <Text
-//                                 style={[styles.gradebookAssessmentHeaderText, { flex: 1, textAlign: "center" }]}
-//                               >
-//                                 %
-//                               </Text>
-//                             </View>
-
-//                             {/* Assessment Rows */}
-//                             {student.assessments &&
-//                             student.assessments.length > 0 ? (
-//                               student.assessments.map(
-//                                 (assessment: Assessment) => (
-//                                   <View
-//                                     key={assessment.assessmentId}
-//                                     style={styles.gradebookAssessmentRow}
-//                                   >
-//                                     <Text
-//                                       style={[styles.gradebookAssessmentText, { flex: 2 }]}
-//                                       numberOfLines={1}
-//                                     >
-//                                       {assessment.assessmentTitle}
-//                                     </Text>
-//                                     <Text
-//                                       style={[styles.gradebookAssessmentText, { flex: 1.5 }]}
-//                                       numberOfLines={1}
-//                                     >
-//                                       {assessment.category}
-//                                     </Text>
-//                                     <Text
-//                                       style={[styles.gradebookAssessmentText, { flex: 1, textAlign: "center" }]}
-//                                     >
-//                                       {assessment.studentPoints}/
-//                                       {assessment.maxPoints}
-//                                     </Text>
-//                                     <Text
-//                                       style={[styles.gradebookAssessmentText, { flex: 1, textAlign: "right", fontWeight: "600" }]}
-//                                     >
-//                                       {assessment.maxPoints > 0
-//                                         ? (
-//                                             (assessment.studentPoints /
-//                                               assessment.maxPoints) *
-//                                             100
-//                                           ).toFixed(1)
-//                                         : 0}
-//                                       %
-//                                     </Text>
-//                                   </View>
-//                                 )
-//                               )
-//                             ) : (
-//                               <Text style={styles.gradebookNoDataText}>
-//                                 No assessments found.
-//                               </Text>
-//                             )}
-//                           </View>
-//                         )}
-//                       </View>
-//                     )}
-//                   </View>
-//                 ))
-//               ) : (
-//                 <View style={{ paddingVertical: 20, alignItems: "center" }}>
-//                   <Text
-//                     style={{
-//                       color: "#6b7280",
-//                       fontSize: 14,
-//                       textAlign: "center",
-//                     }}
-//                   >
-//                     No students found in this course.
-//                   </Text>
-//                 </View>
-//               )}
-//             </View>
-//           </ScrollView>
-//         ) : (
-//           <Text
-//             style={{
-//               textAlign: "center",
-//               color: "#7b8794",
-//               marginVertical: 40,
-//             }}
-//           >
-//             No gradebook data found.
-//           </Text>
-//         )}
-//       </View>
-//     </Modal>
-//   );
-// };
-
-// export default GradebookModal;
-
 // components/modals/GradebookModal.tsx
 import React from "react";
 import {
@@ -439,6 +27,95 @@ interface GradebookModalProps {
   onToggleQuarter: (quarterId: string) => void;
 }
 
+// Percentage color tiers / letter grade styling - mirrors GradebookPage.tsx
+// and the Students section's GradebookTable for visual consistency.
+const getPercentColor = (pct: number) => {
+  if (pct >= 90) return "#16a34a";
+  if (pct >= 80) return "#2563eb";
+  if (pct >= 70) return "#ca8a04";
+  if (pct >= 60) return "#ea580c";
+  return "#dc2626";
+};
+
+const getLetterGradeStyle = (letterGrade?: string) => {
+  const grade = (letterGrade || "").charAt(0);
+  switch (grade) {
+    case "A":
+      return { bg: "#dcfce7", text: "#166534" };
+    case "B":
+      return { bg: "#dbeafe", text: "#1e40af" };
+    case "C":
+      return { bg: "#fef9c3", text: "#854d0e" };
+    case "D":
+      return { bg: "#ffedd5", text: "#9a3412" };
+    default:
+      return { bg: "#fee2e2", text: "#991b1b" };
+  }
+};
+
+// Key-value field row: label fixed-width on the left, value on the right,
+// wrapping (not overlapping/truncating) when long - the "Students section"
+// pattern this modal is being aligned to.
+const FieldRow: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  last?: boolean;
+}> = ({ label, value, last }) => (
+  <View style={[styles.fieldRow, last && styles.fieldRowLast]}>
+    <Text style={styles.fieldLabel}>{label}</Text>
+    <View style={styles.fieldValueWrap}>
+      {typeof value === "string" || typeof value === "number" ? (
+        <Text style={styles.fieldValue}>{value}</Text>
+      ) : (
+        value
+      )}
+    </View>
+  </View>
+);
+
+const AssessmentTable: React.FC<{ assessments?: Assessment[] }> = ({ assessments }) => {
+  if (!assessments || assessments.length === 0) {
+    return <Text style={styles.noDataText}>No assessments found.</Text>;
+  }
+  return (
+    <View>
+      {assessments.map((assessment) => {
+        const max = Number(assessment.maxPoints ?? 0);
+        const pts = Number(assessment.studentPoints ?? 0);
+        const pct = max > 0 ? (pts / max) * 100 : 0;
+        return (
+          <View key={assessment.assessmentId} style={styles.assessmentCard}>
+            <FieldRow label="Assessment" value={assessment.assessmentTitle || "Untitled"} />
+            <FieldRow
+              label="Category"
+              value={
+                <View style={styles.categoryChip}>
+                  <Text style={styles.categoryChipText} numberOfLines={1}>
+                    {assessment.category || "—"}
+                  </Text>
+                </View>
+              }
+            />
+            <FieldRow label="Score" value={Number.isFinite(pts) ? String(pts) : "0"} />
+            <FieldRow label="Max Points" value={Number.isFinite(max) ? String(max) : "0"} />
+            <FieldRow
+              label="Percentage"
+              last
+              value={
+                <Text style={[styles.fieldValueStrong, { color: getPercentColor(pct) }]}>
+                  {pct.toFixed(1)}%
+                </Text>
+              }
+            />
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+const MemoAssessmentTable = React.memo(AssessmentTable);
+
 const GradebookModal: React.FC<GradebookModalProps> = ({
   visible,
   onClose,
@@ -463,82 +140,8 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
       ? (student.semesters?.length || 0) > 0
       : (student.chapters?.length || 0) > 0;
 
-  const renderAssessmentTable = (assessments: Assessment[]) => (
-    <>
-      <View style={styles.assessmentHeader}>
-        <Text style={[styles.assessmentHeaderText, { flex: 2 }]}>
-          Assessment
-        </Text>
-        <Text style={[styles.assessmentHeaderText, { flex: 1.5 }]}>
-          Category
-        </Text>
-        <Text
-          style={[
-            styles.assessmentHeaderText,
-            { flex: 1, textAlign: "center" },
-          ]}
-        >
-          Score
-        </Text>
-        <Text
-          style={[
-            styles.assessmentHeaderText,
-            { flex: 1, textAlign: "center" },
-          ]}
-        >
-          %
-        </Text>
-      </View>
-
-      {assessments?.length > 0 ? (
-        assessments.map((assessment) => (
-          <View key={assessment.assessmentId} style={styles.assessmentRow}>
-            <Text
-              style={[styles.assessmentText, { flex: 2 }]}
-              numberOfLines={1}
-            >
-              {assessment.assessmentTitle}
-            </Text>
-            <Text
-              style={[styles.assessmentText, { flex: 1.5 }]}
-              numberOfLines={1}
-            >
-              {assessment.category}
-            </Text>
-            <Text
-              style={[styles.assessmentText, { flex: 1, textAlign: "center" }]}
-            >
-              {assessment.studentPoints}/{assessment.maxPoints}
-            </Text>
-            <Text
-              style={[
-                styles.assessmentText,
-                { flex: 1, textAlign: "right", fontWeight: "600" },
-              ]}
-            >
-              {assessment.maxPoints > 0
-                ? (
-                    (assessment.studentPoints / assessment.maxPoints) *
-                    100
-                  ).toFixed(1)
-                : 0}
-              %
-            </Text>
-          </View>
-        ))
-      ) : (
-        <Text style={styles.noDataText}>No assessments found.</Text>
-      )}
-    </>
-  );
-
   return (
-    <Modal
-      visible={visible}
-      transparent={false}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent={false} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Gradebook</Text>
@@ -547,295 +150,244 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
           </TouchableOpacity>
         </View>
         {gradebookLoading ? (
-          <ActivityIndicator
-            size="large"
-            color="#10B144"
-            style={styles.loader}
-          />
+          <ActivityIndicator size="large" color="#10B144" style={styles.loader} />
         ) : gradebookError ? (
           <Text style={styles.errorText}>{gradebookError}</Text>
         ) : gradebookData ? (
           <ScrollView contentContainerStyle={styles.contentContainer}>
-            <View style={styles.card}>
-              <View style={styles.tableHeader}>
-                <Text
-                  style={[styles.headerCell, { flex: 2, textAlign: "left" }]}
-                >
-                  Student
-                </Text>
-                <Text
-                  style={[styles.headerCell, { flex: 1, textAlign: "center" }]}
-                >
-                  Final Grade
-                </Text>
-                <Text
-                  style={[styles.headerCell, { flex: 1, textAlign: "center" }]}
-                >
-                  {isNormalGrading ? "Letter" : "Points"}
-                </Text>
-                <Text
-                  style={[styles.headerCell, { flex: 1, textAlign: "right" }]}
-                >
-                  {isNormalGrading ? "GPA" : "Remarks"}
-                </Text>
-              </View>
+            {gradebookData.gradebook?.length > 0 ? (
+              gradebookData.gradebook.map((student: Student) => {
+                const gradeAvailable = hasGradeData(student);
+                const finalPercent = isNormalGrading
+                  ? student.finalGrade
+                  : student.standardGrade?.finalGrade;
+                const letterStyle = getLetterGradeStyle(student.letterGrade);
 
-              {gradebookData.gradebook?.length > 0 ? (
-                gradebookData.gradebook.map((student: Student) => (
-                  <View key={student.studentId}>
+                return (
+                  <View key={student.studentId} style={styles.studentCard}>
                     <TouchableOpacity
                       onPress={() => onToggleStudent(student.studentId)}
-                      style={styles.studentRow}
+                      style={styles.studentHeader}
                     >
-                      <View style={styles.studentInfo}>
-                        <Text
-                          style={styles.expandIcon}
-                          numberOfLines={2}
-                          ellipsizeMode="tail"
-                        >
-                          {expandedStudents.has(student.studentId) ? "▼" : "▶"}
-                        </Text>
-                        <Text style={styles.studentName}>
-                          {student.studentName || "Unknown Student"}
-                        </Text>
-                      </View>
-                      <Text style={styles.gradeText}>
-                        {hasGradeData(student)
-                          ? `${
-                              isNormalGrading
-                                ? student.finalGrade
-                                : student.standardGrade?.finalGrade
-                            }%`
-                          : "---"}
+                      <Text style={styles.expandIcon}>
+                        {expandedStudents.has(student.studentId) ? "▼" : "▶"}
                       </Text>
-                      <View style={styles.letterGradeContainer}>
-                        <View style={styles.letterGradeBadge}>
-                          <Text style={styles.letterGradeText}>
-                            {hasGradeData(student)
-                              ? isNormalGrading
-                                ? student.letterGrade
-                                : student.standardGrade?.points
-                              : "---"}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={styles.gpaText}>
-                        {hasGradeData(student)
-                          ? isNormalGrading
-                            ? student.gpa
-                            : student.standardGrade?.remarks
-                          : "---"}
+                      <Text style={styles.studentName} numberOfLines={2}>
+                        {student.studentName || "Unknown Student"}
                       </Text>
                     </TouchableOpacity>
 
+                    <FieldRow
+                      label="Final Grade"
+                      value={gradeAvailable && finalPercent != null ? `${finalPercent}%` : "---"}
+                    />
+                    {isNormalGrading ? (
+                      <>
+                        <FieldRow
+                          label="Letter Grade"
+                          value={
+                            <View style={[styles.letterGradeBadge, { backgroundColor: letterStyle.bg }]}>
+                              <Text style={[styles.letterGradeText, { color: letterStyle.text }]}>
+                                {gradeAvailable ? student.letterGrade || "—" : "---"}
+                              </Text>
+                            </View>
+                          }
+                        />
+                        <FieldRow
+                          label="GPA"
+                          last
+                          value={gradeAvailable ? student.gpa ?? "—" : "---"}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <FieldRow
+                          label="Points"
+                          value={gradeAvailable ? student.standardGrade?.points ?? "—" : "---"}
+                        />
+                        <FieldRow
+                          label="Remarks"
+                          last
+                          value={gradeAvailable ? student.standardGrade?.remarks ?? "—" : "---"}
+                        />
+                      </>
+                    )}
+
                     {expandedStudents.has(student.studentId) && (
                       <View style={styles.expandedContent}>
-                        <Text style={styles.performanceTitle}>
-                          Academic Performance Breakdown
-                        </Text>
+                        <Text style={styles.performanceTitle}>Academic Performance Breakdown</Text>
 
                         {courseType === "semester-based" ? (
                           student.semesters && student.semesters.length > 0 ? (
                             student.semesters.map((semester: Semester) => (
-                              <View
-                                key={semester.semesterId}
-                                style={styles.semesterItem}
-                              >
+                              <View key={semester.semesterId} style={styles.semesterItem}>
                                 <TouchableOpacity
-                                  onPress={() =>
-                                    onToggleSemester(semester.semesterId)
-                                  }
+                                  onPress={() => onToggleSemester(semester.semesterId)}
                                   style={styles.semesterButton}
                                 >
                                   <Text style={styles.expandIcon}>
-                                    {expandedSemesters.has(semester.semesterId)
-                                      ? "▼"
-                                      : "▶"}
+                                    {expandedSemesters.has(semester.semesterId) ? "▼" : "▶"}
                                   </Text>
-                                  <Text style={styles.semesterTitle}>
+                                  <Text style={styles.semesterTitle} numberOfLines={1}>
                                     {semester.semesterTitle}
                                   </Text>
-                                  {isNormalGrading ? (
-                                    <>
-                                      <Text style={styles.quarterGrade}>
-                                        {semester.grade}%
-                                      </Text>
-                                      <View style={styles.quarterBadge}>
-                                        <Text style={styles.quarterBadgeText}>
-                                          {semester.letterGrade}
-                                        </Text>
-                                      </View>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Text style={styles.quarterGrade}>
-                                        {semester.standardGrade?.grade}%
-                                      </Text>
-                                      <View style={styles.quarterBadge}>
-                                        <Text style={styles.quarterBadgeText}>
-                                          Pts: {semester.standardGrade?.points}
-                                        </Text>
-                                      </View>
-                                    </>
-                                  )}
                                 </TouchableOpacity>
+
+                                {isNormalGrading ? (
+                                  <FieldRow
+                                    label="Grade"
+                                    last
+                                    value={
+                                      <View style={styles.gradeSummaryRow}>
+                                        <Text style={styles.fieldValue}>{semester.grade ?? 0}%</Text>
+                                        <View
+                                          style={[
+                                            styles.letterGradeBadge,
+                                            { backgroundColor: getLetterGradeStyle(semester.letterGrade).bg },
+                                          ]}
+                                        >
+                                          <Text
+                                            style={[
+                                              styles.letterGradeText,
+                                              { color: getLetterGradeStyle(semester.letterGrade).text },
+                                            ]}
+                                          >
+                                            {semester.letterGrade || "—"}
+                                          </Text>
+                                        </View>
+                                      </View>
+                                    }
+                                  />
+                                ) : (
+                                  <FieldRow
+                                    label="Grade"
+                                    last
+                                    value={`${semester.standardGrade?.grade ?? 0}% · Pts: ${
+                                      semester.standardGrade?.points ?? "—"
+                                    }`}
+                                  />
+                                )}
 
                                 {expandedSemesters.has(semester.semesterId) && (
                                   <View style={styles.semesterExpanded}>
                                     {semester.quarters?.length > 0 ? (
-                                      semester.quarters.map(
-                                        (quarter: Quarter) => (
-                                          <View
-                                            key={quarter.quarterId}
-                                            style={styles.quarterItem}
+                                      semester.quarters.map((quarter: Quarter) => (
+                                        <View key={quarter.quarterId} style={styles.quarterItem}>
+                                          <TouchableOpacity
+                                            onPress={() => onToggleQuarter(quarter.quarterId)}
+                                            style={styles.quarterButton}
                                           >
-                                            <TouchableOpacity
-                                              onPress={() =>
-                                                onToggleQuarter(
-                                                  quarter.quarterId
-                                                )
-                                              }
-                                              style={styles.quarterButton}
-                                            >
-                                              <Text style={styles.expandIcon}>
-                                                {expandedQuarters.has(
-                                                  quarter.quarterId
-                                                )
-                                                  ? "▼"
-                                                  : "▶"}
-                                              </Text>
-                                              <Text style={styles.quarterTitle}>
-                                                {quarter.quarterTitle}
-                                              </Text>
-                                              {isNormalGrading ? (
-                                                <>
-                                                  <Text
-                                                    style={styles.quarterGrade}
-                                                  >
-                                                    {quarter.grade}%
-                                                  </Text>
-                                                  <View
-                                                    style={styles.quarterBadge}
-                                                  >
-                                                    <Text
-                                                      style={
-                                                        styles.quarterBadgeText
-                                                      }
-                                                    >
-                                                      {quarter.letterGrade}
-                                                    </Text>
-                                                  </View>
-                                                  <Text
-                                                    style={styles.quarterGpa}
-                                                  >
-                                                    GPA: {quarter.gpa}
-                                                  </Text>
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <Text
-                                                    style={styles.quarterGrade}
-                                                  >
-                                                    {quarter.standardGrade?.grade}%
-                                                  </Text>
-                                                  <View
-                                                    style={styles.quarterBadge}
-                                                  >
-                                                    <Text
-                                                      style={
-                                                        styles.quarterBadgeText
-                                                      }
-                                                    >
-                                                      Pts:{" "}
-                                                      {
-                                                        quarter.standardGrade
-                                                          ?.points
-                                                      }
-                                                    </Text>
-                                                  </View>
-                                                  <Text
-                                                    style={styles.quarterGpa}
-                                                  >
-                                                    {quarter.standardGrade?.remarks}
-                                                  </Text>
-                                                </>
-                                              )}
-                                            </TouchableOpacity>
+                                            <Text style={styles.expandIcon}>
+                                              {expandedQuarters.has(quarter.quarterId) ? "▼" : "▶"}
+                                            </Text>
+                                            <Text style={styles.quarterTitle} numberOfLines={1}>
+                                              {quarter.quarterTitle}
+                                            </Text>
+                                          </TouchableOpacity>
 
-                                            {expandedQuarters.has(
-                                              quarter.quarterId
-                                            ) && (
-                                              <View
-                                                style={styles.quarterExpanded}
-                                              >
-                                                {renderAssessmentTable(
-                                                  quarter.assessments
-                                                )}
-                                              </View>
-                                            )}
-                                          </View>
-                                        )
-                                      )
+                                          {isNormalGrading ? (
+                                            <>
+                                              <FieldRow
+                                                label="Grade"
+                                                value={
+                                                  <View style={styles.gradeSummaryRow}>
+                                                    <Text style={styles.fieldValue}>{quarter.grade ?? 0}%</Text>
+                                                    <View
+                                                      style={[
+                                                        styles.letterGradeBadge,
+                                                        {
+                                                          backgroundColor: getLetterGradeStyle(quarter.letterGrade)
+                                                            .bg,
+                                                        },
+                                                      ]}
+                                                    >
+                                                      <Text
+                                                        style={[
+                                                          styles.letterGradeText,
+                                                          {
+                                                            color: getLetterGradeStyle(quarter.letterGrade).text,
+                                                          },
+                                                        ]}
+                                                      >
+                                                        {quarter.letterGrade || "—"}
+                                                      </Text>
+                                                    </View>
+                                                  </View>
+                                                }
+                                              />
+                                              <FieldRow label="GPA" last value={quarter.gpa ?? "—"} />
+                                            </>
+                                          ) : (
+                                            <>
+                                              <FieldRow label="Grade" value={`${quarter.standardGrade?.grade ?? 0}%`} />
+                                              <FieldRow
+                                                label="Points"
+                                                value={quarter.standardGrade?.points ?? "—"}
+                                              />
+                                              <FieldRow
+                                                label="Remarks"
+                                                last
+                                                value={quarter.standardGrade?.remarks ?? "—"}
+                                              />
+                                            </>
+                                          )}
+
+                                          {expandedQuarters.has(quarter.quarterId) && (
+                                            <View style={styles.quarterExpanded}>
+                                              <MemoAssessmentTable assessments={quarter.assessments} />
+                                            </View>
+                                          )}
+                                        </View>
+                                      ))
                                     ) : (
-                                      <Text style={styles.noDataText}>
-                                        No quarters found.
-                                      </Text>
+                                      <Text style={styles.noDataText}>No quarters found.</Text>
                                     )}
                                   </View>
                                 )}
                               </View>
                             ))
                           ) : (
-                            <Text style={styles.noDataText}>
-                              No semesters found.
-                            </Text>
+                            <Text style={styles.noDataText}>No semesters found.</Text>
                           )
                         ) : (
                           <View style={styles.directAssessments}>
-                            {hasGradeData(student) && (
-                              <View style={styles.chapterSummaryRow}>
+                            {gradeAvailable && (
+                              <>
                                 {isNormalGrading ? (
                                   <>
-                                    <Text style={styles.chapterSummaryText}>
-                                      Overall: {student.finalGrade}%
-                                    </Text>
-                                    <Text style={styles.chapterSummaryText}>
-                                      Letter: {student.letterGrade}
-                                    </Text>
-                                    <Text style={styles.chapterSummaryText}>
-                                      GPA: {student.gpa}
-                                    </Text>
+                                    <FieldRow label="Overall" value={`${student.finalGrade ?? 0}%`} />
+                                    <FieldRow label="Letter" value={student.letterGrade || "—"} />
+                                    <FieldRow label="GPA" last value={student.gpa ?? "—"} />
                                   </>
                                 ) : (
                                   <>
-                                    <Text style={styles.chapterSummaryText}>
-                                      Overall: {student.standardGrade?.finalGrade}%
-                                    </Text>
-                                    <Text style={styles.chapterSummaryText}>
-                                      Points: {student.standardGrade?.points}
-                                    </Text>
-                                    <Text style={styles.chapterSummaryText}>
-                                      {student.standardGrade?.remarks}
-                                    </Text>
+                                    <FieldRow
+                                      label="Overall"
+                                      value={`${student.standardGrade?.finalGrade ?? 0}%`}
+                                    />
+                                    <FieldRow label="Points" value={student.standardGrade?.points ?? "—"} />
+                                    <FieldRow
+                                      label="Remarks"
+                                      last
+                                      value={student.standardGrade?.remarks || "—"}
+                                    />
                                   </>
                                 )}
-                              </View>
+                              </>
                             )}
-                            {renderAssessmentTable(student.chapters || [])}
+                            <MemoAssessmentTable assessments={student.chapters || []} />
                           </View>
                         )}
                       </View>
                     )}
                   </View>
-                ))
-              ) : (
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>
-                    No students found in this course.
-                  </Text>
-                </View>
-              )}
-            </View>
+                );
+              })
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No students found in this course.</Text>
+              </View>
+            )}
           </ScrollView>
         ) : (
           <Text style={styles.noDataText}>No gradebook data found.</Text>
@@ -860,75 +412,59 @@ const styles = StyleSheet.create({
   loader: { marginVertical: 40 },
   errorText: { color: "red", textAlign: "center", marginVertical: 20 },
   contentContainer: { padding: 16 },
-  card: {
+
+  studentCard: {
     backgroundColor: "#fff",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#eee",
     padding: 16,
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
-  tableHeader: {
+  studentHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderColor: "#eee",
     paddingBottom: 12,
-    marginBottom: 12,
-  },
-  headerCell: { fontWeight: "bold", fontSize: 16, color: "#6b7280" },
-  studentRow: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    alignItems: "center",
-    paddingVertical: 12,
+    marginBottom: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#f5f5f5",
+    borderBottomColor: "#eee",
   },
-  studentInfo: {
-    flex: 2,
+  expandIcon: { fontSize: 16, marginRight: 8, color: "#6b7280", fontWeight: "bold" },
+  studentName: { flex: 1, fontSize: 16, fontWeight: "bold", color: "#1E293B", flexShrink: 1 },
+
+  // Key-value field row: label fixed-width, value wraps to the right.
+  fieldRow: {
     flexDirection: "row",
-    alignItems: "center",
-    // backgroundColor: "pink",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingVertical: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
   },
-  expandIcon: {
-    fontSize: 16,
-    marginRight: 8,
-    color: "#6b7280",
-    fontWeight: "bold",
-  },
-  studentName: { flex: 1, fontSize: 16, fontWeight: "bold", color: "#1E293B" },
-  gradeText: { flex: 1, textAlign: "center", fontSize: 16, color: "#1E293B" },
-  letterGradeContainer: { flex: 1, alignItems: "center" },
-  letterGradeBadge: {
-    backgroundColor: "#dbeafe",
-    borderColor: "#93c5fd",
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  letterGradeText: { color: "#1E293B", fontWeight: "bold", fontSize: 14 },
-  gpaText: { flex: 1, textAlign: "right", fontSize: 16, color: "#1E293B" },
+  fieldRowLast: { borderBottomWidth: 0 },
+  fieldLabel: { fontSize: 13, color: "#6b7280", fontWeight: "600", width: 100, paddingTop: 1 },
+  fieldValueWrap: { flex: 1, alignItems: "flex-end" },
+  fieldValue: { fontSize: 14, color: "#111827", fontWeight: "500", textAlign: "right", flexShrink: 1 },
+  fieldValueStrong: { fontSize: 14, color: "#111827", fontWeight: "700", textAlign: "right", flexShrink: 1 },
+
+  letterGradeBadge: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
+  letterGradeText: { fontWeight: "bold", fontSize: 12 },
+  gradeSummaryRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+
   expandedContent: {
-    // backgroundColor: "#000",
-    paddingVertical: 12,
+    paddingTop: 12,
+    marginTop: 8,
     borderLeftWidth: 2,
     borderLeftColor: "#e5e7eb",
-    justifyContent: "center",
-  },
-  performanceTitle: {
-    color: "#6b7280",
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 12,
     paddingLeft: 12,
   },
-  semesterItem: { marginBottom: 8 },
+  performanceTitle: { color: "#6b7280", fontSize: 14, fontWeight: "600", marginBottom: 12 },
+
+  semesterItem: { marginBottom: 12 },
   semesterButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -938,8 +474,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#e5e7eb",
+    marginBottom: 4,
   },
-  semesterTitle: { flex: 1, fontSize: 14, fontWeight: "600", color: "#374151" },
+  semesterTitle: { flex: 1, fontSize: 14, fontWeight: "600", color: "#374151", flexShrink: 1 },
   semesterExpanded: {
     marginTop: 8,
     marginLeft: 12,
@@ -947,7 +484,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderLeftColor: "#d1d5db",
   },
-  quarterItem: { marginBottom: 8 },
+
+  quarterItem: { marginBottom: 12 },
   quarterButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -957,20 +495,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#d1d5db",
+    marginBottom: 4,
   },
-  quarterTitle: { flex: 1, fontSize: 13, fontWeight: "600", color: "#374151" },
-  quarterGrade: { fontSize: 12, color: "#6b7280", marginRight: 8 },
-  quarterBadge: {
-    backgroundColor: "#dbeafe",
-    borderColor: "#93c5fd",
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginRight: 8,
-  },
-  quarterBadgeText: { color: "#1E293B", fontWeight: "bold", fontSize: 11 },
-  quarterGpa: { fontSize: 12, color: "#6b7280" },
+  quarterTitle: { flex: 1, fontSize: 13, fontWeight: "600", color: "#374151", flexShrink: 1 },
   quarterExpanded: {
     marginTop: 8,
     marginLeft: 12,
@@ -981,30 +508,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
-  assessmentHeader: {
-    flexDirection: "row",
-    paddingBottom: 8,
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-  },
-  assessmentHeaderText: { fontSize: 12, fontWeight: "600", color: "#6b7280" },
-  assessmentRow: {
-    flexDirection: "row",
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
-  },
-  assessmentText: { fontSize: 12, color: "#374151" },
-  noDataText: {
-    fontSize: 12,
-    color: "#9ca3af",
-    textAlign: "center",
-    paddingVertical: 8,
-  },
+
   directAssessments: {
-    marginTop: 8,
-    marginLeft: 12,
+    marginTop: 4,
     paddingLeft: 12,
     paddingVertical: 8,
     backgroundColor: "#fff",
@@ -1012,17 +518,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
-  chapterSummaryRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 10,
-    gap: 12,
+
+  assessmentCard: {
+    backgroundColor: "#fafbfc",
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12,
   },
-  chapterSummaryText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#374151",
+  categoryChip: {
+    alignSelf: "flex-end",
+    backgroundColor: "#f3f4f6",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
+  categoryChipText: { fontSize: 11, color: "#374151", fontWeight: "600" },
+
+  noDataText: { fontSize: 13, color: "#9ca3af", textAlign: "center", paddingVertical: 12 },
   emptyContainer: { paddingVertical: 20, alignItems: "center" },
   emptyText: { color: "#6b7280", fontSize: 14, textAlign: "center" },
 });

@@ -387,25 +387,30 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    marginHorizontal: 20,
+    // paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
     position: "relative",
+    // backgroundColor: "pink",
   },
-  title: { fontSize: 18, fontWeight: "bold", color: "#111827" },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111827",
+  },
   closeBtn: {
     position: "absolute",
-    right: 20,
-    top: 16,
-    bottom: 16,
+    bottom: 15,
+    right: 0,
     justifyContent: "center",
-    backgroundColor: "red",
+    // backgroundColor: "red",
   },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: { fontSize: 16, color: "red", textAlign: "center" },
