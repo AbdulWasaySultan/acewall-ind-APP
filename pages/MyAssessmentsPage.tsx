@@ -16,7 +16,7 @@ import {
 import {
   getAllAssessmentForStudent,
   getStudentAssessmentDetails,
-  getAllCourses,
+  getStudentEnrolledCourses,
 } from "../services/course";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -128,14 +128,23 @@ const MyAssessmentsPage = () => {
   const fetchCourses = async () => {
     try {
       setCoursesLoading(true);
-      const res = await getAllCourses();
-      if (res && Array.isArray(res.courses)) {
-        setCourses(res.courses);
+      // Students only pick from courses they're actually enrolled in - not
+      // the teacher-scoped "all courses" catalog (which is always empty for
+      // a student, leaving just the "All Courses" placeholder).
+      const res = await getStudentEnrolledCourses("");
+      if (res && Array.isArray(res.enrolledCourses)) {
+        const mapped = res.enrolledCourses
+          .filter((enrollment: any) => enrollment.course)
+          .map((enrollment: any) => ({
+            _id: enrollment.course._id,
+            courseTitle: enrollment.course.courseTitle,
+          }));
+        setCourses(mapped);
       } else {
         setCourses([]);
       }
     } catch (err: any) {
-      console.error("Error fetching courses:", err);
+      console.error("Error fetching enrolled courses:", err);
       setCourses([]);
     } finally {
       setCoursesLoading(false);
@@ -442,7 +451,7 @@ const MyAssessmentsPage = () => {
 
                 try {
                   const details = await getStudentAssessmentDetails(item._id);
-                  setSubmissionDetails(details.submission);
+                  setSubmissionDetails(details.submissions?.[0] || null);
                 } catch (err: any) {
                   setSubmissionDetailsError(
                     "Failed to load submission details"
@@ -480,14 +489,16 @@ const MyAssessmentsPage = () => {
       </View>
 
       {/* Primary Filter: Course Selector */}
-      <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
-        <CourseSelector
-          courses={courses}
-          selectedCourse={selectedCourse}
-          onCourseChange={handleCourseChange}
-          loading={coursesLoading}
-        />
-      </FilterBar>
+      <View style={{ overflow: "visible", zIndex: 10000, elevation: 10000 }}>
+        <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
+          <CourseSelector
+            courses={courses}
+            selectedCourse={selectedCourse}
+            onCourseChange={handleCourseChange}
+            loading={coursesLoading}
+          />
+        </FilterBar>
+      </View>
 
       {/* Secondary Filters */}
       <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>

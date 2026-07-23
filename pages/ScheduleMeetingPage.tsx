@@ -10,6 +10,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   Video,
@@ -102,7 +103,14 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
       const res = await zoomService.getCourseMeetings(courseId);
       setMeetings(res || []);
     } catch (err: any) {
-      console.error("Error fetching course meetings", err);
+      // console.error("Error fetching course meetings", err);
+      console.log("Error fetching course meetings", err);
+      Toast.show({
+        type: "error",
+        text1: "Error Fetching Meetings",
+        text2: "No meeting found for this course.",
+        visibilityTime: 4000,
+      });
     } finally {
       setFetching(false);
     }

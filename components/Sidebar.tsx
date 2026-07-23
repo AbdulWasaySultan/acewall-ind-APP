@@ -207,7 +207,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 style={styles.avatar}
               />
             </TouchableOpacity>
-            <Text style={styles.username}>{getFullName(user)}</Text>
+            <Text style={styles.username} numberOfLines={2}>
+              {getFullName(user)}
+            </Text>
             <Text style={styles.email}>{user?.email || "No Email"}</Text>
             <Text style={styles.role}>
               {isPreviewMode
@@ -296,6 +298,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 18,
     marginBottom: 2,
+    alignSelf: "center",
+    textAlign: "center",
   },
   email: {
     color: "#888",

@@ -1,5 +1,11 @@
 // gradebookService.ts
 import { getApiInstance } from "./apiInstance";
+import {
+  Assessment as GradebookAssessment,
+  Quarter as GradebookQuarter,
+  Semester as GradebookSemester,
+  StandardGradeBlock,
+} from "../types/course";
 
 // Types...
 export interface Course {
@@ -109,5 +115,54 @@ export const getCourseGradebook = async (
   } catch (error) {
     handleApiError(error, "Failed to fetch course gradebook");
     throw error; // Re-throw for component-level handling
+  }
+};
+
+// Matches the shape returned by
+// /api/gradebook/getGradebooksOfStudentCourseFormatted/:studentId/:courseId
+// (the same "Formatted" gradebook endpoint the web app's
+// studentCourseGrades.jsx uses) so a course's assessments only ever appear
+// once they actually have a graded submission, same as web.
+export interface StudentCourseGradebook {
+  studentId: string;
+  course: {
+    _id: string;
+    courseTitle: string;
+    courseDescription?: string;
+    thumbnail?: { url: string; filename?: string };
+  };
+  courseName: string;
+  gradingSystem: "normalGrading" | "StandardGrading";
+  courseType: "semester-based" | "chapter-based";
+  totalAssessments: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  finalGrade?: number;
+  gpa?: number;
+  letterGrade?: string;
+  standardGrade?: StandardGradeBlock;
+  semesters?: GradebookSemester[];
+  chapters?: GradebookAssessment[];
+}
+
+export const getStudentCourseGradebook = async (
+  studentId: string,
+  courseId: string
+): Promise<StudentCourseGradebook | null> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get(
+      `/api/gradebook/getGradebooksOfStudentCourseFormatted/${studentId}/${courseId}`
+    );
+    return response.data;
+  } catch (error: any) {
+    // No Gradebook document yet just means the student hasn't submitted
+    // anything gradable in this course yet - treat as empty, not an error.
+    if (error?.response?.status === 404) {
+      return null;
+    }
+    handleApiError(error, "Failed to fetch course gradebook");
+    throw error;
   }
 };

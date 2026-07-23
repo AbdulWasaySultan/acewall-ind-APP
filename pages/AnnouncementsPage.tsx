@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
-import { getAllCourses } from "../services/course";
+import { getAllCourses, getStudentEnrolledCourses } from "../services/course";
 import {
   createAnnouncement,
   getAnnouncementsByTeacher,
@@ -190,9 +190,20 @@ const AnnouncementsPage = () => {
   const fetchCourses = async () => {
     try {
       setCoursesLoading(true);
-      const res = await getAllCourses();
-      if (res && Array.isArray(res.courses)) {
-        setCourses(res.courses);
+      if (userRole === "student") {
+        const res = await getStudentEnrolledCourses("");
+        if (res && Array.isArray(res.enrolledCourses)) {
+          setCourses(
+            res.enrolledCourses
+              .map((enrollment: any) => enrollment.course)
+              .filter(Boolean)
+          );
+        }
+      } else {
+        const res = await getAllCourses();
+        if (res && Array.isArray(res.courses)) {
+          setCourses(res.courses);
+        }
       }
     } catch (err: any) {
       console.error("Error fetching courses:", err);

@@ -242,9 +242,9 @@ const ChapterDetailsStudent = () => {
 
     try {
       const details = await getStudentAssessmentDetails(assessmentId);
-      if (details.message === "Submission found") {
+      if (details.submissions && details.submissions.length > 0) {
         setDetailedModalVisible(true);
-        setSubmissionDetails(details.submission);
+        setSubmissionDetails(details.submissions[0]);
       } else {
         navigation.navigate("AssessmentScreenStudent", { assessmentId });
       }

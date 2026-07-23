@@ -323,6 +323,16 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const extractCourses = (data: any): any[] => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
+    // getStudentEnrolledCourses() returns { enrolledCourses: [{ course: {...}, ... }] } -
+    // each item nests the actual course under `.course`, not a flat course object.
+    if (data.enrolledCourses && Array.isArray(data.enrolledCourses)) {
+      return data.enrolledCourses
+        .filter((enrollment: any) => enrollment.course)
+        .map((enrollment: any) => ({
+          _id: enrollment.course._id,
+          courseTitle: enrollment.course.courseTitle,
+        }));
+    }
     if (data.courses && Array.isArray(data.courses)) return data.courses;
     if (data.data && data.data.courses && Array.isArray(data.data.courses))
       return data.data.courses;

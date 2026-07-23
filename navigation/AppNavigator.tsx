@@ -53,6 +53,7 @@ import CourseImportPage from "../pages/ImportCourses";
 import CouponsPage from "../pages/CouponsPage";
 import { ScheduleMeetingPage } from "../pages/ScheduleMeetingPage";
 import StandardGradeScaleManagementPage from "../pages/StandardGradeScaleManagementPage";
+import CourseAnalyticsPage from "../pages/CourseAnalyticsPage";
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -68,6 +69,7 @@ export type RootStackParamList = {
   CourseDetails: { courseId: string };
   Coupons: { courseId: string };
   StandardGradeScaleManagement: { courseId: string };
+  CourseAnalytics: { courseId: string };
   ScheduleMeeting: { courseId: string };
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;
@@ -351,6 +353,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="StandardGradeScaleManagement"
               component={StandardGradeScaleManagementPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="CourseAnalytics"
+              component={CourseAnalyticsPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen

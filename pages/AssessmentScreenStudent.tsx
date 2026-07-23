@@ -49,6 +49,8 @@ const AssessmentScreenStudent = () => {
   const [answers, setAnswers] = useState<Record<string, string | File | null>>({})
   const [uploadedFiles, setUploadedFiles] = useState<any>(null)
   const [submitAssessmentLoading, setSubmitAssessmentLoading] = useState(false)
+  const [submissionResult, setSubmissionResult] = useState<any>(null)
+  const [resultLoading, setResultLoading] = useState(false)
   useEffect(() => {
 
     const fetchAssessment = async () => {
@@ -89,6 +91,23 @@ const AssessmentScreenStudent = () => {
     }
   }
 
+  const showSubmissionResult = async () => {
+    setResultLoading(true)
+    try {
+      const details = await getStudentAssessmentDetails(assessmentId)
+      if (details.submissions && details.submissions.length > 0) {
+        setSubmissionResult(details.submissions[0])
+      } else {
+        navigation.goBack()
+      }
+    } catch (err) {
+      console.error("Error fetching submission result:", err)
+      navigation.goBack()
+    } finally {
+      setResultLoading(false)
+    }
+  }
+
   const handleSubmit = async () => {
     try {
       // Validate all questions are answered
@@ -116,7 +135,7 @@ const AssessmentScreenStudent = () => {
         );
 
         Toast.show(res.message || "Assessment submitted successfully!", Toast.LONG);
-        navigation.goBack();
+        await showSubmissionResult();
         return;
       }
 
@@ -139,10 +158,13 @@ const AssessmentScreenStudent = () => {
 
 
       Toast.show(res.message || "Assessment submitted successfully!", Toast.LONG)
-      navigation.goBack()
+      await showSubmissionResult();
     } catch (error: any) {
-      console.error("Error submitting assessment:", error)
-      Toast.show(error.message || "Failed to submit assessment. Please try again.", Toast.LONG)
+      console.error("Error submitting assessment:", error.response?.data || error)
+      Toast.show(
+        error.response?.data?.message || error.message || "Failed to submit assessment. Please try again.",
+        Toast.LONG
+      )
     }
     finally {
       setSubmitAssessmentLoading(false)
@@ -239,6 +261,88 @@ const AssessmentScreenStudent = () => {
       </TouchableOpacity>
     </View>
   )
+
+  const renderResult = () => (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.backButtonText}>Submission Details</Text>
+      </View>
+
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
+          <View style={styles.assessmentInfo}>
+            <View style={styles.resultBadgeRow}>
+              <View style={styles.resultBadge}>
+                <Text style={styles.resultBadgeText}>{submissionResult.status}</Text>
+              </View>
+              <View style={styles.resultBadge}>
+                <Text style={styles.resultBadgeText}>
+                  {submissionResult.graded ? "Graded" : "Not Graded"}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.assessmentTitle}>{assessment?.title}</Text>
+            <Text style={styles.assessmentDescription}>
+              Total Score: {submissionResult.totalScore} points
+            </Text>
+          </View>
+
+          {(submissionResult.answers || []).map((answer: any, index: number) => (
+            <View key={answer._id || index} style={styles.questionCard}>
+              <View style={styles.questionHeader}>
+                <Text style={styles.questionTitle}>Question {index + 1}</Text>
+                <Text style={styles.questionPoints}>
+                  {answer.pointsAwarded}/{answer.question?.points ?? 0} pts
+                </Text>
+              </View>
+              <Text style={styles.questionText}>
+                {answer.question?.question?.replace(/<[^>]*>/g, "") || "No question text"}
+              </Text>
+              <Text style={styles.resultAnswerLabel}>Your Answer:</Text>
+              <Text style={styles.resultAnswerText}>
+                {answer.file && answer.file.length > 0
+                  ? `${answer.file.length} file(s) uploaded`
+                  : answer.selectedAnswer || "No answer provided"}
+              </Text>
+              <Text
+                style={[
+                  styles.resultStatusText,
+                  {
+                    color: answer.requiresManualCheck
+                      ? "#D97706"
+                      : answer.isCorrect
+                        ? "#16A34A"
+                        : "#DC2626",
+                  },
+                ]}
+              >
+                {answer.requiresManualCheck
+                  ? "Needs Manual Grading"
+                  : answer.isCorrect
+                    ? "Correct"
+                    : "Incorrect"}
+              </Text>
+            </View>
+          ))}
+
+          <TouchableOpacity style={styles.submitButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.submitButtonText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+  )
+
+  if (resultLoading || submissionResult) {
+    if (resultLoading && !submissionResult) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size={"large"} color="#10B144" />
+        </View>
+      )
+    }
+    return renderResult()
+  }
 
   if (!assessment) {
     return (
@@ -465,6 +569,41 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#fff",
+  },
+  resultBadgeRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  resultBadge: {
+    backgroundColor: "#E5E7EB",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  resultBadgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  resultAnswerLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  resultAnswerText: {
+    fontSize: 15,
+    color: "#111",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 12,
+  },
+  resultStatusText: {
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 8,
   },
 })
 

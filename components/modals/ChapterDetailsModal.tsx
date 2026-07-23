@@ -636,6 +636,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
             </View>
           ) : chapterDetails ? (
             <FlatList
+              style={styles.lessonsList}
               data={chapterDetails.lessons || []}
               keyExtractor={lessonKeyExtractor}
               renderItem={renderLesson}
@@ -807,6 +808,7 @@ const styles = StyleSheet.create({
   lessonsCountText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
   chapterLessonsList: { marginTop: 12 },
   lessonsSectionHeaderCard: { marginBottom: 4 },
+  lessonsList: { flex: 1 },
   lessonsListContent: { flexGrow: 1 },
   lessonsListFooterSpacer: { height: 20 },
   assessmentItemContainer: {

@@ -218,11 +218,7 @@ const DashboardPage = () => {
       <View style={styles.mainContainer}>
         <ScrollView
           style={styles.container}
-          contentContainerStyle={{
-            justifyContent: "space-evenly",
-            gap: 30,
-            paddingBottom: 20,
-          }}
+          contentContainerStyle={styles.scrollView}
         >
           {isPreviewMode && (
             <TouchableOpacity
@@ -505,6 +501,12 @@ const styles = StyleSheet.create({
     width: "95%",
     alignSelf: "center",
     marginVertical: 10,
+  },
+  scrollView: {
+    justifyContent: "space-evenly",
+    gap: 25,
+    paddingBottom: 20,
+    marginTop: 10,
   },
   cardsContainer: {
     flexDirection: "row",

@@ -750,32 +750,24 @@ export const submitAssessment = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("course", assessmentId);
+    let payload: any;
 
     if (file && questionId) {
+      const formData = new FormData();
       formData.append("files", {
         uri: file.uri,
         type: file.type || "application/octet-stream",
         name: file.fileName || file.uri.split("/").pop() || "file",
       } as any);
       formData.append("questionId", questionId);
+      payload = formData;
     } else {
-      formData.append("questions", JSON.stringify(questions));
-      questions.forEach((question, index) => {
-        formData.append(`answers[${index}][questionId]`, question.questionId);
-        formData.append(
-          `answers[${index}][selectedAnswer]`,
-          question.selectedAnswer
-        );
-      });
+      payload = { answers: questions };
     }
 
     const response = await api.post(
-      `/api/assessmentSubmission/submission/${assessmentId}`,
-      formData,
+      `/api/assessmentSubmission/submission/v2/${assessmentId}`,
+      payload,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
     return response.data;

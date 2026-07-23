@@ -23,7 +23,10 @@ interface SBLItem {
   remarks: string;
 }
 
-type RouteParams = RouteProp<RootStackParamList, "StandardGradeScaleManagement">;
+type RouteParams = RouteProp<
+  RootStackParamList,
+  "StandardGradeScaleManagement"
+>;
 
 const StandardGradeScaleManagementPage = () => {
   const navigation = useNavigation();
@@ -40,7 +43,6 @@ const StandardGradeScaleManagementPage = () => {
       const res = await getSBLScale(courseId);
       setScale(res.scale || []);
     } catch (err: any) {
-      // if 404 or not found, treat as empty
       if (err.response?.status === 404) {
         setScale([]);
       } else {
@@ -56,9 +58,7 @@ const StandardGradeScaleManagementPage = () => {
   }, [courseId]);
 
   const handleSave = async (newScale: SBLItem[]) => {
-    // Save to API
     try {
-      // call API to set scale
       await setSBLScale(courseId, newScale);
       setScale(newScale);
       setModalVisible(false);
@@ -104,7 +104,6 @@ const StandardGradeScaleManagementPage = () => {
             />
           ) : scale.length === 0 ? (
             <View style={styles.emptyState}>
-              {/* <SimpleIcon name="alert-circle" size={40} color="#aaa" /> */}
               <Text style={styles.emptyText}>No SBL scale found</Text>
               <Text style={styles.emptySubtext}>
                 Tap "Manage Scale" to create one
@@ -114,36 +113,73 @@ const StandardGradeScaleManagementPage = () => {
             <View>
               {/* Header Row */}
               <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>
+                <Text style={[styles.tableHeaderText, styles.colRange]}>
                   Range
                 </Text>
-                <Text style={[styles.tableHeaderText, { flex: 1 }]}>
+                <Text
+                  style={[
+                    styles.tableHeaderText,
+                    styles.colPoints,
+                    { textAlign: "center" },
+                  ]}
+                >
                   Points
                 </Text>
-                <Text style={[styles.tableHeaderText, { flex: 2 }]}>
+                <Text style={[styles.tableHeaderText, styles.colRemarks]}>
                   Remarks
                 </Text>
-                <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Bar</Text>
+                <Text
+                  style={[
+                    styles.tableHeaderText,
+                    styles.colBar,
+                    { textAlign: "center" },
+                  ]}
+                >
+                  Bar
+                </Text>
               </View>
 
+              {/* Data Rows */}
               {scale.map((item, index) => (
                 <View key={item._id || index} style={styles.row}>
-                  <Text style={[styles.rowText, { flex: 1.5 }]}>
+                  {/* Range */}
+                  <Text
+                    style={[styles.rowText, styles.colRange]}
+                    numberOfLines={1}
+                  >
                     {item.minPercentage}% – {item.maxPercentage}%
                   </Text>
-                  <View style={[styles.badge, { flex: 1 }]}>
-                    <Text style={styles.badgeText}>{item.points}</Text>
+
+                  {/* Points Badge Container */}
+                  <View style={[styles.colPoints, styles.badgeColumn]}>
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{item.points}</Text>
+                    </View>
                   </View>
-                  <Text style={[styles.rowText, { flex: 2 }]} numberOfLines={1}>
+
+                  {/* Remarks */}
+                  <Text
+                    style={[styles.rowText, styles.colRemarks]}
+                    numberOfLines={2}
+                  >
                     {item.remarks}
                   </Text>
-                  <View style={[styles.progressContainer, { flex: 1.5 }]}>
-                    <View
-                      style={[
-                        styles.progressFill,
-                        { width: `${item.maxPercentage}%` },
-                      ]}
-                    />
+
+                  {/* Progress Bar */}
+                  <View style={[styles.colBar, styles.progressColumn]}>
+                    <View style={styles.progressContainer}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          {
+                            width: `${Math.min(
+                              Math.max(item.maxPercentage, 0),
+                              100
+                            )}%`,
+                          },
+                        ]}
+                      />
+                    </View>
                   </View>
                 </View>
               ))}
@@ -174,12 +210,12 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   backButton: { padding: 4, marginRight: 12 },
-  headerTitle: { color: "#fff", fontSize: 20, fontWeight: "bold", flex: 1 },
+  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", flex: 1 },
   content: { padding: 16 },
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -196,44 +232,73 @@ const styles = StyleSheet.create({
   manageButton: {
     backgroundColor: "#10B144",
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderRadius: 8,
   },
-  manageButtonText: { color: "#fff", fontWeight: "bold", fontSize: 14 },
+  manageButtonText: { color: "#fff", fontWeight: "bold", fontSize: 13 },
   loader: { marginVertical: 40 },
   emptyState: { alignItems: "center", paddingVertical: 40 },
-  emptyText: { fontSize: 18, fontWeight: "600", color: "#666", marginTop: 12 },
-  emptySubtext: { fontSize: 14, color: "#999", marginTop: 4 },
+  emptyText: { fontSize: 16, fontWeight: "600", color: "#666", marginTop: 12 },
+  emptySubtext: { fontSize: 13, color: "#999", marginTop: 4 },
+
+  // Table Structure
   tableHeader: {
     flexDirection: "row",
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-    paddingBottom: 8,
-    marginBottom: 8,
+    alignItems: "center",
+    borderBottomWidth: 1.5,
+    borderColor: "#e5e7eb",
+    paddingBottom: 10,
+    marginBottom: 4,
   },
-  tableHeaderText: { fontWeight: "bold", color: "#6b7280", fontSize: 12 },
+  tableHeaderText: {
+    fontWeight: "700",
+    color: "#6b7280",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderColor: "#f0f0f0",
+    borderColor: "#f3f4f6",
   },
-  rowText: { fontSize: 14, color: "#333" },
+  rowText: { fontSize: 13, color: "#1f2937", paddingRight: 4 },
+
+  // Strict Column Flex Widths
+  colRange: { flex: 2.2 },
+  colPoints: { flex: 1.2, marginRight: 30 },
+  colRemarks: { flex: 2.1 },
+  colBar: { flex: 1.5, marginLeft: -30 },
+
+  // Component-specific Layout Helpers
+  badgeColumn: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
   badge: {
     backgroundColor: "#10B144",
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    minWidth: 32,
     alignItems: "center",
+    justifyContent: "center",
   },
-  badgeText: { color: "#fff", fontWeight: "bold", fontSize: 14 },
+  badgeText: { color: "#fff", fontWeight: "700", fontSize: 12 },
+
+  progressColumn: {
+    justifyContent: "center",
+    paddingLeft: 4,
+  },
   progressContainer: {
-    height: 8,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: "#e5e7eb",
+    borderRadius: 3,
     overflow: "hidden",
-    marginLeft: 8,
+    width: "100%",
   },
   progressFill: { height: "100%", backgroundColor: "#10B144" },
 });
