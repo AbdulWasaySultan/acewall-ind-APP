@@ -255,19 +255,17 @@ const DrawerNavigator = () => {
         <Drawer.Screen name="Pages" component={CoursePagesStudent} />
       )}
 
+      <Drawer.Screen
+        name="Support"
+        component={SupportPage}
+        options={{ title: "Support" }}
+      />
       {userRole !== "student" && (
-        <>
-          <Drawer.Screen
-            name="Support"
-            component={SupportPage}
-            options={{ title: "Support" }}
-          />
-          <Drawer.Screen
-            name="Wallet"
-            component={WalletPage}
-            options={{ title: "Wallet" }}
-          />
-        </>
+        <Drawer.Screen
+          name="Wallet"
+          component={WalletPage}
+          options={{ title: "Wallet" }}
+        />
       )}
 
       <Drawer.Screen
