@@ -5,12 +5,22 @@ import { io, Socket } from "socket.io-client";
 // `socket.handshake.query.userId` and maps it to the socket id itself
 // (see backend/src/lib/socket.io.js).
 export const connectSocket = (userId: string, baseUrl: string): Socket => {
+  // Socket.io mounts on the raw HTTP server, not under /api — strip if present.
+  const socketUrl = baseUrl.replace(/\/api\/?$/, "");
+
   // No forced `transports` — let socket.io-client negotiate the same way
   // web's client does (long-polling first, then upgrade to websocket if
   // available). Forcing websocket-only skips that negotiation and fails
   // outright on infrastructure that doesn't support a raw upgrade (proxies,
   // some hosting setups), which is what caused the "websocket error".
-  return io(baseUrl, {
+  const socket = io(socketUrl, {
     query: { userId },
   });
+
+  socket.on("connect_error", (err) => {
+    // Log as background warning only — don't surface as a runtime error screen.
+    console.warn("Socket notification connection skipped:", err.message);
+  });
+
+  return socket;
 };

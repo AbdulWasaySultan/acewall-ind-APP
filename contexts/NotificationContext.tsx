@@ -6,7 +6,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Socket } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 import {
   getNotifications,
@@ -14,8 +13,6 @@ import {
   markAllNotificationsRead,
   AppNotification,
 } from "../services/notification";
-import { connectSocket } from "../utils/socket";
-import { getStoredBaseUrl } from "../utils/storage";
 
 interface NotificationContextType {
   notifications: AppNotification[];
@@ -43,7 +40,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const isStudent = userRole === "student";
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchNotifications = useCallback(async () => {
@@ -60,10 +56,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const teardown = () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
       if (pollRef.current) {
         clearInterval(pollRef.current);
         pollRef.current = null;
@@ -72,52 +64,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (!isAuthenticated || !user?._id || !isStudent) {
       // Logged out (or previewing without a real user), or a teacher
-      // account — tear down so a stale socket/timer from the previous
-      // session/role never leaks into the next login, and don't fetch or
-      // connect at all for a role that has no notification UI.
+      // account — tear down so a stale timer from the previous session/role
+      // never leaks into the next login, and don't fetch for a role that has
+      // no notification UI.
       teardown();
       setNotifications([]);
       return;
     }
 
-    let cancelled = false;
+    fetchNotifications();
+    pollRef.current = setInterval(fetchNotifications, POLL_INTERVAL_MS);
 
-    const setup = async () => {
-      await fetchNotifications();
-      if (cancelled) return;
-
-      pollRef.current = setInterval(fetchNotifications, POLL_INTERVAL_MS);
-
-      // Live delivery while the app is foregrounded — additive on top of
-      // polling, not a web-parity requirement (web never wired a listener
-      // for this event despite the backend emitting it).
-      const baseUrl = await getStoredBaseUrl();
-      if (baseUrl && !cancelled) {
-        const socket = connectSocket(user._id, baseUrl);
-        socketRef.current = socket;
-
-        socket.on("newNotification", (payload: any) => {
-          if (payload?._id) {
-            setNotifications((prev) => [payload, ...prev]);
-          } else {
-            // Bulk-notification payload (announcements/discussions/posts)
-            // omits _id/isRead/createdAt — just refetch instead of trying
-            // to splice a partial object into state.
-            fetchNotifications();
-          }
-        });
-        socket.on("connect_error", (err: any) => {
-          console.error("Notification socket connection error:", err);
-        });
-      }
-    };
-
-    setup();
-
-    return () => {
-      cancelled = true;
-      teardown();
-    };
+    return teardown;
   }, [isAuthenticated, user?._id, isStudent, fetchNotifications]);
 
   const markRead = useCallback(async (id: string) => {
