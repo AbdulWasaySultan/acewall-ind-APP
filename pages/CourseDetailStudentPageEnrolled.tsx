@@ -31,7 +31,6 @@ import {
 } from "../services/rating";
 import { getComments, sendComment } from "../services/comment";
 import { createConversation } from "../services/conversation";
-import ConversationsModal from "../components/modals/ConversationsModal";
 import Toast from "react-native-simple-toast";
 import { SafeAreaView } from "react-native-safe-area-context";
 // Type for navigation param
@@ -82,8 +81,6 @@ const CourseDetailStudentPageEnrolled = () => {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
-  const [isConversationsModalVisible, setIsConversationsModalVisible] =
-    useState(false);
   const [isUnenrollModalVisible, setIsUnenrollModalVisible] = useState(false);
   const [unenrollConfirmationText, setUnenrollConfirmationText] = useState("");
   const [isUnenrolling, setIsUnenrolling] = useState(false);
@@ -767,13 +764,6 @@ const CourseDetailStudentPageEnrolled = () => {
           </View>
         )} */}
       </ScrollView>
-      {teacherId && (
-        <ConversationsModal
-          visible={isConversationsModalVisible}
-          onClose={() => setIsConversationsModalVisible(false)}
-          conversationId={teacherId}
-        />
-      )}
       <Modal
         animationType="fade"
         transparent={true}

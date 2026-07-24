@@ -130,7 +130,7 @@ const AccountInformationPage = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, setUser } = useUser();
-  const { logout } = useAuth();
+  const { logout, userRole } = useAuth();
   const [showAccountDeleteModal, setShowAccountDeleteModal] = useState(false);
 
   useFocusEffect(
@@ -553,6 +553,14 @@ const AccountInformationPage = () => {
           >
             <Text style={styles.editButtonText}>Edit Credentials</Text>
           </TouchableOpacity>
+          {userRole === "student" && (
+            <TouchableOpacity
+              style={styles.purchaseHistoryButton}
+              onPress={() => navigation.navigate("PurchaseHistory")}
+            >
+              <Text style={styles.editButtonText}>Purchase History</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -1464,6 +1472,16 @@ const styles = StyleSheet.create({
   },
   editButton: {
     backgroundColor: "#4CAF50",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    flex: 1,
+  },
+  // Matches web's Account.jsx blue "Purchase History" button (student-only;
+  // teachers get a "Stripe Setting" button here on web instead, which
+  // mobile doesn't have yet).
+  purchaseHistoryButton: {
+    backgroundColor: "#3B82F6",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",

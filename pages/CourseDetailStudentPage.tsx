@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, Linking, Alert, Platform, AppState } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Modal, Linking, Alert, Platform } from 'react-native';
 import SimpleIcon from '../components/SimpleIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { getCourseById, getCourseForStudentPreview, getStudentEnrolledCourseDetails, getQuartersForSemester, getChaptersForQuarter, getChapterDetailsForStudent, enrollInCourse, createStripeCheckoutSession, getEnrollStatus } from '../services/course';
@@ -45,19 +45,6 @@ const CourseDetailStudentPage = () => {
   const courseDescription = course?.courseDescription && (showMore
     ? course.courseDescription
     : course.courseDescription.slice(0, 500) + (isLong ? "..." : ""))
-    const appState = useRef(AppState.currentState);
-
-    useEffect(() => {
-      Linking.addEventListener('url',(e)=>  handleLink(e.url))
-    }, []);
-  
-    const handleLink = (url:any) => {
-      if (url.includes("payment-success")) {
-        Toast.show("Payment successful", Toast.LONG);
-      } else if (url.includes("payment-failed")) {
-        Toast.show("Payment failed", Toast.LONG);
-      }
-    };
   useEffect(() => {
     setLoading(true);
     setError(null);

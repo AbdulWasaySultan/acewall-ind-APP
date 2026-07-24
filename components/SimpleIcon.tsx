@@ -127,6 +127,9 @@ const SimpleIcon: React.FC<SimpleIconProps> = ({
     calendar: "📅",
     school: "🏫",
     book: "📘",
+    bell: "🔔",
+    video: "🎥",
+    "credit-card": "💳",
   };
 
   const icon = iconMap[name] || "?";

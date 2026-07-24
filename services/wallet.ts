@@ -103,6 +103,107 @@ export const getTeacherPaymentStatsWithPagination = async (
   }
 };
 
+export interface StripeOnboardingStatus {
+  onboarded: boolean;
+  stripeId?: string;
+  chargesEnabled?: boolean;
+  detailsSubmitted?: boolean;
+  reason?: string;
+}
+
+// Create the teacher's Stripe Express account (Connect onboarding step 1)
+export const createStripeAccount = async (
+  email: string
+): Promise<{ account: any; message: string }> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.patch("/api/stripe/createAccount", { email });
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(
+        error.response.data.error ||
+          error.response.data.message ||
+          "Failed to create Stripe account"
+      );
+    } else if (error.request) {
+      throw new Error(
+        "No response from server. Please check your internet connection."
+      );
+    } else {
+      throw new Error("Error setting up the request");
+    }
+  }
+};
+
+// Get a Stripe-hosted onboarding link (Connect onboarding step 2)
+export const getStripeOnboardingLink = async (): Promise<string> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.post("/api/stripe/onboarding");
+    return response.data.url;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(
+        error.response.data.error || "Failed to create onboarding link"
+      );
+    } else if (error.request) {
+      throw new Error(
+        "No response from server. Please check your internet connection."
+      );
+    } else {
+      throw new Error("Error setting up the request");
+    }
+  }
+};
+
+// Check whether the teacher's Stripe account has completed onboarding
+export const checkStripeOnboarding = async (
+  stripeAccountId?: string
+): Promise<StripeOnboardingStatus> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.post(
+      "/api/stripe/checkOnboarding",
+      stripeAccountId ? { stripeAccountId } : {}
+    );
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(
+        error.response.data.error || "Failed to check onboarding status"
+      );
+    } else if (error.request) {
+      throw new Error(
+        "No response from server. Please check your internet connection."
+      );
+    } else {
+      throw new Error("Error setting up the request");
+    }
+  }
+};
+
+// Get a Stripe-hosted Express dashboard login link
+export const getStripeLoginLink = async (): Promise<string> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get("/api/stripe/getStripeLoginLink");
+    return response.data.url;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(
+        error.response.data.error || "Failed to get Stripe login link"
+      );
+    } else if (error.request) {
+      throw new Error(
+        "No response from server. Please check your internet connection."
+      );
+    } else {
+      throw new Error("Error setting up the request");
+    }
+  }
+};
+
 // Submit withdrawal request
 export const submitWithdrawal = async (
   amount: number,

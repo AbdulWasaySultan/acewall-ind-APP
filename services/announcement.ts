@@ -44,7 +44,7 @@ export const createAnnouncement = async ({ title, courseId, message }: { title: 
   }
 };
 
-export const getAnnouncementsByTeacher = async () => {
+export const getAnnouncementsByTeacher = async (courseId?: string) => {
   try {
     const api = await getApiInstance();
     const user = await getStoredUserData();
@@ -52,7 +52,10 @@ export const getAnnouncementsByTeacher = async () => {
     const teacherId = user?.user?._id;
     console.log(teacherId);
     if (!teacherId) throw new Error('No teacher ID found');
-    const response = await api.get(`/api/announcements/getbyteacher/${teacherId}`);
+    const url = courseId
+      ? `/api/announcements/getbyteacher/${teacherId}?course=${courseId}`
+      : `/api/announcements/getbyteacher/${teacherId}`;
+    const response = await api.get(url);
     return response.data;
   } catch (error: any) {
     console.log(error)

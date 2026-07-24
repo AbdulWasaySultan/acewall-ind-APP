@@ -20,6 +20,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { UserProvider } from "./contexts/UserContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 function AppContent(): React.JSX.Element {
   const isDarkMode = useColorScheme() === "dark";
@@ -70,7 +71,9 @@ function AppContent(): React.JSX.Element {
             barStyle={isDarkMode ? "light-content" : "dark-content"}
             backgroundColor={backgroundStyle.backgroundColor}
           />
-          <AppNavigator />
+          <NotificationProvider>
+            <AppNavigator />
+          </NotificationProvider>
         </KeyboardAvoidingView>
       </SafeAreaProvider>
     </GestureHandlerRootView>

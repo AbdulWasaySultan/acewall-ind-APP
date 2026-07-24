@@ -12,8 +12,8 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
+import Toast from "react-native-simple-toast";
 import { useAuth } from "../contexts/AuthContext";
-import { getAllCourses, getStudentEnrolledCourses } from "../services/course";
 import {
   createAnnouncement,
   getAnnouncementsByTeacher,
@@ -21,11 +21,17 @@ import {
   getAnnouncementsByStudent,
 } from "../services/announcement";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useFocusEffect } from "@react-navigation/native";
-import CourseSelector from "../components/filters/CourseSelector";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  RouteProp,
+} from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/AppNavigator";
 import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar";
-import { DropdownFilter } from "../components/filters/DropDown";
+import SimpleIcon from "../components/SimpleIcon";
 
 // ====================== Helper Components ======================
 
@@ -69,11 +75,6 @@ const TeacherAnnouncementRow = ({
         >
           {announcement.message}
         </Text>
-        {expanded && (
-          <Text style={styles.teacherCourse}>
-            Course: {announcement.course?.courseTitle || "All"}
-          </Text>
-        )}
       </View>
       <Pressable
         style={styles.deleteButton}
@@ -106,10 +107,6 @@ const StudentAnnouncementCard = ({
     <View style={styles.studentCardHeader}>
       <View style={styles.studentCardLeft}>
         <Text style={styles.studentCardTitle}>{announcement.title}</Text>
-        <Text style={styles.studentCardCourse}>
-          <Text style={styles.studentCardCourseLabel}>Course:</Text>{" "}
-          {announcement.course?.courseTitle || "-"}
-        </Text>
       </View>
       <View style={styles.studentCardRight}>
         <Text style={styles.studentCardDate}>
@@ -135,37 +132,22 @@ const StudentAnnouncementCard = ({
 
 // ====================== Main Component ======================
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type ScreenRouteProp = RouteProp<RootStackParamList, "AnnouncementsByCourse">;
+
 const AnnouncementsPage = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<ScreenRouteProp>();
+  const { courseId, courseTitle } = route.params;
+
   const [isAnnouncementsExpanded, setIsAnnouncementsExpanded] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { userRole, user } = useAuth();
 
   const [announcementTitle, setAnnouncementTitle] = useState("");
-  const [selectedCourseForModal, setSelectedCourseForModal] = useState<
-    string | null
-  >(null);
   const [announcementMessage, setAnnouncementMessage] = useState<string>("");
 
-  const [courses, setCourses] = useState<any[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [coursesLoading, setCoursesLoading] = useState(false);
-
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateOpen, setDateOpen] = useState(false);
-  const [dateValue, setDateValue] = useState<string | null>(null);
-  const dateItems = [
-    { label: "All Dates", value: "all" },
-    { label: "Today", value: "today" },
-    { label: "This Week", value: "week" },
-    { label: "This Month", value: "month" },
-  ];
-
-  const [courseOptions, setCourseOptions] = useState<
-    { label: string; value: string }[]
-  >([]);
-  const [coursesLoadingModal, setCoursesLoadingModal] = useState(false);
-  const [coursesError, setCoursesError] = useState("");
-  const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
 
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [announcementsLoading, setAnnouncementsLoading] = useState(false);
@@ -187,108 +169,37 @@ const AnnouncementsPage = () => {
     setExpandedAnnouncements((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const fetchCourses = async () => {
-    try {
-      setCoursesLoading(true);
-      if (userRole === "student") {
-        const res = await getStudentEnrolledCourses("");
-        if (res && Array.isArray(res.enrolledCourses)) {
-          setCourses(
-            res.enrolledCourses
-              .map((enrollment: any) => enrollment.course)
-              .filter(Boolean)
-          );
-        }
-      } else {
-        const res = await getAllCourses();
-        if (res && Array.isArray(res.courses)) {
-          setCourses(res.courses);
-        }
-      }
-    } catch (err: any) {
-      console.error("Error fetching courses:", err);
-    } finally {
-      setCoursesLoading(false);
-    }
-  };
-
-  const handleCourseChange = async (courseId: string | null) => {
-    setSelectedCourse(courseId);
-    setDateValue(null);
-    setSearchQuery("");
-  };
-
-  const isToday = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
-  };
-
-  const isThisWeek = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    return date >= weekAgo;
-  };
-
-  const isThisMonth = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    return (
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
-  };
-
+  // Both lists are already scoped to `courseId` at the fetch layer (server
+  // side for teacher via the `course` query param, client-filtered for
+  // student since that endpoint has no course-scoped variant) — the filter
+  // here just applies search on top. No date filter — web doesn't have one.
   const filteredAnnouncements = useMemo(() => {
-    let courseFiltered = announcements;
-    if (selectedCourse && selectedCourse !== "all") {
-      courseFiltered = announcements.filter(
-        (a) => a.course?._id === selectedCourse
-      );
-    }
-    return courseFiltered.filter((a: any) => {
-      const matchesSearch =
+    return announcements.filter((a: any) => {
+      return (
         searchQuery.trim() === "" ||
         a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.message.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesDate =
-        !dateValue ||
-        dateValue === "all" ||
-        (dateValue === "today" && isToday(a.createdAt)) ||
-        (dateValue === "week" && isThisWeek(a.createdAt)) ||
-        (dateValue === "month" && isThisMonth(a.createdAt));
-      return matchesSearch && matchesDate;
+        a.message.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     });
-  }, [announcements, selectedCourse, searchQuery, dateValue]);
+  }, [announcements, searchQuery]);
 
   const filteredStudentAnnouncements = useMemo(() => {
-    let courseFiltered = studentAnnouncements;
-    if (selectedCourse && selectedCourse !== "all") {
-      courseFiltered = studentAnnouncements.filter(
-        (a) => a.course?._id === selectedCourse
-      );
-    }
+    const courseFiltered = studentAnnouncements.filter(
+      (a) => a.course?._id === courseId
+    );
     return courseFiltered.filter((a: any) => {
-      const matchesSearch =
+      return (
         searchQuery.trim() === "" ||
         a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.message.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesDate =
-        !dateValue ||
-        dateValue === "all" ||
-        (dateValue === "today" && isToday(a.createdAt)) ||
-        (dateValue === "week" && isThisWeek(a.createdAt)) ||
-        (dateValue === "month" && isThisMonth(a.createdAt));
-      return matchesSearch && matchesDate;
+        a.message.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     });
-  }, [studentAnnouncements, selectedCourse, searchQuery, dateValue]);
+  }, [studentAnnouncements, courseId, searchQuery]);
 
   // Teacher: fetch on mount and when role changes
   useEffect(() => {
     if (userRole === "teacher") {
       fetchAnnouncements();
-      fetchCourses();
     }
   }, [userRole]);
 
@@ -296,7 +207,7 @@ const AnnouncementsPage = () => {
     setAnnouncementsLoading(true);
     setAnnouncementsError("");
     try {
-      const res = await getAnnouncementsByTeacher();
+      const res = await getAnnouncementsByTeacher(courseId);
       setAnnouncements(res.announcements || []);
     } catch (err: any) {
       setAnnouncementsError(err.message || "Failed to load announcements");
@@ -304,32 +215,6 @@ const AnnouncementsPage = () => {
       setAnnouncementsLoading(false);
     }
   };
-
-  // Modal: fetch courses when opened
-  useEffect(() => {
-    if (isModalVisible) {
-      setCoursesLoadingModal(true);
-      setCoursesError("");
-      getAllCourses()
-        .then((res) => {
-          if (res && Array.isArray(res.courses)) {
-            setCourseOptions(
-              res.courses.map((course) => ({
-                label: course.courseTitle,
-                value: course._id,
-              }))
-            );
-          } else {
-            setCourseOptions([]);
-          }
-        })
-        .catch((err) => {
-          setCoursesError("Failed to load courses");
-          setCourseOptions([]);
-        })
-        .finally(() => setCoursesLoadingModal(false));
-    }
-  }, [isModalVisible]);
 
   // Student: fetch on mount AND on focus
   const fetchStudentAnnouncements = async () => {
@@ -351,7 +236,6 @@ const AnnouncementsPage = () => {
   useEffect(() => {
     if (userRole === "student" && user?._id) {
       fetchStudentAnnouncements();
-      fetchCourses();
     }
   }, [userRole, user?._id]);
 
@@ -359,7 +243,6 @@ const AnnouncementsPage = () => {
     useCallback(() => {
       if (userRole === "student" && user?._id) {
         fetchStudentAnnouncements();
-        fetchCourses();
       }
       return () => {};
     }, [userRole, user?._id])
@@ -373,23 +256,22 @@ const AnnouncementsPage = () => {
     setIsModalVisible(!isModalVisible);
     if (!isModalVisible) {
       setAnnouncementTitle("");
-      setSelectedCourseForModal(null);
       setAnnouncementMessage("");
     }
   };
 
   const handleCreateAnnouncement = async () => {
-    if (!announcementTitle || !selectedCourseForModal || !announcementMessage)
-      return;
+    if (!announcementTitle || !announcementMessage) return;
     setCreatingAnnouncement(true);
     try {
       await createAnnouncement({
         title: announcementTitle,
-        courseId: selectedCourseForModal,
+        courseId,
         message: announcementMessage,
       });
       toggleModal();
       fetchAnnouncements();
+      Toast.show("Announcement created successfully.", Toast.LONG);
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to create announcement");
     } finally {
@@ -429,53 +311,40 @@ const AnnouncementsPage = () => {
 
   const renderTeacherView = () => (
     <View style={styles.teacherViewContainer}>
+      <View style={styles.header}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <SimpleIcon name="arrow-back" size={24} color="#fff" />
+        </Pressable>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {courseTitle || "Course Announcements"}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <View style={styles.fixedFiltersContainer}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>Announcements</Text>
+        <View style={styles.addNewRow}>
           <Pressable style={styles.addButton} onPress={toggleModal}>
             <Text style={styles.addButtonText}>+</Text>
             <Text style={styles.addButtonLabel}>Add New</Text>
           </Pressable>
         </View>
 
-        {/* Wrap FilterBar to apply overflow: visible without changing its own props */}
         <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>
           <FilterBar
             resultsCount={filteredAnnouncements.length}
             resultsLabel="announcements"
           >
-            <CourseSelector
-              courses={courses}
-              selectedCourse={selectedCourse}
-              onCourseChange={handleCourseChange}
-              loading={coursesLoading}
-            />
-          </FilterBar>
-        </View>
-
-        {selectedCourse && (
-          <FilterBar style={{ paddingHorizontal: 12 }}>
             <SearchFilterView
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Search announcements..."
               style={styles.searchFilterContainer}
             />
-            <View style={styles.dropdownWrapper}>
-              <DropdownFilter
-                open={dateOpen}
-                value={dateValue}
-                items={dateItems}
-                setOpen={setDateOpen}
-                setValue={setDateValue}
-                placeholder="All Dates"
-                zIndex={9999}
-                zIndexInverse={1000}
-                dropDownContainerStyle={styles.dropDownContainer}
-              />
-            </View>
           </FilterBar>
-        )}
+        </View>
       </View>
 
       <FlatList
@@ -550,31 +419,47 @@ const AnnouncementsPage = () => {
 
   const renderStudentView = () => {
     const data = filteredStudentAnnouncements;
+
+    const studentHeader = (
+      <View style={styles.header}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <SimpleIcon name="arrow-back" size={24} color="#fff" />
+        </Pressable>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {courseTitle || "Course Updates"}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+    );
+
     if (studentAnnouncementsLoading) {
       return (
-        <ActivityIndicator size="large" color="#4CAF50" style={styles.loader} />
+        <View style={styles.studentViewContainer}>
+          {studentHeader}
+          <ActivityIndicator
+            size="large"
+            color="#4CAF50"
+            style={styles.loader}
+          />
+        </View>
       );
     }
     if (studentAnnouncementsError) {
-      return <Text style={styles.errorText}>{studentAnnouncementsError}</Text>;
+      return (
+        <View style={styles.studentViewContainer}>
+          {studentHeader}
+          <Text style={styles.errorText}>{studentAnnouncementsError}</Text>
+        </View>
+      );
     }
 
     return (
       <View style={styles.studentViewContainer}>
+        {studentHeader}
         <View style={styles.fixedFiltersContainer}>
-          <Text style={styles.studentPageTitle}>Announcements</Text>
-
-          <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>
-            <FilterBar>
-              <CourseSelector
-                courses={courses}
-                selectedCourse={selectedCourse}
-                onCourseChange={handleCourseChange}
-                loading={coursesLoading}
-              />
-            </FilterBar>
-          </View>
-
           <FilterBar style={{ paddingHorizontal: 12 }}>
             <SearchFilterView
               value={searchQuery}
@@ -582,19 +467,6 @@ const AnnouncementsPage = () => {
               placeholder="Search announcements..."
               style={styles.searchFilterContainer}
             />
-            <View style={styles.dropdownWrapper}>
-              <DropdownFilter
-                open={dateOpen}
-                value={dateValue}
-                items={dateItems}
-                setOpen={setDateOpen}
-                setValue={setDateValue}
-                placeholder="All Dates"
-                zIndex={9999}
-                zIndexInverse={1000}
-                dropDownContainerStyle={styles.dropDownContainer}
-              />
-            </View>
           </FilterBar>
         </View>
 
@@ -659,31 +531,10 @@ const AnnouncementsPage = () => {
                   {announcementTitle?.length}/100 characters
                 </Text>
 
-                <Text style={styles.inputLabel}>Select Course</Text>
-                <View style={styles.courseDropdownWrapper}>
-                  <DropdownFilter
-                    open={courseDropdownOpen}
-                    value={selectedCourseForModal}
-                    items={courseOptions}
-                    setOpen={setCourseDropdownOpen}
-                    setValue={setSelectedCourseForModal}
-                    placeholder={
-                      coursesLoadingModal
-                        ? "Loading courses..."
-                        : "Select a course"
-                    }
-                    disabled={coursesLoadingModal || courseOptions.length === 0}
-                    zIndex={9999}
-                    zIndexInverse={1000}
-                    dropDownContainerStyle={styles.dropDownContainer}
-                    listMode="SCROLLVIEW" // <-- FIX: changed from "MODAL" to "SCROLLVIEW"
-                  />
-                </View>
-                {coursesError ? (
-                  <Text style={styles.errorText}>{coursesError}</Text>
-                ) : courseOptions.length === 0 && !coursesLoadingModal ? (
-                  <Text style={styles.infoText}>No courses available</Text>
-                ) : null}
+                <Text style={styles.inputLabel}>Course</Text>
+                <Text style={styles.lockedCourseText}>
+                  {courseTitle || "This course"}
+                </Text>
 
                 <Text
                   style={[
@@ -734,7 +585,6 @@ const AnnouncementsPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
   teacherViewContainer: {
     flex: 1,
@@ -746,6 +596,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   fixedFiltersContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
     zIndex: 20,
     elevation: 20,
   },
@@ -753,31 +605,60 @@ const styles = StyleSheet.create({
     zIndex: 1,
     elevation: 1,
   },
-  headerContainer: {
+  header: {
+    minHeight: 56,
+    backgroundColor: "#10B144",
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    paddingTop: 44,
+    paddingBottom: 12,
   },
   headerTitle: {
-    fontSize: 24,
+    color: "#fff",
+    fontSize: 18,
     fontWeight: "bold",
+    flex: 1,
+  },
+  backButton: {
+    padding: 4,
+    marginRight: 12,
+  },
+  lockedCourseText: {
+    fontSize: 15,
+    color: "#374151",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  // "Add New" now lives in the screen body (top-right of the content area,
+  // above the search bar) instead of the navigation header, so it no longer
+  // needs to contrast against the green header background.
+  addNewRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 12,
   },
   addButton: {
-    backgroundColor: "#4CAF50",
-    padding: 10,
+    backgroundColor: "#10B144",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 8,
     flexDirection: "row",
     alignItems: "center",
   },
   addButtonText: {
-    color: "white",
+    color: "#fff",
     marginRight: 4,
     fontSize: 16,
+    fontWeight: "bold",
   },
   addButtonLabel: {
-    color: "white",
-    fontSize: 16,
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
   sectionHeader: {
     flexDirection: "row",
@@ -928,13 +809,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   studentListContent: {
+    paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 16,
-  },
-  studentPageTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 24,
   },
   modalContainer: {
     flex: 1,
@@ -988,33 +865,6 @@ const styles = StyleSheet.create({
   },
   searchFilterContainer: {
     paddingHorizontal: 8,
-  },
-  dropdownWrapper: {
-    width: 110,
-    zIndex: 9999,
-    elevation: 9999,
-  },
-  customDateDropdown: {
-    width: 130,
-    minWidth: 100,
-  },
-  courseDropdownWrapper: {
-    zIndex: 9999,
-    elevation: 9999,
-    minHeight: 50,
-    marginLeft: -5,
-    // backgroundColor: "#cdcdcd",
-    marginTop: 3,
-    marginBottom: 16,
-  },
-  belowCourseDropdown: {
-    zIndex: 1,
-    elevation: 1,
-  },
-  dropDownContainer: {
-    zIndex: 9999,
-    elevation: 9999,
-    width: "100%",
   },
   createButton: {
     backgroundColor: "#4CAF50",

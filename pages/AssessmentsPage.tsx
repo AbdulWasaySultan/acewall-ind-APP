@@ -62,11 +62,18 @@ const AssessmentsPage = () => {
     { label: string; value: string }[]
   >([]);
 
-  const [datesOpen, setDatesOpen] = useState(false);
-  const [datesValue, setDatesValue] = useState<string | null>(null);
-  const [datesItems, setDatesItems] = useState([
-    { label: "All Dates", value: "all" },
-  ]);
+  // Matches web's CourseAssessmentList.jsx exactly: static options (not
+  // derived from data), filtered against the assessment's `type` field
+  // (backend enum: "lesson-assessment" | "chapter-assessment" |
+  // "final-assessment" — chapter/lesson ObjectId presence is NOT reliable
+  // for this since a lesson-assessment also has `chapter` populated).
+  const [typeOpen, setTypeOpen] = useState(false);
+  const [typeValue, setTypeValue] = useState<string | null>("all");
+  const typeItems = [
+    { label: "All Types", value: "all" },
+    { label: "Chapter Assessment", value: "chapter-assessment" },
+    { label: "Lesson Assessment", value: "lesson-assessment" },
+  ];
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
@@ -96,11 +103,11 @@ const AssessmentsPage = () => {
   const [submittingGrades, setSubmittingGrades] = useState(false);
 
   useEffect(() => {
-    if (categoryOpen) setDatesOpen(false);
+    if (categoryOpen) setTypeOpen(false);
   }, [categoryOpen]);
   useEffect(() => {
-    if (datesOpen) setCategoryOpen(false);
-  }, [datesOpen]);
+    if (typeOpen) setCategoryOpen(false);
+  }, [typeOpen]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -153,25 +160,6 @@ const AssessmentsPage = () => {
           ...uniqueCategories,
         ]);
         console.log("📂 Categories:", uniqueCategories.length);
-
-        const dateMap = new Map();
-        courseAssessments.forEach((a: any) => {
-          if (a.createdAt) {
-            const formatted = formatDate(a.createdAt);
-            if (!dateMap.has(formatted)) {
-              dateMap.set(formatted, { label: formatted, value: a.createdAt });
-            }
-          }
-        });
-        const formattedDates = Array.from(dateMap.values()).sort(
-          (a, b) => new Date(b.value).getTime() - new Date(a.value).getTime()
-        );
-        setDatesItems([
-          { label: "All Dates", value: "all" },
-          ...formattedDates,
-        ]);
-
-        console.log("📅 Dates:", formattedDates.length);
       } catch (err: any) {
         console.error("❌ Fetch error:", err);
         setError(err.message || "Failed to load data.");
@@ -191,14 +179,16 @@ const AssessmentsPage = () => {
         !categoryValue || categoryValue === "all"
           ? true
           : a.category?._id === categoryValue;
-      const matchesDate =
-        !datesValue || datesValue === "all" ? true : a.createdAt === datesValue;
+      // Matches web exactly: strict equality against the assessment's
+      // `type` field (not chapter/lesson ObjectId presence).
+      const matchesType =
+        !typeValue || typeValue === "all" ? true : a.type === typeValue;
       const matchesSearch =
         searchQuery.trim() === "" ||
         a.title?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesDate && matchesSearch;
+      return matchesCategory && matchesType && matchesSearch;
     });
-  }, [rawAssessments, courseId, categoryValue, datesValue, searchQuery]);
+  }, [rawAssessments, courseId, categoryValue, typeValue, searchQuery]);
 
   const handleAssessmentPress = async (assessment: any) => {
     setSelectedAssessment(assessment);
@@ -307,24 +297,26 @@ const AssessmentsPage = () => {
   };
 
   return (
+    <View style={styles.screen}>
+      {/* ── Course header — course itself is fixed via route params ── */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <SimpleIcon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {courseTitle || "Assessments for this Course"}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
     <ScrollView
       style={styles.container}
       nestedScrollEnabled
       keyboardShouldPersistTaps="handled"
     >
-      {/* ── Course header — course itself is fixed via route params ── */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <SimpleIcon name="arrow-back" size={22} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {courseTitle || "Assessments for this Course"}
-        </Text>
-      </View>
-
       {/* ── Search + Category + Dates ── */}
       <View style={{ zIndex: 2000 }}>
         <FilterBar
@@ -349,12 +341,12 @@ const AssessmentsPage = () => {
             style={{}}
           />
           <DropdownFilter
-            open={datesOpen}
-            value={datesValue}
-            items={datesItems}
-            setOpen={setDatesOpen}
-            setValue={setDatesValue}
-            placeholder="All Dates"
+            open={typeOpen}
+            value={typeValue}
+            items={typeItems}
+            setOpen={setTypeOpen}
+            setValue={setTypeValue}
+            placeholder="All Types"
             zIndex={1000}
             zIndexInverse={2000}
           />
@@ -451,29 +443,31 @@ const AssessmentsPage = () => {
         formatDateTime={formatDateTime}
       />
     </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#f8f8f8",
+  },
+  header: {
+    minHeight: 56,
+    backgroundColor: "#10B144",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 44,
+    paddingBottom: 12,
+  },
+  backButton: { padding: 4, marginRight: 12 },
+  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", flex: 1 },
   container: {
     flex: 1,
     backgroundColor: "#f8f8f8",
     paddingHorizontal: 16,
     paddingTop: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  backButton: {
-    marginRight: 10,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-    flex: 1,
   },
   cardsContainer: {
     flex: 1,

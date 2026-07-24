@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import {
@@ -6,6 +6,7 @@ import {
   DrawerContentComponentProps,
 } from "@react-navigation/drawer";
 import Sidebar from "../components/Sidebar";
+import NotificationBell from "../components/NotificationBell";
 import { useAuth } from "../contexts/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { navigationRef } from "./navigationRef";
@@ -19,9 +20,18 @@ import MyCoursesPage from "../pages/MyCoursesPage";
 import CreateCoursePage from "../pages/CreateCoursePage";
 import AssessmentsPage from "../pages/AssessmentsPage";
 import MyAssessmentsPage from "../pages/MyAssessmentsPage";
+import StudentAssessmentsCoursePicker from "../pages/StudentAssessmentsCoursePicker";
+import TeacherAssessmentsCoursePicker from "../pages/TeacherAssessmentsCoursePicker";
+import StudentAnnouncementsCoursePicker from "../pages/StudentAnnouncementsCoursePicker";
+import TeacherAnnouncementsCoursePicker from "../pages/TeacherAnnouncementsCoursePicker";
 import AnnouncementsPage from "../pages/AnnouncementsPage";
 import MessagesPage from "../pages/MessagesPage";
+import TeacherMessagesCoursePicker from "../pages/TeacherMessagesCoursePicker";
+import TeacherCourseStudentsPage from "../pages/TeacherCourseStudentsPage";
 import StudentsPage from "../pages/StudentsPage";
+import NotificationsPage from "../pages/NotificationsPage";
+import PurchaseHistoryPage from "../pages/PurchaseHistoryPage";
+import TeacherStudentsCoursePicker from "../pages/TeacherStudentsCoursePicker";
 import StudentProfilePage from "../pages/StudentProfilePage";
 import AccountInformationPage, {
   UserData,
@@ -31,6 +41,9 @@ import GradebookPage from "../pages/GradebookPage";
 import OTPVerificationPage from "../pages/OTPVerificationPage";
 import CourseDetailsPage from "../pages/CourseDetailsPage";
 import DiscussionsPage from "../pages/DiscussionsPage";
+import DiscussionsCoursePicker from "../pages/DiscussionsCoursePicker";
+import StudentMeetingsCoursePicker from "../pages/StudentMeetingsCoursePicker";
+import StudentMeetingListPage from "../pages/StudentMeetingListPage";
 import CourseDetailStudentPage from "../pages/CourseDetailStudentPage";
 import CourseDetailStudentPageEnrolled from "../pages/CourseDetailStudentPageEnrolled";
 import ChatPage from "../pages/ChatPage";
@@ -54,6 +67,12 @@ import CouponsPage from "../pages/CouponsPage";
 import { ScheduleMeetingPage } from "../pages/ScheduleMeetingPage";
 import StandardGradeScaleManagementPage from "../pages/StandardGradeScaleManagementPage";
 import CourseAnalyticsPage from "../pages/CourseAnalyticsPage";
+import EnrollmentStatsPage from "../pages/EnrollmentStatsPage";
+import TeacherStudentAnalyticsPage from "../pages/TeacherStudentAnalyticsPage";
+import PaymentSuccessPage from "../pages/PaymentSuccessPage";
+import PaymentCancelPage from "../pages/PaymentCancelPage";
+import { Linking } from "react-native";
+import { handleDeepLink } from "../utils/deepLinking";
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -70,12 +89,16 @@ export type RootStackParamList = {
   Coupons: { courseId: string };
   StandardGradeScaleManagement: { courseId: string };
   CourseAnalytics: { courseId: string };
+  EnrollmentStats: { courseId: string };
+  TeacherStudentAnalytics: { courseId: string; studentId: string };
+  PaymentSuccess: { sessionId?: string };
+  PaymentCancel: { sessionId?: string };
   ScheduleMeeting: { courseId: string };
   CourseDetailStudentPage: { courseId: string; fromAdmin?: boolean };
   Discussions: undefined;
   CourseDetailStudentPageEnrolled: { enrollmentId: string };
   ChapterDetailsStudent: { chapterId: string; navigateBack?: () => void };
-  Chat: undefined;
+  Chat: { conversationId: string; otherMemberName: string };
   ResetPassword: { email: string };
   CreateAssessment: {
     courseId: string;
@@ -99,6 +122,14 @@ export type RootStackParamList = {
   DiscussionStudent: { discussionId: string };
   SpillTheTeaProfile: undefined;
   AIAssistant: undefined;
+  StudentAssessmentsByCourse: { courseId: string; courseTitle?: string };
+  TeacherAssessmentsByCourse: { courseId: string; courseTitle?: string };
+  AnnouncementsByCourse: { courseId: string; courseTitle?: string };
+  DiscussionsByCourse: { courseId: string; courseTitle?: string };
+  StudentMeetingsByCourse: { courseId: string; courseTitle?: string };
+  TeacherMessagesByCourse: { courseId: string; courseTitle?: string };
+  StudentsByCourse: { courseId: string; courseTitle?: string };
+  PurchaseHistory: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -143,6 +174,7 @@ const DrawerNavigator = () => {
         headerTitleStyle: {
           fontWeight: "bold",
         },
+        headerRight: () => <NotificationBell />,
       }}
       drawerContent={(props: DrawerContentComponentProps) => (
         <Sidebar
@@ -177,6 +209,8 @@ const DrawerNavigator = () => {
             Gradebook: "Gradebook",
             AccountInformation: "Account Information",
             Discussions: "Discussions",
+            LiveClasses: "Live Classes",
+            Notifications: "Notifications",
             Support: "Support",
             Wallet: "Wallet",
           };
@@ -208,13 +242,16 @@ const DrawerNavigator = () => {
             component={CreateCoursePage}
             options={{ title: "Create Course" }}
           />
-          <Drawer.Screen name="Students" component={StudentsPage} />
+          <Drawer.Screen
+            name="Students"
+            component={TeacherStudentsCoursePicker}
+          />
         </>
       )}
       {userRole === "student" ? (
         <Drawer.Screen
           name="Assessments"
-          component={MyAssessmentsPage}
+          component={StudentAssessmentsCoursePicker}
           options={{
             title: "My Assessments",
           }}
@@ -222,13 +259,23 @@ const DrawerNavigator = () => {
       ) : (
         <Drawer.Screen
           name="Assessments"
-          component={AssessmentsPage}
+          component={TeacherAssessmentsCoursePicker}
           options={{
             title: "Assessments",
           }}
         />
       )}
-      <Drawer.Screen name="Announcements" component={AnnouncementsPage} />
+      {userRole === "student" ? (
+        <Drawer.Screen
+          name="Announcements"
+          component={StudentAnnouncementsCoursePicker}
+        />
+      ) : (
+        <Drawer.Screen
+          name="Announcements"
+          component={TeacherAnnouncementsCoursePicker}
+        />
+      )}
 
       <Drawer.Screen
         name="ImportCourses"
@@ -241,7 +288,14 @@ const DrawerNavigator = () => {
         component={SpillTheTeaPage}
         options={{ title: "Spill the Tea" }}
       />
-      <Drawer.Screen name="Messages" component={MessagesPage} />
+      {userRole === "student" ? (
+        <Drawer.Screen name="Messages" component={MessagesPage} />
+      ) : (
+        <Drawer.Screen
+          name="Messages"
+          component={TeacherMessagesCoursePicker}
+        />
+      )}
       <Drawer.Screen
         name="AIAssistant"
         component={AIAssistantScreen}
@@ -250,7 +304,21 @@ const DrawerNavigator = () => {
       {userRole === "student" && (
         <Drawer.Screen name="Gradebook" component={GradebookPage} />
       )}
-      <Drawer.Screen name="Discussions" component={DiscussionsPage} />
+      <Drawer.Screen name="Discussions" component={DiscussionsCoursePicker} />
+      {userRole === "student" && (
+        <Drawer.Screen
+          name="Notifications"
+          component={NotificationsPage}
+          options={{ title: "Notifications" }}
+        />
+      )}
+      {userRole === "student" && (
+        <Drawer.Screen
+          name="LiveClasses"
+          component={StudentMeetingsCoursePicker}
+          options={{ title: "Live Classes" }}
+        />
+      )}
       {userRole === "student" && (
         <Drawer.Screen name="Pages" component={CoursePagesStudent} />
       )}
@@ -289,9 +357,34 @@ const DrawerNavigator = () => {
 
 const AppNavigator = () => {
   const { isAuthenticated } = useAuth();
+  const pendingDeepLinkUrl = useRef<string | null>(null);
+
+  useEffect(() => {
+    Linking.getInitialURL().then((url) => {
+      if (!url) return;
+      if (navigationRef.isReady()) {
+        handleDeepLink(url);
+      } else {
+        pendingDeepLinkUrl.current = url;
+      }
+    });
+
+    const subscription = Linking.addEventListener("url", (event) => {
+      handleDeepLink(event.url);
+    });
+    return () => subscription.remove();
+  }, []);
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        if (pendingDeepLinkUrl.current) {
+          handleDeepLink(pendingDeepLinkUrl.current);
+          pendingDeepLinkUrl.current = null;
+        }
+      }}
+    >
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
@@ -359,6 +452,26 @@ const AppNavigator = () => {
               options={{ headerShown: false }}
             />
             <Stack.Screen
+              name="EnrollmentStats"
+              component={EnrollmentStatsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="TeacherStudentAnalytics"
+              component={TeacherStudentAnalyticsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PaymentSuccess"
+              component={PaymentSuccessPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PaymentCancel"
+              component={PaymentCancelPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="ScheduleMeeting"
               component={ScheduleMeetingPage}
               options={{ headerShown: false }}
@@ -371,6 +484,46 @@ const AppNavigator = () => {
             <Stack.Screen
               name="AssessmentScreenStudent"
               component={AssessmentScreenStudent}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="StudentAssessmentsByCourse"
+              component={MyAssessmentsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="TeacherAssessmentsByCourse"
+              component={AssessmentsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="AnnouncementsByCourse"
+              component={AnnouncementsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="DiscussionsByCourse"
+              component={DiscussionsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="StudentMeetingsByCourse"
+              component={StudentMeetingListPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="TeacherMessagesByCourse"
+              component={TeacherCourseStudentsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="StudentsByCourse"
+              component={StudentsPage}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PurchaseHistory"
+              component={PurchaseHistoryPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen

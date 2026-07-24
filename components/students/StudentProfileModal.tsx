@@ -35,12 +35,20 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   const [messageLoading, setMessageLoading] = useState(false);
 
   const handleMessageStudent = useCallback(
-    async (studentId: string) => {
+    async (studentId: string, studentName: string) => {
       try {
         setMessageLoading(true);
-        await createConversation(studentId);
+        const res = await createConversation(studentId);
         onClose();
-        navigation.navigate("Messages" as never);
+        // StudentProfileModal is rendered from StudentsPage, which is a
+        // root-level Stack screen (StudentsByCourse), not nested inside the
+        // Drawer — "Messages" only exists as a Drawer screen name, so it
+        // isn't reachable from here. Go straight to the actual chat thread
+        // instead, matching TeacherCourseStudentsPage's flow.
+        navigation.navigate("Chat", {
+          conversationId: res?.conversation?._id,
+          otherMemberName: studentName,
+        });
       } catch (error: any) {
         console.error("Error creating conversation:", error);
         Toast.show(
@@ -88,7 +96,14 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
             <Pressable
               style={[styles.messageButton, messageLoading && styles.messageButtonDisabled]}
-              onPress={() => handleMessageStudent(student._id)}
+              onPress={() =>
+                handleMessageStudent(
+                  student._id,
+                  [student.firstName, student.lastName]
+                    .filter(Boolean)
+                    .join(" ") || "Student"
+                )
+              }
               disabled={messageLoading}
             >
               <Text style={styles.messageButtonText}>

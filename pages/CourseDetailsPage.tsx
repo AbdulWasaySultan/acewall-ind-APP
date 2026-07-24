@@ -2276,6 +2276,19 @@ const CourseDetailsPage = () => {
             <Text style={styles.topActionButtonText}>Gradebook</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("EnrollmentStats", { courseId: course._id })
+            }
+            style={[
+              styles.topActionButton,
+              { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
+            ]}
+          >
+            <Text style={[styles.topActionButtonText, { color: "#16a34a" }]}>
+              Enrollment Stats
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={() => {
               setEditCourseTitle(course.courseTitle || "");
               setEditCoursePrice(course?.price?.toString() || "");
@@ -2745,6 +2758,7 @@ const CourseDetailsPage = () => {
       <GradebookModal
         visible={showGradebookModal}
         onClose={() => setShowGradebookModal(false)}
+        courseId={course._id}
         gradebookLoading={gradebookLoading}
         gradebookData={gradebookData}
         gradebookError={gradebookError}

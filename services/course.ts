@@ -308,6 +308,54 @@ export const getAllPublishedCourses = async (): Promise<CourseResponse> => {
   }
 };
 
+// Teacher's own verified courses — used for the Announcements course picker,
+// matching web's AllannouncmentCourses.jsx (a real course list, not derived
+// from announcement data).
+export const getVerifiedCourses = async (): Promise<CourseResponse> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get<CourseResponse>(
+      "/api/course/getVerifiedCourses"
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Role-aware course list (teacher-owned or student-enrolled, decided
+// server-side) used by the shared Discussions course picker, matching web's
+// AllCoursesFilterPage.jsx.
+export const getUserCoursesForFilter = async (
+  search: string = ""
+): Promise<CourseResponse & { totalCourses?: number }> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get(
+      `/api/course/getUserCoursesforFilter?search=${encodeURIComponent(search)}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Student's courses that currently have scheduled Zoom meetings, matching
+// web's Meetings/CoursesWithMeetings.jsx. Response includes `meetingCount`
+// per course.
+export const getCoursesWithMeetings = async (): Promise<{
+  success: boolean;
+  courses: any[];
+}> => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get("/api/course/with-meetings");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getTeacherCourses = async (
   published: boolean,
   isVerified: string,
@@ -334,6 +382,32 @@ export const getCourseDetails = async (courseId: string) => {
     return response.data;
   } catch (error) {
     throw error;
+  }
+};
+
+export const getCourseEnrollmentStats = async (
+  courseId: string,
+  range: "7d" | "30d" | "6m" | "all" = "30d"
+) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get(`/api/course/stats/${courseId}`, {
+      params: { range },
+    });
+    // Backend returns { stats, message } — no `success`/`data` wrapper.
+    return response.data.stats as { date: string; students: number }[];
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(
+        error.response.data.message || "Failed to fetch enrollment stats"
+      );
+    } else if (error.request) {
+      throw new Error(
+        "No response from server. Please check your internet connection."
+      );
+    } else {
+      throw new Error("Error setting up the request");
+    }
   }
 };
 

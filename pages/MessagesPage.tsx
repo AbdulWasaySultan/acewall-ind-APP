@@ -1,17 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ActivityIndicator, Button, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
-import ConversationsModal from '../components/modals/ConversationsModal';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import { getConversations } from '../services/message';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const MessagesPage = () => {
   const route = useRoute();
+  const navigation = useNavigation<NavigationProp>();
   const { conversationId, teacherName } = route.params as { conversationId?: string; teacherName?: string } || {};
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  // Guards against re-firing the auto-open effect below (e.g. on refocus)
+  // once we've already navigated away for this particular conversationId.
+  const autoOpenedFor = useRef<string | null>(null);
 
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -58,13 +63,19 @@ const MessagesPage = () => {
     },[])
   );
 
-  // Auto-open conversation if conversationId is provided
+  // Deep-linked straight into a conversation (e.g. from "Message Teacher" on
+  // CourseDetailStudentPageEnrolled.tsx) — skip the inbox entirely and go
+  // straight to the chat thread, using the caller-provided name since we
+  // don't need to wait for the conversations list to fetch.
   useEffect(() => {
-    if (conversationId) {
-      setSelectedConversationId(conversationId);
-      setModalVisible(true);
+    if (conversationId && autoOpenedFor.current !== conversationId) {
+      autoOpenedFor.current = conversationId;
+      navigation.navigate('Chat', {
+        conversationId,
+        otherMemberName: teacherName || 'Conversation',
+      });
     }
-  }, [conversationId]);
+  }, [conversationId, teacherName, navigation]);
 
   return (
     <View style={styles.container}>
@@ -80,10 +91,12 @@ const MessagesPage = () => {
           keyExtractor={(item, index) => item._id || index.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => {
-                setSelectedConversationId(item.conversationId);
-                setModalVisible(true);
-              }}
+              onPress={() =>
+                navigation.navigate('Chat', {
+                  conversationId: item.conversationId,
+                  otherMemberName: item.otherMember?.name || 'Conversation',
+                })
+              }
               activeOpacity={0.7}
             >
               <View style={styles.conversationCard}>
@@ -117,11 +130,6 @@ const MessagesPage = () => {
           )}
         />
       )}
-      <ConversationsModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        conversationId={selectedConversationId}
-      />
     </View>
   );
 };

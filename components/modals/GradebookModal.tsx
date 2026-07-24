@@ -10,12 +10,14 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import SimpleIcon from "../SimpleIcon";
 import { Student, Semester, Quarter, Assessment } from "../../types/course";
 
 interface GradebookModalProps {
   visible: boolean;
   onClose: () => void;
+  courseId: string;
   gradebookLoading: boolean;
   gradebookData: any;
   gradebookError: string | null;
@@ -119,6 +121,7 @@ const MemoAssessmentTable = React.memo(AssessmentTable);
 const GradebookModal: React.FC<GradebookModalProps> = ({
   visible,
   onClose,
+  courseId,
   gradebookLoading,
   gradebookData,
   gradebookError,
@@ -129,6 +132,13 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
   onToggleSemester,
   onToggleQuarter,
 }) => {
+  const navigation = useNavigation<any>();
+
+  const handleViewAnalytics = (studentId: string) => {
+    onClose();
+    navigation.navigate("TeacherStudentAnalytics", { courseId, studentId });
+  };
+
   const courseType: "semester-based" | "chapter-based" =
     gradebookData?.courseType || "semester-based";
   const gradingSystem: "normalGrading" | "StandardGrading" =
@@ -165,17 +175,25 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
 
                 return (
                   <View key={student.studentId} style={styles.studentCard}>
-                    <TouchableOpacity
-                      onPress={() => onToggleStudent(student.studentId)}
-                      style={styles.studentHeader}
-                    >
-                      <Text style={styles.expandIcon}>
-                        {expandedStudents.has(student.studentId) ? "▼" : "▶"}
-                      </Text>
-                      <Text style={styles.studentName} numberOfLines={2}>
-                        {student.studentName || "Unknown Student"}
-                      </Text>
-                    </TouchableOpacity>
+                    <View style={styles.studentHeader}>
+                      <TouchableOpacity
+                        onPress={() => onToggleStudent(student.studentId)}
+                        style={styles.studentHeaderMain}
+                      >
+                        <Text style={styles.expandIcon}>
+                          {expandedStudents.has(student.studentId) ? "▼" : "▶"}
+                        </Text>
+                        <Text style={styles.studentName} numberOfLines={2}>
+                          {student.studentName || "Unknown Student"}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleViewAnalytics(student.studentId)}
+                        style={styles.analyticsButton}
+                      >
+                        <Text style={styles.analyticsButtonText}>Analytics</Text>
+                      </TouchableOpacity>
+                    </View>
 
                     <FieldRow
                       label="Final Grade"
@@ -228,6 +246,9 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
                                   <Text style={styles.expandIcon}>
                                     {expandedSemesters.has(semester.semesterId) ? "▼" : "▶"}
                                   </Text>
+                                  <View style={styles.levelBadgeIndigo}>
+                                    <Text style={styles.levelBadgeText}>SEM</Text>
+                                  </View>
                                   <Text style={styles.semesterTitle} numberOfLines={1}>
                                     {semester.semesterTitle}
                                   </Text>
@@ -280,6 +301,9 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
                                             <Text style={styles.expandIcon}>
                                               {expandedQuarters.has(quarter.quarterId) ? "▼" : "▶"}
                                             </Text>
+                                            <View style={styles.levelBadgeGreen}>
+                                              <Text style={styles.levelBadgeText}>QTR</Text>
+                                            </View>
                                             <Text style={styles.quarterTitle} numberOfLines={1}>
                                               {quarter.quarterTitle}
                                             </Text>
@@ -428,13 +452,25 @@ const styles = StyleSheet.create({
   studentHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingBottom: 12,
     marginBottom: 4,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
+  studentHeaderMain: { flexDirection: "row", alignItems: "center", flex: 1 },
   expandIcon: { fontSize: 16, marginRight: 8, color: "#6b7280", fontWeight: "bold" },
   studentName: { flex: 1, fontSize: 16, fontWeight: "bold", color: "#1E293B", flexShrink: 1 },
+  analyticsButton: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginLeft: 8,
+  },
+  analyticsButtonText: { fontSize: 12, fontWeight: "700", color: "#2563eb" },
 
   // Key-value field row: label fixed-width, value wraps to the right.
   fieldRow: {
@@ -455,12 +491,12 @@ const styles = StyleSheet.create({
   letterGradeText: { fontWeight: "bold", fontSize: 12 },
   gradeSummaryRow: { flexDirection: "row", alignItems: "center", gap: 8 },
 
+  // Flat, full-width breakdown area — hierarchy is communicated by the
+  // boxed/tinted headers below (SEM/QTR badges + background color), not by
+  // progressively indenting each nesting level.
   expandedContent: {
     paddingTop: 12,
     marginTop: 8,
-    borderLeftWidth: 2,
-    borderLeftColor: "#e5e7eb",
-    paddingLeft: 12,
   },
   performanceTitle: { color: "#6b7280", fontSize: 14, fontWeight: "600", marginBottom: 12 },
 
@@ -468,53 +504,66 @@ const styles = StyleSheet.create({
   semesterButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#fff",
-    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: "#EEF2FF",
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    marginBottom: 4,
+    borderColor: "#C7D2FE",
+    marginBottom: 8,
   },
-  semesterTitle: { flex: 1, fontSize: 14, fontWeight: "600", color: "#374151", flexShrink: 1 },
+  semesterTitle: { flex: 1, fontSize: 15, fontWeight: "700", color: "#312E81", flexShrink: 1 },
+  // No left margin/padding/border — stays the same width as its parent.
   semesterExpanded: {
-    marginTop: 8,
-    marginLeft: 12,
-    paddingLeft: 12,
-    borderLeftWidth: 2,
-    borderLeftColor: "#d1d5db",
+    marginTop: 4,
   },
 
   quarterItem: { marginBottom: 12 },
   quarterButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#f3f4f6",
-    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: "#F0FDF4",
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    marginBottom: 4,
+    borderColor: "#BBF7D0",
+    marginBottom: 8,
   },
-  quarterTitle: { flex: 1, fontSize: 13, fontWeight: "600", color: "#374151", flexShrink: 1 },
+  quarterTitle: { flex: 1, fontSize: 14, fontWeight: "700", color: "#14532D", flexShrink: 1 },
+  // Boxed like a card, but no left indent — full parent width.
   quarterExpanded: {
-    marginTop: 8,
-    marginLeft: 12,
-    paddingLeft: 12,
-    paddingVertical: 8,
+    marginTop: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     backgroundColor: "#fff",
-    borderRadius: 6,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
 
-  directAssessments: {
-    marginTop: 4,
-    paddingLeft: 12,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
+  levelBadgeIndigo: {
+    backgroundColor: "#4F46E5",
     borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginRight: 10,
+  },
+  levelBadgeGreen: {
+    backgroundColor: "#16A34A",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginRight: 10,
+  },
+  levelBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700", letterSpacing: 0.5 },
+
+  directAssessments: {
+    marginTop: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#fff",
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },

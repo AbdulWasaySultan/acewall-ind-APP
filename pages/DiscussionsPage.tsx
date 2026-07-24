@@ -11,10 +11,13 @@ import {
   Alert,
   Image,
   FlatList,
+  Platform,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
+import Toast from "react-native-simple-toast";
 import {
   getAllDiscussions,
+  getDiscussionsByCourseForTeacher,
   createDiscussion,
   getDiscussionDetails,
   getDiscussionComments,
@@ -25,7 +28,8 @@ import { getStoredUserId } from "../utils/storage";
 import SimpleIcon from "../components/SimpleIcon";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useAuth } from "../contexts/AuthContext";
 // You will need to install react-native-document-picker: npm install react-native-document-picker or yarn add react-native-document-picker
 // import DocumentPicker from 'react-native-document-picker'; // Commenting out the import
 export interface Discussion {
@@ -67,12 +71,17 @@ export interface Thumbnail {
   filename: string;
 }
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type ScreenRouteProp = RouteProp<RootStackParamList, "DiscussionsByCourse">;
+
 const DiscussionsPage = () => {
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<ScreenRouteProp>();
+  const { courseId, courseTitle } = route.params;
+  const { userRole } = useAuth();
   // Modal form states
   const [discussionTypeOpen, setDiscussionTypeOpen] = useState(false);
   const [discussionTypeValue, setDiscussionTypeValue] = useState<string | null>(
@@ -112,9 +121,18 @@ const DiscussionsPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getAllDiscussions();
+      // Teacher: server-scoped by course (matches web's TeacherDiscussisons.jsx
+      // type=course branch). Student: student endpoint doesn't have a
+      // dedicated scoped variant beyond the `course` query param, so pass it
+      // through the same "get all" call.
+      const data =
+        userRole === "teacher"
+          ? await getDiscussionsByCourseForTeacher(courseId)
+          : await getAllDiscussions(courseId);
       console.log(data);
-      setDiscussions(data.discussions || data.discussion || []);
+      const list: Discussion[] = data.discussions || data.discussion || [];
+      // Defensive client-side filter in case a response isn't already scoped.
+      setDiscussions(list.filter((d) => d.course?._id === courseId));
     } catch (err: any) {
       console.error("Failed to fetch discussions:", err);
       setError(err.message || "Failed to load discussions.");
@@ -167,7 +185,7 @@ const DiscussionsPage = () => {
         // ...(selectedFile && { file: selectedFile }),
       };
       await createDiscussion(discussionData);
-      Alert.alert("Success", "Discussion created successfully!");
+      Toast.show("Discussion created successfully!", Toast.LONG);
       setModalVisible(false);
       // Reset form fields
       setDiscussionTypeValue(null);
@@ -280,6 +298,19 @@ const DiscussionsPage = () => {
   };
 
   return (
+    <View style={styles.screen}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <SimpleIcon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {courseTitle || "Discussions"}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
     <ScrollView style={styles.container}>
       {/* Create Discussion Button Hidden */}
       {/* <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
@@ -312,12 +343,18 @@ const DiscussionsPage = () => {
                 }
               >
                 <Image
-                  source={{ uri: discussion.course.thumbnail.url }}
+                  source={
+                    discussion.course?.thumbnail?.url
+                      ? { uri: discussion.course.thumbnail.url }
+                      : require("../assets/jpg.jpg")
+                  }
                   style={{ width: "100%", height: 150 }}
                 />
 
                 <Text style={styles.dueDate}>
-                  Due Date: {new Date(discussion.dueDate.date).toDateString()}
+                  {discussion.dueDate?.date
+                    ? `Due Date: ${new Date(discussion.dueDate.date).toDateString()}`
+                    : "No due date"}
                 </Text>
 
                 <View style={styles.chapterBadge}>
@@ -325,9 +362,6 @@ const DiscussionsPage = () => {
                 </View>
 
                 <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-                <Text style={styles.discussionSubtitle}>
-                  {discussion.course.courseTitle || "test"}
-                </Text>
                 <Text style={styles.discussionDescription}>
                   {discussion.description}
                 </Text>
@@ -609,10 +643,26 @@ const DiscussionsPage = () => {
         </View>
       </Modal>
     </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  header: {
+    minHeight: 56,
+    backgroundColor: "#10B144",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === "ios" ? 44 : 16,
+    paddingBottom: 12,
+  },
+  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", flex: 1 },
+  backButton: { padding: 4, marginRight: 12 },
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",

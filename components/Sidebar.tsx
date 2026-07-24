@@ -79,6 +79,8 @@ const studentMenuItems = [
   { label: "AI Assistant", icon: require("../assets/jpg.jpg") },
   { label: "Gradebook", icon: require("../assets/jpg.jpg") },
   { label: "Discussions", icon: require("../assets/jpg.jpg") },
+  { label: "Live Classes", icon: require("../assets/jpg.jpg") },
+  { label: "Notifications", icon: require("../assets/jpg.jpg") },
   // { label: 'Pages', icon: require('../assets/jpg.jpg') },
   { label: "Support", icon: require("../assets/jpg.jpg") },
   { label: "Account Information", icon: require("../assets/jpg.jpg") },

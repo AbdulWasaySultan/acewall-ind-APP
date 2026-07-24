@@ -23,11 +23,13 @@ import {
   getPagesForLesson,
   createPageForLesson,
 } from "../services/page";
-import {
-  launchCamera,
-  launchImageLibrary,
-  MediaType,
-} from "react-native-image-picker";
+import * as ImagePicker from "react-native-image-picker";
+import { MediaType } from "react-native-image-picker";
+// import {
+//   launchCamera,
+//   launchImageLibrary,
+//   MediaType,
+// } from "react-native-image-picker";
 import { pick, types } from "@react-native-documents/picker";
 import Toast from "react-native-simple-toast";
 import SimpleIcon from "../components/SimpleIcon";
@@ -122,40 +124,78 @@ const ChapterPagesPage = () => {
     }
   };
 
-  const openGallery = () => {
+  // const openGallery = () => {
+  //   const options = {
+  //     mediaType: "photo" as MediaType,
+  //     includeBase64: false,
+  //     maxHeight: 2000,
+  //     maxWidth: 2000,
+  //   };
+
+  //   launchImageLibrary(options, (response) => {
+  //     if (response.didCancel) {
+  //       console.log(`user cancelled the camera`);
+  //       return;
+  //     } else if (response.errorCode || response.errorMessage) {
+  //       console.log(`Camera error:`, response.errorMessage);
+  //     } else if (response.assets && response.assets.length > 0) {
+  //       setSelectedImage(
+  //         response.assets[0].uri ||
+  //           response.assets ||
+  //           response.assets[0] ||
+  //           null
+  //       );
+  //     }
+  //   });
+  // };
+
+  // const openCamera = () => {
+  //   const options = {
+  //     mediaType: "photo" as MediaType,
+  //     includeBase64: false,
+  //     maxHeight: 2000,
+  //     maxWidth: 2000,
+  //   };
+
+  //   launchCamera(options, (response) => {
+  //     if (response.didCancel) {
+  //       console.log("User cancelled image picker");
+  //       return;
+  //     } else if (response.errorCode) {
+  //       console.log("Image picker error: ", response.errorMessage);
+  //       return;
+  //     } else if (response.assets && response.assets.length > 0) {
+  //       setSelectedImage(response.assets[0].uri || null);
+
+  //       //     const asset = res.assets && res.assets[0];
+  //       // if (asset) setSelectedImage(asset);
+  //     }
+  //   });
+  // };
+  const handleUploadImage = () => {
     const options = {
       mediaType: "photo" as MediaType,
       includeBase64: false,
       maxHeight: 2000,
       maxWidth: 2000,
     };
-
-    launchImageLibrary(options, (response) => {
-      if (response.didCancel) {
-        console.log(`user cancelled the camera`);
-        return;
-      } else if (response.errorCode || response.errorMessage) {
-        console.log(`Camera error:`, response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        setSelectedImage(
-          response.assets[0].uri ||
-            response.assets ||
-            response.assets[0] ||
-            null
-        );
-      }
-    });
-  };
-
-  const openCamera = () => {
-    const options = {
-      mediaType: "photo" as MediaType,
-      includeBase64: false,
-      maxHeight: 2000,
-      maxWidth: 2000,
-    };
-
-    launchCamera(options, (response) => {
+    // Alert.alert(
+    //   "Upload Photo",
+    //   "Select an option to upload your profile picture",
+    //   [
+    //     { text: "Cancel" },
+    //     {
+    //       text: "Take a Photo",
+    //       onPress: () => openCamera(),
+    //     },
+    //     {
+    //       text: "Select From Gallery",
+    //       onPress: () => openGallery(),
+    //     },
+    //   ],
+    //   { cancelable: true }
+    // );
+    ImagePicker.launchImageLibrary(options, (response) => {
       if (response.didCancel) {
         console.log("User cancelled image picker");
         return;
@@ -164,29 +204,14 @@ const ChapterPagesPage = () => {
         return;
       } else if (response.assets && response.assets.length > 0) {
         setSelectedImage(response.assets[0].uri || null);
-
-        //     const asset = res.assets && res.assets[0];
-        // if (asset) setSelectedImage(asset);
       }
+      // if (res.didCancel || res.errorMessage) return;
+      // const asset = res.assets && res.assets[0];
+      // if (asset) setSelectedImage(asset);
+
+      //     const asset = res.assets && res.assets[0];
+      // if (asset) setSelectedImage(asset);
     });
-  };
-  const handleUploadImage = () => {
-    Alert.alert(
-      "Upload Photo",
-      "Select an option to upload your profile picture",
-      [
-        { text: "Cancel" },
-        {
-          text: "Take a Photo",
-          onPress: () => openCamera(),
-        },
-        {
-          text: "Select From Gallery",
-          onPress: () => openGallery(),
-        },
-      ],
-      { cancelable: true }
-    );
   };
 
   const handleDeletePage = (p: any) => {
@@ -450,7 +475,11 @@ const ChapterPagesPage = () => {
                     const fileUrl = f.url || f.uri || f.path;
                     return (
                       <View key={f._id || idx} style={styles.attachmentCard}>
-                        <SimpleIcon name="description" size={22} color="#ef4444" />
+                        <SimpleIcon
+                          name="description"
+                          size={22}
+                          color="#ef4444"
+                        />
                         <Text style={styles.attachmentName} numberOfLines={1}>
                           {f.filename || f.name || `File ${idx + 1}`}
                         </Text>
@@ -458,7 +487,9 @@ const ChapterPagesPage = () => {
                           style={styles.attachmentViewButton}
                           onPress={() => handleOpenPDF(fileUrl)}
                         >
-                          <Text style={styles.attachmentViewButtonText}>View</Text>
+                          <Text style={styles.attachmentViewButtonText}>
+                            View
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     );

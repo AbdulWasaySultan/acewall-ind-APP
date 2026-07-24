@@ -205,19 +205,42 @@ export const createDiscussion = async (discussionData: DiscussionData) => {
   }
 };
 
-export const getAllDiscussions = async () => {
+export const getAllDiscussions = async (courseId?: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
     const user = await AsyncStorage.getItem('userData')
 
     const path = JSON.parse(user).user.role === "student" ? '/studentDiscussion' : '/all'
-    console.log("Fetching all discussions from: /api/discussion/all");
-    const response = await api.get(`/api/discussion/${path}`);
+    const url = courseId
+      ? `/api/discussion${path}?course=${courseId}`
+      : `/api/discussion${path}`;
+    console.log("Fetching discussions from:", url);
+    const response = await api.get(url);
     console.log("All discussions response:", response.data);
     return response.data;
   } catch (error: any) {
     console.error("Get all discussions error:", error);
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch discussions");
+    } else if (error.request) {
+      throw new Error("No response from server. Please check your internet connection.");
+    } else {
+      throw new Error("Error setting up the request");
+    }
+  }
+};
+
+// Teacher, course-scoped list — matches web's TeacherDiscussisons.jsx
+// (type=course branch: GET /discussion/v2/course/:courseId).
+export const getDiscussionsByCourseForTeacher = async (courseId: string) => {
+  try {
+    const api = await createApiInstance();
+    addAuthInterceptor(api);
+    const response = await api.get(`/api/discussion/v2/course/${courseId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error("Get discussions by course error:", error);
     if (error.response) {
       throw new Error(error.response.data.message || "Failed to fetch discussions");
     } else if (error.request) {

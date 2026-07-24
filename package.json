@@ -41,6 +41,7 @@
     "react-native-webview": "^13.16.0",
     "react-native-youtube-iframe": "^2.4.1",
     "remove-markdown": "^0.6.4",
+    "socket.io-client": "^4.8.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

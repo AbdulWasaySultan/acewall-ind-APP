@@ -60,6 +60,32 @@ export const getConversations = async () => {
   }
 };
 
+// Students enrolled in one of the teacher's courses, matching web's
+// StudentList.jsx (teacher "start a conversation" course→student picker).
+export const getStudentsByCourse = async (courseId: string) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get(
+      `/api/conversation/getStudentsByOfTeacher/${courseId}`
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Failed to fetch students for this course");
+  }
+};
+
+// Creates (or fetches, if one already exists) a 1:1 conversation with the
+// given member, matching web's StudentList.jsx handleConversation.
+export const createConversation = async (memberId: string) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.post("/api/conversation/create", { memberId });
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Failed to start conversation");
+  }
+};
+
 export const sendMessage = async (conversationId: string, text: string) => {
   try {
     const api = await getApiInstance();

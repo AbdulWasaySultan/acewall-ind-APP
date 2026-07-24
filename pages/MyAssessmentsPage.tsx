@@ -443,124 +443,124 @@ const MyAssessmentsPage = () => {
 
   // ---------- UI ----------
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      <View style={[styles.banner, styles.bannerRow]}>
+    <View style={styles.screen}>
+      <View style={styles.banner}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <SimpleIcon name="arrow-back" size={22} color="#fff" />
+          <SimpleIcon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.bannerText} numberOfLines={1}>
           {courseTitle || "Course Assessment Details"}
         </Text>
-        <View style={{ width: 22 }} />
+        <View style={{ width: 40 }} />
       </View>
+    <FlatList
+      style={styles.container}
+      data={loading || error ? [] : filtered}
+      keyExtractor={(item, index) => item._id || `${index}`}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+      contentContainerStyle={{ paddingBottom: 60 }}
+      ListHeaderComponent={
+        // Secondary Filters — course itself is fixed via route params
+        <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>
+          <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
+            <SearchFilterView
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search by title"
+              style={{ flex: 1 }}
+            />
+          </FilterBar>
 
-      {/* Secondary Filters — course itself is fixed via route params */}
-      <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>
-        <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
-          <SearchFilterView
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search by title"
-            style={{ flex: 1 }}
-          />
-        </FilterBar>
-
-        <FilterBar>
-          <DropdownFilter
-            open={typeOpen}
-            value={typeValue}
-            items={typeItems}
-            setOpen={setTypeOpen}
-            setValue={setTypeValue}
-            placeholder="All Types"
-            zIndex={3000}
-            dropDownContainerStyle={styles.dropdownContainer}
-            style={{ flex: 1 }}
-          />
-          <DropdownFilter
-            open={categoryOpen}
-            value={categoryValue}
-            items={categoryItems}
-            setOpen={setCategoryOpen}
-            setValue={setCategoryValue}
-            placeholder="All Categories"
-            zIndex={2000}
-            dropDownContainerStyle={styles.dropdownContainer}
-            style={{ flex: 1 }}
-          />
-          <DropdownFilter
-            open={statusOpen}
-            value={statusValue}
-            items={statusItems}
-            setOpen={setStatusOpen}
-            setValue={setStatusValue}
-            placeholder="All Status"
-            zIndex={1000}
-            dropDownContainerStyle={styles.dropdownContainer}
-            style={{ flex: 1 }}
-          />
-        </FilterBar>
-      </View>
-
-      {loading ? (
-        <View style={styles.stateWrap}>
-          <ActivityIndicator size="small" color="#16A34A" />
-          <Text style={styles.stateText}>Loading assessments...</Text>
+          <FilterBar>
+            <DropdownFilter
+              open={typeOpen}
+              value={typeValue}
+              items={typeItems}
+              setOpen={setTypeOpen}
+              setValue={setTypeValue}
+              placeholder="All Types"
+              zIndex={3000}
+              dropDownContainerStyle={styles.dropdownContainer}
+              style={{ flex: 1 }}
+            />
+            <DropdownFilter
+              open={categoryOpen}
+              value={categoryValue}
+              items={categoryItems}
+              setOpen={setCategoryOpen}
+              setValue={setCategoryValue}
+              placeholder="All Categories"
+              zIndex={2000}
+              dropDownContainerStyle={styles.dropdownContainer}
+              style={{ flex: 1 }}
+            />
+            <DropdownFilter
+              open={statusOpen}
+              value={statusValue}
+              items={statusItems}
+              setOpen={setStatusOpen}
+              setValue={setStatusValue}
+              placeholder="All Status"
+              zIndex={1000}
+              dropDownContainerStyle={styles.dropdownContainer}
+              style={{ flex: 1 }}
+            />
+          </FilterBar>
         </View>
-      ) : error ? (
-        <View style={styles.stateWrap}>
-          <Text style={styles.stateText}>{error}</Text>
-        </View>
-      ) : filtered.length === 0 ? (
-        <View style={styles.stateWrap}>
-          <Text style={styles.stateText}>No assessments available.</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item, index) => item._id || `${index}`}
-          contentContainerStyle={{ paddingBottom: 60, paddingHorizontal: 16 }}
-          renderItem={({ item, index }) => (
-            <View>
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() =>
-                  setExpanded((prev) => ({
-                    ...prev,
-                    [item._id]: !prev[item._id],
-                  }))
-                }
-              >
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardLeft}>
-                    <Text style={styles.cardTitle}>{getTitle(item)}</Text>
-                    <Text style={styles.cardCourse}>{getCourse(item)}</Text>
-                  </View>
-                  <View style={styles.cardRight}>
-                    <StatusBadge status={getStatus(item)} />
-                    <Text style={styles.cardArrow}>
-                      {expanded[item._id] ? "▲" : "▼"}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.cardMeta}>
-                  <Text style={styles.cardMetaText}>Due: {formatDate(getDueDate(item).date)}</Text>
-                  <Text style={styles.cardMetaText}>Type: {getType(item)}</Text>
-                </View>
-              </TouchableOpacity>
-              {expanded[item._id] && <ExpandedDetails item={item} />}
+      }
+      ListEmptyComponent={
+        loading ? (
+          <View style={styles.stateWrap}>
+            <ActivityIndicator size="small" color="#16A34A" />
+            <Text style={styles.stateText}>Loading assessments...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.stateWrap}>
+            <Text style={styles.stateText}>{error}</Text>
+          </View>
+        ) : (
+          <View style={styles.stateWrap}>
+            <Text style={styles.stateText}>No assessments available.</Text>
+          </View>
+        )
+      }
+      renderItem={({ item, index }) => (
+        <View style={{ paddingHorizontal: 16 }}>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() =>
+              setExpanded((prev) => ({
+                ...prev,
+                [item._id]: !prev[item._id],
+              }))
+            }
+          >
+            <View style={styles.cardHeader}>
+              <View style={styles.cardLeft}>
+                <Text style={styles.cardTitle}>{getTitle(item)}</Text>
+                <Text style={styles.cardCourse}>{getCourse(item)}</Text>
+              </View>
+              <View style={styles.cardRight}>
+                <StatusBadge status={getStatus(item)} />
+                <Text style={styles.cardArrow}>
+                  {expanded[item._id] ? "▲" : "▼"}
+                </Text>
+              </View>
             </View>
-          )}
-        />
+            <View style={styles.cardMeta}>
+              <Text style={styles.cardMetaText}>Due: {formatDate(getDueDate(item).date)}</Text>
+              <Text style={styles.cardMetaText}>Type: {getType(item)}</Text>
+            </View>
+          </TouchableOpacity>
+          {expanded[item._id] && <ExpandedDetails item={item} />}
+        </View>
       )}
+    />
       <Modal
         visible={detailedModalVisible}
         animationType="slide"
@@ -889,7 +889,7 @@ const MyAssessmentsPage = () => {
           ) : null}
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -905,20 +905,26 @@ const COLORS = {
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
     padding: 12,
   },
   banner: {
-    backgroundColor: COLORS.green,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
+    minHeight: 56,
+    backgroundColor: "#10B144",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 44,
+    paddingBottom: 12,
   },
-  bannerText: { color: COLORS.white, fontSize: 18, fontWeight: "700", flex: 1, textAlign: "center" },
-  bannerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  backButton: { width: 22, alignItems: "flex-start" },
+  bannerText: { color: COLORS.white, fontSize: 18, fontWeight: "bold", flex: 1 },
+  backButton: { padding: 4, marginRight: 12 },
   row: {
     flexDirection: "row",
     alignItems: "center",

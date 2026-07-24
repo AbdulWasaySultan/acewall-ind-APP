@@ -92,7 +92,9 @@ const CoursePickerGrid: React.FC<CoursePickerGridProps> = ({
         />
       </View>
 
-      {extraFilter ? <View style={styles.extraFilter}>{extraFilter}</View> : null}
+      {extraFilter ? (
+        <View style={styles.extraFilter}>{extraFilter}</View>
+      ) : null}
 
       {loading ? (
         <View style={styles.stateWrap}>
@@ -140,7 +142,9 @@ const CoursePickerGrid: React.FC<CoursePickerGridProps> = ({
                           { backgroundColor: badge.backgroundColor },
                         ]}
                       >
-                        <Text style={[styles.badgeText, { color: badge.color }]}>
+                        <Text
+                          style={[styles.badgeText, { color: badge.color }]}
+                        >
                           {badge.label}
                         </Text>
                       </View>
@@ -169,7 +173,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 12,
+    padding: 16,
   },
   banner: {
     backgroundColor: "#10B144",
@@ -181,11 +185,16 @@ const styles = StyleSheet.create({
   bannerSubtitle: { color: "#E7F8ED", fontSize: 13, marginTop: 4 },
   searchContainer: {
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F3F4F6",
     borderRadius: 8,
     paddingHorizontal: 12,
-    marginBottom: 10,
+    marginBottom: 20,
+    marginHorizontal: 3,
+
+    // width: "96.5%",
+    alignSelf: "center",
   },
   searchInput: {
     flex: 1,
@@ -216,6 +225,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingBottom: 40,
+    marginTop: 14,
   },
   card: {
     backgroundColor: "#fff",

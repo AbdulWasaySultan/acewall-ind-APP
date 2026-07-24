@@ -19,38 +19,38 @@ export interface ZoomMeeting {
 }
 
 export const zoomService = {
-  // GET /zoom/course/:courseId
+  // GET /api/zoom/course/:courseId
   getCourseMeetings: async (courseId: string): Promise<ZoomMeeting[]> => {
     const api = await getApiInstance();
-    const response = await api.get(`/zoom/course/${courseId}`);
+    const response = await api.get(`/api/zoom/course/${courseId}`);
     return response.data;
   },
 
-  // POST /zoom/schedule
+  // POST /api/zoom/schedule
   scheduleMeeting: async (
     payload: ScheduleMeetingPayload
   ): Promise<ZoomMeeting> => {
     const api = await getApiInstance();
-    const response = await api.post("/zoom/schedule", payload);
+    const response = await api.post("/api/zoom/schedule", payload);
     return response.data;
   },
 
-  // GET /zoom/join/:meetingId
+  // GET /api/zoom/join/:meetingId
   joinMeeting: async (meetingId: string): Promise<{ url: string }> => {
     const api = await getApiInstance();
-    const response = await api.get(`/zoom/join/${meetingId}`);
+    const response = await api.get(`/api/zoom/join/${meetingId}`);
     return response.data;
   },
 
-  // PUT /zoom/end/:meetingId
+  // PUT /api/zoom/end/:meetingId
   endMeeting: async (meetingId: string): Promise<void> => {
     const api = await getApiInstance();
-    api.put(`/zoom/end/${meetingId}`);
+    api.put(`/api/zoom/end/${meetingId}`);
   },
 
-  // DELETE /zoom/:meetingId
+  // DELETE /api/zoom/:meetingId
   deleteMeeting: async (meetingId: string): Promise<void> => {
     const api = await getApiInstance();
-    api.delete(`/zoom/${meetingId}`);
+    api.delete(`/api/zoom/${meetingId}`);
   },
 };
