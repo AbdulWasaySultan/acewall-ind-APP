@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   Image,
-  Platform,
 } from "react-native";
 import {
   useFocusEffect,
@@ -20,6 +19,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { getStudentsByCourse, createConversation } from "../services/message";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ScreenRouteProp = RouteProp<RootStackParamList, "TeacherMessagesByCourse">;
@@ -44,6 +44,7 @@ const formatDate = (dateString?: string) => {
 
 const TeacherCourseStudentsPage = () => {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const route = useRoute<ScreenRouteProp>();
   const { courseId, courseTitle } = route.params;
 
@@ -100,7 +101,7 @@ const TeacherCourseStudentsPage = () => {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -120,10 +121,15 @@ const TeacherCourseStudentsPage = () => {
         }
       >
         {!loading && !error && (
-          <Text style={styles.subHeader}>
-            {totalStudents} {totalStudents === 1 ? "Student" : "Students"}{" "}
-            Enrolled
-          </Text>
+          <>
+            <Text style={styles.sectionTitle}>
+              Students ({totalStudents})
+            </Text>
+            <Text style={styles.subHeader}>
+              {totalStudents} {totalStudents === 1 ? "Student" : "Students"}{" "}
+              Enrolled
+            </Text>
+          </>
         )}
 
         {loading ? (
@@ -215,12 +221,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === "ios" ? 44 : 16,
     paddingBottom: 12,
   },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", flex: 1 },
   backButton: { padding: 4, marginRight: 12 },
   container: { flex: 1, padding: 16 },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 4,
+  },
   subHeader: { fontSize: 13, color: "#6B7280", marginBottom: 12 },
   stateWrap: { alignItems: "center", padding: 40 },
   errorText: { color: "#DC2626", textAlign: "center", marginBottom: 12 },

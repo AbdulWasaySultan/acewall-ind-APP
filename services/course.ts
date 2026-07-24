@@ -352,7 +352,12 @@ export const getCoursesWithMeetings = async (): Promise<{
     const response = await api.get("/api/course/with-meetings");
     return response.data;
   } catch (error) {
-    throw error;
+    console.log(`Error while fetching courses with scheduled meeting`, error);
+    return {
+      success: false,
+      courses: [],
+    };
+    // throw error;
   }
 };
 
@@ -886,11 +891,11 @@ export const getCourseById = async (courseId: string) => {
   }
 };
 
-export const getStudentEnrolledCourses = async (searchQuery: string) => {
+export const getStudentEnrolledCourses = async (searchQuery: string = "") => {
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/api/enrollment/studentCourses?search=${searchQuery}`
+      `/api/enrollment/studentCourses?search=${encodeURIComponent(searchQuery)}`
     );
     return response.data;
   } catch (error) {
@@ -951,13 +956,10 @@ export const createStripeCheckoutSession = async (
 ) => {
   try {
     const api = await getApiInstance();
-    const response = await api.post(
-      "/api/stripe/create-checkout-session-mobile",
-      {
-        courseId,
-        studentId,
-      }
-    );
+    const response = await api.post("/api/stripe/create-checkout-session-mobile", {
+      courseId,
+      studentId,
+    });
     return response.data;
   } catch (error) {
     throw error;

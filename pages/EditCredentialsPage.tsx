@@ -25,10 +25,12 @@ import {
 } from '../services/schoolService';
 import { countryCodes } from '../utils/countries';
 import SimpleIcon from '../components/SimpleIcon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type TabType = 'email' | 'password' | 'phone';
 
 const EditCredentialsPage: React.FC = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>('email');
   const [isLoading, setIsLoading] = useState(false);
   const [showOTPModal, setShowOTPModal] = useState(false);
@@ -514,7 +516,7 @@ const EditCredentialsPage: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Tabs at the very top */}
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'email' && styles.activeTab]}
           onPress={() => setActiveTab('email')}
@@ -642,7 +644,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    paddingTop: 50, // Add top padding for status bar
   },
   tab: {
     flex: 1,

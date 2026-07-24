@@ -76,8 +76,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                 </Text>
                 <View style={styles.assessmentDetailsCategoryBadge}>
                   <Text style={styles.assessmentDetailsCategoryText}>
-                    {selectedAssessmentForModal.category?.name ||
-                      "No Category"}
+                    {selectedAssessmentForModal.category?.name || "No Category"}
                   </Text>
                 </View>
               </View>
@@ -130,9 +129,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                         </Text>
                         <SimpleIcon
                           name={
-                            expandedMcq?.[index]
-                              ? "chevron-up"
-                              : "chevron-down"
+                            expandedMcq?.[index] ? "chevron-up" : "chevron-down"
                           }
                           size={20}
                           color="#000"
@@ -220,9 +217,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                               >
                                 Answer:
                               </Text>
-                              <Text
-                                style={styles.assessmentDetailsOptionText}
-                              >
+                              <Text style={styles.assessmentDetailsOptionText}>
                                 {question.correctAnswer || "—"}
                               </Text>
                             </View>
@@ -232,9 +227,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                             question.files.length > 0 && (
                               <View style={{ marginTop: 10 }}>
                                 <Text
-                                  style={
-                                    styles.assessmentDetailsQuestionLabel
-                                  }
+                                  style={styles.assessmentDetailsQuestionLabel}
                                 >
                                   File:
                                 </Text>
@@ -242,9 +235,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                                   (file: any, fIndex: number) => (
                                     <TouchableOpacity
                                       key={fIndex}
-                                      onPress={() =>
-                                        Linking.openURL(file.url)
-                                      }
+                                      onPress={() => Linking.openURL(file.url)}
                                       style={{
                                         flexDirection: "row",
                                         alignItems: "center",

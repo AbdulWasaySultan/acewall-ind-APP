@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import GradeScaleModal from '../components/GradeScaleModal';
 import SimpleIcon from '../components/SimpleIcon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface GradeScale {
     id: string;
@@ -17,6 +18,7 @@ interface GradeScale {
 }
 
 const GradeScaleManagementPage: React.FC = () => {
+    const insets = useSafeAreaInsets();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [gradeScales, setGradeScales] = useState<GradeScale[]>([
         { id: '1', letter: 'A', minPercentage: 90, maxPercentage: 100 },
@@ -44,7 +46,7 @@ const GradeScaleManagementPage: React.FC = () => {
         <View style={styles.container}>
             <ScrollView style={styles.content}>
                 {/* Header */}
-                <View style={styles.header}>
+                <View style={[styles.header, { paddingTop: insets.top }]}>
                     <TouchableOpacity style={styles.backButton}>
                         <SimpleIcon name="arrow-back" size={24} color="#333" />
                         <Text style={styles.backText}>Back</Text>
@@ -130,7 +132,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 20,
-        paddingTop: 50,
     },
     backButton: {
         flexDirection: 'row',

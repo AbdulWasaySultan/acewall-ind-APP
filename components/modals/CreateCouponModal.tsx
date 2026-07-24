@@ -16,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SimpleIcon from '../SimpleIcon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createCouponsByCourse } from '../../services/coupon';
 
 // ─── Zod Schema ────────────────────────────────────────────────
@@ -39,6 +40,7 @@ interface Props {
 }
 
 export default function CreateCouponModal({ visible, onClose, courseId, onRefresh }: Props) {
+  const insets = useSafeAreaInsets();
   const [submitting, setSubmitting] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -102,7 +104,7 @@ export default function CreateCouponModal({ visible, onClose, courseId, onRefres
     >
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
             <SimpleIcon name="arrow-back" size={24} color="#10B144" />
           </TouchableOpacity>
@@ -296,7 +298,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
-    paddingTop: 50,
   },
   backButton: { padding: 4 },
   headerTitle: {
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
   submitButton: {
     paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: '#007bff',
+    backgroundColor: '#10B144',
     alignItems: 'center',
     marginTop: 8,
   },

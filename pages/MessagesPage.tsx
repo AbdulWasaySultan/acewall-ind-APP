@@ -7,6 +7,18 @@ import { getConversations } from '../services/message';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+// The backend returns the other conversation member as firstName/lastName
+// (matching every other person object in this app), not a combined `name`
+// field, so build the display name from those instead of relying on `.name`.
+const getMemberName = (member: any): string => {
+  if (!member) return "Conversation";
+  return (
+    member.name ||
+    [member.firstName, member.lastName].filter(Boolean).join(" ") ||
+    "Conversation"
+  );
+};
+
 const MessagesPage = () => {
   const route = useRoute();
   const navigation = useNavigation<NavigationProp>();
@@ -94,7 +106,7 @@ const MessagesPage = () => {
               onPress={() =>
                 navigation.navigate('Chat', {
                   conversationId: item.conversationId,
-                  otherMemberName: item.otherMember?.name || 'Conversation',
+                  otherMemberName: getMemberName(item.otherMember),
                 })
               }
               activeOpacity={0.7}
@@ -113,7 +125,7 @@ const MessagesPage = () => {
                   </View>
                 </View>
                 <View style={styles.conversationDetails}>
-                  <Text style={styles.conversationTitle}>{item.otherMember?.name || 'Untitled Conversation'}</Text>
+                  <Text style={styles.conversationTitle}>{getMemberName(item.otherMember)}</Text>
                   {item.lastMessage && (
                     <Text style={styles.lastMessage} numberOfLines={1}>
                       {item.lastMessage}

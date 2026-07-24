@@ -7,24 +7,29 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  Platform,
 } from "react-native";
 import Toast from "react-native-simple-toast";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { getAllStudentsWithCourses, Student, Course } from "../services/student";
+import {
+  getAllStudentsWithCourses,
+  Student,
+  Course,
+} from "../services/student";
 import StudentCard from "../components/students/StudentCard";
 import StudentProfileModal from "../components/students/StudentProfileModal";
 import CourseGradebookModal from "../components/students/CourseGradebookModal";
 import { DropdownFilter } from "../components/filters/DropDown";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ScreenRouteProp = RouteProp<RootStackParamList, "StudentsByCourse">;
 
 const StudentsPage = () => {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const route = useRoute<ScreenRouteProp>();
   const { courseId, courseTitle } = route.params;
 
@@ -91,7 +96,9 @@ const StudentsPage = () => {
       return false;
     }
     if (searchQuery.trim() !== "") {
-      const fullName = `${s.firstName} ${s.middleName || ""} ${s.lastName}`.toLowerCase();
+      const fullName = `${s.firstName} ${s.middleName || ""} ${
+        s.lastName
+      }`.toLowerCase();
       return fullName.includes(searchQuery.toLowerCase().trim());
     }
     return true;
@@ -110,12 +117,18 @@ const StudentsPage = () => {
     setGradebookModalVisible(true);
   }, []);
 
-  const closeProfileModal = useCallback(() => setProfileModalVisible(false), []);
-  const closeGradebookModal = useCallback(() => setGradebookModalVisible(false), []);
+  const closeProfileModal = useCallback(
+    () => setProfileModalVisible(false),
+    []
+  );
+  const closeGradebookModal = useCallback(
+    () => setGradebookModalVisible(false),
+    []
+  );
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -129,7 +142,9 @@ const StudentsPage = () => {
       </View>
 
       <View style={styles.container}>
-        <Text style={styles.pageTitle}>Students ({filteredStudents.length})</Text>
+        <Text style={styles.pageTitle}>
+          Students ({filteredStudents.length})
+        </Text>
 
         <View style={styles.searchContainer}>
           <TextInput
@@ -146,7 +161,9 @@ const StudentsPage = () => {
           )}
         </View>
 
-        <View style={{ marginBottom: 16, zIndex: studentFilterOpen ? 1000 : 0 }}>
+        <View
+          style={{ marginBottom: 16, zIndex: studentFilterOpen ? 1000 : 0 }}
+        >
           <DropdownFilter
             open={studentFilterOpen}
             value={studentFilterValue}
@@ -156,36 +173,42 @@ const StudentsPage = () => {
             placeholder="Select student by name"
             zIndex={1000}
             zIndexInverse={1000}
+            style={{ borderColor: "#fff" }}
           />
         </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" />
-      ) : (
-        <FlatList
-          data={filteredStudents}
-          keyExtractor={(student) => student._id}
-          contentContainerStyle={styles.studentListContent}
-          renderItem={({ item: student }) => (
-            <StudentCard student={student} onViewProfile={handleViewProfile} />
-          )}
-          ListEmptyComponent={<Text style={styles.emptyText}>No students found.</Text>}
+        {loading ? (
+          <ActivityIndicator size="large" />
+        ) : (
+          <FlatList
+            data={filteredStudents}
+            keyExtractor={(student) => student._id}
+            contentContainerStyle={styles.studentListContent}
+            renderItem={({ item: student }) => (
+              <StudentCard
+                student={student}
+                onViewProfile={handleViewProfile}
+              />
+            )}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No students found.</Text>
+            }
+          />
+        )}
+
+        <StudentProfileModal
+          visible={profileModalVisible}
+          student={selectedStudent}
+          onClose={closeProfileModal}
+          onSelectCourse={handleSelectCourse}
         />
-      )}
 
-      <StudentProfileModal
-        visible={profileModalVisible}
-        student={selectedStudent}
-        onClose={closeProfileModal}
-        onSelectCourse={handleSelectCourse}
-      />
-
-      <CourseGradebookModal
-        visible={gradebookModalVisible}
-        studentId={selectedStudent?._id ?? null}
-        course={gradebookCourse}
-        onClose={closeGradebookModal}
-      />
+        <CourseGradebookModal
+          visible={gradebookModalVisible}
+          studentId={selectedStudent?._id ?? null}
+          course={gradebookCourse}
+          onClose={closeGradebookModal}
+        />
       </View>
     </View>
   );
@@ -199,7 +222,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === "ios" ? 44 : 16,
     paddingBottom: 12,
   },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", flex: 1 },

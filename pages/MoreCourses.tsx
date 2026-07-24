@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import SimpleIcon from "../components/SimpleIcon";
 import {
-  getPublishedCourses,
   getCategories,
   getSubcategories,
   getCoursesBySubcategory,

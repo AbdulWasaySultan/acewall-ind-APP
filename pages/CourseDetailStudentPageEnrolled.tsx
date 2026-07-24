@@ -379,7 +379,7 @@ const CourseDetailStudentPageEnrolled = () => {
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
         >
-          <Text style={styles.closeSimpleIconText}>×</Text>
+          <SimpleIcon name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <View style={styles.bannerContainer}>
           <Image

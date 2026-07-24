@@ -529,7 +529,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                       ? selectedCourse.courseTitle
                       : "Choose a Class..."}
                   </Text>
-                  <Icon name="chevron-down" size={22} color="#555" />
+                  <SimpleIcon name="chevron-down" size={22} color="#555" />
                 </TouchableOpacity>
               )}
 

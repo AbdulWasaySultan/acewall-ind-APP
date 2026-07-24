@@ -23,7 +23,7 @@ const StudentMeetingsCoursePicker = () => {
       const res = await getCoursesWithMeetings();
       setCourses(res?.success && Array.isArray(res.courses) ? res.courses : []);
     } catch (err: any) {
-      setError(err?.message || "Failed to load live classes.");
+      setError("Failed to load live classes.");
       setCourses([]);
     } finally {
       setLoading(false);

@@ -11,6 +11,7 @@ import {
   StyleSheet,
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface ChapterDetailsModalProps {
   visible: boolean;
@@ -151,7 +152,7 @@ const LessonCard = React.memo<LessonCardProps>(
   ({
     lesson,
     index,
-  isDropdownOpen,
+    isDropdownOpen,
     onEditLesson,
     onDeleteLessonFromChapter,
     onLessonsPlusButtonPress,
@@ -181,7 +182,7 @@ const LessonCard = React.memo<LessonCardProps>(
               style={styles.lessonActionIcon}
               onPress={() => onEditLesson(lesson)}
             >
-              <SimpleIcon name="pencil" size={30} color="#10B144" />
+              <SimpleIcon name="pencil" size={26} useEmoji={true} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.lessonActionIcon}
@@ -284,28 +285,31 @@ const LessonCard = React.memo<LessonCardProps>(
           </View>
 
           {/* Lesson Assessments Section */}
-          {lesson.lesson_assessments && lesson.lesson_assessments.length > 0 && (
-            <View style={styles.filesSection}>
-              <View style={styles.filesHeader}>
-                <Text style={styles.filesTitle}>
-                  Lesson Assessments ({lesson.lesson_assessments.length})
-                </Text>
+          {lesson.lesson_assessments &&
+            lesson.lesson_assessments.length > 0 && (
+              <View style={styles.filesSection}>
+                <View style={styles.filesHeader}>
+                  <Text style={styles.filesTitle}>
+                    Lesson Assessments ({lesson.lesson_assessments.length})
+                  </Text>
+                </View>
+                {lesson.lesson_assessments.map(
+                  (assessment: any, assessmentIndex: number) => (
+                    <AssessmentItem
+                      key={assessment._id || assessmentIndex}
+                      assessment={assessment}
+                      index={assessmentIndex}
+                      onClose={onClose}
+                      onDeleteAssessmentDirect={onDeleteAssessmentDirect}
+                      onSelectAssessmentForModal={onSelectAssessmentForModal}
+                      onAssessmentDetailsModalOpen={
+                        onAssessmentDetailsModalOpen
+                      }
+                    />
+                  )
+                )}
               </View>
-              {lesson.lesson_assessments.map(
-                (assessment: any, assessmentIndex: number) => (
-                  <AssessmentItem
-                    key={assessment._id || assessmentIndex}
-                    assessment={assessment}
-                    index={assessmentIndex}
-                    onClose={onClose}
-                    onDeleteAssessmentDirect={onDeleteAssessmentDirect}
-                    onSelectAssessmentForModal={onSelectAssessmentForModal}
-                    onAssessmentDetailsModalOpen={onAssessmentDetailsModalOpen}
-                  />
-                )
-              )}
-            </View>
-          )}
+            )}
 
           {/* Resources Section */}
           {(lesson.youtubeLinks || lesson.otherLink) && (
@@ -317,7 +321,7 @@ const LessonCard = React.memo<LessonCardProps>(
                     style={styles.youtubeResource}
                     onPress={() => onOpenLink(lesson.youtubeLinks)}
                   >
-                    <SimpleIcon name="play" size={16} color="#fff" />
+                    <SimpleIcon name="play" size={16} color="#dc2626" />
                     <Text style={styles.resourceText}>YouTube Video</Text>
                   </TouchableOpacity>
                 )}
@@ -326,7 +330,7 @@ const LessonCard = React.memo<LessonCardProps>(
                     style={styles.linkResource}
                     onPress={() => onOpenLink(lesson.otherLink)}
                   >
-                    <SimpleIcon name="link" size={16} color="#fff" />
+                    <SimpleIcon name="link" size={16} color="#10B144" />
                     <Text style={styles.resourceText}>External Link</Text>
                   </TouchableOpacity>
                 )}
@@ -364,6 +368,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
   onAssessmentDetailsModalOpen,
   onChaptersForQuarterModalOpen,
 }) => {
+  const insets = useSafeAreaInsets();
   const handleClose = () => {
     onClose();
     onChaptersForQuarterModalOpen();
@@ -430,15 +435,15 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                 style={styles.chapterDetailsActionButton}
                 onPress={onEditChapter}
               >
-                <SimpleIcon name="pencil" size={25} color="#fff" />
+                <SimpleIcon name="pencil" size={23} useEmoji={true} />
               </TouchableOpacity>
               <View style={styles.plusButtonContainer}>
                 <TouchableOpacity
-                  style={styles.chapterDetailsActionButton}
+                  style={[styles.chapterDetailsActionButton, {backgroundColor: "#10B144"}]}
                   onPress={onPlusButtonPress}
                   activeOpacity={0.8}
                 >
-                  <SimpleIcon name="plus" size={25} color="#000" />
+                  <SimpleIcon name="plus" size={25} color="#fff" />
 
                   {showPlusDropdown && (
                     <View style={styles.dropdownMenu}>
@@ -477,9 +482,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                           size={16}
                           color="#6b7280"
                         />
-                        <Text style={styles.dropdownItemText}>
-                          + Add Page
-                        </Text>
+                        <Text style={styles.dropdownItemText}>+ Add Page</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.dropdownItem}
@@ -496,9 +499,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
               </View>
             </View>
           </View>
-          <Text style={styles.chapterDetailsTitle}>
-            {chapterDetails.title}
-          </Text>
+          <Text style={styles.chapterDetailsTitle}>{chapterDetails.title}</Text>
           <Text style={styles.chapterDetailsDescription}>
             {chapterDetails.description}
           </Text>
@@ -532,9 +533,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                     onClose={onClose}
                     onDeleteAssessmentDirect={onDeleteAssessmentDirect}
                     onSelectAssessmentForModal={onSelectAssessmentForModal}
-                    onAssessmentDetailsModalOpen={
-                      onAssessmentDetailsModalOpen
-                    }
+                    onAssessmentDetailsModalOpen={onAssessmentDetailsModalOpen}
                   />
                 )
               )}
@@ -602,7 +601,12 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
       onRequestClose={handleClose}
     >
       <View style={styles.fullScreenModalContainer}>
-        <View style={styles.fullScreenModalContent}>
+        <View
+          style={[
+            styles.fullScreenModalContent,
+            { paddingTop: insets.top + 20 },
+          ]}
+        >
           <View style={styles.fullScreenModalHeader}>
             <TouchableOpacity onPress={handleClose} style={styles.backButton}>
               <SimpleIcon name="arrow-back" size={24} color="#10B144" />
@@ -641,7 +645,9 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
               keyExtractor={lessonKeyExtractor}
               renderItem={renderLesson}
               ListHeaderComponent={lessonsListHeader}
-              ListFooterComponent={<View style={styles.lessonsListFooterSpacer} />}
+              ListFooterComponent={
+                <View style={styles.lessonsListFooterSpacer} />
+              }
               ListEmptyComponent={lessonsListEmpty}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
@@ -729,7 +735,6 @@ const styles = StyleSheet.create({
   chapterDetailsActionButton: {
     padding: 8,
     borderRadius: 4,
-    backgroundColor: "#f5f5f5",
   },
   plusButtonContainer: {
     position: "relative",

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { createAssessmentCategory } from '../../services/course';
 import Toast from 'react-native-simple-toast';
+import SimpleIcon from '../SimpleIcon';
 
 interface AddAssessmentCategoryModalProps {
   visible: boolean;
@@ -102,16 +103,27 @@ const AddAssessmentCategoryModal: React.FC<AddAssessmentCategoryModalProps> = ({
     >
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContent, { width: '90%', maxWidth: 400 }]}>
-          <Text
+          <View
             style={{
-              fontSize: 24,
-              fontWeight: 'bold',
-              color: '#111',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               marginBottom: 8,
             }}
           >
-            Add New Topic
-          </Text>
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: '#111',
+              }}
+            >
+              Add New Topic
+            </Text>
+            <TouchableOpacity onPress={handleCancel} hitSlop={10}>
+              <SimpleIcon name="close" size={24} color="#374151" />
+            </TouchableOpacity>
+          </View>
           <Text style={{ fontSize: 16, color: '#666', marginBottom: 24 }}>
             Create a new assessment category for this course.
           </Text>

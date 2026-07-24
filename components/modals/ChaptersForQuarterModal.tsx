@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface ChaptersForQuarterModalProps {
   visible: boolean;
@@ -89,6 +90,7 @@ const ChaptersForQuarterModal: React.FC<ChaptersForQuarterModalProps> = ({
   onViewChapterDetails,
   onDeleteChapter,
 }) => {
+  const insets = useSafeAreaInsets();
   const handleClose = () => {
     onClose();
     onBackToQuarters();
@@ -118,7 +120,9 @@ const ChaptersForQuarterModal: React.FC<ChaptersForQuarterModalProps> = ({
       animationType="slide"
       onRequestClose={handleClose}
     >
-      <View style={styles.chaptersModalContainer}>
+      <View
+        style={[styles.chaptersModalContainer, { paddingTop: insets.top + 20 }]}
+      >
         <View style={styles.chaptersModalHeader}>
           <Text style={styles.chaptersModalTitle}>Chapters</Text>
           <TouchableOpacity onPress={handleClose}>
@@ -150,6 +154,8 @@ const ChaptersForQuarterModal: React.FC<ChaptersForQuarterModalProps> = ({
             />
           ) : chaptersForQuarter.length > 0 ? (
             <FlatList
+              style={styles.chaptersList}
+              contentContainerStyle={styles.chaptersListContent}
               data={chaptersForQuarter}
               keyExtractor={chapterKeyExtractor}
               renderItem={renderChapter}
@@ -173,7 +179,8 @@ const styles = StyleSheet.create({
   chaptersModalContainer: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   chaptersModalHeader: {
     flexDirection: "row",
@@ -188,6 +195,12 @@ const styles = StyleSheet.create({
   },
   chaptersContent: {
     flex: 1,
+  },
+  chaptersList: {
+    flex: 1,
+  },
+  chaptersListContent: {
+    paddingBottom: 20,
   },
   chaptersHeaderButton: {
     backgroundColor: "#f5f5f5",

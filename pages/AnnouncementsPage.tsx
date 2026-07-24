@@ -32,6 +32,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ====================== Helper Components ======================
 
@@ -137,6 +138,7 @@ type ScreenRouteProp = RouteProp<RootStackParamList, "AnnouncementsByCourse">;
 
 const AnnouncementsPage = () => {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const route = useRoute<ScreenRouteProp>();
   const { courseId, courseTitle } = route.params;
 
@@ -311,7 +313,7 @@ const AnnouncementsPage = () => {
 
   const renderTeacherView = () => (
     <View style={styles.teacherViewContainer}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -421,7 +423,7 @@ const AnnouncementsPage = () => {
     const data = filteredStudentAnnouncements;
 
     const studentHeader = (
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -611,7 +613,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 44,
     paddingBottom: 12,
   },
   headerTitle: {
@@ -676,6 +677,7 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: 16,
+    paddingHorizontal: 16,
   },
   tableHeaders: {
     flexDirection: "row",
@@ -748,15 +750,11 @@ const styles = StyleSheet.create({
   },
   studentCard: {
     backgroundColor: "white",
-    borderRadius: 20,
-    padding: 32,
-    marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-    borderColor: "#e5e8ef",
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   studentCardHeader: {
     flexDirection: "row",
@@ -766,11 +764,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   studentCardTitle: {
-    fontSize: 21,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "600",
     color: "#111827",
-    marginBottom: 8,
-    lineHeight: 22,
+    marginBottom: 4,
+    lineHeight: 20,
   },
   studentCardCourse: {
     fontSize: 18,
@@ -785,24 +783,24 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   studentCardDate: {
-    fontSize: 15,
+    fontSize: 13,
     color: "#6b7280",
     marginRight: 8,
   },
   studentCardArrow: {
     color: "#6b7280",
-    fontSize: 15,
+    fontSize: 13,
   },
   studentCardExpanded: {
     marginTop: 16,
   },
   studentCardMessage: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#374151",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   studentCardTime: {
-    fontSize: 15,
+    fontSize: 12,
     color: "#374151",
   },
   studentCardTimeLabel: {

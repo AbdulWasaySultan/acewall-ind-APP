@@ -12,6 +12,7 @@ import Svg, { Polyline, Circle, Line as SvgLine } from "react-native-svg";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getCourseAnalytics } from "../services/gradebook";
 
 type RouteParams = RouteProp<RootStackParamList, "CourseAnalytics">;
@@ -108,6 +109,7 @@ const CategoryBarChart = ({
 
 const CourseAnalyticsPage = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const route = useRoute<RouteParams>();
   const { courseId } = route.params;
   const { width: screenWidth } = useWindowDimensions();
@@ -135,7 +137,7 @@ const CourseAnalyticsPage = () => {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -362,7 +364,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 44,
     paddingBottom: 12,
   },
   backButton: { padding: 4, marginRight: 12 },

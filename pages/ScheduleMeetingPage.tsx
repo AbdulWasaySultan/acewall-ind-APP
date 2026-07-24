@@ -569,9 +569,9 @@ const styles = StyleSheet.create({
   },
   card: {
     borderTopWidth: 4,
-    borderTopColor: "#2563eb",
+    borderTopColor: "#10B144",
     borderLeftWidth: 1,
-    borderLeftColor: "#1060f4",
+    borderLeftColor: "#0d8f37",
     borderRightWidth: 0,
     borderBottomWidth: 0,
     borderRadius: 12,
@@ -676,7 +676,7 @@ const styles = StyleSheet.create({
     borderLeftColor: "#e2e8f0",
   },
   submitButton: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#10B144",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",

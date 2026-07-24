@@ -19,6 +19,7 @@ interface DropdownFilterProps {
     dropDownDirection?: "AUTO" | "TOP" | "BOTTOM";
     listMode?: "MODAL" | "SCROLLVIEW"; // optional
     style?: StyleProp<ViewStyle>;
+    wrapperStyle?: StyleProp<ViewStyle>;
 }
 
 export const DropdownFilter: React.FC<DropdownFilterProps> = ({
@@ -35,9 +36,17 @@ export const DropdownFilter: React.FC<DropdownFilterProps> = ({
     dropDownDirection = "BOTTOM",
     listMode = "SCROLLVIEW",
     style,
+    wrapperStyle,
 }) => {
     return (
-        <View style={[styles.dropdownWrapper, { zIndex: open ? zIndex : 1 }]}>
+        <View
+            style={[
+                styles.dropdownWrapper,
+                { zIndex: open ? zIndex : zIndexInverse },
+                open && styles.dropdownWrapperOpen,
+                wrapperStyle,
+            ]}
+        >
             <DropDownPicker
                 open={open}
                 value={value}
@@ -64,24 +73,23 @@ export const DropdownFilter: React.FC<DropdownFilterProps> = ({
 
 
 const styles = StyleSheet.create({
-    // DropdownFilter styles
     dropdownWrapper: {
-        // flex: 1,
-        // backgroundColor: 'cyan',
-        alignSelf: 'flex-end',
-        width: "98%"
+        flex: 1,
+        minWidth: 0,
+    },
+    dropdownWrapperOpen: {
+        elevation: 12,
     },
     dropdownPicker: {
-        // backgroundColor: "#fff",
-        // backgroundColor: "pink",
         borderColor: "#10B144",
         borderRadius: 8,
-        width: "100%",
+        minHeight: 44,
     },
     dropdownContainerStyle: {
-        // zIndex managed by wrapper View
+        height: 44,
     },
     dropdownListStyle: {
         borderColor: "#10B144",
+        elevation: 12,
     },
 });

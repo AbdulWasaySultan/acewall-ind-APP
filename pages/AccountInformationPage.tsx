@@ -543,16 +543,18 @@ const AccountInformationPage = () => {
 
       {/* Action Buttons */}
       {!isEditMode && (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.editButton} onPress={handleEditInfo}>
-            <Text style={styles.editButtonText}>Edit Info</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={handleEditCredentials}
-          >
-            <Text style={styles.editButtonText}>Edit Credentials</Text>
-          </TouchableOpacity>
+        <View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={handleEditCredentials}
+            >
+              <Text style={styles.editButtonText}>Edit Credentials</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.editButton} onPress={handleEditInfo}>
+              <Text style={styles.editButtonText}>Edit Info</Text>
+            </TouchableOpacity>
+          </View>
           {userRole === "student" && (
             <TouchableOpacity
               style={styles.purchaseHistoryButton}
@@ -1467,7 +1469,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 16,
-    marginBottom: 24,
+    marginBottom: 12,
     gap: 12,
   },
   editButton: {
@@ -1485,7 +1487,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
-    flex: 1,
+    marginBottom: 24,
   },
   editButtonText: {
     color: "#fff",

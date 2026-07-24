@@ -11,8 +11,10 @@ import {
   Dimensions,
 } from "react-native";
 import Toast from "react-native-simple-toast";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Course, StudentCourseGradebook, getStudentCourseGradebook } from "../../services/student";
 import GradebookTable from "./GradebookTable";
+import SimpleIcon from "../SimpleIcon";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -29,6 +31,7 @@ const CourseGradebookModal: React.FC<CourseGradebookModalProps> = ({
   course,
   onClose,
 }) => {
+  const insets = useSafeAreaInsets();
   const [gradebook, setGradebook] = useState<StudentCourseGradebook | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -76,8 +79,11 @@ const CourseGradebookModal: React.FC<CourseGradebookModalProps> = ({
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <View style={styles.modalContainer}>
-        <Pressable style={styles.modalCloseButton} onPress={onClose}>
-          <Text style={styles.modalCloseText}>×</Text>
+        <Pressable
+          style={[styles.modalCloseButton, { top: insets.top + 8 }]}
+          onPress={onClose}
+        >
+          <SimpleIcon name="close" size={28} color="#333" />
         </Pressable>
 
         {loading ? (
@@ -92,7 +98,10 @@ const CourseGradebookModal: React.FC<CourseGradebookModalProps> = ({
         ) : gradebook ? (
           <ScrollView
             style={styles.modalList}
-            contentContainerStyle={styles.modalListContent}
+            contentContainerStyle={[
+              styles.modalListContent,
+              { paddingTop: insets.top + 52 },
+            ]}
             showsVerticalScrollIndicator
             keyboardShouldPersistTaps="handled"
           >
@@ -139,9 +148,8 @@ const CourseGradebookModal: React.FC<CourseGradebookModalProps> = ({
 const styles = StyleSheet.create({
   modalContainer: { flex: 1, height: SCREEN_HEIGHT, backgroundColor: "#fff" },
   modalCloseButton: { position: "absolute", top: 16, right: 20, zIndex: 100, padding: 8 },
-  modalCloseText: { fontSize: 32, color: "#333", fontWeight: "bold" },
   modalList: { flex: 1, height: SCREEN_HEIGHT },
-  modalListContent: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 16 },
+  modalListContent: { paddingBottom: 40, paddingHorizontal: 16 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: { color: "#b91c1c", fontSize: 15, textAlign: "center", paddingHorizontal: 24 },
   noDataText: { color: "#6b7280", fontSize: 15, textAlign: "center", paddingHorizontal: 24 },

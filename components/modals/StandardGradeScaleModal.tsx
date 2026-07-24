@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface SBLItem {
   _id?: string;
@@ -66,6 +67,7 @@ const StandardGradeScaleModal: React.FC<StandardGradeScaleModalProps> = ({
   initialScale = [],
   courseId,
 }) => {
+  const insets = useSafeAreaInsets();
   const [scale, setScale] = useState<SBLItem[]>(initialScale);
   const [newPoints, setNewPoints] = useState("");
   const [newRemarks, setNewRemarks] = useState("");
@@ -221,7 +223,7 @@ const StandardGradeScaleModal: React.FC<StandardGradeScaleModalProps> = ({
     >
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
             <SimpleIcon name="arrow-back" size={24} color="#10B144" />
           </TouchableOpacity>
@@ -388,7 +390,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
     backgroundColor: "#fff",
@@ -414,8 +415,8 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 15,
   },
-  inputRow: { flexDirection: "row", marginBottom: 12 },
-  inputContainer: { flex: 1, marginRight: 10 },
+  inputRow: { flexDirection: "row", marginBottom: 12, gap: 10 },
+  inputContainer: { flex: 1 },
   inputLabel: {
     fontSize: 14,
     color: "#333",

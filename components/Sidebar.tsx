@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useUser } from "../contexts/UserContext";
 import { getUserInfo } from "../services/schoolService";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface UserData {
   _id: string;
@@ -94,6 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { userRole, isPreviewMode } = useAuth();
   const { user, setUser } = useUser();
+  const insets = useSafeAreaInsets();
   const drawerStatus = useDrawerStatus();
   const isFetchingRef = useRef(false);
 
@@ -191,7 +193,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         showsVerticalScrollIndicator={true}
         bounces={true}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           {/* <Image
             source={require("../assets/logo.png")}
             style={styles.logo}
@@ -278,7 +280,6 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    paddingTop: 40,
     paddingBottom: 20,
   },
   logo: {

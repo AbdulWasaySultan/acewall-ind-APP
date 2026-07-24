@@ -14,6 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import SimpleIcon from '../components/SimpleIcon';
 import CreateCouponModal from '../components/modals/CreateCouponModal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Coupon, fetchCouponsByCourse, updateCouponStatus } from '../services/coupon';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export default function CouponsPage({ navigation, route }: Props) {
+  const insets = useSafeAreaInsets();
   const { courseId } = route.params;
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +107,7 @@ export default function CouponsPage({ navigation, route }: Props) {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <SimpleIcon name="arrow-back" size={24} color="#10B144" />
         </TouchableOpacity>
@@ -159,7 +161,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
-    paddingTop: 50,
   },
   backButton: { padding: 4 },
   headerTitle: {
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#10B144',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 6,
@@ -219,6 +220,6 @@ const styles = StyleSheet.create({
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   emptyTitle: { fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 8 },
   emptySubtitle: { fontSize: 14, color: '#6c757d', textAlign: 'center', marginBottom: 24 },
-  createButton: { backgroundColor: '#007bff', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
+  createButton: { backgroundColor: '#10B144', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
   createButtonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });

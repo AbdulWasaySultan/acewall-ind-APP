@@ -19,6 +19,7 @@ import Svg, {
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getCourseEnrollmentStats } from "../services/course";
 
 type RouteParams = RouteProp<RootStackParamList, "EnrollmentStats">;
@@ -76,11 +77,11 @@ const EnrollmentAreaChart = ({
           </LinearGradient>
         </Defs>
 
-        {yTicks.map((v) => {
+        {yTicks.map((v, i) => {
           const y = padding + chartH - (v / yMax) * chartH;
           return (
             <SvgLine
-              key={v}
+              key={i}
               x1={padding}
               y1={y}
               x2={width - padding}
@@ -105,8 +106,8 @@ const EnrollmentAreaChart = ({
         {yTicks
           .slice()
           .reverse()
-          .map((v) => (
-            <Text key={v} style={styles.axisLabel}>
+          .map((v, i) => (
+            <Text key={i} style={styles.axisLabel}>
               {v}
             </Text>
           ))}
@@ -126,6 +127,7 @@ const EnrollmentAreaChart = ({
 
 const EnrollmentStatsPage = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const route = useRoute<RouteParams>();
   const { courseId } = route.params;
   const { width: screenWidth } = useWindowDimensions();
@@ -156,7 +158,7 @@ const EnrollmentStatsPage = () => {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -233,7 +235,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 44,
     paddingBottom: 12,
   },
   backButton: { padding: 4, marginRight: 12 },

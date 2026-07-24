@@ -9,6 +9,7 @@ interface FilterBarProps {
   resultsCount?: number;
   resultsLabel?: string;
   style?: StyleProp<ViewStyle>;
+  filtersRowStyle?: StyleProp<ViewStyle>;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -16,10 +17,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   resultsCount,
   resultsLabel = "items",
   style,
+  filtersRowStyle,
 }) => {
   return (
     <View style={[styles.filterBar, style]}>
-      <View style={styles.filtersRow}>{children}</View>
+      <View style={[styles.filtersRow, filtersRowStyle]}>{children}</View>
       {resultsCount !== undefined && (
         <View style={styles.resultsContainer}>
           <Text style={styles.resultsText}>

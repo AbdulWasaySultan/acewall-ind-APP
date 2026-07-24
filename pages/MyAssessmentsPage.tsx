@@ -444,7 +444,7 @@ const MyAssessmentsPage = () => {
   // ---------- UI ----------
   return (
     <View style={styles.screen}>
-      <View style={styles.banner}>
+      <View style={[styles.banner, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -456,27 +456,22 @@ const MyAssessmentsPage = () => {
         </Text>
         <View style={{ width: 40 }} />
       </View>
-    <FlatList
-      style={styles.container}
-      data={loading || error ? [] : filtered}
-      keyExtractor={(item, index) => item._id || `${index}`}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      contentContainerStyle={{ paddingBottom: 60 }}
-      ListHeaderComponent={
-        // Secondary Filters — course itself is fixed via route params
-        <View style={{ overflow: "visible", zIndex: 9999, elevation: 9999 }}>
-          <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
-            <SearchFilterView
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search by title"
-              style={{ flex: 1 }}
-            />
-          </FilterBar>
 
-          <FilterBar>
+      <View style={styles.filtersSection}>
+        <FilterBar resultsCount={filtered.length} resultsLabel="assessments">
+          <SearchFilterView
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by title"
+            style={{ flex: 1 }}
+          />
+        </FilterBar>
+
+        <FilterBar
+          style={styles.dropdownFilterBar}
+          filtersRowStyle={styles.dropdownFiltersRow}
+        >
+          <View style={[styles.dropdownItem, typeOpen && styles.dropdownItemActive]}>
             <DropdownFilter
               open={typeOpen}
               value={typeValue}
@@ -485,9 +480,11 @@ const MyAssessmentsPage = () => {
               setValue={setTypeValue}
               placeholder="All Types"
               zIndex={3000}
-              dropDownContainerStyle={styles.dropdownContainer}
-              style={{ flex: 1 }}
+              zIndexInverse={1000}
+              wrapperStyle={styles.dropdownFullWidth}
             />
+          </View>
+          <View style={[styles.dropdownItem, categoryOpen && styles.dropdownItemActive]}>
             <DropdownFilter
               open={categoryOpen}
               value={categoryValue}
@@ -496,9 +493,11 @@ const MyAssessmentsPage = () => {
               setValue={setCategoryValue}
               placeholder="All Categories"
               zIndex={2000}
-              dropDownContainerStyle={styles.dropdownContainer}
-              style={{ flex: 1 }}
+              zIndexInverse={2000}
+              wrapperStyle={styles.dropdownFullWidth}
             />
+          </View>
+          <View style={[styles.dropdownItem, statusOpen && styles.dropdownItemActive]}>
             <DropdownFilter
               open={statusOpen}
               value={statusValue}
@@ -507,12 +506,23 @@ const MyAssessmentsPage = () => {
               setValue={setStatusValue}
               placeholder="All Status"
               zIndex={1000}
-              dropDownContainerStyle={styles.dropdownContainer}
-              style={{ flex: 1 }}
+              zIndexInverse={3000}
+              wrapperStyle={styles.dropdownFullWidth}
             />
-          </FilterBar>
-        </View>
+          </View>
+        </FilterBar>
+      </View>
+
+    <FlatList
+      style={styles.list}
+      data={loading || error ? [] : filtered}
+      keyExtractor={(item, index) => item._id || `${index}`}
+      nestedScrollEnabled
+      keyboardShouldPersistTaps="handled"
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
+      contentContainerStyle={{ paddingBottom: 60 }}
       ListEmptyComponent={
         loading ? (
           <View style={styles.stateWrap}>
@@ -912,7 +922,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    padding: 12,
+    paddingHorizontal: 12,
+  },
+  list: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 12,
+    zIndex: 1,
+  },
+  filtersSection: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    zIndex: 5000,
+    elevation: 5,
+    overflow: "visible",
+  },
+  dropdownFilterBar: {
+    marginBottom: 0,
+  },
+  dropdownFiltersRow: {
+    flexDirection: "column",
+    gap: 10,
+    alignItems: "stretch",
+  },
+  dropdownItem: {
+    width: "100%",
+  },
+  dropdownItemActive: {
+    zIndex: 5000,
+    elevation: 12,
+  },
+  dropdownFullWidth: {
+    width: "100%",
+    flex: 0,
   },
   banner: {
     minHeight: 56,
@@ -920,7 +962,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 44,
     paddingBottom: 12,
   },
   bannerText: { color: COLORS.white, fontSize: 18, fontWeight: "bold", flex: 1 },
@@ -1347,10 +1388,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#6B7280",
-  },
-  dropdownContainer: {
-    zIndex: 9999,
-    elevation: 9999,
   },
 });
 

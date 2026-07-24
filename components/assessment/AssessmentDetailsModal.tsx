@@ -477,7 +477,10 @@ const AssessmentDetailsModal: React.FC<Props> = ({
     <Modal visible={visible} animationType="slide">
       <View style={[styles.container, { paddingTop: insets.top || 20 }]}>
         {/* Back button */}
-        <TouchableOpacity style={styles.backBtn} onPress={onClose}>
+        <TouchableOpacity
+          style={[styles.backBtn, { top: insets.top + 10 }]}
+          onPress={onClose}
+        >
           <SimpleIcon name="arrow-back" size={18} color="#111" />
         </TouchableOpacity>
 

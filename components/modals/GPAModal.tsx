@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GPAItem } from "../../types/course";
 
 interface GPAModalProps {
@@ -25,6 +26,7 @@ const GPAModal: React.FC<GPAModalProps> = ({
   onSave,
   initialGpaScales = [],
 }) => {
+  const insets = useSafeAreaInsets();
   const [gpaScales, setGpaScales] = useState<GPAItem[]>(initialGpaScales);
   const [newGpa, setNewGpa] = useState({
     gpaInput: "",
@@ -161,7 +163,7 @@ const GPAModal: React.FC<GPAModalProps> = ({
     >
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity style={styles.backButton} onPress={onClose}>
             <SimpleIcon name="arrow-back" size={24} color="#10B144" />
           </TouchableOpacity>
@@ -315,7 +317,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 50,
     paddingBottom: 15,
     paddingHorizontal: 20,
     backgroundColor: "#fff",

@@ -17,6 +17,8 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Student, Course } from "../../services/student";
 import { createConversation } from "../../services/conversation";
 import CourseCard from "./CourseCard";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SimpleIcon from "../SimpleIcon";
 
 interface StudentProfileModalProps {
   visible: boolean;
@@ -32,6 +34,7 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   onSelectCourse,
 }) => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const [messageLoading, setMessageLoading] = useState(false);
 
   const handleMessageStudent = useCallback(
@@ -65,14 +68,20 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <View style={styles.modalContainer}>
-        <Pressable style={styles.modalCloseButton} onPress={onClose}>
-          <Text style={styles.modalCloseText}>×</Text>
+        <Pressable
+          style={[styles.modalCloseButton, { top: insets.top + 8 }]}
+          onPress={onClose}
+        >
+          <SimpleIcon name="close" size={28} color="#333" />
         </Pressable>
 
         {student && (
           <ScrollView
             style={styles.modalList}
-            contentContainerStyle={styles.modalListContent}
+            contentContainerStyle={[
+              styles.modalListContent,
+              { paddingTop: insets.top + 52 },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
@@ -132,9 +141,8 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 const styles = StyleSheet.create({
   modalContainer: { flex: 1, height: SCREEN_HEIGHT, backgroundColor: "#fff" },
   modalCloseButton: { position: "absolute", top: 16, right: 20, zIndex: 100, padding: 8 },
-  modalCloseText: { fontSize: 32, color: "#333", fontWeight: "bold" },
   modalList: { flex: 1, height: SCREEN_HEIGHT },
-  modalListContent: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 16 },
+  modalListContent: { paddingBottom: 40, paddingHorizontal: 16 },
 
   profileHeader: { alignItems: "center", marginBottom: 16 },
   avatarLarge: {

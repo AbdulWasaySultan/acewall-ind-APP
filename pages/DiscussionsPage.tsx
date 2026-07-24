@@ -26,6 +26,7 @@ import {
 import { getAllCourses } from "../services/course";
 import { getStoredUserId } from "../utils/storage";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -74,6 +75,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ScreenRouteProp = RouteProp<RootStackParamList, "DiscussionsByCourse">;
 
 const DiscussionsPage = () => {
+  const insets = useSafeAreaInsets();
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -299,7 +301,7 @@ const DiscussionsPage = () => {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -405,7 +407,7 @@ const DiscussionsPage = () => {
       >
         <View style={styles.fullScreenModal}>
           {/* Modal Header with Title and Close Icon */}
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + 12 }]}>
             <Text
               style={styles.modalHeaderTitle}
               numberOfLines={1}
@@ -417,7 +419,7 @@ const DiscussionsPage = () => {
               style={styles.modalHeaderClose}
               onPress={closeDetailsModal}
             >
-              <Text style={styles.closeIconText}>×</Text>
+              <SimpleIcon name="close" size={22} color="#333" />
             </TouchableOpacity>
           </View>
           {detailsLoading ? (
@@ -658,7 +660,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === "ios" ? 44 : 16,
     paddingBottom: 12,
   },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", flex: 1 },
@@ -987,7 +988,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 40,
     paddingBottom: 12,
     paddingHorizontal: 18,
     backgroundColor: "#fff",

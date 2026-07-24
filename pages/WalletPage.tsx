@@ -420,7 +420,12 @@ const WalletPage = () => {
         </View>
 
         {/* Recent Withdrawals Section */}
-        <View style={styles.withdrawalsSection}>
+        <View
+          style={[
+            styles.withdrawalsSection,
+            { marginTop: 20, marginBottom: 30 },
+          ]}
+        >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Withdrawals</Text>
           </View>
@@ -592,10 +597,7 @@ const WalletPage = () => {
                 <ActivityIndicator size="large" color="#10B144" />
               </View>
             ) : (
-              <ScrollView
-                style={styles.allWithdrawalsScroll}
-                showsVerticalScrollIndicator={false}
-              >
+              <View style={styles.allWithdrawalsScroll}>
                 {/* Summary Cards */}
                 <View style={styles.summaryGrid}>
                   <View
@@ -640,27 +642,32 @@ const WalletPage = () => {
                   </View>
                 </View>
 
-                {/* Table Headers */}
-                <View style={styles.tableHeader}>
-                  <Text style={styles.tableHeaderText}>Amount</Text>
-                  <Text style={styles.tableHeaderText}>Method</Text>
-                  <Text style={styles.tableHeaderText}>Date</Text>
-                  <Text style={styles.tableHeaderText}>Status</Text>
-                </View>
-
-                {/* Table Content */}
-                {allWithdrawals.length > 0 ? (
-                  <View style={styles.tableContent}>
-                    {allWithdrawals.map((withdrawal) => (
-                      <View key={withdrawal._id} style={styles.tableRow}>
+                {/* Withdrawal History card — a FlatList instead of the old
+                    ScrollView + .map so a long, paginated history scrolls
+                    on its own rather than eagerly rendering every row. */}
+                <View style={[styles.withdrawalsSection, styles.historyCard]}>
+                  <Text style={styles.sectionTitle}>Withdrawal History</Text>
+                  <FlatList
+                    data={allWithdrawals}
+                    keyExtractor={(item) => item._id}
+                    style={styles.historyList}
+                    showsVerticalScrollIndicator={false}
+                    ListHeaderComponent={
+                      <View style={styles.tableHeader}>
+                        <Text style={styles.tableHeaderText}>Amount</Text>
+                        <Text style={styles.tableHeaderText}>Method</Text>
+                        <Text style={styles.tableHeaderText}>Date</Text>
+                        <Text style={styles.tableHeaderText}>Status</Text>
+                      </View>
+                    }
+                    renderItem={({ item }) => (
+                      <View style={styles.tableRow}>
                         <Text style={styles.tableCell}>
-                          {formatCurrency(withdrawal.amount)}
+                          {formatCurrency(item.amount)}
                         </Text>
+                        <Text style={styles.tableCell}>{item.method}</Text>
                         <Text style={styles.tableCell}>
-                          {withdrawal.method}
-                        </Text>
-                        <Text style={styles.tableCell}>
-                          {formatDate(withdrawal.requestedAt)}
+                          {formatDate(item.requestedAt)}
                         </Text>
                         <View
                           style={{
@@ -674,66 +681,72 @@ const WalletPage = () => {
                               styles.statusBadge,
                               {
                                 backgroundColor:
-                                  getStatusColor(withdrawal.status) + "20",
+                                  getStatusColor(item.status) + "20",
                               },
                             ]}
                           >
                             <Text
                               style={[
                                 styles.statusText,
-                                { color: getStatusColor(withdrawal.status) },
+                                { color: getStatusColor(item.status) },
                               ]}
                             >
-                              {withdrawal.status.charAt(0).toUpperCase() +
-                                withdrawal.status.slice(1)}
+                              {item.status.charAt(0).toUpperCase() +
+                                item.status.slice(1)}
                             </Text>
                           </View>
                         </View>
                       </View>
-                    ))}
-                  </View>
-                ) : (
-                  <Text style={styles.emptyText}>No withdrawals found</Text>
-                )}
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <View style={styles.pagination}>
-                    <TouchableOpacity
-                      style={[
-                        styles.paginationButton,
-                        currentPage === 1 && styles.paginationButtonDisabled,
-                      ]}
-                      onPress={() => {
-                        if (currentPage > 1) {
-                          fetchAllWithdrawals(currentPage - 1);
-                        }
-                      }}
-                      disabled={currentPage === 1}
-                    >
-                      <Text style={styles.paginationButtonText}>Previous</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.paginationText}>
-                      Page {currentPage} of {totalPages}
-                    </Text>
-                    <TouchableOpacity
-                      style={[
-                        styles.paginationButton,
-                        currentPage === totalPages &&
-                          styles.paginationButtonDisabled,
-                      ]}
-                      onPress={() => {
-                        if (currentPage < totalPages) {
-                          fetchAllWithdrawals(currentPage + 1);
-                        }
-                      }}
-                      disabled={currentPage === totalPages}
-                    >
-                      <Text style={styles.paginationButtonText}>Next</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </ScrollView>
+                    )}
+                    ListEmptyComponent={
+                      <Text style={styles.emptyText}>No withdrawals found</Text>
+                    }
+                    ListFooterComponent={
+                      totalPages > 1 ? (
+                        <View style={styles.pagination}>
+                          <TouchableOpacity
+                            style={[
+                              styles.paginationButton,
+                              currentPage === 1 &&
+                                styles.paginationButtonDisabled,
+                            ]}
+                            onPress={() => {
+                              if (currentPage > 1) {
+                                fetchAllWithdrawals(currentPage - 1);
+                              }
+                            }}
+                            disabled={currentPage === 1}
+                          >
+                            <Text style={styles.paginationButtonText}>
+                              Previous
+                            </Text>
+                          </TouchableOpacity>
+                          <Text style={styles.paginationText}>
+                            Page {currentPage} of {totalPages}
+                          </Text>
+                          <TouchableOpacity
+                            style={[
+                              styles.paginationButton,
+                              currentPage === totalPages &&
+                                styles.paginationButtonDisabled,
+                            ]}
+                            onPress={() => {
+                              if (currentPage < totalPages) {
+                                fetchAllWithdrawals(currentPage + 1);
+                              }
+                            }}
+                            disabled={currentPage === totalPages}
+                          >
+                            <Text style={styles.paginationButtonText}>
+                              Next
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : null
+                    }
+                  />
+                </View>
+              </View>
             )}
 
             {/* Request Withdrawal Button */}
@@ -930,7 +943,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#9CA3AF",
     fontSize: 14,
-    paddingVertical: 24,
+    paddingVertical: 20,
+    // backgroundColor: "#000",
+    flexGrow: 1,
   },
   // Stripe Connect section
   stripeIdLabel: {
@@ -1130,6 +1145,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "right",
+  },
+  historyCard: {
+    flex: 1,
+  },
+  historyList: {
+    flex: 1,
+    marginTop: 12,
   },
   pagination: {
     flexDirection: "row",

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Platform,
   ActivityIndicator,
   TextInput,
   Keyboard,
@@ -21,6 +20,7 @@ import {
   type RouteProp,
 } from "@react-navigation/native";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
 import {
   getStudentDiscussion,
@@ -131,6 +131,7 @@ const DiscussionStudent = () => {
   const route =
     useRoute<RouteProp<Record<string, DiscussionDetailParams>, string>>();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { discussionId } = route.params;
   const { userRole } = useAuth();
   const isTeacher = userRole === "teacher";
@@ -606,7 +607,7 @@ const DiscussionStudent = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -855,7 +856,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingTop: Platform.OS === "ios" ? 50 : 12,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",

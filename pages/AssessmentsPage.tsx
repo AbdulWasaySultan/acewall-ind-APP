@@ -23,6 +23,7 @@ import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar"; // ✅ fixed import
 import { DropdownFilter } from "../components/filters/DropDown"; // ✅ fixed import
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 
 const formatDate = (dateString: string) =>
@@ -47,6 +48,7 @@ type ScreenRouteProp = RouteProp<RootStackParamList, "TeacherAssessmentsByCourse
 
 const AssessmentsPage = () => {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const route = useRoute<ScreenRouteProp>();
   const { courseId, courseTitle } = route.params;
 
@@ -299,7 +301,7 @@ const AssessmentsPage = () => {
   return (
     <View style={styles.screen}>
       {/* ── Course header — course itself is fixed via route params ── */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -322,6 +324,7 @@ const AssessmentsPage = () => {
         <FilterBar
           resultsCount={filteredAssessments.length}
           resultsLabel="assessments"
+          filtersRowStyle={{ flexDirection: "column", gap: 10 }}
         >
           <SearchFilterView
             value={searchQuery}
@@ -458,7 +461,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 44,
     paddingBottom: 12,
   },
   backButton: { padding: 4, marginRight: 12 },
