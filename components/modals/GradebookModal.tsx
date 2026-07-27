@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Platform,
   StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SimpleIcon from "../SimpleIcon";
 import { Student, Semester, Quarter, Assessment } from "../../types/course";
 
@@ -133,6 +133,7 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
   onToggleQuarter,
 }) => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
 
   const handleViewAnalytics = (studentId: string) => {
     onClose();
@@ -153,7 +154,7 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
   return (
     <Modal visible={visible} transparent={false} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.headerTitle}>Gradebook</Text>
           <TouchableOpacity onPress={onClose}>
             <SimpleIcon name="close" size={32} color="#333" />
@@ -433,7 +434,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-    paddingTop: Platform.OS === "ios" ? 40 : 16,
   },
   headerTitle: { fontSize: 28, fontWeight: "bold", color: "#1E293B" },
   loader: { marginVertical: 40 },

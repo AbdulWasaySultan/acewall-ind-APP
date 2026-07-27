@@ -32,7 +32,7 @@ import {
 import { getComments, sendComment } from "../services/comment";
 import { createConversation } from "../services/conversation";
 import Toast from "react-native-simple-toast";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 // Type for navigation param
 const avatarPlaceholder = require("../assets/placeholder.png");
 interface Params {
@@ -63,6 +63,7 @@ const formatDateWithOrdinal = (dateString: string) => {
   return `${month} ${day}${getOrdinal(day)}, ${year}`;
 };
 const CourseDetailStudentPageEnrolled = () => {
+  const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<Record<string, Params>, string>>();
   const { enrollmentId, courseId } = route.params;
   const [loading, setLoading] = useState(true);
@@ -832,7 +833,7 @@ const CourseDetailStudentPageEnrolled = () => {
         onRequestClose={() => setShowQuartersModal(false)}
       >
         <View style={styles.quartersModalContainer}>
-          <View style={styles.quartersModalHeader}>
+          <View style={[styles.quartersModalHeader, { paddingTop: insets.top + 16 }]}>
             <Text style={styles.quartersModalTitle}>Quarters</Text>
             <TouchableOpacity onPress={() => setShowQuartersModal(false)}>
               <SimpleIcon name="close" size={32} color="#333" />
@@ -882,7 +883,7 @@ const CourseDetailStudentPageEnrolled = () => {
         }}
       >
         <View style={styles.chaptersModalContainer}>
-          <View style={styles.chaptersModalHeader}>
+          <View style={[styles.chaptersModalHeader, { paddingTop: insets.top + 16 }]}>
             <Text style={styles.chaptersModalTitle}>Chapters</Text>
             <TouchableOpacity
               onPress={() => {

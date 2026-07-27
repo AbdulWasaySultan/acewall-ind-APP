@@ -438,6 +438,7 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SimpleIcon from "../SimpleIcon";
 
 interface EditCourseModalProps {
@@ -497,6 +498,7 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
   editCourseError,
   onSave,
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -509,7 +511,7 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.fullScreenContainer}>
-          <View style={styles.editCourseModalHeader}>
+          <View style={[styles.editCourseModalHeader, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity onPress={onClose} style={styles.backButton}>
               <SimpleIcon name="arrow-back" size={22} color="#111827" />
             </TouchableOpacity>

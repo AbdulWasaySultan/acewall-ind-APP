@@ -8,6 +8,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SimpleIcon from '../SimpleIcon';
 import Toast from 'react-native-simple-toast';
 
@@ -22,6 +23,7 @@ const AddAssessmentModal: React.FC<AddAssessmentModalProps> = ({
   onClose,
   onBackToChapter,
 }) => {
+  const insets = useSafeAreaInsets();
   const handleCreate = () => {
     Toast.show('Assessment creation coming soon!', Toast.LONG);
     onClose();
@@ -41,7 +43,7 @@ const AddAssessmentModal: React.FC<AddAssessmentModalProps> = ({
     >
       <View style={styles.fullScreenModalContainer}>
         <View style={styles.fullScreenModalContent}>
-          <View style={styles.fullScreenModalHeader}>
+          <View style={[styles.fullScreenModalHeader, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
               <SimpleIcon name="arrow-back" size={24} color="#10B144" />
             </TouchableOpacity>

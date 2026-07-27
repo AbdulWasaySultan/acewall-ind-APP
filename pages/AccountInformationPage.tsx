@@ -511,7 +511,8 @@ const AccountInformationPage = () => {
   };
 
   return (
-    <ScrollView style={styles.container}
+    <ScrollView
+      style={styles.container}
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
     >
@@ -554,7 +555,10 @@ const AccountInformationPage = () => {
             >
               <Text style={styles.editButtonText}>Edit Credentials</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.editButton} onPress={handleEditInfo}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={handleEditInfo}
+            >
               <Text style={styles.editButtonText}>Edit Info</Text>
             </TouchableOpacity>
           </View>
@@ -675,9 +679,9 @@ const AccountInformationPage = () => {
             </Text>
           </View>
           {userData?.role === "teacher" && (
-            <View style={[styles.infoRow, { alignItems: "flex-start" }]}>
+            <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Bio:</Text>
-              <Text style={[styles.infoValue]}>
+              <Text style={styles.infoValue}>
                 {formatDisplayValue(userData.Bio)}
               </Text>
             </View>
@@ -852,7 +856,9 @@ const AccountInformationPage = () => {
       {/* Address Information Section */}
       <Text style={styles.sectionTitle}>Address Information</Text>
       {isEditMode ? (
-        <>
+        <View
+          style={{ justifyContent: "flex-start", alignItems: "flex-start" }}
+        >
           {/* Home Address */}
           <Text style={styles.subSectionTitle}>Home Address</Text>
           <View style={styles.inputContainer}>
@@ -974,7 +980,7 @@ const AccountInformationPage = () => {
               />
             </View>
           </View>
-        </>
+        </View>
       ) : (
         <>
           <View style={styles.infoRow}>
@@ -1385,7 +1391,7 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
@@ -1393,7 +1399,7 @@ const styles = StyleSheet.create({
   infoRoww: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
@@ -1408,7 +1414,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000", // already
     flex: 1,
-    textAlign: "right",
+    textAlign: "left",
   },
   imageSaveButton: {
     backgroundColor: "#4CAF50",

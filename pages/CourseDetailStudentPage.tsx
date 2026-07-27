@@ -10,7 +10,6 @@ import {
   Modal,
   Linking,
   Alert,
-  Platform,
 } from "react-native";
 import SimpleIcon from "../components/SimpleIcon";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -358,7 +357,7 @@ const CourseDetailStudentPage = () => {
               padding: 16,
               borderBottomWidth: 1,
               borderBottomColor: "#eee",
-              paddingTop: Platform.OS === "ios" ? 40 : 16,
+              paddingTop: insets.top + 16,
             }}
           >
             <Text
@@ -443,7 +442,7 @@ const CourseDetailStudentPage = () => {
               padding: 16,
               borderBottomWidth: 1,
               borderBottomColor: "#eee",
-              paddingTop: Platform.OS === "ios" ? 40 : 16,
+              paddingTop: insets.top + 16,
             }}
           >
             <TouchableOpacity onPress={() => setShowChaptersModal(false)}>
@@ -531,7 +530,7 @@ const CourseDetailStudentPage = () => {
               padding: 16,
               borderBottomWidth: 1,
               borderBottomColor: "#eee",
-              paddingTop: Platform.OS === "ios" ? 40 : 16,
+              paddingTop: insets.top + 16,
             }}
           >
             <TouchableOpacity onPress={() => setShowChapterDetailsModal(false)}>

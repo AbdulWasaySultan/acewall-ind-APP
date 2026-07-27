@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SimpleIcon from "../SimpleIcon";
 
 interface LessonCreationModalProps {
@@ -51,6 +52,7 @@ const LessonCreationModal: React.FC<LessonCreationModalProps> = ({
   handleCreateLesson,
   styles,
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -60,7 +62,7 @@ const LessonCreationModal: React.FC<LessonCreationModalProps> = ({
     >
       <View style={styles.fullScreenModalContainer}>
         <View style={styles.fullScreenModalContent}>
-          <View style={styles.fullScreenModalHeader}>
+          <View style={[styles.fullScreenModalHeader, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity
               onPress={() => {
                 onClose();

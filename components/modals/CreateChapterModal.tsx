@@ -9,6 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SimpleIcon from '../SimpleIcon';
 import { createChapter } from '../../services/course';
 import { getApiInstance } from '../../services/apiInstance';
@@ -138,6 +139,7 @@ const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
   course,
   onCreated,
 }) => {
+  const insets = useSafeAreaInsets();
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterDescription, setChapterDescription] = useState('');
   const [chapterLoading, setChapterLoading] = useState(false);
@@ -271,7 +273,7 @@ const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
       onRequestClose={handleCancel}
     >
       <View style={styles.chaptersModalContainer}>
-        <View style={styles.chaptersModalHeader}>
+        <View style={[styles.chaptersModalHeader, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.chaptersModalTitle}>Create New Chapter</Text>
           <TouchableOpacity onPress={handleCancel}>
             <SimpleIcon name="close" size={32} color="#333" />

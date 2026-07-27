@@ -313,312 +313,325 @@ const DiscussionsPage = () => {
         </Text>
         <View style={{ width: 40 }} />
       </View>
-    <ScrollView style={styles.container}
-      showsVerticalScrollIndicator={false}
-      showsHorizontalScrollIndicator={false}
-    >
-      {/* Create Discussion Button Hidden */}
-      {/* <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
+        {/* Create Discussion Button Hidden */}
+        {/* <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
         <Text style={styles.createButtonText}>Create Discussion</Text>
       </TouchableOpacity> */}
 
-      {
-        loading ? (
-          <ActivityIndicator
-            size="large"
-            color="#007bff"
-            style={styles.loadingIndicator}
-          />
-        ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : discussions.length === 0 ? (
-          <Text style={styles.noDiscussionsText}>
-            No discussions available.
-          </Text>
-        ) : discussions && discussions.length > 0 ? (
-          <View style={styles.discussionsGrid}>
-            {discussions.map((discussion: Discussion, index: number) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.discussionCard}
-                onPress={() =>
-                  navigation.navigate("DiscussionStudent", {
-                    discussionId: discussion?._id,
-                  })
-                }
-              >
-                <Image
-                  source={
-                    discussion.course?.thumbnail?.url
-                      ? { uri: discussion.course.thumbnail.url }
-                      : require("../assets/jpg.jpg")
-                  }
-                  style={{ width: "100%", height: 150 }}
-                />
-
-                <Text style={styles.dueDate}>
-                  {discussion.dueDate?.date
-                    ? `Due Date: ${new Date(discussion.dueDate.date).toDateString()}`
-                    : "No due date"}
-                </Text>
-
-                <View style={styles.chapterBadge}>
-                  <Text style={styles.chapterBadgeText}>{discussion.type}</Text>
-                </View>
-
-                <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-                <Text style={styles.discussionDescription}>
-                  {discussion.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <SimpleIcon name="chat-bubble-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyStateText}>No discussions available</Text>
-          </View>
-        )
-        // discussions.map((discussion: any) => (
-        //   <TouchableOpacity key={discussion._id} onPress={() => openDetailsModal(discussion._id)}>
-        //     <View style={styles.discussionCard}>
-        //       {discussion.type === 'course' && discussion.course && discussion.course.thumbnail && discussion.course.thumbnail.url && (
-        //         <Image
-        //           source={{ uri: discussion.course.thumbnail.url }}
-        //           style={styles.courseThumbnail}
-        //           resizeMode="cover"
-        //         />
-        //       )}
-        //       <Text style={styles.discussionTypeTag}>{discussion.type}</Text>
-        //       <Text style={styles.discussionTitle}>{discussion.topic}</Text>
-        //       {discussion.type === 'course' && discussion.course && (
-        //         <Text style={styles.discussionCourse}>Course: {discussion.course.courseTitle}</Text>
-        //       )}
-        //       <Text style={styles.discussionDescription}>{discussion.description}</Text>
-        //       <Text style={styles.discussionDate}>Created: {formatDate(discussion.createdAt)}</Text>
-        //     </View>
-        //   </TouchableOpacity>
-        // ))
-      }
-
-      {/* Details Modal */}
-      <Modal
-        animationType="slide"
-        transparent={false}
-        visible={detailsModalVisible}
-        onRequestClose={closeDetailsModal}
-      >
-        <View style={styles.fullScreenModal}>
-          {/* Modal Header with Title and Close Icon */}
-          <View style={[styles.modalHeader, { paddingTop: insets.top + 12 }]}>
-            <Text
-              style={styles.modalHeaderTitle}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {discussionDetails?.topic || "Discussion"}
-            </Text>
-            <TouchableOpacity
-              style={styles.modalHeaderClose}
-              onPress={closeDetailsModal}
-            >
-              <SimpleIcon name="close" size={22} color="#333" />
-            </TouchableOpacity>
-          </View>
-          {detailsLoading ? (
+        {
+          loading ? (
             <ActivityIndicator
               size="large"
               color="#007bff"
-              style={{ alignSelf: "center", marginVertical: 20 }}
+              style={styles.loadingIndicator}
             />
-          ) : discussionDetails ? (
-            <>
-              {/* Only Chat Section, no image, no course, no created/by */}
-              <View style={styles.chatSectionOnly}>
-                <Text style={styles.commentsTitle}>Comments</Text>
-                {commentsLoading ? (
-                  <ActivityIndicator
-                    size="small"
-                    color="#007bff"
-                    style={{ marginVertical: 10 }}
-                  />
-                ) : comments.length === 0 ? (
-                  <Text style={styles.noCommentsText}>No comments yet</Text>
-                ) : (
-                  <FlatList
-                    data={comments}
-                    keyExtractor={(item) => item._id}
-                    renderItem={({ item }) => {
-                      const isMine =
-                        !!myUserId &&
-                        item.createdby &&
-                        item.createdby._id === myUserId;
-                      return (
-                        <View
-                          style={[
-                            styles.chatBubbleRow,
-                            isMine
-                              ? styles.chatBubbleRowRight
-                              : styles.chatBubbleRowLeft,
-                          ]}
-                        >
-                          {!isMine && (
-                            <Text style={styles.chatUserInitials}>
-                              {(item.createdby?.firstName || "")
-                                .charAt(0)
-                                .toUpperCase()}
-                            </Text>
-                          )}
-                          <View
-                            style={[
-                              styles.chatBubble,
-                              isMine
-                                ? styles.chatBubbleMine
-                                : styles.chatBubbleOther,
-                            ]}
-                          >
-                            <Text style={styles.chatUserName}>
-                              {item.createdby?.firstName || ""}{" "}
-                              {item.createdby?.middleName || ""}{" "}
-                              {item.createdby?.lastName || ""}
-                            </Text>
-                            <Text style={styles.chatText}>{item.text}</Text>
-                          </View>
-                          {isMine && (
-                            <Text style={styles.chatUserInitials}>
-                              {(item.createdby?.firstName || "")
-                                .charAt(0)
-                                .toUpperCase()}
-                            </Text>
-                          )}
-                        </View>
-                      );
-                    }}
-                    style={{ width: "100%" }}
-                    showsVerticalScrollIndicator={false}
-                    showsHorizontalScrollIndicator={false}
-                  />
-                )}
-                {/* Pagination Controls */}
-                {commentsTotalPages > 1 && (
-                  <View style={styles.paginationContainer}>
-                    <TouchableOpacity
-                      style={[
-                        styles.paginationButton,
-                        commentsPage === 1 && { opacity: 0.5 },
-                      ]}
-                      disabled={commentsPage === 1}
-                      onPress={() => handleCommentsPageChange(commentsPage - 1)}
-                    >
-                      <Text style={styles.paginationButtonText}>{"<"}</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.paginationText}>
-                      {commentsPage} / {commentsTotalPages}
-                    </Text>
-                    <TouchableOpacity
-                      style={[
-                        styles.paginationButton,
-                        commentsPage === commentsTotalPages && { opacity: 0.5 },
-                      ]}
-                      disabled={commentsPage === commentsTotalPages}
-                      onPress={() => handleCommentsPageChange(commentsPage + 1)}
-                    >
-                      <Text style={styles.paginationButtonText}>{">"}</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-              {/* Chat Input at Bottom */}
-              <View style={styles.commentInputContainerFull}>
-                <TextInput
-                  style={styles.commentInput}
-                  placeholder="Write a comment..."
-                  value={commentInput}
-                  onChangeText={setCommentInput}
-                />
+          ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : discussions.length === 0 ? (
+            <Text style={styles.noDiscussionsText}>
+              No discussions available.
+            </Text>
+          ) : discussions && discussions.length > 0 ? (
+            <View style={styles.discussionsGrid}>
+              {discussions.map((discussion: Discussion, index: number) => (
                 <TouchableOpacity
-                  style={[
-                    styles.sendButton,
-                    commentInput.trim() && !sending
-                      ? { opacity: 1 }
-                      : { opacity: 0.5 },
-                  ]}
-                  disabled={!commentInput.trim() || sending}
-                  onPress={handleSendComment}
+                  key={index}
+                  style={styles.discussionCard}
+                  onPress={() =>
+                    navigation.navigate("DiscussionStudent", {
+                      discussionId: discussion?._id,
+                    })
+                  }
                 >
-                  <Text style={styles.sendButtonText}>
-                    {sending ? "..." : "Send"}
+                  <Image
+                    source={
+                      discussion.course?.thumbnail?.url
+                        ? { uri: discussion.course.thumbnail.url }
+                        : require("../assets/jpg.jpg")
+                    }
+                    style={{ width: "100%", height: 150 }}
+                  />
+
+                  <Text style={styles.dueDate}>
+                    {discussion.dueDate?.date
+                      ? `Due Date: ${new Date(
+                          discussion.dueDate.date
+                        ).toDateString()}`
+                      : "No due date"}
+                  </Text>
+
+                  <View style={styles.chapterBadge}>
+                    <Text style={styles.chapterBadgeText}>
+                      {discussion.type}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+                  <Text style={styles.discussionDescription}>
+                    {discussion.description}
                   </Text>
                 </TouchableOpacity>
-              </View>
-            </>
+              ))}
+            </View>
           ) : (
-            <Text style={styles.errorText}>No details found.</Text>
-          )}
-        </View>
-      </Modal>
+            <View style={styles.emptyState}>
+              <SimpleIcon name="chat-bubble-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyStateText}>
+                No discussions available
+              </Text>
+            </View>
+          )
+          // discussions.map((discussion: any) => (
+          //   <TouchableOpacity key={discussion._id} onPress={() => openDetailsModal(discussion._id)}>
+          //     <View style={styles.discussionCard}>
+          //       {discussion.type === 'course' && discussion.course && discussion.course.thumbnail && discussion.course.thumbnail.url && (
+          //         <Image
+          //           source={{ uri: discussion.course.thumbnail.url }}
+          //           style={styles.courseThumbnail}
+          //           resizeMode="cover"
+          //         />
+          //       )}
+          //       <Text style={styles.discussionTypeTag}>{discussion.type}</Text>
+          //       <Text style={styles.discussionTitle}>{discussion.topic}</Text>
+          //       {discussion.type === 'course' && discussion.course && (
+          //         <Text style={styles.discussionCourse}>Course: {discussion.course.courseTitle}</Text>
+          //       )}
+          //       <Text style={styles.discussionDescription}>{discussion.description}</Text>
+          //       <Text style={styles.discussionDate}>Created: {formatDate(discussion.createdAt)}</Text>
+          //     </View>
+          //   </TouchableOpacity>
+          // ))
+        }
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Create New Discussion</Text>
+        {/* Details Modal */}
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={detailsModalVisible}
+          onRequestClose={closeDetailsModal}
+        >
+          <View style={styles.fullScreenModal}>
+            {/* Modal Header with Title and Close Icon */}
+            <View style={[styles.modalHeader, { paddingTop: insets.top + 12 }]}>
+              <Text
+                style={styles.modalHeaderTitle}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {discussionDetails?.topic || "Discussion"}
+              </Text>
+              <TouchableOpacity
+                style={styles.modalHeaderClose}
+                onPress={closeDetailsModal}
+              >
+                <SimpleIcon name="close" size={22} color="#333" />
+              </TouchableOpacity>
+            </View>
+            {detailsLoading ? (
+              <ActivityIndicator
+                size="large"
+                color="#007bff"
+                style={{ alignSelf: "center", marginVertical: 20 }}
+              />
+            ) : discussionDetails ? (
+              <>
+                {/* Only Chat Section, no image, no course, no created/by */}
+                <View style={styles.chatSectionOnly}>
+                  <Text style={styles.commentsTitle}>Comments</Text>
+                  {commentsLoading ? (
+                    <ActivityIndicator
+                      size="small"
+                      color="#007bff"
+                      style={{ marginVertical: 10 }}
+                    />
+                  ) : comments.length === 0 ? (
+                    <Text style={styles.noCommentsText}>No comments yet</Text>
+                  ) : (
+                    <FlatList
+                      data={comments}
+                      keyExtractor={(item) => item._id}
+                      renderItem={({ item }) => {
+                        const isMine =
+                          !!myUserId &&
+                          item.createdby &&
+                          item.createdby._id === myUserId;
+                        return (
+                          <View
+                            style={[
+                              styles.chatBubbleRow,
+                              isMine
+                                ? styles.chatBubbleRowRight
+                                : styles.chatBubbleRowLeft,
+                            ]}
+                          >
+                            {!isMine && (
+                              <Text style={styles.chatUserInitials}>
+                                {(item.createdby?.firstName || "")
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </Text>
+                            )}
+                            <View
+                              style={[
+                                styles.chatBubble,
+                                isMine
+                                  ? styles.chatBubbleMine
+                                  : styles.chatBubbleOther,
+                              ]}
+                            >
+                              <Text style={styles.chatUserName}>
+                                {item.createdby?.firstName || ""}{" "}
+                                {item.createdby?.middleName || ""}{" "}
+                                {item.createdby?.lastName || ""}
+                              </Text>
+                              <Text style={styles.chatText}>{item.text}</Text>
+                            </View>
+                            {isMine && (
+                              <Text style={styles.chatUserInitials}>
+                                {(item.createdby?.firstName || "")
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </Text>
+                            )}
+                          </View>
+                        );
+                      }}
+                      style={{ width: "100%" }}
+                      showsVerticalScrollIndicator={false}
+                      showsHorizontalScrollIndicator={false}
+                    />
+                  )}
+                  {/* Pagination Controls */}
+                  {commentsTotalPages > 1 && (
+                    <View style={styles.paginationContainer}>
+                      <TouchableOpacity
+                        style={[
+                          styles.paginationButton,
+                          commentsPage === 1 && { opacity: 0.5 },
+                        ]}
+                        disabled={commentsPage === 1}
+                        onPress={() =>
+                          handleCommentsPageChange(commentsPage - 1)
+                        }
+                      >
+                        <Text style={styles.paginationButtonText}>{"<"}</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.paginationText}>
+                        {commentsPage} / {commentsTotalPages}
+                      </Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.paginationButton,
+                          commentsPage === commentsTotalPages && {
+                            opacity: 0.5,
+                          },
+                        ]}
+                        disabled={commentsPage === commentsTotalPages}
+                        onPress={() =>
+                          handleCommentsPageChange(commentsPage + 1)
+                        }
+                      >
+                        <Text style={styles.paginationButtonText}>{">"}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+                {/* Chat Input at Bottom */}
+                <View style={styles.commentInputContainerFull}>
+                  <TextInput
+                    style={styles.commentInput}
+                    placeholder="Write a comment..."
+                    value={commentInput}
+                    onChangeText={setCommentInput}
+                  />
+                  <TouchableOpacity
+                    style={[
+                      styles.sendButton,
+                      commentInput.trim() && !sending
+                        ? { opacity: 1 }
+                        : { opacity: 0.5 },
+                    ]}
+                    disabled={!commentInput.trim() || sending}
+                    onPress={handleSendComment}
+                  >
+                    <Text style={styles.sendButtonText}>
+                      {sending ? "..." : "Send"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <Text style={styles.errorText}>No details found.</Text>
+            )}
+          </View>
+        </Modal>
 
-            <DropDownPicker
-              open={discussionTypeOpen}
-              value={discussionTypeValue}
-              items={discussionTypeItems}
-              setOpen={setDiscussionTypeOpen}
-              setValue={setDiscussionTypeValue}
-              setItems={setDiscussionTypeItems}
-              placeholder="Select a type"
-              style={styles.dropdownPicker}
-              containerStyle={styles.dropdownContainerStyle}
-              zIndex={3000}
-              zIndexInverse={1000}
-            />
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Create New Discussion</Text>
 
-            {discussionTypeValue === "course" && (
               <DropDownPicker
-                open={courseOpen}
-                value={courseValue}
-                items={courseItems}
-                setOpen={setCourseOpen}
-                setValue={setCourseValue}
-                setItems={setCourseItems}
-                placeholder="Select Course"
+                open={discussionTypeOpen}
+                value={discussionTypeValue}
+                items={discussionTypeItems}
+                setOpen={setDiscussionTypeOpen}
+                setValue={setDiscussionTypeValue}
+                setItems={setDiscussionTypeItems}
+                placeholder="Select a type"
                 style={styles.dropdownPicker}
                 containerStyle={styles.dropdownContainerStyle}
-                zIndex={2000}
-                zIndexInverse={2000}
+                zIndex={3000}
+                zIndexInverse={1000}
               />
-            )}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Topic"
-              value={topic}
-              onChangeText={setTopic}
-              placeholderTextColor="#000"
-            />
+              {discussionTypeValue === "course" && (
+                <DropDownPicker
+                  open={courseOpen}
+                  value={courseValue}
+                  items={courseItems}
+                  setOpen={setCourseOpen}
+                  setValue={setCourseValue}
+                  setItems={setCourseItems}
+                  placeholder="Select Course"
+                  style={styles.dropdownPicker}
+                  containerStyle={styles.dropdownContainerStyle}
+                  zIndex={2000}
+                  zIndexInverse={2000}
+                />
+              )}
 
-            <TextInput
-              style={[styles.input, styles.descriptionInput]}
-              placeholder="Description"
-              multiline
-              value={description}
-              onChangeText={setDescription}
-              placeholderTextColor="#000"
-            />
+              <TextInput
+                style={styles.input}
+                placeholder="Topic"
+                value={topic}
+                onChangeText={setTopic}
+                placeholderTextColor="#000"
+              />
 
-            {/* Commenting out file picker container */}
-            {/*
+              <TextInput
+                style={[styles.input, styles.descriptionInput]}
+                placeholder="Description"
+                multiline
+                value={description}
+                onChangeText={setDescription}
+                placeholderTextColor="#000"
+              />
+
+              {/* Commenting out file picker container */}
+              {/*
             <View style={styles.filePickerContainer}>
               <Text style={styles.filePickerLabel}>Attach File (Only PNG, JPEG, JPG, and PDF files are allowed.)</Text>
               <TouchableOpacity style={styles.chooseFileButton} onPress={handleFilePick}>
@@ -628,28 +641,28 @@ const DiscussionsPage = () => {
             </View>
             */}
 
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleCreateDiscussion}
-              disabled={createLoading}
-            >
-              {createLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.submitButtonText}>Create Discussion</Text>
-              )}
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleCreateDiscussion}
+                disabled={createLoading}
+              >
+                {createLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Create Discussion</Text>
+                )}
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </ScrollView>
+        </Modal>
+      </ScrollView>
     </View>
   );
 };
@@ -691,7 +704,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: "red",
+    color: "#000",
     textAlign: "center",
     marginTop: 50,
   },

@@ -430,7 +430,7 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
       transparent={false}
       onRequestClose={onClose}
     >
-      <View style={[styles.container, { paddingTop: 20 }]}>
+      <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
         {/* ── Top bar ── */}
         <View style={styles.topBar}>
           <TouchableOpacity

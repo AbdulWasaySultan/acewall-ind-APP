@@ -29,8 +29,10 @@ import {
 } from "../services/wallet";
 import { getUserInfo } from "../services/schoolService";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const WalletPage = () => {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<PaymentStats["stats"]>({
     totalRevenue: 0,
@@ -583,7 +585,12 @@ const WalletPage = () => {
       >
         <View style={styles.allWithdrawalsModalOverlay}>
           <View style={styles.allWithdrawalsModalContent}>
-            <View style={styles.allWithdrawalsHeader}>
+            <View
+              style={[
+                styles.allWithdrawalsHeader,
+                { paddingTop: insets.top + 16 },
+              ]}
+            >
               <TouchableOpacity
                 onPress={() => setShowAllWithdrawalsModal(false)}
                 style={styles.backButtonWhite}
@@ -777,7 +784,7 @@ const WalletPage = () => {
         onRequestClose={() => setShowOnboardingWebView(false)}
       >
         <View style={styles.webViewContainer}>
-          <View style={styles.webViewHeader}>
+          <View style={[styles.webViewHeader, { paddingTop: insets.top + 16 }]}>
             <TouchableOpacity
               onPress={() => setShowOnboardingWebView(false)}
               style={styles.backButton}
@@ -1010,7 +1017,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    paddingTop: Platform.OS === "ios" ? 48 : 16,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },

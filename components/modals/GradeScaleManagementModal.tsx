@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SimpleIcon from "../SimpleIcon";
 
 interface GradeScaleManagementModalProps {
@@ -25,6 +26,7 @@ const GradeScaleManagementModal: React.FC<GradeScaleManagementModalProps> = ({
   showGradeScaleManagementLoader,
   gradeScale,
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -34,7 +36,7 @@ const GradeScaleManagementModal: React.FC<GradeScaleManagementModalProps> = ({
     >
       <View style={styles.fullScreenModalContainer}>
         <View style={styles.fullScreenModalContent}>
-          <View style={styles.fullScreenModalHeader}>
+          <View style={[styles.fullScreenModalHeader, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity onPress={onClose} style={styles.backButton}>
               <SimpleIcon name="arrow-back" size={24} color="#10B144" />
             </TouchableOpacity>

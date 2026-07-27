@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Platform,
 } from "react-native";
 import {
   DrawerContentComponentProps,
@@ -339,6 +340,8 @@ const styles = StyleSheet.create({
   logoutButton: {
     margin: 16,
     backgroundColor: "#ff4444",
+    marginBottom: Platform.OS === "ios" ? 18 : 10,
+    marginHorizontal: 18,
   },
   logoutText: {
     color: "#fff",

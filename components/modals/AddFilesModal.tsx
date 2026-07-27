@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SimpleIcon from "../SimpleIcon";
 
 interface AddFilesModalProps {
@@ -36,6 +37,7 @@ const AddFilesModal: React.FC<AddFilesModalProps> = ({
   addFilesLoading,
   styles,
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -48,7 +50,7 @@ const AddFilesModal: React.FC<AddFilesModalProps> = ({
     >
       <View style={styles.fullScreenModalContainer}>
         <View style={styles.fullScreenModalContent}>
-          <View style={styles.fullScreenModalHeader}>
+          <View style={[styles.fullScreenModalHeader, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity
               onPress={() => {
                 onClose();

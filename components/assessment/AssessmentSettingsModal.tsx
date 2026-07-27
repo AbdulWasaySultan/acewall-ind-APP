@@ -117,7 +117,7 @@ const AssessmentSettingsModal: React.FC<Props> = ({ visible, onClose }) => {
 
     return (
         <Modal visible={visible} animationType="slide">
-            <View style={[styles.container, { paddingTop: 20 }]}>
+            <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.backBtn} onPress={onClose}>

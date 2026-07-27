@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SimpleIcon from "../SimpleIcon";
 
 interface QuartersModalProps {
@@ -28,6 +29,7 @@ const QuartersModal: React.FC<QuartersModalProps> = ({
   formatDateWithOrdinal,
   styles,
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -36,7 +38,7 @@ const QuartersModal: React.FC<QuartersModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.quartersModalContainer}>
-        <View style={styles.quartersModalHeader}>
+        <View style={[styles.quartersModalHeader, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.quartersModalTitle}>Quarters</Text>
           <TouchableOpacity onPress={onClose}>
             <SimpleIcon name="close" size={32} color="#333" />
