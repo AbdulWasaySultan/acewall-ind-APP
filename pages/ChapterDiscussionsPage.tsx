@@ -374,7 +374,7 @@
 //                   <View style={{ marginLeft: 12 }}>
 //                     <Text style={styles.dueDateLabel}>Due Date:</Text>
 //                     <Text style={styles.dueDateValue}>
-//                       {new Date(d.dueDate?.date).toLocaleDateString("en-GB")}{" "}
+//                       {new Date(d.dueDate?.date).toLocaleDateString("en-US")}{" "}
 //                       {d.dueDate?.time}
 //                     </Text>
 //                   </View>
@@ -383,7 +383,7 @@
 //                 <Text style={styles.courseTitle}>{d?.course?.courseTitle}</Text>
 //                 <Text style={styles.description}>{d.description}</Text>
 //                 <Text style={styles.dateRight}>
-//                   {new Date(d.createdAt).toLocaleDateString("en-GB")}
+//                   {new Date(d.createdAt).toLocaleDateString("en-US")}
 //                 </Text>
 //               </TouchableOpacity>
 //             );
@@ -1549,7 +1549,7 @@ const ChapterDiscussionsPage = () => {
                   <View style={{ marginLeft: 12 }}>
                     <Text style={styles.dueDateLabel}>Due Date:</Text>
                     <Text style={styles.dueDateValue}>
-                      {new Date(d.dueDate?.date).toLocaleDateString("en-GB")}{" "}
+                      {new Date(d.dueDate?.date).toLocaleDateString("en-US")}{" "}
                       {d.dueDate?.time}
                     </Text>
                   </View>
@@ -1558,7 +1558,7 @@ const ChapterDiscussionsPage = () => {
                 <Text style={styles.courseTitle}>{d?.course?.courseTitle}</Text>
                 <Text style={styles.description}>{d.description}</Text>
                 <Text style={styles.dateRight}>
-                  {new Date(d.createdAt).toLocaleDateString("en-GB")}
+                  {new Date(d.createdAt).toLocaleDateString("en-US")}
                 </Text>
               </TouchableOpacity>
             );

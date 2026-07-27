@@ -35,7 +35,7 @@ export const UpcomingMeetingToast: React.FC<Props> = ({
           {topic}
         </Text>
         <Text style={styles.timeText}>
-          {new Date(scheduledAt).toLocaleTimeString([], {
+          {new Date(scheduledAt).toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
           })}

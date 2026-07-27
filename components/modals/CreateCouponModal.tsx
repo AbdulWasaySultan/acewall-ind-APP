@@ -248,7 +248,7 @@ export default function CreateCouponModal({ visible, onClose, courseId, onRefres
                 <Text style={styles.label}>Expiry Date</Text>
                 <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
                   <Text style={value ? styles.dateText : styles.placeholderText}>
-                    {value ? new Date(value).toLocaleDateString() : 'dd/mm/yyyy'}
+                    {value ? new Date(value).toLocaleDateString('en-US') : 'mm/dd/yyyy'}
                   </Text>
                 </TouchableOpacity>
                 {showDatePicker && (

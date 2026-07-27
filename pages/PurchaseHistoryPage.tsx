@@ -57,9 +57,9 @@ const PurchaseHistoryPage = () => {
     // toLocaleDateString with dateStyle isn't supported on all Hermes
     // builds — fall back to a manual medium-style format if it throws.
     try {
-      return date.toLocaleDateString(undefined, { dateStyle: "medium" } as any);
+      return date.toLocaleDateString("en-US", { dateStyle: "medium" } as any);
     } catch {
-      return date.toLocaleDateString(undefined, {
+      return date.toLocaleDateString("en-US", {
         month: "short",
         day: "2-digit",
         year: "numeric",

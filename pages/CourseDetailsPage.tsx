@@ -409,11 +409,11 @@ const CourseDetailsPage = () => {
     const day = String(date.getUTCDate()).padStart(2, "0");
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     const year = date.getUTCFullYear();
-    return `${day}/${month}/${year}`;
+    return `${month}/${day}/${year}`;
   };
 
   const parseDateFromInput = (dateString: string) => {
-    const [day, month, year] = dateString.split("/");
+    const [month, day, year] = dateString.split("/");
     return new Date(`${year}-${month}-${day}T00:00:00.000Z`);
   };
 

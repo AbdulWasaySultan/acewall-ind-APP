@@ -39,7 +39,7 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
     
     messages.forEach((msg) => {
       const sender = msg.role === 'user' ? 'You' : 'AI Assistant';
-      const time = msg.timestamp.toLocaleTimeString();
+      const time = msg.timestamp.toLocaleTimeString("en-US");
       text += `[${time}] ${sender}:\n${msg.content}\n\n`;
       
       if (msg.file) {

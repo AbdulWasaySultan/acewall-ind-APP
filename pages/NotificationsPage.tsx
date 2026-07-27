@@ -110,7 +110,7 @@ const NotificationsPage = () => {
                     <View style={styles.cardMetaRow}>
                       <SimpleIcon name="calendar" size={12} color="#9CA3AF" />
                       <Text style={styles.cardDate}>
-                        {new Date(item.createdAt).toLocaleDateString()}
+                        {new Date(item.createdAt).toLocaleDateString("en-US")}
                       </Text>
                     </View>
                   </View>

@@ -79,7 +79,7 @@ const EditQuarterModal: React.FC<EditQuarterModalProps> = ({
                   : styles.semesterModalPlaceholder
               }
             >
-              {quarterStartDate || 'dd/mm/yyyy'}
+              {quarterStartDate || 'mm/dd/yyyy'}
             </Text>
           </TouchableOpacity>
           {showQuarterDatePicker === 'start' && (
@@ -110,7 +110,7 @@ const EditQuarterModal: React.FC<EditQuarterModalProps> = ({
                   : styles.semesterModalPlaceholder
               }
             >
-              {quarterEndDate || 'dd/mm/yyyy'}
+              {quarterEndDate || 'mm/dd/yyyy'}
             </Text>
           </TouchableOpacity>
           {showQuarterDatePicker === 'end' && (

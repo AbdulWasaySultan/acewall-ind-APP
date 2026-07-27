@@ -81,7 +81,7 @@ export default function CouponsPage({ navigation, route }: Props) {
         <View style={styles.detailsRow}>
           <Text style={styles.detailText}>Uses: Max {item.maxRedemptions || '∞'}</Text>
           <Text style={styles.detailText}>
-            Expires: {item.expiresAt ? new Date(item.expiresAt).toLocaleDateString() : 'Never'}
+            Expires: {item.expiresAt ? new Date(item.expiresAt).toLocaleDateString("en-US") : 'Never'}
           </Text>
         </View>
         <TouchableOpacity

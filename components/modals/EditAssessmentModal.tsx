@@ -163,7 +163,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
           >
             <Text style={{ color: editAssessmentDueDate ? "#000" : "#999" }}>
               {editAssessmentDueDate
-                ? `${editAssessmentDueDate.toLocaleDateString()} at ${editAssessmentDueDate.toLocaleTimeString(
+                ? `${editAssessmentDueDate.toLocaleDateString("en-US")} at ${editAssessmentDueDate.toLocaleTimeString(
                     "en-US",
                     { hour: "2-digit", minute: "2-digit" }
                   )}`

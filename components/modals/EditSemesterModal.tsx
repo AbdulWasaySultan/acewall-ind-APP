@@ -79,7 +79,7 @@ const EditSemesterModal: React.FC<EditSemesterModalProps> = ({
                   : styles.semesterModalPlaceholder
               }
             >
-              {semesterStartDate || 'dd/mm/yyyy'}
+              {semesterStartDate || 'mm/dd/yyyy'}
             </Text>
           </TouchableOpacity>
           {showSemesterDatePicker === 'start' && (
@@ -110,7 +110,7 @@ const EditSemesterModal: React.FC<EditSemesterModalProps> = ({
                   : styles.semesterModalPlaceholder
               }
             >
-              {semesterEndDate || 'dd/mm/yyyy'}
+              {semesterEndDate || 'mm/dd/yyyy'}
             </Text>
           </TouchableOpacity>
           {showSemesterDatePicker === 'end' && (

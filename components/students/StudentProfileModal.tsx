@@ -99,7 +99,7 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               <Text style={styles.profileEmail}>✉️ {student.email}</Text>
               <Text style={styles.profileJoined}>
                 📅 Joined:{" "}
-                {student.createdAt ? new Date(student.createdAt).toLocaleDateString() : "—"}
+                {student.createdAt ? new Date(student.createdAt).toLocaleDateString("en-US") : "—"}
               </Text>
             </View>
 

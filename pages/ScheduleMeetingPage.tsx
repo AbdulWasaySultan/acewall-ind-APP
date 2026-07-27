@@ -40,7 +40,7 @@ const formatDateForInput = (date: Date): string => {
   const year = date.getFullYear();
   const hours = String(date.getHours()).padStart(2, "0");
   const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
+  return `${month}/${day}/${year} ${hours}:${minutes}`;
 };
 
 const parseDateFromInput = (formattedString: string): Date => {
@@ -48,7 +48,7 @@ const parseDateFromInput = (formattedString: string): Date => {
   const [datePart, timePart] = formattedString.split(" ");
   if (!datePart) return new Date();
 
-  const [day, month, year] = datePart.split("/").map(Number);
+  const [month, day, year] = datePart.split("/").map(Number);
   let hours = 0;
   let minutes = 0;
 
@@ -353,7 +353,7 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
                       : styles.datePickerPlaceholder
                   }
                 >
-                  {scheduledAt || "dd/mm/yyyy, --:-- --"}
+                  {scheduledAt || "mm/dd/yyyy, --:-- --"}
                 </Text>
                 <Calendar size={18} color="#64748b" />
               </TouchableOpacity>

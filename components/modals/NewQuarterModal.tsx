@@ -38,7 +38,7 @@ const isBeforeToday = (date: Date) => {
 };
 
 /**
- * Safely parse a date string that may be in ISO format OR dd/mm/yyyy format.
+ * Safely parse a date string that may be in ISO format OR mm/dd/yyyy format.
  * Returns null if the result is an Invalid Date.
  */
 const safeParseDate = (
@@ -50,7 +50,7 @@ const safeParseDate = (
   let parsed: Date;
 
   // If it looks like an ISO string (contains '-' and 'T', or is a plain ISO date),
-  // parse it directly instead of going through parseDateFromInput (which expects dd/mm/yyyy).
+  // parse it directly instead of going through parseDateFromInput (which expects mm/dd/yyyy).
   if (dateString.includes("T") || /^\d{4}-\d{2}-\d{2}/.test(dateString)) {
     parsed = new Date(dateString);
   } else {
@@ -107,7 +107,7 @@ const NewQuarterModal: React.FC<NewQuarterModalProps> = ({
   };
 
   // Safely parse semester boundaries — these come from the API as ISO strings,
-  // NOT in dd/mm/yyyy format, so we must handle both.
+  // NOT in mm/dd/yyyy format, so we must handle both.
   const semesterStart = selectedSemesterForQuarter
     ? safeParseDate(selectedSemesterForQuarter.startDate, parseDateFromInput)
     : null;
@@ -240,7 +240,7 @@ const NewQuarterModal: React.FC<NewQuarterModalProps> = ({
                   : styles.semesterModalPlaceholder
               }
             >
-              {quarterStartDate || "dd/mm/yyyy"}
+              {quarterStartDate || "mm/dd/yyyy"}
             </Text>
           </TouchableOpacity>
           {showQuarterDatePicker === "start" && (
@@ -264,7 +264,7 @@ const NewQuarterModal: React.FC<NewQuarterModalProps> = ({
                   : styles.semesterModalPlaceholder
               }
             >
-              {quarterEndDate || "dd/mm/yyyy"}
+              {quarterEndDate || "mm/dd/yyyy"}
             </Text>
           </TouchableOpacity>
           {showQuarterDatePicker === "end" && (

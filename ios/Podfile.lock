@@ -1380,7 +1380,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context (5.3.0):
+  - react-native-safe-area-context (5.8.0):
     - React-Core
   - react-native-simple-toast (3.3.2):
     - React-Core
@@ -1436,7 +1436,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-webview (13.16.1):
+  - react-native-webview (13.17.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1786,7 +1786,9 @@ PODS:
     - React-Core
   - RNDateTimePicker (8.6.0):
     - React-Core
-  - RNGestureHandler (2.19.0):
+  - RNFS (2.20.0):
+    - React-Core
+  - RNGestureHandler (2.24.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1959,6 +1961,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNSVG (15.15.5):
+    - React-Core
   - RNVectorIcons (10.3.0):
     - DoubleConversion
     - glog
@@ -2069,9 +2073,11 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
+  - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2240,12 +2246,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
   Yoga:
@@ -2259,7 +2269,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: cd4bd90f051e3658c83cc00e87c603dfe1b75947
-  RCT-Folly: 36fe2295e44b10d831836cc0d1daec5f8abcf809
+  RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
   RCTDeprecation: c147f8912f768e5eedbc5f115b2b223d007d9fe3
   RCTRequired: a71a7e9efd6546704d5abc683e0b68fcaa759861
   RCTTypeSafety: d1bd039b216cfc4a46ad1d8b4564f780648e1be0
@@ -2292,12 +2302,12 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: a2d19a42269e02a7a86ab1c51fa3a4fa63be00ba
   react-native-document-picker: b6419b766863408dacbdf5e97b2f3a694c611150
   react-native-image-picker: 7babe45e727db306b3f00d08c72eda3586d6e9c1
-  react-native-safe-area-context: fdb0a66feac038cb6eb1edafcf2ccee2b5cf0284
+  react-native-safe-area-context: 700f3e707470d3cef056231541c77df29a5f0d9e
   react-native-simple-toast: 4c9cc976cb92b6e5fb555e7c57fce38b90a56d07
   react-native-vector-icons-evil-icons: 468d002d338e0d5020f580473b8e2f4c3b5e4476
   react-native-vector-icons-fontawesome6: 4818cfee1b9283e57f5476778b21bdb490a08941
   react-native-video: 29452afd424425f8c2b45a1c546dc9590c462537
-  react-native-webview: 7c27252c8f027e2720f69eb194811c587f9a846e
+  react-native-webview: d63b9a3e58d51c164ce5c7667410b71ecf64fe1d
   React-NativeModulesApple: f8c91c74d5d223944c7b7fdeb0695d8ee73f899c
   React-oscompat: faff1df234d57a7368b56e9642222dde9eb9f422
   React-perflogger: 59c434b6ab0741baa4cdc589ba4278889e3fae18
@@ -2331,9 +2341,11 @@ SPEC CHECKSUMS:
   ReactCommon: 1257efa9d0b07517d8b79bb4055eaefac1204807
   RNCAsyncStorage: b44e8a4e798c3e1f56bffccd0f591f674fb9198f
   RNDateTimePicker: 39a7b97196b9daaa1d52d71fb835da924a9c5776
-  RNGestureHandler: f222f55baf9d61d5bc4fd3d413e91ae086d124de
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
+  RNGestureHandler: ce4a87dba81030b374d7f1993c4376f5c230da2e
   RNReanimated: 510c8d0f8b8b84ac33b46cfb7147f433f47b15b2
   RNScreens: aa5701d2bbb13ea716d2c0152261595bd22f1635
+  RNSVG: c61e38e1c0c90ed982418ed696ec272b706995bb
   RNVectorIcons: e431ef1e6bef75d6ad0e33a83d376e6207962a9d
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Toast: 1f5ea13423a1e6674c4abdac5be53587ae481c4e

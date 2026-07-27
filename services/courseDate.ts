@@ -53,7 +53,7 @@ export function getOrdinal(day: number): string {
   }
   
   /**
-   * Convert an ISO date string to "dd/mm/yyyy".
+   * Convert an ISO date string to US format "mm/dd/yyyy".
    * Example: "2025-01-01T00:00:00.000Z" → "01/01/2025"
    */
   export function formatDateForInput(dateString: string): string {
@@ -61,14 +61,14 @@ export function getOrdinal(day: number): string {
     const day = String(date.getUTCDate()).padStart(2, "0");
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     const year = date.getUTCFullYear();
-    return `${day}/${month}/${year}`;
+    return `${month}/${day}/${year}`;
   }
-  
+
   /**
-   * Parse a "dd/mm/yyyy" string into a Date object (UTC).
+   * Parse a "mm/dd/yyyy" string into a Date object (UTC).
    * Example: "01/01/2025" → Date(2025-01-01T00:00:00.000Z)
    */
   export function parseDateFromInput(dateString: string): Date {
-    const [day, month, year] = dateString.split("/");
+    const [month, day, year] = dateString.split("/");
     return new Date(`${year}-${month}-${day}T00:00:00.000Z`);
   }

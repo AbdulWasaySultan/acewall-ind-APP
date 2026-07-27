@@ -106,7 +106,7 @@ const NotificationBell = () => {
                         {item.message}
                       </Text>
                       <Text style={styles.rowTime}>
-                        {new Date(item.createdAt).toLocaleString()}
+                        {new Date(item.createdAt).toLocaleString("en-US")}
                       </Text>
                     </View>
                     {!item.isRead && <View style={styles.dot} />}

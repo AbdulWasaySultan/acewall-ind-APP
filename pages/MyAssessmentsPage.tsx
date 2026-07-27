@@ -239,7 +239,7 @@ const MyAssessmentsPage = () => {
     const date = new Date(dateStr);
     return isNaN(date.getTime())
       ? "—"
-      : date.toLocaleDateString(undefined, {
+      : date.toLocaleDateString("en-US", {
         month: "short",
         day: "2-digit",
         year: "numeric",
@@ -251,7 +251,7 @@ const MyAssessmentsPage = () => {
     const date = new Date(`1970-01-01T${timeStr}Z`);
     return isNaN(date.getTime())
       ? "—"
-      : date.toLocaleTimeString(undefined, {
+      : date.toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       });

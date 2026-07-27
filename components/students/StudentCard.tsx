@@ -24,7 +24,7 @@ const StudentCard: React.FC<StudentCardProps> = ({ student, onViewProfile }) => 
       <View style={styles.joinedRow}>
         <Text style={styles.joinedLabel}>Joined</Text>
         <Text>
-          {student.createdAt ? new Date(student.createdAt).toLocaleDateString() : "—"}
+          {student.createdAt ? new Date(student.createdAt).toLocaleDateString("en-US") : "—"}
         </Text>
       </View>
       <Pressable style={styles.viewProfileButton} onPress={() => onViewProfile(student)}>

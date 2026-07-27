@@ -54,7 +54,7 @@ const TeacherAnnouncementRow = ({
   return (
     <Pressable onPress={onToggle} style={rowStyle}>
       <Text style={styles.teacherDate}>
-        {new Date(announcement.createdAt).toLocaleDateString(undefined, {
+        {new Date(announcement.createdAt).toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -111,7 +111,7 @@ const StudentAnnouncementCard = ({
       </View>
       <View style={styles.studentCardRight}>
         <Text style={styles.studentCardDate}>
-          {new Date(announcement.createdAt).toLocaleDateString("en-GB")}
+          {new Date(announcement.createdAt).toLocaleDateString("en-US")}
         </Text>
         <Text style={styles.studentCardArrow}>{expanded ? "▲" : "▼"}</Text>
       </View>
@@ -121,7 +121,7 @@ const StudentAnnouncementCard = ({
         <Text style={styles.studentCardMessage}>{announcement.message}</Text>
         <Text style={styles.studentCardTime}>
           <Text style={styles.studentCardTimeLabel}>Time:</Text>{" "}
-          {new Date(announcement.createdAt).toLocaleTimeString([], {
+          {new Date(announcement.createdAt).toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
           })}
