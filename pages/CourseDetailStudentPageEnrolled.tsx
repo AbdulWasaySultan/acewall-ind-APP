@@ -372,7 +372,10 @@ const CourseDetailStudentPageEnrolled = () => {
   };
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView style={{ backgroundColor: "#fff" }}>
+      <ScrollView style={{ backgroundColor: "#fff" }}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {/* Banner */}
         <TouchableOpacity
           style={styles.closeSimpleIcon}
@@ -835,7 +838,10 @@ const CourseDetailStudentPageEnrolled = () => {
               <SimpleIcon name="close" size={32} color="#333" />
             </TouchableOpacity>
           </View>
-          <ScrollView>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             {loadingSemesterQuarters ? (
               <ActivityIndicator
                 size="large"
@@ -896,7 +902,10 @@ const CourseDetailStudentPageEnrolled = () => {
                 color="#10B144"
               />
             ) : chaptersForQuarter.length > 0 ? (
-              <ScrollView>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
+              >
                 {chaptersForQuarter.map((chapter, index) => {
                   console.log(chapter);
                   return (

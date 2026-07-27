@@ -316,6 +316,7 @@ const SpillTheTeaProfilePage: React.FC = () => {
               onCommentPress={openComments}
             />
           )}
+          showsHorizontalScrollIndicator={false}
         />
       )}
 

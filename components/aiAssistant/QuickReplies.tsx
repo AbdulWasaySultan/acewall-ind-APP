@@ -29,6 +29,7 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
       >
         {replies.map((reply, index) => (
           <TouchableOpacity

@@ -54,7 +54,10 @@ const GradeScaleManagementModal: React.FC<GradeScaleManagementModalProps> = ({
               style={{ marginTop: 20 }}
             />
           ) : Object.keys(gradeScale).length > 0 ? (
-            <ScrollView style={{ flex: 1, marginTop: 20 }}>
+            <ScrollView style={{ flex: 1, marginTop: 20 }}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {/* Table Header */}
               <View style={styles.tableHeader}>
                 <Text style={[styles.headerText, { flex: 1 }]}>Grade</Text>

@@ -49,7 +49,10 @@ const AddAssessmentModal: React.FC<AddAssessmentModalProps> = ({
             <View style={{ width: 40 }} />
           </View>
 
-          <ScrollView style={{ flex: 1 }}>
+          <ScrollView style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             <Text style={styles.lessonFormInstruction}>
               Create a new assessment for this chapter.
             </Text>

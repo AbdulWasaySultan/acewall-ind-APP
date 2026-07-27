@@ -139,7 +139,10 @@ const OTPVerificationPage = () => {
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
         </View>
-        <ScrollView style={styles.scrollView}>
+        <ScrollView style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <View style={styles.formContainer}>
             <Text style={styles.title}>
               {flow === 'signup' ? 'Verify Your Email' : 'Verify Your Email'}

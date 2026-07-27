@@ -308,7 +308,10 @@ const ChapterPagesPage = () => {
           <Text style={{ color: "red" }}>{error}</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <ScrollView contentContainerStyle={{ padding: 16 }}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {pages.map((p) => (
             <TouchableOpacity
               key={p._id}
@@ -360,7 +363,10 @@ const ChapterPagesPage = () => {
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <ScrollView contentContainerStyle={{ padding: 16 }}>
+            <ScrollView contentContainerStyle={{ padding: 16 }}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               <Text style={styles.inputLabel}>Title *</Text>
               <TextInput
                 style={styles.textInput}
@@ -446,7 +452,10 @@ const ChapterPagesPage = () => {
             </Text>
             <View style={{ width: 28 }} />
           </View>
-          <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <ScrollView contentContainerStyle={{ padding: 16 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             {!!selectedPage?.image?.url && (
               <Image
                 source={{ uri: selectedPage.image.url }}

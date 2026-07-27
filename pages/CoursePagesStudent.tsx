@@ -121,7 +121,10 @@ export default function CoursePagesStudent({ studentId = "68c341b51febd9a384b8b9
                                 <SimpleIcon name="close" size={20} color="#111827" />
                             </TouchableOpacity>
                         </View>
-                        <ScrollView>
+                        <ScrollView
+                          showsVerticalScrollIndicator={false}
+                          showsHorizontalScrollIndicator={false}
+                        >
                             {courses.map((opt) => {
                                 const active = selectedCourse?.id === opt.id
                                 return (
@@ -163,6 +166,7 @@ export default function CoursePagesStudent({ studentId = "68c341b51febd9a384b8b9
                     renderItem={renderPageItem}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
                 />
             )}
 
@@ -176,7 +180,9 @@ export default function CoursePagesStudent({ studentId = "68c341b51febd9a384b8b9
                                 <SimpleIcon name="close" size={22} color="#111827" />
                             </TouchableOpacity>
                         </View>
-                        <ScrollView showsVerticalScrollIndicator={false}>
+                        <ScrollView showsVerticalScrollIndicator={false}
+                          showsHorizontalScrollIndicator={false}
+                        >
                             {selectedPage?.image?.url ? (
                                 <Image source={{ uri: selectedPage.image.url }} style={styles.modalImage} />
                             ) : null}

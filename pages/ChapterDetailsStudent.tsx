@@ -606,7 +606,9 @@ const ChapterDetailsStudent = () => {
             </View>
           )}
           <View style={styles.tabsContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+            >
               {renderTabButton("description", "Description")}
               {renderTabButton("files", "Files")}
               {renderTabButton("assessments", "Assessments")}
@@ -623,7 +625,10 @@ const ChapterDetailsStudent = () => {
               style={{ alignSelf: "center", height: "30%" }}
             />
           ) : (
-            <ScrollView style={styles.contentScrollView}>
+            <ScrollView style={styles.contentScrollView}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {renderTabContent()}
             </ScrollView>
           )}
@@ -655,6 +660,8 @@ const ChapterDetailsStudent = () => {
                 <ScrollView
                   style={styles.lessonsList}
                   contentContainerStyle={{ flexGrow: 1 }}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
                 >
                   {chapter.lessons.map((lesson: Lesson, index: number) => (
                     <TouchableOpacity
@@ -756,7 +763,10 @@ const ChapterDetailsStudent = () => {
               </TouchableOpacity>
             </View>
           ) : submissionDetails ? (
-            <ScrollView style={styles.detailedModalContent}>
+            <ScrollView style={styles.detailedModalContent}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {/* Student and Submission Overview */}
               <View style={styles.submissionOverview}>
                 <View style={styles.studentOverviewDetails}>

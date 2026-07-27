@@ -102,7 +102,10 @@ const handleCreateNewSemester = () => {
               <ActivityIndicator size="large" color="#10B144" />
             </View>
           ) : (
-            <ScrollView style={styles.gradingPeriodsList}>
+            <ScrollView style={styles.gradingPeriodsList}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {gradingPeriods.length === 0 ? (
                 <Text style={styles.gradingPeriodsEmptyText}>
                   No semesters found. Create your first semester.

@@ -548,6 +548,7 @@ const MyCoursesPage = () => {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
+            showsHorizontalScrollIndicator={false}
           >
             {loading && !refreshing ? (
               <View style={styles.loadingContainer}>
@@ -685,6 +686,7 @@ const MyCoursesPage = () => {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
+            showsHorizontalScrollIndicator={false}
           >
             {loading && !refreshing ? (
               <View style={styles.loadingContainer}>

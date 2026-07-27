@@ -140,6 +140,8 @@ const MessagesPage = () => {
               </View>
             </TouchableOpacity>
           )}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
         />
       )}
     </View>

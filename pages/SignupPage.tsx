@@ -253,7 +253,10 @@ const SignupPage = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
       >
-        <ScrollView style={styles.scrollView}>
+        <ScrollView style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <View style={styles.formContainer}>
             <Text style={styles.title}>Create Account</Text>
 
@@ -354,9 +357,10 @@ const SignupPage = () => {
                 <View style={styles.countryDropdown}>
                   <ScrollView
                     style={styles.countryScrollView}
-                    showsVerticalScrollIndicator={true}
+                    showsVerticalScrollIndicator={false}
                     nestedScrollEnabled={true}
                     bounces={false}
+                    showsHorizontalScrollIndicator={false}
                   >
                     {countryCodes.map((country, index) => (
                       <TouchableOpacity

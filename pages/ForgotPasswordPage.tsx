@@ -55,7 +55,10 @@ const ForgotPasswordPage = () => {
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
         </View>
-        <ScrollView style={styles.scrollView}>
+        <ScrollView style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <View style={styles.formContainer}>
             <Text style={styles.title}>Forgot Password</Text>
             <Text style={styles.subtitle}>

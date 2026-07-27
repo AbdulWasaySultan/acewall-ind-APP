@@ -72,6 +72,8 @@ const NotificationsPage = () => {
           data={notifications}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }

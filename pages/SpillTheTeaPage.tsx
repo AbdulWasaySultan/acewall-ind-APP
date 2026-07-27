@@ -459,6 +459,7 @@ const SpillTheTeaPage: React.FC = () => {
               onCommentPress={openComments}
             />
           )}
+          showsHorizontalScrollIndicator={false}
         />
       )}
 

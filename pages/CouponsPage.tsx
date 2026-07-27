@@ -137,6 +137,7 @@ export default function CouponsPage({ navigation, route }: Props) {
             setRefreshing(true);
             loadCoupons();
           }}
+          showsHorizontalScrollIndicator={false}
         />
       )}
 

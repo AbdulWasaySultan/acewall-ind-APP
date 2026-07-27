@@ -469,9 +469,10 @@ const EditCredentialsPage: React.FC = () => {
                 <View style={styles.countryDropdown}>
                   <ScrollView
                     style={styles.countryScrollView}
-                    showsVerticalScrollIndicator={true}
+                    showsVerticalScrollIndicator={false}
                     nestedScrollEnabled={true}
                     bounces={false}
+                    showsHorizontalScrollIndicator={false}
                   >
                     {countryCodes.map((country, index) => (
                       <TouchableOpacity
@@ -548,6 +549,7 @@ const EditCredentialsPage: React.FC = () => {
         style={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        showsHorizontalScrollIndicator={false}
       >
         {renderTabContent()}
       </ScrollView>

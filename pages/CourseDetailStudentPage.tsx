@@ -371,7 +371,10 @@ const CourseDetailStudentPage = () => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <ScrollView contentContainerStyle={{ padding: 16 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             {loadingQuarters ? (
               <View
                 style={{
@@ -460,7 +463,10 @@ const CourseDetailStudentPage = () => {
             </Text>
           </View>
 
-          <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <ScrollView contentContainerStyle={{ padding: 16 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             {loadingChapters ? (
               <View
                 style={{
@@ -568,7 +574,10 @@ const CourseDetailStudentPage = () => {
             ))}
           </View>
 
-          <ScrollView contentContainerStyle={{ padding: 16 }}>
+          <ScrollView contentContainerStyle={{ padding: 16 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             {loadingChapterDetails ? (
               <View
                 style={{
@@ -680,7 +689,9 @@ const CourseDetailStudentPage = () => {
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : course ? (
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <Text style={styles.title}>{course.courseTitle}</Text>
           <Text style={styles.subtitle}>
             {courseDescription}
@@ -753,6 +764,7 @@ const CourseDetailStudentPage = () => {
             showsHorizontalScrollIndicator={false}
             style={styles.tabsScrollContainer}
             contentContainerStyle={styles.tabsRow}
+            showsVerticalScrollIndicator={false}
           >
             {TABS.map((tab) => (
               <TouchableOpacity

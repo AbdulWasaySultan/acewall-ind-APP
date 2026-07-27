@@ -122,6 +122,8 @@ const StudentMeetingListPage = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         {loading ? (
           <View style={styles.stateWrap}>

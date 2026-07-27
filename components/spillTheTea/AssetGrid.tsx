@@ -36,6 +36,7 @@ const AssetGrid: React.FC<AssetGridProps> = ({ assets, isVisible }) => {
       showsHorizontalScrollIndicator={false}
       style={styles.multiWrapper}
       contentContainerStyle={{ gap: 10 }}
+      showsVerticalScrollIndicator={false}
     >
       {assets.map((asset) => (
         <View key={asset._id} style={styles.multiItem}>

@@ -112,7 +112,9 @@ export default function CreateCouponModal({ visible, onClose, courseId, onRefres
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.form} showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {/* Internal Name */}
           <Controller
             control={control}

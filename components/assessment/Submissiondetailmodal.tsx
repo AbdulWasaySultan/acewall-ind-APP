@@ -92,7 +92,11 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
             <Text style={styles.errorText}>{submissionDetailsError}</Text>
           </View>
         ) : submissionDetails ? (
-          <ScrollView style={styles.scroll}>
+          <ScrollView
+            style={styles.scroll}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             {/* Student Overview */}
             <View style={styles.overview}>
               <View style={styles.avatar}>
@@ -200,7 +204,9 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
-                        flex: 1,
+                        flexWrap: "wrap",
+                        flexShrink: 1,
+                        marginRight: 8,
                       }}
                     >
                       <Text style={styles.qNumber}>Question {index + 1}</Text>
@@ -210,7 +216,14 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
                           : answer.questionDetails?.type}
                       </Text>
                     </View>
-                    <View style={{ flexDirection: "row" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        justifyContent: "flex-end",
+                        rowGap: 8,
+                      }}
+                    >
                       {answer.requiresManualCheck ? (
                         <View
                           style={[
@@ -506,6 +519,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    rowGap: 8,
     marginBottom: 16,
   },
   qNumber: {
@@ -515,7 +530,12 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   qType: { fontSize: 14, color: "#6B7280", marginRight: 12 },
-  qTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  qTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
   qTagText: { fontSize: 12, fontWeight: "500" },
 
   fieldLabel: {

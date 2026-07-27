@@ -62,7 +62,10 @@ const SupportPage = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         <View style={styles.formContainer}>
           <Text style={styles.title}>Contact Support</Text>
           <Text style={styles.subtitle}>

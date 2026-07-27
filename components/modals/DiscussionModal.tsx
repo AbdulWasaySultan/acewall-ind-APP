@@ -49,7 +49,10 @@ const DiscussionModal: React.FC<DiscussionModalProps> = ({
             <View style={{ width: 40 }} />
           </View>
 
-          <ScrollView style={{ flex: 1 }}>
+          <ScrollView style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             <Text style={styles.lessonFormInstruction}>
               Start a discussion for this chapter.
             </Text>

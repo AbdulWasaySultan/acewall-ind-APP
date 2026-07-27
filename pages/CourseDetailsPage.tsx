@@ -2144,7 +2144,10 @@ const CourseDetailsPage = () => {
       />
 
       {/* Main ScrollView */}
-      <ScrollView contentContainerStyle={{ padding: keyboardPadding }}>
+      <ScrollView contentContainerStyle={{ padding: keyboardPadding }}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         <View style={styles.thumbnailContainer}>
           <Image
             source={

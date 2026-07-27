@@ -164,7 +164,10 @@ const GradebookModal: React.FC<GradebookModalProps> = ({
         ) : gradebookError ? (
           <Text style={styles.errorText}>{gradebookError}</Text>
         ) : gradebookData ? (
-          <ScrollView contentContainerStyle={styles.contentContainer}>
+          <ScrollView contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             {gradebookData.gradebook?.length > 0 ? (
               gradebookData.gradebook.map((student: Student) => {
                 const gradeAvailable = hasGradeData(student);

@@ -161,6 +161,7 @@ const ChaptersForQuarterModal: React.FC<ChaptersForQuarterModalProps> = ({
               renderItem={renderChapter}
               showsVerticalScrollIndicator={false}
               removeClippedSubviews={false}
+              showsHorizontalScrollIndicator={false}
             />
           ) : (
             <Text style={{ textAlign: "center", marginTop: 20, fontSize: 16 }}>

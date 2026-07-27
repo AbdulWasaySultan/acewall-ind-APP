@@ -112,7 +112,10 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
           <View style={{ width: 24 }} />
         </View>
 
-        <ScrollView style={styles.editChapterForm}>
+        <ScrollView style={styles.editChapterForm}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {/* Chapter Title */}
           <View style={styles.editChapterField}>
             <Text style={styles.editChapterLabel}>Chapter Title</Text>

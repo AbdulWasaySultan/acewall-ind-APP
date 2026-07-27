@@ -74,7 +74,10 @@ const LessonCreationModal: React.FC<LessonCreationModalProps> = ({
             <View style={{ width: 40 }} />
           </View>
 
-          <ScrollView style={{ flex: 1 }}>
+          <ScrollView style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             <Text style={styles.lessonFormInstruction}>
               Fill in the lesson details. Upload only PDF files, max 5MB
               total.

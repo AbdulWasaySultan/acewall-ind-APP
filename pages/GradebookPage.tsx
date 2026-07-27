@@ -327,7 +327,10 @@ const GradebookPage = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+    >
       <View style={styles.content}>
         <View style={styles.performanceCard}>
           <Text style={styles.performanceTitle}>

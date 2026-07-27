@@ -62,7 +62,10 @@ const AddFilesModal: React.FC<AddFilesModalProps> = ({
             <View style={{ width: 40 }} />
           </View>
 
-          <ScrollView style={{ flex: 1 }}>
+          <ScrollView style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             <Text style={styles.lessonFormInstruction}>
               Upload only PDF files, max 5MB total.
             </Text>

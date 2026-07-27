@@ -514,7 +514,10 @@ const AssessmentDetailsModal: React.FC<Props> = ({
         </View>
 
         {/* Content */}
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <Text style={styles.title}>{assessment.title}</Text>
 
           {assessment.category?.name && (

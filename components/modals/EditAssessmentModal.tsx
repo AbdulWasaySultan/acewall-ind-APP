@@ -94,7 +94,10 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView style={{ flex: 1, padding: 16 }}>
+        <ScrollView style={{ flex: 1, padding: 16 }}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <Text style={styles.editAssessmentLabel}>Title</Text>
           <TextInput
             style={styles.editAssessmentInput}
@@ -135,7 +138,10 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
 
           {showEditCategoryMenu && (
             <View style={styles.editCategoryDropdownMenu}>
-              <ScrollView>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
+              >
                 {assessmentCategories.map((c) => (
                   <TouchableOpacity
                     key={c.id}

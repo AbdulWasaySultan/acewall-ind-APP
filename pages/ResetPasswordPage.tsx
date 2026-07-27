@@ -86,7 +86,10 @@ const ResetPasswordPage = () => {
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
         </View>
-        <ScrollView style={styles.scrollView}>
+        <ScrollView style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <View style={styles.formContainer}>
             <Text style={styles.title}>Reset Your Password</Text>
             <Text style={styles.subtitle}>

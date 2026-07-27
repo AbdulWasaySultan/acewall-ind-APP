@@ -66,7 +66,10 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {selectedAssessmentForModal && (
             <>
               {/* Title and Category */}

@@ -73,6 +73,8 @@ const CoursePickerGrid: React.FC<CoursePickerGridProps> = ({
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         ) : undefined
       }
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
     >
       <View style={styles.banner}>
         <Text style={styles.bannerTitle}>{headerTitle}</Text>

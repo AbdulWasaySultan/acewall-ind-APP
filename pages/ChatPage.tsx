@@ -129,6 +129,8 @@ const ChatPage = () => {
           flatListRef.current?.scrollToEnd({ animated: true })
         }
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       />
       <View style={[styles.inputContainer, { paddingBottom: keyboardMargin }]}>
         <TextInput

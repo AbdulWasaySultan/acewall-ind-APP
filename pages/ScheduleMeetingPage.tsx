@@ -318,6 +318,7 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
         style={styles.mainContainer}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         {/* Schedule Form Card */}
         <View style={styles.card}>

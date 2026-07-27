@@ -16,7 +16,10 @@ const CustomDrawer = (props: DrawerContentComponentProps) => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Menu</Text>
         </View>
-        <ScrollView style={styles.content}>
+        <ScrollView style={styles.content}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}

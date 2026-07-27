@@ -12,7 +12,9 @@ const MediaGrid: React.FC<Props> = ({ files, onRemove }) => {
   if (files.length === 0) return null;
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}
+      showsVerticalScrollIndicator={false}
+    >
       {files.map((file, index) => (
         <View key={`${file.uri}-${index}`} style={styles.thumb}>
           <Image source={{ uri: file.uri }} style={styles.image} />

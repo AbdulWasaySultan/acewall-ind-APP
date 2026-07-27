@@ -124,6 +124,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
               </View>
             </View>
           )}
+          showsHorizontalScrollIndicator={false}
         />
       )}
 

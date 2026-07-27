@@ -74,7 +74,10 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
           <View style={{ width: 24 }} />
         </View>
 
-        <ScrollView style={styles.lessonEditForm}>
+        <ScrollView style={styles.lessonEditForm}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {/* Lesson Title */}
           <View style={styles.lessonEditField}>
             <Text style={styles.lessonEditLabel}>Lesson Title</Text>

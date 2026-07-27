@@ -28,7 +28,10 @@ const StudentProfilePage = () => {
   }, [studentId]);
 
   return (
-    <ScrollView style={{ flex: 1, padding: 16 }}>
+    <ScrollView style={{ flex: 1, padding: 16 }}
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+    >
       {/* Profile Section */}
       <View style={{ alignItems: 'center', marginBottom: 24 }}>
         {/* Profile Icon Placeholder */}

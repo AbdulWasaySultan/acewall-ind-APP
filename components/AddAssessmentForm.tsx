@@ -601,7 +601,9 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
   // RENDER
   // ────────────────────────────────────────────────────────────────
   return (
-    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+    >
       {/* Assessment Type Selection */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Assessment Type</Text>
@@ -933,7 +935,10 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Category</Text>
-            <ScrollView style={styles.categoryList}>
+            <ScrollView style={styles.categoryList}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {loadingCategories ? (
                 <ActivityIndicator size="large" color="#10B144" />
               ) : categories.length > 0 ? (
@@ -1056,7 +1061,10 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Question Type</Text>
-            <ScrollView style={styles.categoryList}>
+            <ScrollView style={styles.categoryList}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {QuestionType.map((type) => (
                 <TouchableOpacity
                   key={type._id}
@@ -1109,7 +1117,10 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, styles.questionModalContent]}>
             <Text style={styles.modalTitle}>Add Question</Text>
-            <ScrollView style={styles.questionForm}>
+            <ScrollView style={styles.questionForm}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Question Type</Text>
                 <TouchableOpacity

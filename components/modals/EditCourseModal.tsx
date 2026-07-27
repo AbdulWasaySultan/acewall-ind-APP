@@ -519,6 +519,8 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
           <ScrollView
             nestedScrollEnabled={true}
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
           >
             <Text style={styles.editCourseModalLabel}>Course Title</Text>
             <TextInput
@@ -561,7 +563,10 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
 
             {showSubcategoryDropdown && (
               <View style={styles.editCourseModalDropdownOverlay}>
-                <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
+                <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                >
                   {subcategories.map((subcategory) => (
                     <TouchableOpacity
                       key={subcategory._id}
@@ -606,7 +611,10 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({
 
             {showLanguageDropdown && (
               <View style={styles.editCourseModalLanguageDropdownOverlay}>
-                <ScrollView style={{ maxHeight: 200 }}>
+                <ScrollView style={{ maxHeight: 200 }}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                >
                   {[
                     "English",
                     "Spanish",

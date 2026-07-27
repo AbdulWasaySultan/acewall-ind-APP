@@ -70,7 +70,10 @@ const GPAManagementModal: React.FC<GPAManagementModalProps> = ({
               )}
             </View>
           ) : Object.keys(GPA).length > 0 ? (
-            <ScrollView style={{ flex: 1, marginTop: 20 }}>
+            <ScrollView style={{ flex: 1, marginTop: 20 }}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {/* Table Header */}
               <View style={styles.tableHeader}>
                 <Text style={[styles.headerText, { flex: 1 }]}>GPA</Text>

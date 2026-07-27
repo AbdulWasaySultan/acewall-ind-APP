@@ -193,6 +193,8 @@ const StudentsPage = () => {
             ListEmptyComponent={
               <Text style={styles.emptyText}>No students found.</Text>
             }
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
           />
         )}
 

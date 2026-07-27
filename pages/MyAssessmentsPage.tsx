@@ -570,6 +570,8 @@ const MyAssessmentsPage = () => {
           {expanded[item._id] && <ExpandedDetails item={item} />}
         </View>
       )}
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
     />
       <Modal
         visible={detailedModalVisible}
@@ -609,7 +611,10 @@ const MyAssessmentsPage = () => {
               <Text style={styles.errorText}>{submissionDetailsError}</Text>
             </View>
           ) : submissionDetails ? (
-            <ScrollView style={styles.detailedModalContent}>
+            <ScrollView style={styles.detailedModalContent}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {submissionDetails && console.log(submissionDetails)}
 
               {/* Student and Submission Overview */}

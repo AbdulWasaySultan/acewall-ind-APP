@@ -173,6 +173,7 @@ const EnrollmentStatsPage = () => {
         style={styles.content}
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         <View style={styles.titleRow}>
           <SimpleIcon name="calendar" size={18} color="#16a34a" />

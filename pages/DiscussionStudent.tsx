@@ -620,6 +620,8 @@ const DiscussionStudent = () => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingBottom: keyboardHeight }}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         <View style={styles.discussionBanner}>
           <Text style={styles.discussionBannerText}>Discussion</Text>

@@ -196,7 +196,10 @@ const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
               <SimpleIcon name="close" size={24} color="#374151" />
             </TouchableOpacity>
           </View>
-          <ScrollView>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             <Text style={styles.manageCategoriesModalSubtitle}>
               Manage your course assessment categories and their weights.
             </Text>

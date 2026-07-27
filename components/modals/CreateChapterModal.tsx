@@ -277,7 +277,10 @@ const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
             <SimpleIcon name="close" size={32} color="#333" />
           </TouchableOpacity>
         </View>
-        <ScrollView style={styles.chaptersContent}>
+        <ScrollView style={styles.chaptersContent}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <View
             style={[styles.modalContent, { width: '100%', maxWidth: '100%' }]}
           >

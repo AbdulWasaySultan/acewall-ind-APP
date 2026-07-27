@@ -184,6 +184,7 @@ const MediaGrid: React.FC<{
       horizontal
       showsHorizontalScrollIndicator={false}
       style={{ marginTop: 12 }}
+      showsVerticalScrollIndicator={false}
     >
       {files.map((file, index) => (
         <View key={`${file.uri}-${index}`} style={gridStyles.thumb}>
@@ -474,6 +475,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               ItemSeparatorComponent={() => (
                 <View style={styles.courseSeparator} />
               )}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
             />
           )}
         </View>
@@ -497,6 +500,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              showsHorizontalScrollIndicator={false}
             >
               {/* Header */}
               <View style={styles.header}>

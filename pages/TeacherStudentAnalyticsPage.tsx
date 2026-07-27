@@ -188,6 +188,7 @@ const TeacherStudentAnalyticsPage = () => {
         style={styles.content}
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         {/* Trend insight banner */}
         {insights && (

@@ -219,6 +219,8 @@ const DashboardPage = () => {
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
         >
           {isPreviewMode && (
             <TouchableOpacity
@@ -331,7 +333,9 @@ const DashboardPage = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         <TouchableOpacity
           style={styles.previewCornerButton}
           onPress={handleTogglePreview}

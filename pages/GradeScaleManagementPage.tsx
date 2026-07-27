@@ -44,7 +44,10 @@ const GradeScaleManagementPage: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            <ScrollView style={styles.content}>
+            <ScrollView style={styles.content}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
                 {/* Header */}
                 <View style={[styles.header, { paddingTop: insets.top }]}>
                     <TouchableOpacity style={styles.backButton}>

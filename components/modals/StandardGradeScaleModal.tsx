@@ -231,7 +231,10 @@ const StandardGradeScaleModal: React.FC<StandardGradeScaleModalProps> = ({
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView style={styles.content}>
+        <ScrollView style={styles.content}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {/* Add Form */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Add New SBL Range</Text>

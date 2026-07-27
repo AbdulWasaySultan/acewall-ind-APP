@@ -1213,6 +1213,7 @@ const AIChatbotScreen: React.FC = () => {
                   </View>
                 ) : null
               }
+              showsHorizontalScrollIndicator={false}
             />
           </>
         )}

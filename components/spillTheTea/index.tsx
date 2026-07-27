@@ -95,6 +95,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onClose, onS
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
           >
 
             {/* ── Header ── */}

@@ -190,8 +190,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
+        showsVerticalScrollIndicator={false}
         bounces={true}
+        showsHorizontalScrollIndicator={false}
       >
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
           {/* <Image

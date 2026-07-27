@@ -84,6 +84,7 @@ const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
           >
             <View style={styles.profileHeader}>
               <View style={styles.avatarLarge}>

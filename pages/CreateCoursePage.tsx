@@ -1314,7 +1314,10 @@ const CreateCoursePage = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+    >
       <Text style={styles.pageTitle}>Create New Course</Text>
 
       {/* Thumbnail Section */}
@@ -1420,7 +1423,10 @@ const CreateCoursePage = () => {
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Select Category</Text>
-                <ScrollView>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                >
                   {isLoadingCategories ? (
                     <ActivityIndicator style={styles.loader} />
                   ) : (
@@ -1473,7 +1479,10 @@ const CreateCoursePage = () => {
                 <View style={styles.modalOverlay}>
                   <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>Select Subcategory</Text>
-                    <ScrollView>
+                    <ScrollView
+                      showsVerticalScrollIndicator={false}
+                      showsHorizontalScrollIndicator={false}
+                    >
                       {subcategories.length > 0 ? (
                         subcategories.map((subcat) => (
                           <Pressable
@@ -1532,7 +1541,10 @@ const CreateCoursePage = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select</Text>
-            <ScrollView>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {[
                 { _id: 1, title: "Yes" },
                 { _id: 2, title: "No" },
@@ -1610,7 +1622,10 @@ const CreateCoursePage = () => {
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Select Semesters</Text>
-                <ScrollView>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                >
                   {isLoadingSemesters ? (
                     <ActivityIndicator style={styles.loader} />
                   ) : (
@@ -1698,7 +1713,10 @@ const CreateCoursePage = () => {
                 <View style={styles.modalOverlay}>
                   <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>Select Quarters</Text>
-                    <ScrollView>
+                    <ScrollView
+                      showsVerticalScrollIndicator={false}
+                      showsHorizontalScrollIndicator={false}
+                    >
                       {isLoadingQuarters ? (
                         <ActivityIndicator style={styles.loader} />
                       ) : quarters.length > 0 ? (

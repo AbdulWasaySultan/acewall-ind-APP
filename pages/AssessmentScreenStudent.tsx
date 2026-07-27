@@ -268,7 +268,10 @@ const AssessmentScreenStudent = () => {
         <Text style={styles.backButtonText}>Submission Details</Text>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         <View style={styles.content}>
           <View style={styles.assessmentInfo}>
             <View style={styles.resultBadgeRow}>
@@ -362,7 +365,10 @@ const AssessmentScreenStudent = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         <View style={styles.content}>
           {/* Assessment Info */}
           <View style={styles.assessmentInfo}>

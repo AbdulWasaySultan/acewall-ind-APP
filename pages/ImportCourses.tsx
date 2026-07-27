@@ -261,6 +261,8 @@ const CourseImportPage = () => {
       <ScrollView
         style={styles.container}
         contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.header}>

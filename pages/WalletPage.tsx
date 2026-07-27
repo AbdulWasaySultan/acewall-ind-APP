@@ -311,7 +311,9 @@ const WalletPage = () => {
         <Text style={styles.headerText}>My Earnings</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {/* Statistics Cards */}
         <View style={styles.statsGrid}>
           <StatCard
@@ -744,6 +746,7 @@ const WalletPage = () => {
                         </View>
                       ) : null
                     }
+                    showsHorizontalScrollIndicator={false}
                   />
                 </View>
               </View>

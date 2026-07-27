@@ -313,7 +313,10 @@ const DiscussionsPage = () => {
         </Text>
         <View style={{ width: 40 }} />
       </View>
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+    >
       {/* Create Discussion Button Hidden */}
       {/* <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
         <Text style={styles.createButtonText}>Create Discussion</Text>
@@ -492,6 +495,8 @@ const DiscussionsPage = () => {
                       );
                     }}
                     style={{ width: "100%" }}
+                    showsVerticalScrollIndicator={false}
+                    showsHorizontalScrollIndicator={false}
                   />
                 )}
                 {/* Pagination Controls */}

@@ -318,6 +318,8 @@ const AssessmentsPage = () => {
       style={styles.container}
       nestedScrollEnabled
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
     >
       {/* ── Search + Category + Dates ── */}
       <View style={{ zIndex: 2000 }}>

@@ -1518,7 +1518,10 @@ const ChapterDiscussionsPage = () => {
           <Text style={{ color: "#000" }}>{error}</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <ScrollView contentContainerStyle={{ padding: 16 }}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {items.map((d) => {
             const bannerUrl = d.course?.thumbnail?.url;
             return (
@@ -1593,7 +1596,10 @@ const ChapterDiscussionsPage = () => {
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <ScrollView contentContainerStyle={{ padding: 16 }}>
+            <ScrollView contentContainerStyle={{ padding: 16 }}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               <Text style={styles.inputLabel}>Topic</Text>
               <TextInput
                 style={styles.textInput}
@@ -1857,7 +1863,10 @@ const ChapterDiscussionsPage = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Category</Text>
-            <ScrollView style={styles.categoryList}>
+            <ScrollView style={styles.categoryList}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            >
               {loadingCategories ? (
                 <ActivityIndicator size="large" color="#10B144" />
               ) : categories.length > 0 ? (

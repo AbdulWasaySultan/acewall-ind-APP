@@ -166,7 +166,9 @@ const GradeScaleModal: React.FC<GradeScaleModalProps> = ({
                     <View style={{ width: 40 }} />
                 </View>
 
-                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                >
                     {/* Add Grade */}
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Add New Grade</Text>

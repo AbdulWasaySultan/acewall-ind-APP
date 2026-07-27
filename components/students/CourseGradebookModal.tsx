@@ -102,8 +102,9 @@ const CourseGradebookModal: React.FC<CourseGradebookModalProps> = ({
               styles.modalListContent,
               { paddingTop: insets.top + 52 },
             ]}
-            showsVerticalScrollIndicator
+            showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
           >
             <View style={styles.gradesHeader}>
               <Text style={styles.gradesCourseName}>{gradebook.courseName}</Text>

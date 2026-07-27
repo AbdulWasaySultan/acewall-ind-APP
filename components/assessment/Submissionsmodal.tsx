@@ -62,7 +62,10 @@ const AnalyticsModal: React.FC<{
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <ScrollView style={analyticsStyles.container}>
+      <ScrollView style={analyticsStyles.container}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={[analyticsStyles.header, { paddingTop: insets.top + 8 }]}>
           <TouchableOpacity onPress={onClose} style={analyticsStyles.backBtn}>
@@ -72,7 +75,10 @@ const AnalyticsModal: React.FC<{
           <View style={{ width: 38 }} />
         </View>
 
-        <ScrollView contentContainerStyle={analyticsStyles.scrollContent}>
+        <ScrollView contentContainerStyle={analyticsStyles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           {/* Assessment name */}
           <Text style={analyticsStyles.assessmentName}>{assessmentTitle}</Text>
 
@@ -593,6 +599,8 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
                   )}
                 </TouchableOpacity>
               )}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
             />
           )}
         </View>

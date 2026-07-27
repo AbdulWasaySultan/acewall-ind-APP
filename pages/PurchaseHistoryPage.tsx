@@ -97,6 +97,8 @@ const PurchaseHistoryPage = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         <View style={styles.subHeaderRow}>
           <View style={{ flex: 1 }}>

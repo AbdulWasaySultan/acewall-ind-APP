@@ -415,6 +415,8 @@ const AnnouncementsPage = () => {
           ) : null
         }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       />
     </View>
   );
@@ -488,6 +490,8 @@ const AnnouncementsPage = () => {
           ListEmptyComponent={
             <Text style={styles.emptyText}>No announcements found.</Text>
           }
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
         />
       </View>
     );
@@ -514,6 +518,7 @@ const AnnouncementsPage = () => {
                 keyboardShouldPersistTaps="handled"
                 nestedScrollEnabled
                 contentContainerStyle={styles.modalScrollContent}
+                showsHorizontalScrollIndicator={false}
               >
                 <Text style={styles.modalTitle}>Create New Announcement</Text>
                 <Text style={styles.modalSubtitle}>

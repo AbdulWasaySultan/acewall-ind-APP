@@ -113,6 +113,8 @@ const NotificationBell = () => {
                   </TouchableOpacity>
                 );
               }}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
             />
 
             <TouchableOpacity

@@ -167,6 +167,7 @@ const CourseAnalyticsPage = () => {
           style={styles.content}
           contentContainerStyle={{ paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
         >
           {data.courseName ? (
             <Text style={styles.courseName}>{data.courseName}</Text>

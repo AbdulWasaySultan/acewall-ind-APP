@@ -49,7 +49,10 @@ const AddPageModal: React.FC<AddPageModalProps> = ({
             <View style={{ width: 40 }} />
           </View>
 
-          <ScrollView style={{ flex: 1 }}>
+          <ScrollView style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
             <Text style={styles.lessonFormInstruction}>
               Create a new page for this chapter.
             </Text>
