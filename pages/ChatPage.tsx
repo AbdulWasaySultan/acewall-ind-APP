@@ -110,7 +110,7 @@ const ChatPage = () => {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top || 10 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={{ paddingVertical: 10, marginTop: 10 }}>
           <Text style={styles.headerName}>{otherMemberName}</Text>
         </View>

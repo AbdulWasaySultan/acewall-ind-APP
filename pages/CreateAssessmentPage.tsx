@@ -84,7 +84,7 @@ const CreateAssessmentPage = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <SimpleIcon name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>

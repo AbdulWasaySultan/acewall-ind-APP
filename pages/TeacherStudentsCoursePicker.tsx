@@ -101,6 +101,7 @@ const TeacherStudentsCoursePicker = () => {
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search courses..."
+      filterOpen={courseFilterOpen}
       extraFilter={
         <View>
           <DropdownFilter

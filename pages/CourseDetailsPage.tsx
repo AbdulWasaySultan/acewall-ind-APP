@@ -844,6 +844,8 @@ const CourseDetailsPage = () => {
       setCurrentChapterForLesson(chapterDetails._id);
       setShowChapterDetailsModal(false);
       setShowLessonCreationModal(true);
+    } else {
+      Toast.show("Please open a chapter first", Toast.LONG);
     }
   };
 
@@ -2035,7 +2037,7 @@ const CourseDetailsPage = () => {
           paddingHorizontal: 16,
           elevation: 4,
           shadowColor: "#000",
-          paddingTop: insets.top,
+          paddingTop: insets.top + 12,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.2,
           shadowRadius: 2,

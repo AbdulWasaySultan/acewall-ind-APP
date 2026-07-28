@@ -159,6 +159,7 @@ const TeacherAssessmentsCoursePicker = () => {
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search courses..."
+      filterOpen={verificationOpen || structureOpen}
       extraFilter={
         <View style={{ flexDirection: "column", gap: 8 }}>
           <View style={{ zIndex: verificationOpen ? 3000 : 2000 }}>

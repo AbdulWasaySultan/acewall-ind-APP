@@ -103,7 +103,10 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
     >
       <View style={styles.fullScreenModalContainer}>
         <View
-          style={[styles.fullScreenModalHeader, { paddingTop: insets.top }]}
+          style={[
+            styles.fullScreenModalHeader,
+            { paddingTop: insets.top + 12 },
+          ]}
         >
           <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
             <SimpleIcon name="arrow-back" size={24} color="#333" />

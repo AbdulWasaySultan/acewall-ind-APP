@@ -59,7 +59,10 @@ const LessonEditModal: React.FC<LessonEditModalProps> = ({
     >
       <View style={styles.fullScreenModalContainer}>
         <View
-          style={[styles.fullScreenModalHeader, { paddingTop: insets.top }]}
+          style={[
+            styles.fullScreenModalHeader,
+            { paddingTop: insets.top + 12 },
+          ]}
         >
           <TouchableOpacity
             onPress={() => {

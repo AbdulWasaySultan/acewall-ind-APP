@@ -7,7 +7,6 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
-  Linking,
   StyleSheet,
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
@@ -171,9 +170,19 @@ const LessonCard = React.memo<LessonCardProps>(
     );
 
     return (
-      <View style={styles.lessonCard}>
-        {/* Header row: number badge + action icons — dropdown lives ONLY here */}
-        <View style={styles.lessonCardHeader}>
+      <View
+        style={[styles.lessonCard, isDropdownOpen && styles.lessonCardOpen]}
+      >
+        {/* Header row: number badge + action icons — dropdown lives ONLY here.
+            lessonCardHeaderOpen gets its own elevation bump below so it paints
+            over the title/description/Files block that sits right beneath it
+            inside this same card. */}
+        <View
+          style={[
+            styles.lessonCardHeader,
+            isDropdownOpen && styles.lessonCardHeaderOpen,
+          ]}
+        >
           <View style={styles.lessonNumberBadge}>
             <Text style={styles.lessonCardNumberText}>Lesson {index + 1}</Text>
           </View>
@@ -192,8 +201,12 @@ const LessonCard = React.memo<LessonCardProps>(
             </TouchableOpacity>
 
             {/* add lesson button */}
-
-            <View style={styles.lessonsPlusButtonContainer}>
+            <View
+              style={[
+                styles.lessonsPlusButtonContainer,
+                isDropdownOpen && styles.plusButtonContainerActive,
+              ]}
+            >
               <TouchableOpacity
                 style={styles.lessonAddButton}
                 onPress={() => onLessonsPlusButtonPress(lesson)}
@@ -375,7 +388,12 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
   };
 
   // Virtualized so chapters with many lessons don't mount everything at
-  // once (was the source of the scroll stutter/freeze).
+  // once. NOTE: deliberately NOT using CellRendererComponent here — wrapping
+  // every row (and the header) in an extra View interfered with FlatList's
+  // internal height measurement/recycling and made "+ Add Lesson" taps land
+  // on the wrong row intermittently. z-order for open dropdowns is handled
+  // entirely through elevation on the row/card styles instead (see styles
+  // below), so no FlatList-level wrapper is needed.
   const renderLesson = useCallback(
     ({ item, index }: { item: any; index: number }) => (
       <LessonCard
@@ -425,7 +443,12 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
     return (
       <>
         {/* ─── Chapter Info Card ─── */}
-        <View style={styles.chapterDetailsCard}>
+        <View
+          style={[
+            styles.chapterDetailsCard,
+            showPlusDropdown && styles.chapterDetailsCardOpen,
+          ]}
+        >
           <View style={styles.chapterDetailsHeader}>
             <View style={styles.chapterDetailsIcon}>
               <SimpleIcon name="menu-book" size={24} color="#10B144" />
@@ -439,63 +462,63 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
               </TouchableOpacity>
               <View style={styles.plusButtonContainer}>
                 <TouchableOpacity
-                  style={[styles.chapterDetailsActionButton, {backgroundColor: "#10B144"}]}
+                  style={[
+                    styles.chapterDetailsActionButton,
+                    { backgroundColor: "#10B144" },
+                  ]}
                   onPress={onPlusButtonPress}
                   activeOpacity={0.8}
                 >
                   <SimpleIcon name="plus" size={25} color="#fff" />
-
-                  {showPlusDropdown && (
-                    <View style={styles.dropdownMenu}>
-                      <TouchableOpacity
-                        style={styles.dropdownItem}
-                        onPress={() => onDropdownOption("lesson")}
-                      >
-                        <SimpleIcon
-                          name="menu-book"
-                          size={16}
-                          color="#10B144"
-                        />
-                        <Text style={styles.dropdownItemText}>
-                          + Add Lesson
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.dropdownItem}
-                        onPress={() => onDropdownOption("assessment")}
-                      >
-                        <SimpleIcon
-                          name="clipboard"
-                          size={16}
-                          color="#10B144"
-                        />
-                        <Text style={styles.dropdownItemText}>
-                          + Add Assessment
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.dropdownItem}
-                        onPress={() => onDropdownOption("page")}
-                      >
-                        <SimpleIcon
-                          name="description"
-                          size={16}
-                          color="#6b7280"
-                        />
-                        <Text style={styles.dropdownItemText}>+ Add Page</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.dropdownItem}
-                        onPress={() => onDropdownOption("discussion")}
-                      >
-                        <SimpleIcon name="chat" size={16} color="#6b7280" />
-                        <Text style={styles.dropdownItemText}>
-                          + Discussion
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
                 </TouchableOpacity>
+
+                {/* Sibling of the trigger button, not a child of it — nesting
+                    these TouchableOpacity items inside the "+" button's own
+                    TouchableOpacity let the button's responder intercept taps
+                    meant for the item closest to it ("Add Lesson"), so that
+                    item silently did nothing on iOS while the others worked. */}
+                {showPlusDropdown && (
+                  <View style={styles.dropdownMenu}>
+                    <TouchableOpacity
+                      style={styles.dropdownItem}
+                      onPress={() => onDropdownOption("lesson")}
+                    >
+                      <SimpleIcon name="menu-book" size={16} color="#10B144" />
+                      <Text style={styles.dropdownItemText}>
+                        + Add Lesson
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.dropdownItem}
+                      onPress={() => onDropdownOption("assessment")}
+                    >
+                      <SimpleIcon name="clipboard" size={16} color="#10B144" />
+                      <Text style={styles.dropdownItemText}>
+                        + Add Assessment
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.dropdownItem}
+                      onPress={() => onDropdownOption("page")}
+                    >
+                      <SimpleIcon
+                        name="description"
+                        size={16}
+                        color="#6b7280"
+                      />
+                      <Text style={styles.dropdownItemText}>+ Add Page</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.dropdownItem}
+                      onPress={() => onDropdownOption("discussion")}
+                    >
+                      <SimpleIcon name="chat" size={16} color="#6b7280" />
+                      <Text style={styles.dropdownItemText}>
+                        + Discussion
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -711,11 +734,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#e5e5e5",
-
     overflow: "visible",
-
-    zIndex: 999,
-    elevation: 1,
+    zIndex: 5,
+  },
+  // Applied only while showPlusDropdown is open. On Android, sibling paint
+  // order (and therefore which view WINS TOUCHES in the overlap region) is
+  // decided by elevation, not zIndex — this card's dropdown overflows onto
+  // the "Chapter Assessments" card below it, so it needs a real elevation
+  // bump to paint (and receive taps) above that sibling.
+  chapterDetailsCardOpen: {
+    zIndex: 50,
+    elevation: 20,
   },
   chapterDetailsHeader: {
     flexDirection: "row",
@@ -736,14 +765,23 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
   },
+  // Always-on wrapper around the chapter-level plus button. Small, constant
+  // elevation so the button + its dropdown always sit above the card's own
+  // static content (title/description), independent of open/closed state.
   plusButtonContainer: {
     position: "relative",
-    zIndex: 10, // always present, never toggled
-    elevation: 10, // always present, never toggled
+    zIndex: 10,
+    elevation: 10,
   },
+  // The actual floating menu — highest elevation in its stacking context so
+  // it always paints (and is tappable) above everything around it.
   dropdownMenu: {
     position: "absolute",
-    top: 40,
+    // The "+" button is ~41px tall (padding: 8 + icon 25); top: 40 left the
+    // dropdown's top edge overlapping the button's own last ~1px, so taps
+    // meant for the closest item ("Add Lesson") sometimes still landed on
+    // the button instead and just re-toggled the menu.
+    top: 50,
     right: 0,
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -754,8 +792,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 5,
-    zIndex: 1000,
+    elevation: 30,
+    zIndex: 60,
   },
   dropdownItem: {
     flexDirection: "row",
@@ -785,9 +823,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#e5e5e5",
-
-    zIndex: 1,
-    elevation: 1,
+    overflow: "visible",
   },
   lessonsHeader: {
     flexDirection: "row",
@@ -871,12 +907,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: "#e5e5e5",
+    overflow: "visible",
+  },
+  // Applied only while this lesson's own dropdown is open. Lesson cards are
+  // FlatList siblings with no elevation by default, so the next card down
+  // (rendered later) would otherwise paint — and catch taps — over this
+  // one's dropdown overflow without this bump.
+  lessonCardOpen: {
+    zIndex: 10,
+    elevation: 20,
   },
   lessonCardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8,
+    overflow: "visible",
+  },
+  // Applied only while open. Beats this card's OWN sibling below it
+  // (title/description/Files block) within the same lessonCard.
+  lessonCardHeaderOpen: {
+    zIndex: 20,
+    elevation: 24,
   },
   lessonNumberBadge: {
     backgroundColor: "#10B144",
@@ -887,14 +939,27 @@ const styles = StyleSheet.create({
   lessonCardNumberText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
   lessonCardActions: { flexDirection: "row", gap: 8 },
   lessonActionIcon: { padding: 8, borderRadius: 4, backgroundColor: "#f5f5f5" },
+  // Always-on wrapper around the per-lesson plus button — same reasoning as
+  // plusButtonContainer above.
   lessonsPlusButtonContainer: {
     position: "relative",
     zIndex: 10,
     elevation: 10,
   },
+  plusButtonContainerActive: {
+    zIndex: 30,
+    elevation: 26,
+  },
+  // The actual floating dropdown box — highest elevation so it's always on
+  // top and always tappable.
   lessonsDropdownMenu: {
     position: "absolute",
-    top: 40,
+    // lessonAddButton is ~42px tall (paddingVertical: 10 + icon 22) AND has
+    // marginTop: 4, so its true bottom edge sits at ~46px from this
+    // container's top — top: 40 put the dropdown's top edge ~6px inside the
+    // button's own tap target, so taps on the first item landed on the
+    // button instead and just re-toggled the menu.
+    top: 54,
     right: 0,
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -905,8 +970,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 5,
-    zIndex: 1000, // was 999999999999999
+    elevation: 30,
+    zIndex: 40,
   },
   lessonAddButton: {
     backgroundColor: "#10B144",

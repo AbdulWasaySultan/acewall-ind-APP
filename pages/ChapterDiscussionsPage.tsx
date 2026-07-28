@@ -1475,7 +1475,7 @@ const ChapterDiscussionsPage = () => {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() =>
             navigateBack ? navigateBack() : (navigation as any).goBack()
@@ -1582,7 +1582,7 @@ const ChapterDiscussionsPage = () => {
         onRequestClose={() => setShowCreate(false)}
       >
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
-          <View style={[styles.header, { paddingTop: insets.top }]}>
+          <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity
               onPress={() => setShowCreate(false)}
               style={{ padding: 4, marginRight: 12 }}

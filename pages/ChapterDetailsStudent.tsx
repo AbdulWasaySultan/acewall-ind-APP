@@ -732,7 +732,7 @@ const ChapterDetailsStudent = () => {
         <View
           style={[
             styles.detailedModalContainer,
-            { paddingTop: insets.top || 20 },
+            { paddingTop: insets.top + 12 },
           ]}
         >
           {/* Header */}

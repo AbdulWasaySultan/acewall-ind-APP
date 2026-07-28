@@ -277,7 +277,7 @@ const ChapterPagesPage = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() =>
             navigateBack ? navigateBack() : (navigation as any).goBack()
@@ -349,7 +349,7 @@ const ChapterPagesPage = () => {
         onRequestClose={() => setShowCreateModal(false)}
       >
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
-          <View style={[styles.header, { paddingTop: insets.top }]}>
+          <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity
               onPress={() => setShowCreateModal(false)}
               style={{ padding: 4, marginRight: 12 }}
@@ -440,7 +440,7 @@ const ChapterPagesPage = () => {
         onRequestClose={() => setShowDetails(false)}
       >
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
-          <View style={[styles.header, { paddingTop: insets.top }]}>
+          <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
             <TouchableOpacity
               onPress={() => setShowDetails(false)}
               style={{ padding: 4, marginRight: 12 }}

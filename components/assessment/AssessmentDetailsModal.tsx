@@ -475,7 +475,7 @@ const AssessmentDetailsModal: React.FC<Props> = ({
 
   return (
     <Modal visible={visible} animationType="slide">
-      <View style={[styles.container, { paddingTop: insets.top || 20 }]}>
+      <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         {/* Back button */}
         <TouchableOpacity
           style={[styles.backBtn, { top: insets.top + 10 }]}

@@ -49,7 +49,7 @@ const GradeScaleManagementPage: React.FC = () => {
               showsHorizontalScrollIndicator={false}
             >
                 {/* Header */}
-                <View style={[styles.header, { paddingTop: insets.top }]}>
+                <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
                     <TouchableOpacity style={styles.backButton}>
                         <SimpleIcon name="arrow-back" size={24} color="#333" />
                         <Text style={styles.backText}>Back</Text>

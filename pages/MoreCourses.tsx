@@ -404,7 +404,12 @@ const MoreCoursesPage = () => {
       {/* STUDENT UI: Category Dropdowns, Search, and Courses */}
       {userRole === "student" && (
         <>
-          <View style={styles.dropdownContainer}>
+          <View
+            style={[
+              styles.dropdownContainer,
+              (categoryOpen || subcategoryOpen) && styles.dropdownContainerOpen,
+            ]}
+          >
             <DropDownPicker
               open={categoryOpen}
               value={selectedCategory}
@@ -567,6 +572,12 @@ const styles = StyleSheet.create({
   dropdownContainer: {
     marginBottom: 16,
     zIndex: 1000,
+  },
+  // Wins the Android stacking fight against the course list's elevated
+  // cards so the open dropdown list renders on top of them.
+  dropdownContainerOpen: {
+    zIndex: 4000,
+    elevation: 10,
   },
   dropdownPicker: {
     backgroundColor: "#fff",

@@ -74,7 +74,7 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
       transparent={false}
       onRequestClose={onClose}
     >
-      <View style={[styles.container, { paddingTop: insets.top || 20 }]}>
+      <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Submission Details</Text>

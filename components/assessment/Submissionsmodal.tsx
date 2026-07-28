@@ -474,7 +474,12 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
         </View>
 
         {/* ── Filters ── */}
-        <View style={styles.dropdownRow}>
+        <View
+          style={[
+            styles.dropdownRow,
+            (modalStatusOpen || modalGradingOpen) && styles.dropdownRowOpen,
+          ]}
+        >
           <View style={{ flex: 1, marginRight: 8 }}>
             <DropDownPicker
               open={modalStatusOpen}
@@ -684,6 +689,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: 16,
     marginBottom: 12,
+  },
+  // Wins the Android stacking fight against the submissions list's
+  // elevated cards so the open dropdown list renders on top of them.
+  dropdownRowOpen: {
+    zIndex: 6000,
+    elevation: 10,
   },
   dropdown: { backgroundColor: "#fff", borderColor: "#ddd", borderRadius: 8 },
   dropdownContainer: { height: 50, marginBottom: 10 },

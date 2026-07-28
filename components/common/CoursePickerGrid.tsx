@@ -37,6 +37,12 @@ interface CoursePickerGridProps {
   onSearchChange: (q: string) => void;
   searchPlaceholder?: string;
   extraFilter?: React.ReactNode;
+  // Whether a dropdown inside extraFilter is currently open. When true, the
+  // filter row is given elevation higher than the course cards below it —
+  // on Android, elevation (not just zIndex) decides paint order between
+  // siblings, so without this the open dropdown list renders behind the
+  // elevated cards instead of over them.
+  filterOpen?: boolean;
   onSelect: (item: CoursePickerItem) => void;
   emptyTitle?: string;
   emptySubtitle?: string;
@@ -57,6 +63,7 @@ const CoursePickerGrid: React.FC<CoursePickerGridProps> = ({
   onSearchChange,
   searchPlaceholder = "Search courses...",
   extraFilter,
+  filterOpen = false,
   onSelect,
   emptyTitle = "No courses found",
   emptySubtitle = "Try adjusting your search or filters.",
@@ -95,7 +102,11 @@ const CoursePickerGrid: React.FC<CoursePickerGridProps> = ({
       </View>
 
       {extraFilter ? (
-        <View style={styles.extraFilter}>{extraFilter}</View>
+        <View
+          style={[styles.extraFilter, filterOpen && styles.extraFilterOpen]}
+        >
+          {extraFilter}
+        </View>
       ) : null}
 
       {loading ? (
@@ -206,6 +217,13 @@ const styles = StyleSheet.create({
   },
   extraFilter: {
     marginBottom: 10,
+  },
+  // Wins the Android stacking fight against the course cards below (which
+  // have elevation: 3) so the open dropdown list renders on top of them
+  // instead of behind them.
+  extraFilterOpen: {
+    zIndex: 10,
+    elevation: 10,
   },
   stateWrap: { alignItems: "center", padding: 32 },
   stateText: { color: "#6B7280", marginTop: 8 },

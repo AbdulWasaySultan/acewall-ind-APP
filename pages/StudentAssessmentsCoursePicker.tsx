@@ -102,6 +102,7 @@ const StudentAssessmentsCoursePicker = () => {
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search courses..."
+      filterOpen={typeOpen}
       extraFilter={
         <DropdownFilter
           open={typeOpen}

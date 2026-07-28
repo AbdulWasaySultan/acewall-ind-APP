@@ -77,7 +77,10 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
     >
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
         <View
-          style={[styles.assessmentDetailsHeader, { paddingTop: insets.top }]}
+          style={[
+            styles.assessmentDetailsHeader,
+            { paddingTop: insets.top + 12 },
+          ]}
         >
           <TouchableOpacity
             onPress={() => {

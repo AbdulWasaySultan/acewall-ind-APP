@@ -71,7 +71,7 @@ const handleCreateNewSemester = () => {
         <View
           style={[
             styles.gradingPeriodsModalContent,
-            { paddingTop: insets.top },
+            { paddingTop: insets.top + 12 },
           ]}
         >
           <TouchableOpacity

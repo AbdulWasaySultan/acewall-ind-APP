@@ -99,6 +99,7 @@ const TeacherAnnouncementsCoursePicker = () => {
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search courses..."
+      filterOpen={courseFilterOpen}
       extraFilter={
         <DropdownFilter
           open={courseFilterOpen}

@@ -32,7 +32,10 @@ import {
 import { getComments, sendComment } from "../services/comment";
 import { createConversation } from "../services/conversation";
 import Toast from "react-native-simple-toast";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 // Type for navigation param
 const avatarPlaceholder = require("../assets/placeholder.png");
 interface Params {
@@ -127,7 +130,7 @@ const CourseDetailStudentPageEnrolled = () => {
     await refreshChaptersForQuarter(quarter._id);
   };
   useEffect(() => {
-   console.log(courseId)
+    console.log(courseId);
     const fetchDetails = async () => {
       setLoading(true);
       setError(null);
@@ -227,7 +230,9 @@ const CourseDetailStudentPageEnrolled = () => {
 
     Alert.alert(
       "Confirm Rating",
-      `Submit a rating of ${newRating} star${newRating > 1 ? "s" : ""} for this course?`,
+      `Submit a rating of ${newRating} star${
+        newRating > 1 ? "s" : ""
+      } for this course?`,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Submit", onPress: () => submitRating(newRating) },
@@ -373,7 +378,8 @@ const CourseDetailStudentPageEnrolled = () => {
   };
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView style={{ backgroundColor: "#fff" }}
+      <ScrollView
+        style={{ backgroundColor: "#fff" }}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       >
@@ -544,7 +550,7 @@ const CourseDetailStudentPageEnrolled = () => {
                     name="check-circle"
                     size={22}
                     color="#43a047"
-                    style={{ marginRight: 8 }}
+                    style={styles.checkIcon}
                   />
                   <Text style={styles.checkText}>{point}</Text>
                 </View>
@@ -833,7 +839,12 @@ const CourseDetailStudentPageEnrolled = () => {
         onRequestClose={() => setShowQuartersModal(false)}
       >
         <View style={styles.quartersModalContainer}>
-          <View style={[styles.quartersModalHeader, { paddingTop: insets.top + 16 }]}>
+          <View
+            style={[
+              styles.quartersModalHeader,
+              { paddingTop: insets.top + 16 },
+            ]}
+          >
             <Text style={styles.quartersModalTitle}>Quarters</Text>
             <TouchableOpacity onPress={() => setShowQuartersModal(false)}>
               <SimpleIcon name="close" size={32} color="#333" />
@@ -883,7 +894,12 @@ const CourseDetailStudentPageEnrolled = () => {
         }}
       >
         <View style={styles.chaptersModalContainer}>
-          <View style={[styles.chaptersModalHeader, { paddingTop: insets.top + 16 }]}>
+          <View
+            style={[
+              styles.chaptersModalHeader,
+              { paddingTop: insets.top + 16 },
+            ]}
+          >
             <Text style={styles.chaptersModalTitle}>Chapters</Text>
             <TouchableOpacity
               onPress={() => {
@@ -1086,9 +1102,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   sectionSubtitle: { fontSize: 16, color: "#888", marginBottom: 8 },
-  checkRow: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  checkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+    width: "90%",
+  },
+  checkIcon: {
+    marginRight: 8,
+    marginTop: 1, // nudge to optically align with the first line of text
+    flexShrink: 0,
+  },
   checkSimpleIcon: { fontSize: 18, color: "#10B144", marginRight: 8 },
-  checkText: { fontSize: 16, color: "#222" },
+  checkText: { flex: 1, fontSize: 16, color: "#222" },
   unenrollBtn: {
     backgroundColor: "#FF6347",
     borderRadius: 8,

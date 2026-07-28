@@ -392,7 +392,7 @@ const SpillTheTeaPage: React.FC = () => {
       {/* <StatusBar barStyle="light-content" backgroundColor={COLORS.secondary} /> */}
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerIcon}>☕</Text>
           <Text style={styles.headerTitle}>Spill The Tea</Text>
