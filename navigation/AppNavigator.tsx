@@ -73,6 +73,24 @@ import PaymentSuccessPage from "../pages/PaymentSuccessPage";
 import PaymentCancelPage from "../pages/PaymentCancelPage";
 import { Linking } from "react-native";
 import { handleDeepLink } from "../utils/deepLinking";
+import { withTeacherGuard } from "../components/common/RequireTeacher";
+
+// Teacher-only stack screens, guarded at the navigator level (not just
+// hidden from the Drawer menu) - see components/common/RequireTeacher.tsx.
+// Defined once at module scope so React Navigation's `component` prop gets
+// a stable reference instead of remounting on every render.
+const GuardedCreateAssessmentPage = withTeacherGuard(CreateAssessmentPage);
+const GuardedTeacherStudentAnalyticsPage = withTeacherGuard(
+  TeacherStudentAnalyticsPage
+);
+const GuardedEnrollmentStatsPage = withTeacherGuard(EnrollmentStatsPage);
+const GuardedStandardGradeScaleManagementPage = withTeacherGuard(
+  StandardGradeScaleManagementPage
+);
+const GuardedStudentsPage = withTeacherGuard(StudentsPage);
+const GuardedTeacherCourseStudentsPage = withTeacherGuard(
+  TeacherCourseStudentsPage
+);
 
 // Define the type for our stack navigator
 export type RootStackParamList = {
@@ -443,7 +461,7 @@ const AppNavigator = () => {
             />
             <Stack.Screen
               name="StandardGradeScaleManagement"
-              component={StandardGradeScaleManagementPage}
+              component={GuardedStandardGradeScaleManagementPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen
@@ -453,12 +471,12 @@ const AppNavigator = () => {
             />
             <Stack.Screen
               name="EnrollmentStats"
-              component={EnrollmentStatsPage}
+              component={GuardedEnrollmentStatsPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen
               name="TeacherStudentAnalytics"
-              component={TeacherStudentAnalyticsPage}
+              component={GuardedTeacherStudentAnalyticsPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen
@@ -513,12 +531,12 @@ const AppNavigator = () => {
             />
             <Stack.Screen
               name="TeacherMessagesByCourse"
-              component={TeacherCourseStudentsPage}
+              component={GuardedTeacherCourseStudentsPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen
               name="StudentsByCourse"
-              component={StudentsPage}
+              component={GuardedStudentsPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen
@@ -548,7 +566,7 @@ const AppNavigator = () => {
             />
             <Stack.Screen
               name="CreateAssessment"
-              component={CreateAssessmentPage}
+              component={GuardedCreateAssessmentPage}
               options={{ headerShown: false }}
             />
             <Stack.Screen

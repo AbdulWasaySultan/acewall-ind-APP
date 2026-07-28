@@ -11,6 +11,7 @@ import {
   Dimensions,
 } from "react-native";
 import Toast from "react-native-simple-toast";
+import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Course, StudentCourseGradebook, getStudentCourseGradebook } from "../../services/student";
 import GradebookTable from "./GradebookTable";
@@ -31,11 +32,21 @@ const CourseGradebookModal: React.FC<CourseGradebookModalProps> = ({
   course,
   onClose,
 }) => {
+  const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const [gradebook, setGradebook] = useState<StudentCourseGradebook | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleViewAnalytics = () => {
+    if (!studentId || !course?._id) return;
+    onClose();
+    navigation.navigate("TeacherStudentAnalytics", {
+      courseId: course._id,
+      studentId,
+    });
+  };
 
   useEffect(() => {
     if (!visible || !studentId || !course?._id) {
@@ -79,12 +90,19 @@ const CourseGradebookModal: React.FC<CourseGradebookModalProps> = ({
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <View style={styles.modalContainer}>
-        <Pressable
-          style={[styles.modalCloseButton, { top: insets.top + 8 }]}
-          onPress={onClose}
-        >
-          <SimpleIcon name="close" size={28} color="#333" />
-        </Pressable>
+        <View style={[styles.modalTopBar, { top: insets.top + 8 }]}>
+          {studentId && course?._id && (
+            <Pressable
+              style={styles.analyticsButton}
+              onPress={handleViewAnalytics}
+            >
+              <Text style={styles.analyticsButtonText}>Analytics</Text>
+            </Pressable>
+          )}
+          <Pressable style={styles.modalCloseButton} onPress={onClose}>
+            <SimpleIcon name="close" size={28} color="#333" />
+          </Pressable>
+        </View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -148,7 +166,24 @@ const CourseGradebookModal: React.FC<CourseGradebookModalProps> = ({
 
 const styles = StyleSheet.create({
   modalContainer: { flex: 1, height: SCREEN_HEIGHT, backgroundColor: "#fff" },
-  modalCloseButton: { position: "absolute", top: 16, right: 20, zIndex: 100, padding: 8 },
+  modalTopBar: {
+    position: "absolute",
+    right: 12,
+    zIndex: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  modalCloseButton: { padding: 8 },
+  analyticsButton: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  analyticsButtonText: { fontSize: 12, fontWeight: "700", color: "#2563eb" },
   modalList: { flex: 1, height: SCREEN_HEIGHT },
   modalListContent: { paddingBottom: 40, paddingHorizontal: 16 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },

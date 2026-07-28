@@ -42,7 +42,7 @@ import NewQuarterModal from "../components/modals/NewQuarterModal";
 import EditQuarterModal from "../components/modals/EditQuarterModal";
 import GradingPeriodsModal from "../components/modals/GradingPeriodsModal";
 import ChaptersForQuarterModal from "../components/modals/ChaptersForQuarterModal";
-import AssessmentDetailsModal from "../components/modals/AssessmentDetailsModal";
+import AssessmentDetailsModal from "../components/assessment/AssessmentDetailsModal";
 import EditAssessmentModal from "../components/modals/EditAssessmentModal";
 import AddFilesModal from "../components/modals/AddFilesModal";
 import LessonCreationModal from "../components/modals/LessonCreationModal";
@@ -189,9 +189,6 @@ const CourseDetailsPage = () => {
   >(null);
   const [selectedAssessmentForModal, setSelectedAssessmentForModal] =
     useState<any>(null);
-  const [expandedMcq, setExpandedMcq] = useState<{ [key: number]: boolean }>({
-    0: true,
-  });
 
   // ---- Assessment Categories ----
   const [assessmentCategories, setAssessmentCategories] = useState<any[]>([]);
@@ -2192,17 +2189,19 @@ const CourseDetailsPage = () => {
               Manage GradeScale
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Coupons", { courseId })}
-            style={[
-              styles.topActionButton,
-              { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
-            ]}
-          >
-            <Text style={[styles.topActionButtonText, { color: "#000" }]}>
-              Coupons
-            </Text>
-          </TouchableOpacity>
+          {course.paymentType !== "FREE" && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Coupons", { courseId })}
+              style={[
+                styles.topActionButton,
+                { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
+              ]}
+            >
+              <Text style={[styles.topActionButtonText, { color: "#000" }]}>
+                Coupons
+              </Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={loadGPA}
             style={[
@@ -2723,15 +2722,14 @@ const CourseDetailsPage = () => {
 
       <AssessmentDetailsModal
         visible={showAssessmentDetailsModal}
-        onClose={() => setShowAssessmentDetailsModal(false)}
-        onBackToChapter={() => setShowChapterDetailsModal(true)}
+        onClose={() => {
+          setShowAssessmentDetailsModal(false);
+          setShowChapterDetailsModal(true);
+        }}
+        assessment={selectedAssessmentForModal}
         onEdit={openEditAssessmentModal}
-        selectedAssessmentForModal={selectedAssessmentForModal}
-        expandedMcq={expandedMcq}
-        setExpandedMcq={setExpandedMcq}
-        insets={insets}
-        styles={styles}
       />
+
 
       <EditAssessmentModal
         visible={showEditAssessmentModal}
@@ -3730,9 +3728,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
+    paddingVertical: 16,
     justifyContent: "space-between",
   },
-  assessmentDetailsBackButton: { flexDirection: "row", alignItems: "center" },
+  assessmentDetailsBackButton: {
+    width: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   assessmentDetailsBackText: { color: "#fff", fontSize: 18, marginLeft: 8 },
   assessmentDetailsEditButton: { padding: 8 },
   assessmentDetailsHeaderTitle: {

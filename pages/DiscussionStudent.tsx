@@ -9,17 +9,21 @@ import {
   ScrollView,
   ActivityIndicator,
   TextInput,
-  Keyboard,
   Linking,
   Image,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import {
   useRoute,
   useNavigation,
   type RouteProp,
 } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import Toast from "react-native-simple-toast";
 import SimpleIcon from "../components/SimpleIcon";
+import AnimatedBottomSheet from "../components/common/AnimatedBottomSheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -31,6 +35,11 @@ import {
   sendReply,
   getReplies,
   gradeDiscussionComment,
+  getStudentsOfCourse,
+  editDiscussion,
+  toggleDiscussionResubmission,
+  setDiscussionDueDateForStudents,
+  getAssessmentCategories,
 } from "../services/course";
 
 interface DiscussionDetailParams {
@@ -59,6 +68,18 @@ interface Discussion {
   category: string;
   semester: string;
   quarter: string;
+  allowResubmission?: boolean;
+  studentDueDateOverrides?: {
+    _id: string;
+    student: {
+      _id: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      email: string;
+    };
+    newDueDate: { date: string; time: string };
+  }[];
   chapter: {
     _id: string;
     title: string;
@@ -150,20 +171,33 @@ const DiscussionStudent = () => {
   const [sendingComment, setSendingComment] = useState(false);
   const [hasCommented, setHasCommented] = useState(false);
   const [checkingCommented, setCheckingCommented] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", (e) => {
-      setKeyboardHeight(20);
-    });
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardHeight(0);
-    });
 
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
+  // ── Settings sheet (teacher): resubmission + due date extensions ──
+  const [showSettingsSheet, setShowSettingsSheet] = useState(false);
+  const [savingResubmission, setSavingResubmission] = useState(false);
+  const [courseStudents, setCourseStudents] = useState<any[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [overrideDate, setOverrideDate] = useState<Date | null>(null);
+  const [tempOverrideDate, setTempOverrideDate] = useState<Date | null>(null);
+  const [showOverrideDatePicker, setShowOverrideDatePicker] = useState(false);
+  const [showOverrideTimePicker, setShowOverrideTimePicker] = useState(false);
+  const [savingOverride, setSavingOverride] = useState(false);
+
+  // ── Edit sheet (teacher): topic / description / category / due date ──
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [editTopic, setEditTopic] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategories, setEditCategories] = useState<any[]>([]);
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [showEditCategorySheet, setShowEditCategorySheet] = useState(false);
+  const [editDueDate, setEditDueDate] = useState<Date | null>(null);
+  const [tempEditDate, setTempEditDate] = useState<Date | null>(null);
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  const [showEditTimePicker, setShowEditTimePicker] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+
   useEffect(() => {
     fetchDiscussionDetails();
     fetchComments(1);
@@ -270,6 +304,158 @@ const DiscussionStudent = () => {
       console.error("Error checking if commented:", error);
     } finally {
       setCheckingCommented(false);
+    }
+  };
+
+  // ── Settings sheet (teacher) ────────────────────────────────────────────
+  const openSettingsSheet = async () => {
+    if (!discussion?.course?._id) return;
+    setShowSettingsSheet(true);
+    setStudentSearch("");
+    setSelectedStudentIds([]);
+    setOverrideDate(null);
+    setTempOverrideDate(null);
+    setLoadingStudents(true);
+    try {
+      const students = await getStudentsOfCourse(discussion.course._id);
+      setCourseStudents(students);
+    } catch (error) {
+      Toast.show("Failed to load students.", Toast.LONG);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  const handleToggleResubmission = async () => {
+    if (!discussion?._id) return;
+    const newValue = !discussion.allowResubmission;
+    setDiscussion((prev) =>
+      prev ? { ...prev, allowResubmission: newValue } : prev
+    );
+    setSavingResubmission(true);
+    try {
+      const res = await toggleDiscussionResubmission(discussion._id, newValue);
+      setDiscussion((prev) =>
+        prev ? { ...prev, allowResubmission: res.allowResubmission } : prev
+      );
+    } catch (error) {
+      setDiscussion((prev) =>
+        prev ? { ...prev, allowResubmission: !newValue } : prev
+      );
+      Toast.show("Failed to update resubmission setting.", Toast.LONG);
+    } finally {
+      setSavingResubmission(false);
+    }
+  };
+
+  const toggleStudentSelection = (studentId: string) => {
+    setSelectedStudentIds((prev) =>
+      prev.includes(studentId)
+        ? prev.filter((id) => id !== studentId)
+        : [...prev, studentId]
+    );
+  };
+
+  const handleSaveExtension = async () => {
+    if (!discussion?._id) return;
+    if (selectedStudentIds.length === 0) {
+      Toast.show("Select at least one student.", Toast.LONG);
+      return;
+    }
+    if (!overrideDate) {
+      Toast.show("Pick an override date and time.", Toast.LONG);
+      return;
+    }
+    setSavingOverride(true);
+    try {
+      const date = overrideDate.toISOString().split("T")[0];
+      const time = `${String(overrideDate.getHours()).padStart(
+        2,
+        "0"
+      )}:${String(overrideDate.getMinutes()).padStart(2, "0")}`;
+      await setDiscussionDueDateForStudents(discussion._id, selectedStudentIds, {
+        date,
+        time,
+      });
+      Toast.show("Due date extension saved.", Toast.LONG);
+      setSelectedStudentIds([]);
+      setOverrideDate(null);
+      await fetchDiscussionDetails();
+    } catch (error: any) {
+      Toast.show(
+        error?.response?.data?.message || "Failed to save extension.",
+        Toast.LONG
+      );
+    } finally {
+      setSavingOverride(false);
+    }
+  };
+
+  const filteredCourseStudents = courseStudents.filter((s) => {
+    if (!studentSearch.trim()) return true;
+    const full = `${s.firstName} ${s.middleName || ""} ${s.lastName} ${
+      s.email || ""
+    }`.toLowerCase();
+    return full.includes(studentSearch.toLowerCase().trim());
+  });
+
+  // ── Edit sheet (teacher) ────────────────────────────────────────────────
+  const openEditSheet = async () => {
+    if (!discussion) return;
+    setEditTopic(discussion.topic || "");
+    setEditDescription(discussion.description || "");
+    const categoryId =
+      typeof discussion.category === "string"
+        ? discussion.category
+        : (discussion.category as any)?._id || "";
+    setEditCategoryId(categoryId);
+    if (discussion.dueDate?.date) {
+      const due = new Date(discussion.dueDate.date);
+      if (discussion.dueDate.time) {
+        const [h, m] = discussion.dueDate.time.split(":");
+        due.setHours(parseInt(h, 10), parseInt(m, 10));
+      }
+      setEditDueDate(due);
+    } else {
+      setEditDueDate(null);
+    }
+    setShowEditSheet(true);
+    try {
+      const res = await getAssessmentCategories(discussion.course._id);
+      setEditCategories(res?.categories || []);
+    } catch (error) {
+      Toast.show("Failed to load categories.", Toast.LONG);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!discussion?._id) return;
+    if (!editTopic.trim() || !editDescription.trim() || !editCategoryId) {
+      Toast.show("Topic, description and category are required.", Toast.LONG);
+      return;
+    }
+    if (!editDueDate) {
+      Toast.show("Please select a due date.", Toast.LONG);
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await editDiscussion(discussion._id, {
+        topic: editTopic.trim(),
+        description: editDescription.trim(),
+        category: editCategoryId,
+        dueDate: editDueDate.toISOString(),
+      });
+      Toast.show("Discussion updated successfully.", Toast.LONG);
+      setShowEditSheet(false);
+      await fetchDiscussionDetails();
+    } catch (error: any) {
+      Toast.show(
+        error?.response?.data?.message || "Failed to update discussion.",
+        Toast.LONG
+      );
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -606,7 +792,11 @@ const DiscussionStudent = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={insets.top}
+    >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -615,11 +805,27 @@ const DiscussionStudent = () => {
           <SimpleIcon name="arrow-back" size={24} color="#333" />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
+
+        {isTeacher && (
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.headerActionButton}
+              onPress={openSettingsSheet}
+            >
+              <SimpleIcon name="settings" size={20} color="#333" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerActionButton}
+              onPress={openEditSheet}
+            >
+              <SimpleIcon name="edit" size={20} color="#333" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: keyboardHeight }}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       >
@@ -751,7 +957,12 @@ const DiscussionStudent = () => {
       </ScrollView>
 
       {hasCommented ? (
-        <View style={styles.alreadyCommentedContainer}>
+        <View
+          style={[
+            styles.alreadyCommentedContainer,
+            { paddingBottom: insets.bottom || 16 },
+          ]}
+        >
           <View style={styles.commentInputAvatar}>
             <Text style={styles.commentInputAvatarText}>U</Text>
           </View>
@@ -760,7 +971,12 @@ const DiscussionStudent = () => {
           </Text>
         </View>
       ) : (
-        <View style={styles.commentInputContainer}>
+        <View
+          style={[
+            styles.commentInputContainer,
+            { paddingBottom: insets.bottom || 16 },
+          ]}
+        >
           <View style={styles.commentInputAvatar}>
             <Text style={styles.commentInputAvatarText}>U</Text>
           </View>
@@ -836,7 +1052,443 @@ const DiscussionStudent = () => {
           </View>
         </View>
       </Modal>
-    </View>
+
+      {/* ── Settings Sheet (teacher) ── */}
+      <AnimatedBottomSheet
+        visible={showSettingsSheet}
+        onClose={() => setShowSettingsSheet(false)}
+      >
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.sheetTitle}>Discussion Settings</Text>
+
+          <TouchableOpacity
+            style={styles.resubmissionRow}
+            onPress={handleToggleResubmission}
+            disabled={savingResubmission}
+            activeOpacity={0.7}
+          >
+            <View
+              style={[
+                styles.checkbox,
+                discussion?.allowResubmission && styles.checkboxChecked,
+              ]}
+            >
+              {savingResubmission ? (
+                <ActivityIndicator size="small" color="#3B82F6" />
+              ) : (
+                discussion?.allowResubmission && (
+                  <SimpleIcon name="check" size={14} color="#fff" />
+                )
+              )}
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.resubmissionLabel}>Allow Resubmission</Text>
+              <Text style={styles.resubmissionHint}>
+                {discussion?.allowResubmission
+                  ? "Students can resubmit their responses."
+                  : "Resubmission disabled."}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.sheetDivider} />
+
+          <Text style={styles.sheetSectionTitle}>
+            Extend Due Date for Specific Students
+          </Text>
+
+          <TextInput
+            style={styles.studentSearchInput}
+            placeholder="Search student..."
+            placeholderTextColor="#999"
+            value={studentSearch}
+            onChangeText={setStudentSearch}
+          />
+
+          {loadingStudents ? (
+            <ActivityIndicator style={{ marginVertical: 16 }} color="#10B144" />
+          ) : filteredCourseStudents.length === 0 ? (
+            <Text style={styles.noStudentsText}>No students found.</Text>
+          ) : (
+            <View style={styles.studentListBox}>
+              {filteredCourseStudents.map((s) => {
+                const isSelected = selectedStudentIds.includes(s._id);
+                return (
+                  <TouchableOpacity
+                    key={s._id}
+                    style={styles.studentRow}
+                    onPress={() => toggleStudentSelection(s._id)}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        isSelected && styles.checkboxChecked,
+                      ]}
+                    >
+                      {isSelected && (
+                        <SimpleIcon name="check" size={14} color="#fff" />
+                      )}
+                    </View>
+                    <View style={{ marginLeft: 12 }}>
+                      <Text style={styles.studentName}>
+                        {s.firstName} {s.middleName || ""} {s.lastName}
+                      </Text>
+                      <Text style={styles.studentEmail}>{s.email}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+
+          {selectedStudentIds.length > 0 && (
+            <Text style={styles.selectedCountText}>
+              {selectedStudentIds.length} student
+              {selectedStudentIds.length > 1 ? "s" : ""} selected
+            </Text>
+          )}
+
+          <Text style={styles.sheetLabel}>New Override Date & Time</Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setShowOverrideDatePicker(true)}
+            >
+              <Text style={styles.dateButtonText}>
+                {overrideDate
+                  ? overrideDate.toLocaleDateString("en-US")
+                  : "Select date"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => {
+                if (!overrideDate && !tempOverrideDate) {
+                  Toast.show("Select a date first.", Toast.LONG);
+                  return;
+                }
+                setShowOverrideTimePicker(true);
+              }}
+            >
+              <Text style={styles.dateButtonText}>
+                {overrideDate
+                  ? overrideDate.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "Select time"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {showOverrideDatePicker && (
+            <>
+              {Platform.OS === "ios" && (
+                <TouchableOpacity
+                  style={styles.pickerDoneButton}
+                  onPress={() => {
+                    setShowOverrideDatePicker(false);
+                    if (tempOverrideDate) {
+                      setTimeout(() => setShowOverrideTimePicker(true), 200);
+                    }
+                  }}
+                >
+                  <Text style={styles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              )}
+              <DateTimePicker
+                value={tempOverrideDate || overrideDate || new Date()}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedDate) => {
+                  if (Platform.OS === "android") {
+                    setShowOverrideDatePicker(false);
+                    if (event.type === "set" && selectedDate) {
+                      setTempOverrideDate(selectedDate);
+                      setTimeout(() => setShowOverrideTimePicker(true), 200);
+                    }
+                  } else if (selectedDate) {
+                    setTempOverrideDate(selectedDate);
+                    setOverrideDate(selectedDate);
+                  }
+                }}
+              />
+            </>
+          )}
+
+          {showOverrideTimePicker && (
+            <>
+              {Platform.OS === "ios" && (
+                <TouchableOpacity
+                  style={styles.pickerDoneButton}
+                  onPress={() => {
+                    setShowOverrideTimePicker(false);
+                    if (tempOverrideDate) setOverrideDate(tempOverrideDate);
+                  }}
+                >
+                  <Text style={styles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              )}
+              <DateTimePicker
+                value={tempOverrideDate || overrideDate || new Date()}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedTime) => {
+                  const base = tempOverrideDate || overrideDate || new Date();
+                  if (Platform.OS === "android") {
+                    setShowOverrideTimePicker(false);
+                    if (event.type === "set" && selectedTime) {
+                      const combined = new Date(base);
+                      combined.setHours(selectedTime.getHours());
+                      combined.setMinutes(selectedTime.getMinutes());
+                      setOverrideDate(combined);
+                    }
+                  } else if (selectedTime) {
+                    const combined = new Date(base);
+                    combined.setHours(selectedTime.getHours());
+                    combined.setMinutes(selectedTime.getMinutes());
+                    setTempOverrideDate(combined);
+                  }
+                }}
+              />
+            </>
+          )}
+
+          <TouchableOpacity
+            style={[
+              styles.sheetSaveButton,
+              savingOverride && { opacity: 0.7 },
+            ]}
+            onPress={handleSaveExtension}
+            disabled={savingOverride}
+          >
+            {savingOverride ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.sheetSaveButtonText}>Save Extension</Text>
+            )}
+          </TouchableOpacity>
+
+          {discussion?.studentDueDateOverrides &&
+            discussion.studentDueDateOverrides.length > 0 && (
+              <>
+                <View style={styles.sheetDivider} />
+                <Text style={styles.sheetSectionTitle}>
+                  Existing Student Due Date Overrides
+                </Text>
+                {discussion.studentDueDateOverrides.map((override) => (
+                  <View key={override._id} style={styles.overrideRow}>
+                    <View>
+                      <Text style={styles.studentName}>
+                        {override.student?.firstName}{" "}
+                        {override.student?.lastName}
+                      </Text>
+                      <Text style={styles.studentEmail}>
+                        {override.student?.email}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: "flex-end" }}>
+                      <Text style={styles.overrideDateText}>
+                        {new Date(
+                          override.newDueDate.date
+                        ).toLocaleDateString()}
+                      </Text>
+                      <Text style={styles.studentEmail}>
+                        {override.newDueDate.time || "00:00"}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
+        </ScrollView>
+      </AnimatedBottomSheet>
+
+      {/* ── Edit Sheet (teacher) ── */}
+      <AnimatedBottomSheet
+        visible={showEditSheet}
+        onClose={() => setShowEditSheet(false)}
+      >
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.sheetTitle}>Edit Discussion</Text>
+
+          <Text style={styles.sheetLabel}>Topic</Text>
+          <TextInput
+            style={styles.sheetInput}
+            value={editTopic}
+            onChangeText={setEditTopic}
+            placeholder="Discussion topic"
+          />
+
+          <Text style={styles.sheetLabel}>Description</Text>
+          <TextInput
+            style={[styles.sheetInput, { minHeight: 90, textAlignVertical: "top" }]}
+            value={editDescription}
+            onChangeText={setEditDescription}
+            placeholder="Discussion description"
+            multiline
+          />
+
+          <Text style={styles.sheetLabel}>Category</Text>
+          <TouchableOpacity
+            style={styles.sheetInput}
+            onPress={() => setShowEditCategorySheet(true)}
+          >
+            <Text style={{ color: editCategoryId ? "#000" : "#999" }}>
+              {editCategories.find((c) => c._id === editCategoryId)?.name ||
+                "Select category"}
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.sheetLabel}>Standard Due Date</Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setShowEditDatePicker(true)}
+            >
+              <Text style={styles.dateButtonText}>
+                {editDueDate
+                  ? editDueDate.toLocaleDateString("en-US")
+                  : "Select date"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => {
+                if (!editDueDate && !tempEditDate) {
+                  Toast.show("Select a date first.", Toast.LONG);
+                  return;
+                }
+                setShowEditTimePicker(true);
+              }}
+            >
+              <Text style={styles.dateButtonText}>
+                {editDueDate
+                  ? editDueDate.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "Select time"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {showEditDatePicker && (
+            <>
+              {Platform.OS === "ios" && (
+                <TouchableOpacity
+                  style={styles.pickerDoneButton}
+                  onPress={() => {
+                    setShowEditDatePicker(false);
+                    if (tempEditDate) {
+                      setTimeout(() => setShowEditTimePicker(true), 200);
+                    }
+                  }}
+                >
+                  <Text style={styles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              )}
+              <DateTimePicker
+                value={tempEditDate || editDueDate || new Date()}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedDate) => {
+                  if (Platform.OS === "android") {
+                    setShowEditDatePicker(false);
+                    if (event.type === "set" && selectedDate) {
+                      setTempEditDate(selectedDate);
+                      setTimeout(() => setShowEditTimePicker(true), 200);
+                    }
+                  } else if (selectedDate) {
+                    setTempEditDate(selectedDate);
+                    setEditDueDate(selectedDate);
+                  }
+                }}
+              />
+            </>
+          )}
+
+          {showEditTimePicker && (
+            <>
+              {Platform.OS === "ios" && (
+                <TouchableOpacity
+                  style={styles.pickerDoneButton}
+                  onPress={() => {
+                    setShowEditTimePicker(false);
+                    if (tempEditDate) setEditDueDate(tempEditDate);
+                  }}
+                >
+                  <Text style={styles.pickerDoneText}>Done</Text>
+                </TouchableOpacity>
+              )}
+              <DateTimePicker
+                value={tempEditDate || editDueDate || new Date()}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, selectedTime) => {
+                  const base = tempEditDate || editDueDate || new Date();
+                  if (Platform.OS === "android") {
+                    setShowEditTimePicker(false);
+                    if (event.type === "set" && selectedTime) {
+                      const combined = new Date(base);
+                      combined.setHours(selectedTime.getHours());
+                      combined.setMinutes(selectedTime.getMinutes());
+                      setEditDueDate(combined);
+                    }
+                  } else if (selectedTime) {
+                    const combined = new Date(base);
+                    combined.setHours(selectedTime.getHours());
+                    combined.setMinutes(selectedTime.getMinutes());
+                    setTempEditDate(combined);
+                  }
+                }}
+              />
+            </>
+          )}
+
+          <TouchableOpacity
+            style={[styles.sheetSaveButton, savingEdit && { opacity: 0.7 }]}
+            onPress={handleSaveEdit}
+            disabled={savingEdit}
+          >
+            {savingEdit ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.sheetSaveButtonText}>Save Changes</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </AnimatedBottomSheet>
+
+      {/* ── Edit: Category Picker Sheet ── */}
+      <AnimatedBottomSheet
+        visible={showEditCategorySheet}
+        onClose={() => setShowEditCategorySheet(false)}
+      >
+        <Text style={styles.sheetTitle}>Select Category</Text>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {editCategories.length === 0 ? (
+            <Text style={styles.noStudentsText}>No categories available</Text>
+          ) : (
+            editCategories.map((c) => (
+              <TouchableOpacity
+                key={c._id}
+                style={styles.categoryOption}
+                onPress={() => {
+                  setEditCategoryId(c._id);
+                  setShowEditCategorySheet(false);
+                }}
+              >
+                <Text style={styles.studentName}>{c.name}</Text>
+                {editCategoryId === c._id && (
+                  <SimpleIcon name="check" size={16} color="#10B144" />
+                )}
+              </TouchableOpacity>
+            ))
+          )}
+        </ScrollView>
+      </AnimatedBottomSheet>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -856,11 +1508,24 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerActionButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "#f3f4f6",
   },
   backButton: {
     flexDirection: "row",
@@ -1318,6 +1983,141 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 16,
+  },
+  sheetSectionTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 10,
+  },
+  sheetLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  sheetDivider: {
+    height: 1,
+    backgroundColor: "#e5e7eb",
+    marginVertical: 16,
+  },
+  sheetInput: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#111827",
+  },
+  sheetSaveButton: {
+    backgroundColor: "#10B144",
+    borderRadius: 8,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  sheetSaveButtonText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  resubmissionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9fafb",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    padding: 14,
+  },
+  resubmissionLabel: { fontSize: 14, fontWeight: "600", color: "#111827" },
+  resubmissionHint: { fontSize: 12, color: "#6b7280", marginTop: 2 },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: "#3B82F6",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  checkboxChecked: { backgroundColor: "#3B82F6", borderColor: "#3B82F6" },
+  studentSearchInput: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  studentListBox: {
+    maxHeight: 220,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 8,
+  },
+  studentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+  },
+  studentName: { fontSize: 14, fontWeight: "600", color: "#111827" },
+  studentEmail: { fontSize: 12, color: "#6b7280" },
+  noStudentsText: {
+    fontSize: 13,
+    color: "#6b7280",
+    textAlign: "center",
+    paddingVertical: 12,
+  },
+  selectedCountText: {
+    fontSize: 12,
+    color: "#3B82F6",
+    fontWeight: "600",
+    marginTop: 8,
+  },
+  dateButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  dateButtonText: { fontSize: 13, color: "#111827" },
+  pickerDoneButton: {
+    alignSelf: "flex-end",
+    marginTop: 8,
+  },
+  pickerDoneText: { color: "#007AFF", fontSize: 16, fontWeight: "600" },
+  overrideRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    padding: 10,
+    marginBottom: 8,
+  },
+  overrideDateText: { fontSize: 13, fontWeight: "600", color: "#111827" },
+  categoryOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
   },
 });
 

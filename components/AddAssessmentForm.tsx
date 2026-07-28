@@ -14,17 +14,24 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Toast from "react-native-simple-toast";
 import SimpleIcon from "./SimpleIcon";
+import AnimatedBottomSheet from "./common/AnimatedBottomSheet";
+import AIAssistantSheet, {
+  parseMCQFromAI,
+  parseTrueFalseFromAI,
+} from "./common/AIAssistantSheet";
+import { Sparkles } from "lucide-react-native";
 import { createApiInstance, addAuthInterceptor } from "../services/course";
 import { pick, types } from "@react-native-documents/picker";
 
 interface Question {
   id: string;
-  type: "mcq" | "truefalse" | "qa";
+  type: "mcq" | "truefalse" | "qa" | "file";
   question: string;
   concept?: string;
   options?: string[];
   correctAnswer?: string;
   points: number;
+  files?: any[];
 }
 
 interface AssessmentCategory {
@@ -67,6 +74,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
     { _id: "1", name: "Multiple Choice", type: "mcq" },
     { _id: "2", name: "True/False", type: "truefalse" },
     { _id: "3", name: "Question & Answer", type: "qa" },
+    { _id: "4", name: "File Upload", type: "file" },
   ];
 
   const MAX_PDF_SIZE_MB = 5;
@@ -117,6 +125,11 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
     correctAnswer: "",
     points: 1,
   });
+
+  // AI Assistant
+  const [showAITitleSheet, setShowAITitleSheet] = useState(false);
+  const [showAIDescriptionSheet, setShowAIDescriptionSheet] = useState(false);
+  const [showAIQuestionSheet, setShowAIQuestionSheet] = useState(false);
 
   // File upload
   const [selectedFiles, setSelectedFiles] = useState<any[]>([]);
@@ -367,6 +380,27 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
     }
   };
 
+  const handleAcceptAIQuestion = (content: string) => {
+    if (currentQuestion.type === "mcq") {
+      const parsed = parseMCQFromAI(content);
+      setCurrentQuestion((prev) => ({
+        ...prev,
+        question: parsed.question,
+        options: parsed.options.length > 0 ? parsed.options : prev.options,
+        correctAnswer: parsed.correctAnswer || prev.correctAnswer,
+      }));
+    } else if (currentQuestion.type === "truefalse") {
+      const parsed = parseTrueFalseFromAI(content);
+      setCurrentQuestion((prev) => ({
+        ...prev,
+        question: parsed.question,
+        correctAnswer: parsed.correctAnswer || prev.correctAnswer,
+      }));
+    } else {
+      setCurrentQuestion((prev) => ({ ...prev, question: content.trim() }));
+    }
+  };
+
   const handleAddQuestion = () => {
     if (!currentQuestion.question?.trim()) {
       Toast.show("Please enter a question", Toast.SHORT);
@@ -386,6 +420,13 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
       Toast.show("Please select a correct answer", Toast.SHORT);
       return;
     }
+    if (
+      currentQuestion.type === "file" &&
+      (!currentQuestion.files || currentQuestion.files.length === 0)
+    ) {
+      Toast.show("Please attach at least one file", Toast.SHORT);
+      return;
+    }
     if (!currentQuestion.points || currentQuestion.points <= 0) {
       Toast.show("Please enter valid points", Toast.SHORT);
       return;
@@ -393,13 +434,14 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
 
     const newQuestion: Question = {
       id: Date.now().toString(),
-      type: currentQuestion.type as "mcq" | "truefalse" | "qa",
+      type: currentQuestion.type as "mcq" | "truefalse" | "qa" | "file",
       question: currentQuestion.question,
       concept: currentQuestion.concept || "",
       options:
         currentQuestion.type === "mcq" ? currentQuestion.options : undefined,
       correctAnswer: currentQuestion.correctAnswer,
       points: currentQuestion.points,
+      files: currentQuestion.type === "file" ? currentQuestion.files : undefined,
     };
     setQuestions([...questions, newQuestion]);
     setCurrentQuestion({
@@ -409,6 +451,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
       concept: "",
       correctAnswer: "",
       points: 1,
+      files: [],
     });
     setShowAddQuestionModal(false);
   };
@@ -477,6 +520,43 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
 
   const handleRemoveFile = (index: number) => {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleQuestionFilePick = async () => {
+    try {
+      const result = await pick({
+        type: [types.pdf],
+        copyTo: "cachesDirectory",
+        allowMultiSelection: true,
+      });
+      if (result && result.length > 0) {
+        const file = result[0];
+        const fileSizeMB = file.size ? file.size / (1024 * 1024) : 0;
+        if (fileSizeMB > 5) {
+          Toast.show("File size must be less than 5MB", Toast.LONG);
+          return;
+        }
+        const newFile = {
+          uri: file.uri,
+          fileName: file.name || file.uri.split("/").pop(),
+          fileSize: file.size,
+          type: "application/pdf",
+        };
+        setCurrentQuestion((prev) => ({
+          ...prev,
+          files: [...(prev.files || []), newFile],
+        }));
+      }
+    } catch (error) {
+      // ignore (user cancelled picker)
+    }
+  };
+
+  const handleRemoveQuestionFile = (index: number) => {
+    setCurrentQuestion((prev) => ({
+      ...prev,
+      files: (prev.files || []).filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmitAssessment = async () => {
@@ -572,6 +652,16 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         });
       } else {
         formData.append("questions", JSON.stringify(normalizedQuestions));
+        questions.forEach((q, questionIndex) => {
+          if (q.type !== "file") return;
+          (q.files || []).forEach((file, fileIndex) => {
+            formData.append(`question_${questionIndex}_file_${fileIndex}`, {
+              uri: file.uri,
+              name: file.fileName,
+              type: file.type,
+            } as any);
+          });
+        });
       }
 
       const response = await api.post(
@@ -689,7 +779,17 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         <Text style={styles.sectionTitle}>Assessment Details</Text>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Assessment Title</Text>
+          <View style={styles.aiLabelRow}>
+            <Text style={styles.inputLabel}>Assessment Title</Text>
+            <TouchableOpacity
+              style={styles.aiSmallButton}
+              onPress={() => setShowAITitleSheet(true)}
+              activeOpacity={0.8}
+            >
+              <Sparkles color="#6366f1" size={14} style={styles.aiSmallButtonIcon} />
+              <Text style={styles.aiSmallButtonText}>AI Generate</Text>
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={styles.textInput}
             placeholder="Enter Assessment title"
@@ -701,7 +801,17 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Description</Text>
+          <View style={styles.aiLabelRow}>
+            <Text style={styles.inputLabel}>Description</Text>
+            <TouchableOpacity
+              style={styles.aiSmallButton}
+              onPress={() => setShowAIDescriptionSheet(true)}
+              activeOpacity={0.8}
+            >
+              <Sparkles color="#6366f1" size={14} style={styles.aiSmallButtonIcon} />
+              <Text style={styles.aiSmallButtonText}>AI Generate</Text>
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={[styles.textInput, styles.textArea]}
             placeholder="Enter description and instructions"
@@ -859,6 +969,12 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                     Correct Answer: {question.correctAnswer}
                   </Text>
                 )}
+                {question.type === "file" && (
+                  <Text style={styles.questionOptionsLabel}>
+                    {question.files?.length || 0} file
+                    {(question.files?.length || 0) !== 1 ? "s" : ""} attached
+                  </Text>
+                )}
               </View>
             </View>
           ))}
@@ -925,187 +1041,190 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         )}
       </TouchableOpacity>
 
-      {/* Category Selection Modal */}
-      <Modal
+      {/* Category Selection Sheet */}
+      <AnimatedBottomSheet
         visible={showCategoryModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowCategoryModal(false)}
+        onClose={() => setShowCategoryModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Category</Text>
-            <ScrollView style={styles.categoryList}
-              showsVerticalScrollIndicator={false}
-              showsHorizontalScrollIndicator={false}
-            >
-              {loadingCategories ? (
-                <ActivityIndicator size="large" color="#10B144" />
-              ) : categories.length > 0 ? (
-                categories.map((category) => (
-                  <TouchableOpacity
-                    key={category._id}
-                    style={[
-                      styles.categoryItem,
-                      selectedCategory?._id === category._id &&
-                      styles.categoryItemSelected,
-                    ]}
-                    onPress={() => {
-                      setSelectedCategory(category);
-                      setShowCategoryModal(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryItemText,
-                        selectedCategory?._id === category._id &&
-                        styles.categoryItemTextSelected,
-                      ]}
-                    >
-                      {category.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text style={styles.noCategoriesText}>
-                  No categories available
-                </Text>
-              )}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setShowCategoryModal(false)}
-            >
-              <Text style={styles.modalCloseButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalCloseButton, { backgroundColor: "#111" }]}
-              onPress={() => {
-                setShowCategoryModal(false);
-                setShowAddCategoryModal(true);
-              }}
-            >
-              <Text style={[styles.modalCloseButtonText, { color: "#fff" }]}>
-                + Add New Topic
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Add New Topic Modal */}
-      <Modal
-        visible={showAddCategoryModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowAddCategoryModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Topic</Text>
-            <Text style={{ color: "#6b7280", marginBottom: 16 }}>
-              Create a new assessment category for this course.
-            </Text>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Topic Name</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="e.g., Midterm Exam, Quiz, Assignment"
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Weight (%)</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="0"
-                value={newCategoryWeight}
-                onChangeText={setNewCategoryWeight}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
+        <Text style={styles.modalTitle}>Select Category</Text>
+        <ScrollView style={styles.categoryList}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
+          {loadingCategories ? (
+            <ActivityIndicator size="large" color="#10B144" />
+          ) : categories.length > 0 ? (
+            categories.map((category) => (
               <TouchableOpacity
-                style={styles.cancelQuestionButton}
-                onPress={() => setShowAddCategoryModal(false)}
-                disabled={creatingCategory}
+                key={category._id}
+                style={[
+                  styles.categoryItem,
+                  selectedCategory?._id === category._id &&
+                  styles.categoryItemSelected,
+                ]}
+                onPress={() => {
+                  setSelectedCategory(category);
+                  setShowCategoryModal(false);
+                }}
               >
-                <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.saveQuestionButton}
-                onPress={handleCreateCategory}
-                disabled={creatingCategory}
-              >
-                {creatingCategory ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveQuestionButtonText}>
-                    Create Category
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Question Type Modal */}
-      <Modal
-        visible={showQuestionTypeModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowQuestionTypeModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Question Type</Text>
-            <ScrollView style={styles.categoryList}
-              showsVerticalScrollIndicator={false}
-              showsHorizontalScrollIndicator={false}
-            >
-              {QuestionType.map((type) => (
-                <TouchableOpacity
-                  key={type._id}
+                <Text
                   style={[
-                    styles.categoryItem,
-                    currentQuestion?.type === type.type &&
-                    styles.categoryItemSelected,
+                    styles.categoryItemText,
+                    selectedCategory?._id === category._id &&
+                    styles.categoryItemTextSelected,
                   ]}
-                  onPress={() => {
-                    setCurrentQuestion({
-                      ...currentQuestion,
-                      type: type.type as any,
-                    });
-                    setShowQuestionTypeModal(false);
-                    setShowAddQuestionModal(true);
-                  }}
                 >
-                  <Text
-                    style={[
-                      styles.categoryItemText,
-                      currentQuestion?.type === type.type &&
-                      styles.categoryItemTextSelected,
-                    ]}
-                  >
-                    {type.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.noCategoriesText}>
+              No categories available
+            </Text>
+          )}
+        </ScrollView>
+        <TouchableOpacity
+          style={styles.modalCloseButton}
+          onPress={() => setShowCategoryModal(false)}
+        >
+          <Text style={styles.modalCloseButtonText}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.modalCloseButton, { backgroundColor: "#111" }]}
+          onPress={() => {
+            setShowCategoryModal(false);
+            setShowAddCategoryModal(true);
+          }}
+        >
+          <Text style={[styles.modalCloseButtonText, { color: "#fff" }]}>
+            + Add New Topic
+          </Text>
+        </TouchableOpacity>
+      </AnimatedBottomSheet>
+
+      {/* Add New Topic Sheet */}
+      <AnimatedBottomSheet
+        visible={showAddCategoryModal}
+        onClose={() => setShowAddCategoryModal(false)}
+      >
+        <Text style={styles.modalTitle}>Add New Topic</Text>
+        <Text style={{ color: "#6b7280", marginBottom: 16 }}>
+          Create a new assessment category for this course.
+        </Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Topic Name</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="e.g., Midterm Exam, Quiz, Assignment"
+            value={newCategoryName}
+            onChangeText={setNewCategoryName}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Weight (%)</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="0"
+            value={newCategoryWeight}
+            onChangeText={setNewCategoryWeight}
+            keyboardType="numeric"
+          />
+        </View>
+        <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
+          <TouchableOpacity
+            style={styles.cancelQuestionButton}
+            onPress={() => setShowAddCategoryModal(false)}
+            disabled={creatingCategory}
+          >
+            <Text style={styles.cancelQuestionButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.saveQuestionButton}
+            onPress={handleCreateCategory}
+            disabled={creatingCategory}
+          >
+            {creatingCategory ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.saveQuestionButtonText}>
+                Create Category
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </AnimatedBottomSheet>
+
+      {/* Question Type Sheet */}
+      <AnimatedBottomSheet
+        visible={showQuestionTypeModal}
+        onClose={() => setShowQuestionTypeModal(false)}
+      >
+        <Text style={styles.modalTitle}>Select Question Type</Text>
+        <ScrollView style={styles.categoryList}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
+          {QuestionType.map((type) => (
             <TouchableOpacity
-              style={styles.modalCloseButton}
+              key={type._id}
+              style={[
+                styles.categoryItem,
+                currentQuestion?.type === type.type &&
+                styles.categoryItemSelected,
+              ]}
               onPress={() => {
+                setCurrentQuestion({
+                  ...currentQuestion,
+                  type: type.type as any,
+                });
                 setShowQuestionTypeModal(false);
                 setShowAddQuestionModal(true);
               }}
             >
-              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+              <Text
+                style={[
+                  styles.categoryItemText,
+                  currentQuestion?.type === type.type &&
+                  styles.categoryItemTextSelected,
+                ]}
+              >
+                {type.name}
+              </Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+          ))}
+        </ScrollView>
+        <TouchableOpacity
+          style={styles.modalCloseButton}
+          onPress={() => {
+            setShowQuestionTypeModal(false);
+            setShowAddQuestionModal(true);
+          }}
+        >
+          <Text style={styles.modalCloseButtonText}>Cancel</Text>
+        </TouchableOpacity>
+      </AnimatedBottomSheet>
+
+      {/* AI Assistant Sheets */}
+      <AIAssistantSheet
+        visible={showAITitleSheet}
+        onClose={() => setShowAITitleSheet(false)}
+        usedfor="assessmentTitle"
+        onAccept={(content) => setTitle(content.trim())}
+      />
+      <AIAssistantSheet
+        visible={showAIDescriptionSheet}
+        onClose={() => setShowAIDescriptionSheet(false)}
+        usedfor="assessmentDescription"
+        onAccept={(content) => setDescription(content.trim())}
+      />
+      <AIAssistantSheet
+        visible={showAIQuestionSheet}
+        onClose={() => setShowAIQuestionSheet(false)}
+        usedfor={`question-${currentQuestion.type === "file" ? "qa" : currentQuestion.type || "qa"}`}
+        showDifficulty
+        onAccept={handleAcceptAIQuestion}
+      />
 
       {/* Add Question Modal */}
       <Modal
@@ -1135,7 +1254,9 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                       ? "Multiple Choice"
                       : currentQuestion.type === "truefalse"
                         ? "True/False"
-                        : "Question & Answer"}
+                        : currentQuestion.type === "file"
+                          ? "File Upload"
+                          : "Question & Answer"}
                   </Text>
                   <SimpleIcon name="chevron-down" size={20} color="#7b8794" />
                 </TouchableOpacity>
@@ -1170,7 +1291,23 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                 </View>
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Question</Text>
+                <View style={styles.aiLabelRow}>
+                  <Text style={styles.inputLabel}>Question</Text>
+                  {currentQuestion.type !== "file" && (
+                    <TouchableOpacity
+                      style={styles.aiSmallButton}
+                      onPress={() => setShowAIQuestionSheet(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Sparkles
+                        color="#6366f1"
+                        size={14}
+                        style={styles.aiSmallButtonIcon}
+                      />
+                      <Text style={styles.aiSmallButtonText}>AI Generate</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
                 <View style={styles.richTextEditor}>
                   <TextInput
                     style={styles.richTextInput}
@@ -1328,6 +1465,39 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                       </Text>
                     </TouchableOpacity>
                   </View>
+                </View>
+              )}
+
+              {currentQuestion.type === "file" && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Attached Files</Text>
+                  <Text style={styles.optionsHint}>
+                    PDF only, up to 5MB per file.
+                  </Text>
+                  {(currentQuestion.files || []).map((file, index) => (
+                    <View key={index} style={styles.fileItem}>
+                      <SimpleIcon name="description" size={24} color="#10B144" />
+                      <Text style={styles.fileName} numberOfLines={1}>
+                        {file.fileName}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleRemoveQuestionFile(index)}
+                      >
+                        <SimpleIcon name="close" size={20} color="#dc2626" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  <TouchableOpacity
+                    style={styles.addOptionButton}
+                    onPress={handleQuestionFilePick}
+                  >
+                    <SimpleIcon
+                      name="add-circle-outline"
+                      size={20}
+                      color="#10B144"
+                    />
+                    <Text style={styles.addOptionButtonText}>Attach File</Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </ScrollView>
@@ -1530,6 +1700,30 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 8,
+  },
+  aiLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  aiSmallButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f3ff",
+    borderWidth: 1,
+    borderColor: "#ddd6fe",
+    borderRadius: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+  },
+  aiSmallButtonIcon: {
+    marginRight: 4,
+  },
+  aiSmallButtonText: {
+    color: "#4c1d95",
+    fontSize: 12,
+    fontWeight: "600",
   },
   textInput: {
     borderWidth: 1,

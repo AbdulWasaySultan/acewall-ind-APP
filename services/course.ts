@@ -766,6 +766,43 @@ export const editAssessment = async (
   }
 };
 
+export const setAssessmentAllowResubmission = async (
+  assessmentId: string,
+  allowResubmission: boolean
+) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.put(
+      `/api/assessment/setAllowResubmission/${assessmentId}`,
+      { allowResubmission }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateAssessmentLatePolicy = async (
+  assessmentId: string,
+  payload: {
+    enabled: boolean;
+    strategy: "one-time" | "daily";
+    deductionType: "points" | "percentage";
+    deductionValue: number;
+  }
+) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.put(
+      `/api/assessment/updateLatePolicy/${assessmentId}`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAllAssessmentsByTeacher = async () => {
   try {
     const api = await getApiInstance();
@@ -903,11 +940,14 @@ export const getStudentEnrolledCourses = async (searchQuery: string = "") => {
   }
 };
 
-export const getStudentEnrolledCourseDetails = async (enrollmentId: string) => {
+export const getStudentEnrolledCourseDetails = async (
+  enrollmentId: string,
+  courseId: string
+) => {
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/api/enrollment/studentCourseDetails/${enrollmentId}`
+      `/api/enrollment/studentCourseDetails/v2/${enrollmentId}/${courseId}`
     );
     return response.data?.enrolledCourse || null;
   } catch (error) {
@@ -952,13 +992,15 @@ export const unenrollFromCourse = async (
 
 export const createStripeCheckoutSession = async (
   courseId: string,
-  studentId: string
+  studentId: string,
+  refCode?: string | null
 ) => {
   try {
     const api = await getApiInstance();
     const response = await api.post("/api/stripe/create-checkout-session-mobile", {
       courseId,
       studentId,
+      refCode: refCode || null,
     });
     return response.data;
   } catch (error) {
@@ -1174,7 +1216,9 @@ export const getChaptersForCourses = async (courseId: string) => {
 export const getChapterDetailsForStudent = async (chapterId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/api/enrollment/getChapter/${chapterId}`);
+    const response = await api.get(
+      `/api/enrollment/getChapter/v2/${chapterId}`
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -1184,7 +1228,7 @@ export const getChapterDetailsForStudent = async (chapterId: string) => {
 export const getChapterDiscussionsForStudent = async (chapterId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/api/discussion/chapter/${chapterId}`);
+    const response = await api.get(`/api/discussion/v2/chapter/${chapterId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1194,7 +1238,7 @@ export const getChapterDiscussionsForStudent = async (chapterId: string) => {
 export const getLessonDiscussionsForStudent = async (lessonId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/api/discussion/lesson/${lessonId}`);
+    const response = await api.get(`/api/discussion/v2/lesson/${lessonId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1227,7 +1271,7 @@ export const getLessonPagesForStudent = async (lessonId: string) => {
 export const getStudentDiscussion = async (discussionId: string) => {
   try {
     const api = await getApiInstance();
-    const response = await api.get(`/api/discussion/${discussionId}`);
+    const response = await api.get(`/api/discussion/v2/${discussionId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -1242,7 +1286,7 @@ export const getCommentForDiscussionStudent = async (
   try {
     const api = await getApiInstance();
     const response = await api.get(
-      `/api/discussionComment/get/${discussionId}?page=${page}&limit=${limit}`
+      `/api/discussionComment/v2/get/${discussionId}?page=${page}&limit=${limit}`
     );
     return response.data;
   } catch (error) {
@@ -1254,7 +1298,7 @@ export const sendComment = async (discussionId: string, comment: string) => {
   try {
     const api = await getApiInstance();
     const response = await api.post(
-      `/api/discussionComment/sendComment/${discussionId}`,
+      `/api/discussionComment/v2/sendComment/${discussionId}`,
       { text: comment }
     );
     return response.data;
@@ -1321,6 +1365,90 @@ export const gradeDiscussionComment = async (
     const response = await api.put(
       `/api/discussionComment/gradeDiscussionofStd/${discussionId}/${commentId}`,
       { obtainedMarks }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const generateTeacherContent = async (
+  command: string,
+  usedfor: string,
+  difficulty: "easy" | "medium" | "hard" = "medium"
+) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.post("/api/aichat/generateContentForTeacher", {
+      command,
+      usedfor,
+      difficulty,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getStudentsOfCourse = async (courseId: string) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get(
+      `/api/course/getStudentofCourse/${courseId}`
+    );
+    return response.data?.students || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const editDiscussion = async (
+  discussionId: string,
+  payload: {
+    topic: string;
+    description: string;
+    category: string;
+    dueDate: string;
+  }
+) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.put(
+      `/api/discussion/editDiscussion/${discussionId}`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const toggleDiscussionResubmission = async (
+  discussionId: string,
+  allowResubmission: boolean
+) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.put(
+      `/api/discussion/toggleAllowResubmission/${discussionId}`,
+      { allowResubmission }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const setDiscussionDueDateForStudents = async (
+  discussionId: string,
+  studentIds: string[],
+  newDueDate: { date: string; time: string }
+) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.put(
+      `/api/discussion/setDueDateForStudent/${discussionId}`,
+      { studentIds, newDueDate }
     );
     return response.data;
   } catch (error) {

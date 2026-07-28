@@ -42,10 +42,11 @@ const CourseDetailStudentPage = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { user } = useUser();
-  const { courseId, fromAdmin, enrollmentId } = route.params as {
+  const { courseId, fromAdmin, enrollmentId, refCode } = route.params as {
     courseId: string;
     fromAdmin?: boolean;
     enrollmentId?: string;
+    refCode?: string;
   };
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -94,7 +95,8 @@ const CourseDetailStudentPage = () => {
         if (enrollmentId) {
           // For enrolled courses, get the enrolled course details
           const enrolledCourseData = await getStudentEnrolledCourseDetails(
-            enrollmentId
+            enrollmentId,
+            courseId
           );
           setCourse(enrolledCourseData?.courseDetails || null);
         } else if (fromAdmin) {
@@ -186,7 +188,11 @@ const CourseDetailStudentPage = () => {
           throw new Error("Student ID not found. Please log in again.");
         }
 
-        const result = await createStripeCheckoutSession(courseId, studentId);
+        const result = await createStripeCheckoutSession(
+          courseId,
+          studentId,
+          refCode
+        );
         setShowEnrollModal(false);
         // Open the checkout URL from Stripe
         console.log("Result:", result);
@@ -828,8 +834,15 @@ const CourseDetailStudentPage = () => {
               )}
               {/* Enroll Button & Course Includes */}
               <View style={styles.enrollBox}>
-                <Text style={[styles.includesTitle, { fontSize: 25 }]}>
+                <Text style={[styles.includesTitle, { fontSize: 25, marginBottom: 2 }]}>
                   $ {course?.price}{" "}
+                </Text>
+                <Text style={styles.priceTypeLabel}>
+                  {course?.paymentType === "SUBSCRIPTION"
+                    ? "Per month"
+                    : course?.paymentType === "ONETIME"
+                    ? "One-time"
+                    : "Free Course"}
                 </Text>
                 <TouchableOpacity
                   style={[
@@ -1190,6 +1203,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#222",
     marginBottom: 10,
+  },
+  priceTypeLabel: {
+    fontSize: 13,
+    color: "#6b7280",
+    marginBottom: 14,
   },
   includeRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   includeText: { fontSize: 15, color: "#444" },

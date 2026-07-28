@@ -269,6 +269,7 @@ const lucideMap: Record<string, React.FC<LucideProps>> = {
   "send-outline": Send,
   share: Share2,
   bell: Bell,
+  notifications: Bell,
 
   // === User ===
   "account-circle": UserCircle,
@@ -466,6 +467,7 @@ const emojiMap: Record<string, string> = {
   school: "🏫",
   book: "📘",
   bell: "🔔",
+  notifications: "🔔",
   video: "🎥",
   "credit-card": "💳",
 };

@@ -5,7 +5,7 @@ export const getDiscussionsForChapter = async (chapterId: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.get(`/api/discussion/chapter/${chapterId}`);
+    const response = await api.get(`/api/discussion/v2/chapter/${chapterId}`);
     return response.data;
   } catch (error: any) {
     if (error.response) {
@@ -22,7 +22,7 @@ export const getDiscussionsForLesson = async (lessonId: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.get(`/api/discussion/lesson/${lessonId}`);
+    const response = await api.get(`/api/discussion/v2/lesson/${lessonId}`);
     return response.data;
   } catch (error: any) {
     if (error.response) {
@@ -255,7 +255,7 @@ export const getDiscussionDetails = async (discussionId: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.get(`/api/discussion/${discussionId}`);
+    const response = await api.get(`/api/discussion/v2/${discussionId}`);
     return response.data;
   } catch (error: any) {
     if (error.response) {
@@ -272,7 +272,7 @@ export const getDiscussionComments = async (discussionId: string, page = 1, limi
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.get(`/api/discussionComment/get/${discussionId}?page=${page}&limit=${limit}`);
+    const response = await api.get(`/api/discussionComment/v2/get/${discussionId}?page=${page}&limit=${limit}`);
     return response.data;
   } catch (error: any) {
     if (error.response) {
@@ -289,7 +289,7 @@ export const sendDiscussionComment = async (discussionId: string, text: string) 
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const response = await api.post(`/api/discussionComment/sendComment/${discussionId}`, { text });
+    const response = await api.post(`/api/discussionComment/v2/sendComment/${discussionId}`, { text });
     return response.data;
   } catch (error: any) {
     if (error.response) {

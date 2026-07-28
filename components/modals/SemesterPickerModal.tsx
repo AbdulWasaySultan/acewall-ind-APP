@@ -1,11 +1,11 @@
 import React from "react";
 import {
-  View,
   Text,
-  Modal,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
+import AnimatedBottomSheet from "../common/AnimatedBottomSheet";
 
 interface SemesterPickerModalProps {
   visible: boolean;
@@ -25,33 +25,23 @@ const SemesterPickerModal: React.FC<SemesterPickerModalProps> = ({
   styles,
 }) => {
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        onPress={onClose}
-      >
-        <View style={styles.pickerModalContent}>
-          {loadingSemesters ? (
-            <ActivityIndicator />
-          ) : (
-            allSemesters.map((s) => (
-              <TouchableOpacity
-                key={s._id}
-                style={styles.pickerItem}
-                onPress={() => handleSemesterSelect(s)}
-              >
-                <Text>{s.title}</Text>
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
-      </TouchableOpacity>
-    </Modal>
+    <AnimatedBottomSheet visible={visible} onClose={onClose}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {loadingSemesters ? (
+          <ActivityIndicator />
+        ) : (
+          allSemesters.map((s) => (
+            <TouchableOpacity
+              key={s._id}
+              style={styles.pickerItem}
+              onPress={() => handleSemesterSelect(s)}
+            >
+              <Text>{s.title}</Text>
+            </TouchableOpacity>
+          ))
+        )}
+      </ScrollView>
+    </AnimatedBottomSheet>
   );
 };
 

@@ -8,7 +8,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
   ActivityIndicator,
 } from "react-native";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
@@ -31,28 +30,7 @@ const ChatPage = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [newMessage, setNewMessage] = useState("");
-  const [keyboardMargin, setKeyboardMargin] = useState(20);
   const flatListRef = useRef<FlatList>(null);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      "keyboardDidShow",
-      () => {
-        setKeyboardMargin(21);
-      }
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      "keyboardDidHide",
-      () => {
-        setKeyboardMargin(20);
-      }
-    );
-
-    return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
-    };
-  }, []);
 
   const fetchMessages = useCallback(async () => {
     setLoading(true);
@@ -109,7 +87,11 @@ const ChatPage = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={insets.top}
+    >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={{ paddingVertical: 10, marginTop: 10 }}>
           <Text style={styles.headerName}>{otherMemberName}</Text>
@@ -132,7 +114,12 @@ const ChatPage = () => {
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       />
-      <View style={[styles.inputContainer, { paddingBottom: keyboardMargin }]}>
+      <View
+        style={[
+          styles.inputContainer,
+          { paddingBottom: insets.bottom || 16 },
+        ]}
+      >
         <TextInput
           style={styles.input}
           placeholder="Type your message..."
@@ -156,7 +143,7 @@ const ChatPage = () => {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 

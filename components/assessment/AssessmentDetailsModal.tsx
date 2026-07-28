@@ -349,6 +349,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SimpleIcon from "../SimpleIcon";
@@ -361,6 +362,7 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   assessment: any;
+  onEdit?: (assessment: any) => void;
 }
 
 // ── Helpers (unchanged) ──────────────────────────────────────────────────────
@@ -411,10 +413,74 @@ const QuestionGroup: React.FC<{ type: string; questions: any[] }> = ({
       {open &&
         questions.map((q: any, i: number) => (
           <View key={i} style={grpStyles.qCard}>
-            <Text style={grpStyles.qLabel}>Question:</Text>
+            <Text style={grpStyles.qLabel}>
+              {q.type === "file" ? "Instruction:" : "Question:"}
+            </Text>
             <Text style={grpStyles.qText}>
               {q.question?.replace(/<[^>]*>/g, "")}
             </Text>
+
+            {q.type === "mcq" &&
+              q.options?.map((option: string, oi: number) => {
+                const isCorrect = q.correctAnswer === option?.toString();
+                return (
+                  <View
+                    key={oi}
+                    style={[
+                      grpStyles.optionRow,
+                      isCorrect
+                        ? grpStyles.optionRowCorrect
+                        : grpStyles.optionRowDefault,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        grpStyles.optionText,
+                        isCorrect && grpStyles.optionTextCorrect,
+                      ]}
+                    >
+                      {String.fromCharCode(65 + oi)}. {option}
+                    </Text>
+                    {isCorrect && (
+                      <View style={grpStyles.correctBadge}>
+                        <Text style={grpStyles.correctBadgeText}>
+                          Correct Answer
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+
+            {(q.type === "qa" || q.type === "truefalse") && (
+              <View style={grpStyles.correctAnswerBox}>
+                <Text style={grpStyles.correctAnswerLabel}>
+                  Correct Answer:
+                </Text>
+                <Text style={grpStyles.correctAnswerValue}>
+                  {q.type === "truefalse"
+                    ? q.correctAnswer === "true"
+                      ? "True"
+                      : "False"
+                    : q.correctAnswer || "—"}
+                </Text>
+              </View>
+            )}
+
+            {q.type === "file" && q.files?.length > 0 && (
+              <View style={{ marginTop: 8 }}>
+                {q.files.map((file: any, fi: number) => (
+                  <TouchableOpacity
+                    key={fi}
+                    style={grpStyles.fileRow}
+                    onPress={() => Linking.openURL(file.url)}
+                  >
+                    <SimpleIcon name="description" size={16} color="#3b82f6" />
+                    <Text style={grpStyles.fileName}>{file.filename}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         ))}
     </View>
@@ -429,6 +495,7 @@ const grpStyles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     alignItems: "center",
+    marginVertical: 20,
   },
   badge: {
     backgroundColor: "#111",
@@ -441,6 +508,44 @@ const grpStyles = StyleSheet.create({
   qCard: { padding: 12, backgroundColor: "#f9fafb", marginTop: 6 },
   qLabel: { fontWeight: "bold" },
   qText: { marginTop: 4 },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginTop: 6,
+  },
+  optionRowDefault: { backgroundColor: "#fff", borderColor: "#e5e7eb" },
+  optionRowCorrect: { backgroundColor: "#DCFCE7", borderColor: "#BBF7D0" },
+  optionText: { fontSize: 13, color: "#374151", flexShrink: 1 },
+  optionTextCorrect: { color: "#166534", fontWeight: "700" },
+  correctBadge: {
+    backgroundColor: "#16A34A",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+  correctBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },
+  correctAnswerBox: {
+    backgroundColor: "#DCFCE7",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 8,
+  },
+  correctAnswerLabel: { fontWeight: "700", color: "#166534", fontSize: 12 },
+  correctAnswerValue: {
+    color: "#166534",
+    fontSize: 14,
+    marginTop: 2,
+    textTransform: "capitalize",
+  },
+  fileRow: { flexDirection: "row", alignItems: "center", marginTop: 6, gap: 6 },
+  fileName: { color: "#3b82f6", textDecorationLine: "underline", fontSize: 13 },
 });
 
 // ── Main component ───────────────────────────────────────────────────────────
@@ -448,6 +553,7 @@ const AssessmentDetailsModal: React.FC<Props> = ({
   visible,
   onClose,
   assessment,
+  onEdit,
 }) => {
   const insets = useSafeAreaInsets();
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -476,17 +582,19 @@ const AssessmentDetailsModal: React.FC<Props> = ({
   return (
     <Modal visible={visible} animationType="slide">
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
-        {/* Back button */}
-        <TouchableOpacity
-          style={[styles.backBtn, { top: insets.top + 10 }]}
-          onPress={onClose}
-        >
-          <SimpleIcon name="arrow-back" size={18} color="#111" />
-        </TouchableOpacity>
+        {/* Header: back button on its own row, never overlapping the action bar */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity style={styles.backBtn} onPress={onClose}>
+            <SimpleIcon name="arrow-back" size={18} color="#111" />
+          </TouchableOpacity>
+        </View>
 
         {/* Action bar */}
         <View style={styles.actionBar}>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => onEdit?.(assessment)}
+          >
             <SimpleIcon name="edit" size={14} color="#374151" />
           </TouchableOpacity>
 
@@ -495,8 +603,8 @@ const AssessmentDetailsModal: React.FC<Props> = ({
             onPress={handleRemindNow}
             disabled={sendingReminder}
           >
-            <SimpleIcon name="notifications" size={14} color="#3B82F6" />
-            <Text style={styles.blueText}>
+            <SimpleIcon name="notifications" size={14} color="#000" />
+            <Text style={styles.greenText}>
               {sendingReminder ? "Sending..." : "Remind Now"}
             </Text>
           </TouchableOpacity>
@@ -514,7 +622,8 @@ const AssessmentDetailsModal: React.FC<Props> = ({
         </View>
 
         {/* Content */}
-        <ScrollView contentContainerStyle={styles.scrollContent}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
@@ -547,10 +656,10 @@ const AssessmentDetailsModal: React.FC<Props> = ({
           ))}
         </ScrollView>
 
-        {/* Settings modal (unchanged) */}
         <AssessmentSettingsModal
           visible={settingsVisible}
           onClose={() => setSettingsVisible(false)}
+          assessment={assessment}
         />
       </View>
     </Modal>
@@ -559,45 +668,63 @@ const AssessmentDetailsModal: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
   backBtn: {
-    position: "absolute",
-    top: 10,
-    left: 16,
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-    elevation: 3,
-    zIndex: 10,
   },
   actionBar: {
-    marginTop: 15,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-  iconBtn: { padding: 8, borderWidth: 1, borderRadius: 8 },
+  iconBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   outlineBtn: {
     flexDirection: "row",
-    padding: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderWidth: 1,
+    borderColor: "#BFDBFE",
     borderRadius: 8,
+    backgroundColor: "#fff",
     gap: 4,
   },
   solidBtn: {
     flexDirection: "row",
-    padding: 8,
-    backgroundColor: "#3B82F6",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#10B144",
     borderRadius: 8,
     gap: 4,
   },
-  blueText: { color: "#3B82F6", fontSize: 12 },
-  whiteText: { color: "#fff", fontSize: 12 },
+  greenText: { color: "#000", fontSize: 13, fontWeight: "600" },
+  whiteText: { color: "#fff", fontSize: 13, fontWeight: "600" },
   scrollContent: { padding: 16 },
   title: { fontSize: 24, fontWeight: "bold" },
   tag: {
@@ -612,7 +739,7 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: "#EFF6FF",
     borderLeftWidth: 4,
-    borderLeftColor: "#3B82F6",
+    borderLeftColor: "#10B144",
   },
   instructionsTitle: { fontWeight: "bold" },
 });

@@ -135,7 +135,7 @@ const CourseDetailStudentPageEnrolled = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getStudentEnrolledCourseDetails(enrollmentId);
+        const data = await getStudentEnrolledCourseDetails(enrollmentId, courseId);
         setEnrolledCourse(data || null);
       } catch (err) {
         setError("Failed to load course details.");
