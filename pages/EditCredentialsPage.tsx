@@ -336,6 +336,13 @@ const EditCredentialsPage: React.FC = () => {
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               )}
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => navigation.goBack()}
+              disabled={isLoading}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         );
 
@@ -431,6 +438,13 @@ const EditCredentialsPage: React.FC = () => {
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               )}
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => navigation.goBack()}
+              disabled={isLoading}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         );
 
@@ -502,6 +516,13 @@ const EditCredentialsPage: React.FC = () => {
               ) : (
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => navigation.goBack()}
+              disabled={isLoading}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         );
@@ -815,6 +836,20 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  cancelButtonText: {
+    color: '#4CAF50',
     fontSize: 16,
     fontWeight: 'bold',
   },

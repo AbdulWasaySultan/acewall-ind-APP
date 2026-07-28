@@ -13,12 +13,7 @@ import {
   Linking,
   Keyboard,
 } from "react-native";
-import {
-  useRoute,
-  useNavigation,
-  RouteProp,
-  useFocusEffect,
-} from "@react-navigation/native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -466,13 +461,15 @@ const CourseDetailsPage = () => {
     }
   }, [showGradingPeriodsModal]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (chapterDetails?._id) {
-        handleViewChapterDetails(chapterDetails._id);
-      }
-    }, [])
-  );
+  // NOTE: there used to be a useFocusEffect here that re-ran
+  // handleViewChapterDetails (which force-opens the chapter modal) whenever
+  // this screen regained focus. That fired on returning from ANY screen
+  // pushed from CourseDetails (Schedule Meeting, Enrollment Stats, Standard
+  // Grade Scale, etc.), reopening the chapter modal even when the user had
+  // already closed it. The three flows that legitimately need to reopen +
+  // refresh the chapter modal on return (create assessment / add page / add
+  // discussion from within a chapter) already do so explicitly via their own
+  // `navigateBack` route params below — this effect isn't needed for those.
 
   // ---- Data fetching ----
   const fetchCourseDetails = async () => {
@@ -2504,6 +2501,8 @@ const CourseDetailsPage = () => {
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
+                      flexWrap: "wrap",
+                      rowGap: 4,
                       marginBottom: 4,
                     }}
                   >
@@ -2518,7 +2517,9 @@ const CourseDetailsPage = () => {
                         fontWeight: "bold",
                         color: "#222",
                         marginRight: 8,
+                        flexShrink: 1,
                       }}
+                      numberOfLines={1}
                     >
                       {userName}
                     </Text>
@@ -4180,7 +4181,10 @@ const styles = StyleSheet.create({
 
   // ---- Full Screen Modals ----
   fullScreenModalContainer: { flex: 1, backgroundColor: "#f5f5f5" },
-  fullScreenModalContent: { flex: 1, padding: 20, paddingTop: 60 },
+  // Top padding is applied per-modal via insets.top on fullScreenModalHeader
+  // (every consumer of this shared style does this) — a static paddingTop
+  // here double-stacks with that and pushes the header/title way too far down.
+  fullScreenModalContent: { flex: 1, padding: 20 },
   fullScreenModalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",

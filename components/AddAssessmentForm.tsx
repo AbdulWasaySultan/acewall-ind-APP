@@ -441,7 +441,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         currentQuestion.type === "mcq" ? currentQuestion.options : undefined,
       correctAnswer: currentQuestion.correctAnswer,
       points: currentQuestion.points,
-      files: currentQuestion.type === "file" ? currentQuestion.files : undefined,
+      files:
+        currentQuestion.type === "file" ? currentQuestion.files : undefined,
     };
     setQuestions([...questions, newQuestion]);
     setCurrentQuestion({
@@ -610,13 +611,13 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
       const normalizedQuestions =
         assessmentType === "question"
           ? questions.map((q) => ({
-            type: q.type,
-            concept: q.concept || "",
-            question: q.question,
-            options: (q.options || []).filter(Boolean),
-            correctAnswer: q.correctAnswer,
-            points: q.points,
-          }))
+              type: q.type,
+              concept: q.concept || "",
+              question: q.question,
+              options: (q.options || []).filter(Boolean),
+              correctAnswer: q.correctAnswer,
+              points: q.points,
+            }))
           : [];
 
       const formData = new FormData();
@@ -678,8 +679,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
       // console.error("Error creating assessment:", error);
       Toast.show(
         error?.response?.data?.message ||
-        error?.message ||
-        "Failed to create assessment",
+          error?.message ||
+          "Failed to create assessment",
         Toast.LONG
       );
     } finally {
@@ -691,7 +692,9 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
   // RENDER
   // ────────────────────────────────────────────────────────────────
   return (
-    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}
+    <ScrollView
+      style={styles.content}
+      showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
     >
       {/* Assessment Type Selection */}
@@ -786,7 +789,11 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
               onPress={() => setShowAITitleSheet(true)}
               activeOpacity={0.8}
             >
-              <Sparkles color="#6366f1" size={14} style={styles.aiSmallButtonIcon} />
+              <Sparkles
+                color="#6366f1"
+                size={14}
+                style={styles.aiSmallButtonIcon}
+              />
               <Text style={styles.aiSmallButtonText}>AI Generate</Text>
             </TouchableOpacity>
           </View>
@@ -808,7 +815,11 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
               onPress={() => setShowAIDescriptionSheet(true)}
               activeOpacity={0.8}
             >
-              <Sparkles color="#6366f1" size={14} style={styles.aiSmallButtonIcon} />
+              <Sparkles
+                color="#6366f1"
+                size={14}
+                style={styles.aiSmallButtonIcon}
+              />
               <Text style={styles.aiSmallButtonText}>AI Generate</Text>
             </TouchableOpacity>
           </View>
@@ -935,8 +946,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                     {question.type === "mcq"
                       ? "Multiple Choice"
                       : question.type === "truefalse"
-                        ? "True/False"
-                        : "Question & Answer"}
+                      ? "True/False"
+                      : "Question & Answer"}
                   </Text>
                 </View>
                 {question.concept && (
@@ -1022,7 +1033,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
             !selectedCategory ||
             (assessmentType === "question" && questions.length === 0) ||
             (assessmentType === "file" && selectedFiles.length === 0)) &&
-          styles.submitButtonDisabled,
+            styles.submitButtonDisabled,
         ]}
         onPress={handleSubmitAssessment}
         disabled={
@@ -1047,7 +1058,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         onClose={() => setShowCategoryModal(false)}
       >
         <Text style={styles.modalTitle}>Select Category</Text>
-        <ScrollView style={styles.categoryList}
+        <ScrollView
+          style={styles.categoryList}
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
@@ -1060,7 +1072,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                 style={[
                   styles.categoryItem,
                   selectedCategory?._id === category._id &&
-                  styles.categoryItemSelected,
+                    styles.categoryItemSelected,
                 ]}
                 onPress={() => {
                   setSelectedCategory(category);
@@ -1071,7 +1083,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                   style={[
                     styles.categoryItemText,
                     selectedCategory?._id === category._id &&
-                    styles.categoryItemTextSelected,
+                      styles.categoryItemTextSelected,
                   ]}
                 >
                   {category.name}
@@ -1079,9 +1091,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
               </TouchableOpacity>
             ))
           ) : (
-            <Text style={styles.noCategoriesText}>
-              No categories available
-            </Text>
+            <Text style={styles.noCategoriesText}>No categories available</Text>
           )}
         </ScrollView>
         <TouchableOpacity
@@ -1147,9 +1157,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
             {creatingCategory ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.saveQuestionButtonText}>
-                Create Category
-              </Text>
+              <Text style={styles.saveQuestionButtonText}>Create Category</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -1161,7 +1169,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         onClose={() => setShowQuestionTypeModal(false)}
       >
         <Text style={styles.modalTitle}>Select Question Type</Text>
-        <ScrollView style={styles.categoryList}
+        <ScrollView
+          style={styles.categoryList}
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
@@ -1171,7 +1180,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
               style={[
                 styles.categoryItem,
                 currentQuestion?.type === type.type &&
-                styles.categoryItemSelected,
+                  styles.categoryItemSelected,
               ]}
               onPress={() => {
                 setCurrentQuestion({
@@ -1186,7 +1195,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                 style={[
                   styles.categoryItemText,
                   currentQuestion?.type === type.type &&
-                  styles.categoryItemTextSelected,
+                    styles.categoryItemTextSelected,
                 ]}
               >
                 {type.name}
@@ -1221,7 +1230,9 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
       <AIAssistantSheet
         visible={showAIQuestionSheet}
         onClose={() => setShowAIQuestionSheet(false)}
-        usedfor={`question-${currentQuestion.type === "file" ? "qa" : currentQuestion.type || "qa"}`}
+        usedfor={`question-${
+          currentQuestion.type === "file" ? "qa" : currentQuestion.type || "qa"
+        }`}
         showDifficulty
         onAccept={handleAcceptAIQuestion}
       />
@@ -1236,7 +1247,8 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, styles.questionModalContent]}>
             <Text style={styles.modalTitle}>Add Question</Text>
-            <ScrollView style={styles.questionForm}
+            <ScrollView
+              style={styles.questionForm}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
             >
@@ -1253,10 +1265,10 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                     {currentQuestion.type === "mcq"
                       ? "Multiple Choice"
                       : currentQuestion.type === "truefalse"
-                        ? "True/False"
-                        : currentQuestion.type === "file"
-                          ? "File Upload"
-                          : "Question & Answer"}
+                      ? "True/False"
+                      : currentQuestion.type === "file"
+                      ? "File Upload"
+                      : "Question & Answer"}
                   </Text>
                   <SimpleIcon name="chevron-down" size={20} color="#7b8794" />
                 </TouchableOpacity>
@@ -1291,7 +1303,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                 </View>
               </View>
               <View style={styles.inputGroup}>
-                <View style={styles.aiLabelRow}>
+                {/* <View style={styles.aiLabelRow}>
                   <Text style={styles.inputLabel}>Question</Text>
                   {currentQuestion.type !== "file" && (
                     <TouchableOpacity
@@ -1307,7 +1319,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                       <Text style={styles.aiSmallButtonText}>AI Generate</Text>
                     </TouchableOpacity>
                   )}
-                </View>
+                </View> */}
                 <View style={styles.richTextEditor}>
                   <TextInput
                     style={styles.richTextInput}
@@ -1342,7 +1354,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                         style={[
                           styles.optionRadio,
                           currentQuestion.correctAnswer === option &&
-                          styles.optionRadioSelected,
+                            styles.optionRadioSelected,
                         ]}
                         onPress={() =>
                           setCurrentQuestion({
@@ -1422,7 +1434,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                       style={[
                         styles.trueFalseOption,
                         currentQuestion.correctAnswer === "true" &&
-                        styles.trueFalseOptionSelected,
+                          styles.trueFalseOptionSelected,
                       ]}
                       onPress={() =>
                         setCurrentQuestion({
@@ -1435,7 +1447,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                         style={[
                           styles.trueFalseText,
                           currentQuestion.correctAnswer === "true" &&
-                          styles.trueFalseTextSelected,
+                            styles.trueFalseTextSelected,
                         ]}
                       >
                         True
@@ -1445,7 +1457,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                       style={[
                         styles.trueFalseOption,
                         currentQuestion.correctAnswer === "false" &&
-                        styles.trueFalseOptionSelected,
+                          styles.trueFalseOptionSelected,
                       ]}
                       onPress={() =>
                         setCurrentQuestion({
@@ -1458,7 +1470,7 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                         style={[
                           styles.trueFalseText,
                           currentQuestion.correctAnswer === "false" &&
-                          styles.trueFalseTextSelected,
+                            styles.trueFalseTextSelected,
                         ]}
                       >
                         False
@@ -1476,7 +1488,11 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                   </Text>
                   {(currentQuestion.files || []).map((file, index) => (
                     <View key={index} style={styles.fileItem}>
-                      <SimpleIcon name="description" size={24} color="#10B144" />
+                      <SimpleIcon
+                        name="description"
+                        size={24}
+                        color="#10B144"
+                      />
                       <Text style={styles.fileName} numberOfLines={1}>
                         {file.fileName}
                       </Text>

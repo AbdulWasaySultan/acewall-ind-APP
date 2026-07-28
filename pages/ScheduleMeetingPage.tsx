@@ -27,6 +27,7 @@ import { zoomService, ZoomMeeting } from "../services/zoomMeeting";
 import { openZoomMeeting } from "../utils/linking";
 import { useNavigation } from "@react-navigation/native";
 import SimpleIcon from "../components/SimpleIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
   route: { params: { courseId: string } };
@@ -80,6 +81,7 @@ const formatDateForDisplay = (dateString: string) => {
 export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
   const { courseId } = route.params;
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   // Form State
   const [topic, setTopic] = useState("");
@@ -305,13 +307,15 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
 
   return (
     <>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <SimpleIcon name="arrow-back" size={34} color="#10B144" />
+          <SimpleIcon name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Schedule Meeting</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -323,7 +327,7 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
         {/* Schedule Form Card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Video size={22} color="#2563eb" />
+            <Video size={22} color="#10B144" />
             <Text style={styles.cardTitle}>Schedule Zoom Class</Text>
           </View>
 
@@ -551,13 +555,15 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
 
 const styles = StyleSheet.create({
   header: {
+    minHeight: 56,
+    backgroundColor: "#10B144",
     flexDirection: "row",
-    justifyContent: "flex-start",
     alignItems: "center",
-    marginTop: 30,
-    marginHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  backButton: { padding: 4 },
+  backButton: { padding: 4, marginRight: 12 },
+  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", flex: 1 },
 
   mainContainer: {
     flex: 1,

@@ -185,7 +185,12 @@ const CoursePickerGrid: React.FC<CoursePickerGridProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    // Was "#fff" — identical to the card background below, which made the
+    // white course cards blend invisibly into the page with only a faint
+    // border/shadow separating them. A neutral gray page bg keeps the cards
+    // clearly distinguishable (matches the light-gray screen bg used by
+    // other course sub-pages, e.g. EnrollmentStatsPage/ScheduleMeetingPage).
+    backgroundColor: "#f8f9fa",
     padding: 16,
   },
   banner: {
