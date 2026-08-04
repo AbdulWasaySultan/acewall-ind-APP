@@ -39,9 +39,10 @@ import {
   getLikeCount,
   getCommentCount,
 } from "../services/socialPosts";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getUserToken } from "../utils/storage";
 
 import PostTarget from "../components/spillTheTea/CreatePostModal";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -67,7 +68,7 @@ const getUserFromToken = async (): Promise<{
   profileImg?: { url: string };
 } | null> => {
   try {
-    const token = await AsyncStorage.getItem("token");
+    const token = await getUserToken();
     if (!token) return null;
     const payload = JSON.parse(atob(token.split(".")[1]));
     return payload.user ?? null;
@@ -211,7 +212,7 @@ const SpillTheTeaPage: React.FC = () => {
           attachCommentCounts(rawPosts, updatePostComment);
         }
       } catch (error: any) {
-        Alert.alert("Error", error.message || "Failed to load posts.");
+        Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to load posts."));
         setPosts([]); // Clear posts on error
       } finally {
         setLoading(false);
@@ -252,7 +253,7 @@ const SpillTheTeaPage: React.FC = () => {
         attachCommentCounts(rawPosts, updatePostComment);
       }
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to load more posts.");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to load more posts."));
     } finally {
       setLoadingMore(false);
     }
@@ -288,7 +289,7 @@ const SpillTheTeaPage: React.FC = () => {
             : p
         )
       );
-      Alert.alert("Error", error.message || "Failed to update like.");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to update like."));
     }
   };
 
@@ -314,7 +315,7 @@ const SpillTheTeaPage: React.FC = () => {
     try {
       await addComment(postId, text);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to send comment.");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to send comment."));
     }
   };
 
@@ -375,7 +376,7 @@ const SpillTheTeaPage: React.FC = () => {
     } catch (error: any) {
       setPosts((prev) => prev.filter((p) => p._id !== tempId));
       console.error("Create post error:", error);
-      Alert.alert("Error", error.message || "Failed to create post.");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to create post."));
     }
   };
 

@@ -1,6 +1,7 @@
 import axios from "axios";
-import { getStoredBaseUrl, getStoredUserId } from "../utils/storage";
+import { getStoredUserId } from "../utils/storage";
 import { ToastAndroid } from "react-native";
+import { getApiInstance } from "./apiInstance";
 
 // Types
 export interface DashboardStats {
@@ -55,37 +56,13 @@ export interface Announcement {
   date: string;
 }
 
-// Create axios instance for dashboard API
-const createDashboardApiInstance = async () => {
-  const baseUrl = await getStoredBaseUrl();
-  console.log("Dashboard API Base URL:", baseUrl);
-  if (!baseUrl) {
-    throw new Error("No base URL configured. Please select a school first.");
-  }
-  const api = axios.create({
-    baseURL: baseUrl,
-    timeout: 10000,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  });
-  console.log("Created API instance with config:", {
-    baseURL: baseUrl,
-    timeout: 10000,
-    headers: api.defaults.headers,
-  });
-  console.log("API instance:", api);
-  return api;
-};
-
 // API calls
 export const dashboardService = {
   // Get teacher dashboard stats
   getTeacherStats: async (): Promise<DashboardStats> => {
     try {
       console.log("Fetching teacher stats...");
-      const api = await createDashboardApiInstance();
+      const api = await getApiInstance();
       const userId = await getStoredUserId();
       if (!userId) {
         console.error("No user ID found. User might not be logged in.");
@@ -130,7 +107,7 @@ export const dashboardService = {
   // Get recent activity
   getRecentActivity: async (): Promise<RecentActivity[]> => {
     try {
-      const api = await createDashboardApiInstance();
+      const api = await getApiInstance();
       const userId = await getStoredUserId();
 
       if (!userId) {
@@ -199,7 +176,7 @@ export const dashboardService = {
   // Get recent sales
   getRecentSales: async (): Promise<RecentSale[]> => {
     try {
-      const api = await createDashboardApiInstance();
+      const api = await getApiInstance();
       const userId = await getStoredUserId();
 
       if (!userId) {
@@ -254,7 +231,7 @@ export const dashboardService = {
       console.log(
         "Fetching student count from /api/course/getallCoursesforTeacher..."
       );
-      const api = await createDashboardApiInstance();
+      const api = await getApiInstance();
       const response = await api.get("/api/course/getallCoursesforTeacher");
 
       console.log("Students API response:", response.data);
@@ -293,7 +270,7 @@ export const dashboardService = {
   // Get recent courses
   getRecentCourses: async (): Promise<CourseStatsResponse | null> => {
     try {
-      const api = await createDashboardApiInstance();
+      const api = await getApiInstance();
       console.log(
         "Calling API endpoint:",
         "/api/course/getTeacherCoursesForDesboard"
@@ -325,8 +302,7 @@ export const dashboardService = {
   // Get student announcements
   getStudentAnnouncements: async (): Promise<Announcement[]> => {
     try {
-      const api = await createDashboardApiInstance();
-      // const api = await getApiInstance();
+      const api = await getApiInstance();
       const studentId = await getStoredUserId();
       console.log("Student ID for announcements:", studentId);
       // if (!studentId) {
@@ -377,7 +353,7 @@ export const dashboardService = {
   // Get student courses
   getStudentCourses: async (): Promise<any[]> => {
     try {
-      const api = await createDashboardApiInstance();
+      const api = await getApiInstance();
       const response = await api.get("/api/enrollment/studentCourses");
       // Response: { message: 'Enrolled Courses', enrolledCourses: [] }
       if (response.data && Array.isArray(response.data.enrolledCourses)) {
@@ -398,7 +374,7 @@ export const dashboardService = {
   },
   fetchStaticRecentActivity: async (): Promise<any[]> => {
     try {
-      const api = await createDashboardApiInstance();
+      const api = await getApiInstance();
       const response = await api.get("/api/comment/teacher/allComment");
       // Response: { message: 'Enrolled Courses', enrolledCourses: [] }
       if (

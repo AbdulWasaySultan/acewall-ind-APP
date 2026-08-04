@@ -14,6 +14,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getCourseAnalytics } from "../services/gradebook";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type RouteParams = RouteProp<RootStackParamList, "CourseAnalytics">;
 
@@ -127,7 +128,7 @@ const CourseAnalyticsPage = () => {
         const res = await getCourseAnalytics(courseId);
         setData(res);
       } catch (err: any) {
-        setError(err.message || "Failed to load analytics.");
+        setError(getFriendlyErrorMessage(err, "Failed to load analytics."));
       } finally {
         setLoading(false);
       }

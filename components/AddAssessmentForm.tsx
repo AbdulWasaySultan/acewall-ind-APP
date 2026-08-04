@@ -22,6 +22,12 @@ import AIAssistantSheet, {
 import { Sparkles } from "lucide-react-native";
 import { createApiInstance, addAuthInterceptor } from "../services/course";
 import { pick, types } from "@react-native-documents/picker";
+import {
+  getQuarterPickerMinDate,
+  getQuarterPickerMaxDate,
+  isQuarterOpenForSelection,
+  validateSelectedDate,
+} from "../utils/dateValidation";
 
 interface Question {
   id: string;
@@ -581,25 +587,13 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
       Toast.show("Please upload at least one file", Toast.SHORT);
       return;
     }
-    if (dueDate && quarterDates) {
-      const dueDateTimestamp = dueDate.getTime();
-      const quarterStartTimestamp = new Date(quarterDates.startDate).getTime();
-      const quarterEndTimestamp = new Date(quarterDates.endDate).getTime();
-      if (
-        dueDateTimestamp < quarterStartTimestamp ||
-        dueDateTimestamp > quarterEndTimestamp
-      ) {
-        Toast.show(
-          `Due date must be between ${formatDate(
-            new Date(quarterDates.startDate)
-          )} and ${formatDate(new Date(quarterDates.endDate))}`,
-          Toast.LONG
-        );
-        return;
-      }
-    }
     if (!dueDate) {
       Toast.show("Please select a due date", Toast.SHORT);
+      return;
+    }
+    const dueDateCheck = validateSelectedDate(dueDate, quarterDates);
+    if (!dueDateCheck.valid) {
+      Toast.show(dueDateCheck.reason || "Invalid due date", Toast.LONG);
       return;
     }
 
@@ -856,8 +850,21 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Due Date</Text>
           <TouchableOpacity
-            style={styles.dateButton}
-            onPress={() => setShowDatePicker(true)}
+            style={[
+              styles.dateButton,
+              !isQuarterOpenForSelection(quarterDates) && { opacity: 0.5 },
+            ]}
+            onPress={() => {
+              if (!isQuarterOpenForSelection(quarterDates)) {
+                Toast.show(
+                  "This quarter has already ended, so no due date can be selected.",
+                  Toast.LONG
+                );
+                return;
+              }
+              setShowDatePicker(true);
+            }}
+            disabled={!isQuarterOpenForSelection(quarterDates)}
           >
             <Text style={styles.dateText}>
               {dueDate
@@ -865,6 +872,13 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
                 : "Select Due Date"}
             </Text>
           </TouchableOpacity>
+
+          {quarterDates && !isQuarterOpenForSelection(quarterDates) && (
+            <Text style={styles.quarterErrorText}>
+              This quarter ended on {formatDate(new Date(quarterDates.endDate))}
+              . No due date can be selected.
+            </Text>
+          )}
 
           {quarterDatesLoading && (
             <View style={styles.quarterStatusRow}>
@@ -1560,17 +1574,13 @@ const AddAssessmentForm: React.FC<AddAssessmentFormProps> = ({
             </Text>
           )}
           <DateTimePicker
-            value={dueDate || new Date()}
+            value={dueDate || getQuarterPickerMinDate(quarterDates)}
             mode="date"
             display={Platform.OS === "ios" ? "spinner" : "default"}
             style={{ alignSelf: "center" }}
-            // ── Restrict to quarter dates ──
-            minimumDate={
-              quarterDates ? new Date(quarterDates.startDate) : undefined
-            }
-            maximumDate={
-              quarterDates ? new Date(quarterDates.endDate) : undefined
-            }
+            // ── Restrict to today at the earliest, and to the quarter's range ──
+            minimumDate={getQuarterPickerMinDate(quarterDates)}
+            maximumDate={getQuarterPickerMaxDate(quarterDates)}
             onChange={(event, selectedDate) => {
               if (Platform.OS === "android") {
                 setShowDatePicker(false);

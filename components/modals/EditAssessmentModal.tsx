@@ -11,6 +11,11 @@ import {
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import {
+  getQuarterEditMinDate,
+  getQuarterEditMaxDate,
+  QuarterDateRange,
+} from "../../utils/dateValidation";
 
 interface EditAssessmentModalProps {
   visible: boolean;
@@ -35,6 +40,7 @@ interface EditAssessmentModalProps {
   setShowEditTimePicker: (show: boolean) => void;
   editAssessmentLoading: boolean;
   handleEditAssessment: () => void;
+  quarterDates?: QuarterDateRange | null;
   insets: any;
   styles: any;
 }
@@ -62,6 +68,7 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
   setShowEditTimePicker,
   editAssessmentLoading,
   handleEditAssessment,
+  quarterDates,
   insets,
   styles,
 }) => {
@@ -165,6 +172,10 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
             </View>
           )}
 
+          {/* Editing an existing assessment intentionally allows any date
+              within the quarter's range, even if that range (or the item's
+              own due date) has already passed — matches web's
+              EditAssessment.jsx, which never floors the date at "today". */}
           <Text style={styles.editAssessmentLabel}>Due Date</Text>
           <TouchableOpacity
             style={styles.editAssessmentInput}
@@ -179,6 +190,13 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
                 : "Select due date"}
             </Text>
           </TouchableOpacity>
+          {quarterDates && (
+            <Text style={{ color: "#6B7280", fontSize: 12, marginTop: 4 }}>
+              Quarter range:{" "}
+              {getQuarterEditMinDate(quarterDates)?.toLocaleDateString("en-US")}{" "}
+              – {getQuarterEditMaxDate(quarterDates)?.toLocaleDateString("en-US")}
+            </Text>
+          )}
 
           <TouchableOpacity
             style={[
@@ -225,10 +243,16 @@ const EditAssessmentModal: React.FC<EditAssessmentModalProps> = ({
               </TouchableOpacity>
             )}
             <DateTimePicker
-              value={editAssessmentDueDate || new Date()}
+              value={
+                editAssessmentDueDate ||
+                getQuarterEditMinDate(quarterDates) ||
+                new Date()
+              }
               mode="date"
               style={{ alignSelf: "center" }}
               display={Platform.OS === "ios" ? "spinner" : "default"}
+              minimumDate={getQuarterEditMinDate(quarterDates)}
+              maximumDate={getQuarterEditMaxDate(quarterDates)}
               onChange={(event, selectedDate) => {
                 if (Platform.OS === "android") {
                   setShowEditDatePicker(false);

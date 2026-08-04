@@ -111,6 +111,7 @@ const ResetPasswordPage = () => {
                 />
                 {password.length > 0 && (
                   <TouchableOpacity
+                    testID="reset-password-toggle-visibility"
                     style={styles.eyeButton}
                     onPress={() => setShowPassword(v => !v)}
                   >

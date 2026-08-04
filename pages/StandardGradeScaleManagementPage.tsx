@@ -14,6 +14,7 @@ import { getSBLScale, setSBLScale } from "../services/course";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StandardGradeScaleModal from "../components/modals/StandardGradeScaleModal";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 interface SBLItem {
   _id?: string;
@@ -46,7 +47,7 @@ const StandardGradeScaleManagementPage = () => {
       if (err.response?.status === 404) {
         setScale([]);
       } else {
-        Alert.alert("Error", err.message || "Failed to fetch scale");
+        Alert.alert("Error", getFriendlyErrorMessage(err, "Failed to fetch scale"));
       }
     } finally {
       setLoading(false);
@@ -63,7 +64,7 @@ const StandardGradeScaleManagementPage = () => {
       setScale(newScale);
       setModalVisible(false);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to save scale");
+      Alert.alert("Error", getFriendlyErrorMessage(err, "Failed to save scale"));
     }
   };
 

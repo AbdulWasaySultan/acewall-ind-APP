@@ -17,6 +17,7 @@ import {
   getTeacherStudentAnalytics,
   TeacherStudentAnalytics,
 } from "../services/gradebook";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type RouteParams = RouteProp<RootStackParamList, "TeacherStudentAnalytics">;
 
@@ -128,7 +129,7 @@ const TeacherStudentAnalyticsPage = () => {
         setData(res);
       }
     } catch (err: any) {
-      setError(err.message || "No data found");
+      setError(getFriendlyErrorMessage(err, "No data found"));
     } finally {
       setLoading(false);
     }

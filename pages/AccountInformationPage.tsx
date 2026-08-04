@@ -33,6 +33,7 @@ import { useUser } from "../contexts/UserContext";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import SimpleIcon from "../components/SimpleIcon";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 export interface Document {
   name: string;
   url: string;
@@ -405,7 +406,7 @@ const AccountInformationPage = () => {
       Toast.show("Document uploaded successfully!", Toast.LONG);
     } catch (error: any) {
       console.error("Error uploading document:", error);
-      Toast.show(error.message || "Failed to upload document", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to upload document"), Toast.LONG);
     } finally {
       setIsLoading(false);
     }
@@ -446,7 +447,7 @@ const AccountInformationPage = () => {
       Toast.show("Document deleted successfully!", Toast.LONG);
     } catch (error: any) {
       console.error("Error deleting document:", error);
-      Toast.show(error.message || "Failed to delete document", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to delete document"), Toast.LONG);
     } finally {
       setIsLoading(false);
     }
@@ -473,7 +474,7 @@ const AccountInformationPage = () => {
       await logout();
     } catch (error: any) {
       console.error("Error deleting account:", error);
-      Toast.show(error.message || "Failed to delete account", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to delete account"), Toast.LONG);
     } finally {
       setIsLoading(false);
     }
@@ -1197,6 +1198,7 @@ const AccountInformationPage = () => {
             {/* Delete Account Button */}
             <View style={{ marginTop: 20, marginBottom: 40 }}>
               <TouchableOpacity
+                testID="account-delete-trigger-button"
                 style={styles.deleteAccountButton}
                 onPress={() => setShowAccountDeleteModal(true)}
                 disabled={isLoading}
@@ -1214,12 +1216,14 @@ const AccountInformationPage = () => {
       {isEditMode && (
         <View style={styles.editButtonContainer}>
           <TouchableOpacity
+            testID="account-edit-cancel-button"
             style={styles.cancelButton}
             onPress={handleCancelEdit}
           >
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            testID="account-save-button"
             style={styles.saveButton}
             onPress={handleSaveChanges}
             disabled={isLoading}
@@ -1256,6 +1260,7 @@ const AccountInformationPage = () => {
             </Text>
             <View style={styles.deleteModalButtons}>
               <TouchableOpacity
+                testID="document-delete-modal-cancel-button"
                 style={styles.deleteModalCancelButton}
                 onPress={handleCancelDelete}
                 disabled={isLoading}
@@ -1263,6 +1268,7 @@ const AccountInformationPage = () => {
                 <Text style={styles.deleteModalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
+                testID="document-delete-modal-confirm-button"
                 style={styles.deleteModalDeleteButton}
                 onPress={handleConfirmDelete}
                 disabled={isLoading}
@@ -1295,6 +1301,7 @@ const AccountInformationPage = () => {
             </Text>
             <View style={styles.deleteModalButtons}>
               <TouchableOpacity
+                testID="account-delete-modal-cancel-button"
                 style={styles.deleteModalCancelButton}
                 onPress={() => setShowAccountDeleteModal(false)}
                 disabled={isLoading}
@@ -1302,6 +1309,7 @@ const AccountInformationPage = () => {
                 <Text style={styles.deleteModalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
+                testID="account-delete-modal-confirm-button"
                 style={styles.deleteModalDeleteButton}
                 onPress={handleConfirmAccountDelete}
                 disabled={isLoading}

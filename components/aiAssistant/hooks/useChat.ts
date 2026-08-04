@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { Message } from "../types";
 import { sendAIMessage, getChatHistory } from "../../../services/aiAssistant";
 import removeMarkdown from "remove-markdown";
+import { getFriendlyErrorMessage } from "../../../utils/errorMessage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEFAULTS
@@ -197,7 +198,7 @@ const useChat = (options: UseChatOptions = {}) => {
         setQuickReplies(data.suggestedQuestions ?? QUICK_REPLIES_DEFAULT);
       } catch (err: any) {
         if (currentRequestIdRef.current !== requestId) return;
-        setError(err.message || "Failed to get response.");
+        setError(getFriendlyErrorMessage(err, "Failed to get response."));
         console.error("AI chat error:", err);
       } finally {
         if (currentRequestIdRef.current === requestId) {

@@ -6,6 +6,7 @@ import { getUserCoursesForFilter } from "../services/course";
 import CoursePickerGrid, {
   CoursePickerItem,
 } from "../components/common/CoursePickerGrid";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -29,7 +30,7 @@ const TeacherMessagesCoursePicker = () => {
       const res = await getUserCoursesForFilter(search);
       setCourses(Array.isArray(res?.courses) ? res.courses : []);
     } catch (err: any) {
-      setError(err?.message || "Failed to load courses.");
+      setError(getFriendlyErrorMessage(err, "Failed to load courses."));
       setCourses([]);
     } finally {
       setLoading(false);

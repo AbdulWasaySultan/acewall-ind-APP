@@ -540,6 +540,7 @@ const EditCredentialsPage: React.FC = () => {
       {/* Tabs at the very top */}
       <View style={[styles.tabContainer, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
+          testID="tab-email"
           style={[styles.tab, activeTab === 'email' && styles.activeTab]}
           onPress={() => setActiveTab('email')}
         >
@@ -548,6 +549,7 @@ const EditCredentialsPage: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          testID="tab-password"
           style={[styles.tab, activeTab === 'password' && styles.activeTab]}
           onPress={() => setActiveTab('password')}
         >
@@ -556,6 +558,7 @@ const EditCredentialsPage: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          testID="tab-phone"
           style={[styles.tab, activeTab === 'phone' && styles.activeTab]}
           onPress={() => setActiveTab('phone')}
         >
@@ -601,6 +604,7 @@ const EditCredentialsPage: React.FC = () => {
               {[0, 1, 2, 3, 4, 5].map((index) => (
                 <TextInput
                   key={index}
+                  testID={`otp-input-${index}`}
                   ref={(ref) => {
                     otpInputRefs.current[index] = ref;
                   }}

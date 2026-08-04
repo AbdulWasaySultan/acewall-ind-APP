@@ -21,6 +21,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getCourseEnrollmentStats } from "../services/course";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type RouteParams = RouteProp<RootStackParamList, "EnrollmentStats">;
 
@@ -145,7 +146,7 @@ const EnrollmentStatsPage = () => {
       const data = await getCourseEnrollmentStats(courseId, range);
       setStats(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      setError(err.message || "Could not load enrollment data.");
+      setError(getFriendlyErrorMessage(err, "Could not load enrollment data."));
       setStats([]);
     } finally {
       setLoading(false);

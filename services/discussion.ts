@@ -1,5 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createApiInstance, addAuthInterceptor } from './course';
+import { getStoredUserData } from '../utils/storage';
 
 export const getDiscussionsForChapter = async (chapterId: string) => {
   try {
@@ -209,9 +209,9 @@ export const getAllDiscussions = async (courseId?: string) => {
   try {
     const api = await createApiInstance();
     addAuthInterceptor(api);
-    const user = await AsyncStorage.getItem('userData')
+    const userData = await getStoredUserData();
 
-    const path = JSON.parse(user).user.role === "student" ? '/studentDiscussion' : '/all'
+    const path = userData?.user?.role === "student" ? '/studentDiscussion' : '/all'
     const url = courseId
       ? `/api/discussion${path}?course=${courseId}`
       : `/api/discussion${path}`;

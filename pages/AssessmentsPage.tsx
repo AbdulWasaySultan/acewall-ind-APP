@@ -16,14 +16,19 @@ import {
   getAssessmentSubmissionsForTeacher,
   getSubmissionDetails,
   submitGrades,
+  editAssessment,
+  getAssessmentCategories,
 } from "../services/course";
 import SubmissionsModal from "../components/assessment/Submissionsmodal";
 import SubmissionDetailModal from "../components/assessment/Submissiondetailmodal";
+import EditAssessmentModal from "../components/modals/EditAssessmentModal";
 import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar"; // ✅ fixed import
 import { DropdownFilter } from "../components/filters/DropDown"; // ✅ fixed import
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { validateEditedDate } from "../utils/dateValidation";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 
 const formatDate = (dateString: string) =>
@@ -104,6 +109,23 @@ const AssessmentsPage = () => {
   const [gradesSubmitted, setGradesSubmitted] = useState(false);
   const [submittingGrades, setSubmittingGrades] = useState(false);
 
+  // ── Edit Assessment (from SubmissionsModal → AssessmentDetailsModal) ──────
+  const [assessmentBeingEdited, setAssessmentBeingEdited] = useState<any>(null);
+  const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
+  const [editAssessmentTitle, setEditAssessmentTitle] = useState("");
+  const [editAssessmentDescription, setEditAssessmentDescription] = useState("");
+  const [editAssessmentCategory, setEditAssessmentCategory] = useState("");
+  const [editAssessmentCategories, setEditAssessmentCategories] = useState<
+    { id: string; title: string }[]
+  >([]);
+  const [showEditCategoryMenu, setShowEditCategoryMenu] = useState(false);
+  const [editAssessmentDueDate, setEditAssessmentDueDate] =
+    useState<Date | null>(null);
+  const [tempEditDate, setTempEditDate] = useState<Date | null>(null);
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  const [showEditTimePicker, setShowEditTimePicker] = useState(false);
+  const [editAssessmentLoading, setEditAssessmentLoading] = useState(false);
+
   useEffect(() => {
     if (categoryOpen) setTypeOpen(false);
   }, [categoryOpen]);
@@ -164,7 +186,7 @@ const AssessmentsPage = () => {
         console.log("📂 Categories:", uniqueCategories.length);
       } catch (err: any) {
         console.error("❌ Fetch error:", err);
-        setError(err.message || "Failed to load data.");
+        setError(getFriendlyErrorMessage(err, "Failed to load data."));
       } finally {
         setLoading(false);
       }
@@ -245,6 +267,107 @@ const AssessmentsPage = () => {
       setSubmissionDetailsError("Failed to load submission details");
     } finally {
       setSubmissionDetailsLoading(false);
+    }
+  };
+
+  const openEditAssessmentModal = async (assessment: any) => {
+    setAssessmentBeingEdited(assessment);
+    setEditAssessmentTitle(assessment.title || "");
+    setEditAssessmentDescription(assessment.description || "");
+    setEditAssessmentCategory(assessment.category?._id || "");
+    if (assessment.dueDate?.date) {
+      const due = new Date(assessment.dueDate.date);
+      if (assessment.dueDate.time) {
+        const [h, m] = assessment.dueDate.time.split(":");
+        due.setHours(parseInt(h, 10), parseInt(m, 10));
+      }
+      setEditAssessmentDueDate(due);
+    } else {
+      setEditAssessmentDueDate(null);
+    }
+    try {
+      const res = await getAssessmentCategories(
+        assessment.course?._id || courseId
+      );
+      setEditAssessmentCategories(
+        (res.categories || []).map((cat: any) => ({
+          id: cat._id,
+          title: cat.name,
+        }))
+      );
+    } catch (error) {
+      /* ignore — category picker just falls back to empty */
+    }
+    setShowEditAssessmentModal(true);
+  };
+
+  // Note: this endpoint's assessment objects don't include a `quarter`
+  // field (see allAssessmentByTeacher's .select() on the backend), so
+  // there's no quarter range to validate against from this screen — and,
+  // matching web's EditAssessment.jsx, editing never floors at "today"
+  // anyway (only quarter bounds constrain an edit, unlike creating new).
+  const handleEditAssessment = async () => {
+    if (!assessmentBeingEdited) return;
+    if (
+      !editAssessmentTitle.trim() ||
+      !editAssessmentDescription.trim() ||
+      !editAssessmentCategory ||
+      !editAssessmentDueDate
+    ) {
+      Alert.alert("Validation", "All fields are required.");
+      return;
+    }
+    const dueDateCheck = validateEditedDate(editAssessmentDueDate, null);
+    if (!dueDateCheck.valid) {
+      Alert.alert("Validation", dueDateCheck.reason || "Invalid due date");
+      return;
+    }
+    setEditAssessmentLoading(true);
+    try {
+      const payload = {
+        title: editAssessmentTitle.trim(),
+        description: editAssessmentDescription.trim(),
+        category: editAssessmentCategory,
+        dueDate: editAssessmentDueDate.toISOString(),
+      };
+      await editAssessment(assessmentBeingEdited._id, payload);
+
+      const categoryMeta = editAssessmentCategories.find(
+        (c) => c.id === editAssessmentCategory
+      );
+      const updatedFields = {
+        title: payload.title,
+        description: payload.description,
+        category: categoryMeta
+          ? { _id: categoryMeta.id, name: categoryMeta.title }
+          : assessmentBeingEdited.category,
+        dueDate: {
+          date: editAssessmentDueDate.toISOString().split("T")[0],
+          time: `${String(editAssessmentDueDate.getHours()).padStart(
+            2,
+            "0"
+          )}:${String(editAssessmentDueDate.getMinutes()).padStart(2, "0")}`,
+        },
+      };
+      setRawAssessments((prev) =>
+        prev.map((a) =>
+          a._id === assessmentBeingEdited._id ? { ...a, ...updatedFields } : a
+        )
+      );
+      setSelectedAssessment((prev: any) =>
+        prev && prev._id === assessmentBeingEdited._id
+          ? { ...prev, ...updatedFields }
+          : prev
+      );
+      setShowEditAssessmentModal(false);
+      Alert.alert("Success", "Assessment updated successfully.");
+    } catch (err: any) {
+      Alert.alert(
+        "Error",
+        err.response?.data?.message || err.message || "Failed to update assessment"
+      );
+    } finally {
+      setEditAssessmentLoading(false);
     }
   };
 
@@ -427,6 +550,34 @@ const AssessmentsPage = () => {
         onSubmissionPress={handleSubmissionPress}
         formatDate={formatDate}
         formatDateTime={formatDateTime}
+        onEdit={openEditAssessmentModal}
+      />
+
+      <EditAssessmentModal
+        visible={showEditAssessmentModal}
+        onClose={() => setShowEditAssessmentModal(false)}
+        onBackToDetails={() => setShowEditAssessmentModal(false)}
+        editAssessmentTitle={editAssessmentTitle}
+        setEditAssessmentTitle={setEditAssessmentTitle}
+        editAssessmentDescription={editAssessmentDescription}
+        setEditAssessmentDescription={setEditAssessmentDescription}
+        editAssessmentCategory={editAssessmentCategory}
+        setEditAssessmentCategory={setEditAssessmentCategory}
+        assessmentCategories={editAssessmentCategories}
+        showEditCategoryMenu={showEditCategoryMenu}
+        setShowEditCategoryMenu={setShowEditCategoryMenu}
+        editAssessmentDueDate={editAssessmentDueDate}
+        setEditAssessmentDueDate={setEditAssessmentDueDate}
+        tempEditDate={tempEditDate}
+        setTempEditDate={setTempEditDate}
+        showEditDatePicker={showEditDatePicker}
+        setShowEditDatePicker={setShowEditDatePicker}
+        showEditTimePicker={showEditTimePicker}
+        setShowEditTimePicker={setShowEditTimePicker}
+        editAssessmentLoading={editAssessmentLoading}
+        handleEditAssessment={handleEditAssessment}
+        insets={insets}
+        styles={styles}
       />
 
       <SubmissionDetailModal
@@ -534,6 +685,80 @@ const styles = StyleSheet.create({
     // width: "50%",
     // backgroundColor: '#000'
   },
+
+  // ---- Edit Assessment modal (shared with EditAssessmentModal component) ----
+  assessmentDetailsHeader: {
+    backgroundColor: "#10B144",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    justifyContent: "space-between",
+  },
+  assessmentDetailsBackButton: {
+    width: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  assessmentDetailsHeaderTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+  },
+  editAssessmentLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  editAssessmentInput: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    fontSize: 16,
+    color: "#000",
+  },
+  editAssessmentCategoryButton: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  editAssessmentCategoryButtonText: { fontSize: 16, color: "#000" },
+  editAssessmentSaveButton: {
+    backgroundColor: "#10B144",
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 24,
+  },
+  editAssessmentSaveButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  editCategoryDropdownMenu: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    maxHeight: 180,
+    marginTop: 6,
+  },
+  editCategoryDropdownItem: { paddingHorizontal: 12, paddingVertical: 10 },
+  editCategoryDropdownItemActive: { backgroundColor: "#eef2ff" },
 });
 
 export default AssessmentsPage;

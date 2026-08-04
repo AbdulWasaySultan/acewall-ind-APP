@@ -13,6 +13,7 @@ import {
   Linking,
   Platform,
   KeyboardAvoidingView,
+  BackHandler,
 } from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -34,6 +35,7 @@ import { pick, types } from "@react-native-documents/picker";
 import Toast from "react-native-simple-toast";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 type RouteParams = RouteProp<RootStackParamList, "ChapterPages">;
 
 const ChapterPagesPage = () => {
@@ -41,6 +43,25 @@ const ChapterPagesPage = () => {
   const navigation = useNavigation();
   const { courseId, chapterId, lessonId, navigateBack } = route.params as any;
   const insets = useSafeAreaInsets();
+
+  // Without this, the Android hardware/gesture back button bypasses the
+  // on-screen back arrow's `navigateBack` call entirely (native-stack's
+  // default back handling just pops the screen), so ChapterDetailsModal on
+  // the screen underneath never gets reopened.
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (navigateBack) {
+          navigateBack();
+        } else {
+          navigation.goBack();
+        }
+        return true;
+      }
+    );
+    return () => subscription.remove();
+  }, [navigateBack, navigation]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +116,7 @@ const ChapterPagesPage = () => {
       }
       setPages(refreshed.pages || []);
     } catch (err: any) {
-      Toast.show(err.message || "Failed to create page", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to create page"), Toast.LONG);
     } finally {
       setSubmitting(false);
       setLoading(false);
@@ -228,7 +249,7 @@ const ChapterPagesPage = () => {
             if (showDetails && selectedPage?._id === p._id)
               setShowDetails(false);
           } catch (err: any) {
-            Toast.show(err.message || "Failed to delete page", Toast.LONG);
+            Toast.show(getFriendlyErrorMessage(err, "Failed to delete page"), Toast.LONG);
           }
         },
       },
@@ -267,7 +288,7 @@ const ChapterPagesPage = () => {
         }
         setPages(res.pages || []);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch pages");
+        setError(getFriendlyErrorMessage(err, "Failed to fetch pages"));
       } finally {
         setLoading(false);
       }

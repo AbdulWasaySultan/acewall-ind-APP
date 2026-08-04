@@ -18,8 +18,9 @@ import {
   deleteAssessmentCategory,
 } from "../../services/course";
 import Toast from "react-native-simple-toast";
+import { getFriendlyErrorMessage } from "../../utils/errorMessage";
 
-interface ManageCategoriesModalProps {
+interface ManageAssessmentCategoriesModalProps {
   visible: boolean;
   onClose: () => void;
   courseId: string;
@@ -31,7 +32,7 @@ interface Category {
   weight: string;
 }
 
-const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
+const ManageCategoriesModal: React.FC<ManageAssessmentCategoriesModalProps> = ({
   visible,
   onClose,
   courseId,
@@ -104,7 +105,7 @@ const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
       Toast.show("Category updated successfully.", Toast.LONG);
       fetchAssessmentCategories();
     } catch (error: any) {
-      Toast.show(error.message || "Failed to update category.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to update category."), Toast.LONG);
     }
   };
 
@@ -167,7 +168,7 @@ const ManageCategoriesModal: React.FC<ManageCategoriesModalProps> = ({
       if (error.response.type === 404) {
         Toast.show("The weightage shouldnot exceed more than 100%", Toast.LONG);
       }
-      Toast.show(error.message || "Failed to add category.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to add category."), Toast.LONG);
     } finally {
       setCreatingCategory(false);
     }

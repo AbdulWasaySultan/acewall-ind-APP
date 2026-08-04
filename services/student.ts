@@ -1,5 +1,6 @@
 // gradebookService.ts
 import { getApiInstance } from "./apiInstance";
+import { parseApiError } from "../utils/apiError";
 import {
   Assessment as GradebookAssessment,
   Quarter as GradebookQuarter,
@@ -64,21 +65,6 @@ export interface CourseGradebook {
   directAssessments: DirectAssessments;
 }
 
-// Error handler
-const handleApiError = (error: any, defaultMessage: string) => {
-  console.error(`${defaultMessage}:`, error);
-
-  if (error.response) {
-    throw new Error(error.response.data?.message || defaultMessage);
-  } else if (error.request) {
-    throw new Error(
-      "No response from server. Please check your internet connection."
-    );
-  } else {
-    throw new Error(`Error: ${error.message}`);
-  }
-};
-
 export const getAllStudentsWithCourses = async (): Promise<Student[]> => {
   try {
     const api = await getApiInstance(); // Interceptor already handles auth
@@ -91,7 +77,7 @@ export const getAllStudentsWithCourses = async (): Promise<Student[]> => {
 
     return response.data.students;
   } catch (error) {
-    handleApiError(error, "Failed to fetch students with courses");
+    throw parseApiError(error, "Failed to fetch students with courses");
     return []; // This line won't execute due to throw, but keeps TypeScript happy
   }
 };
@@ -113,7 +99,7 @@ export const getCourseGradebook = async (
 
     return response.data;
   } catch (error) {
-    handleApiError(error, "Failed to fetch course gradebook");
+    throw parseApiError(error, "Failed to fetch course gradebook");
     throw error; // Re-throw for component-level handling
   }
 };
@@ -162,7 +148,7 @@ export const getStudentCourseGradebook = async (
     if (error?.response?.status === 404) {
       return null;
     }
-    handleApiError(error, "Failed to fetch course gradebook");
+    throw parseApiError(error, "Failed to fetch course gradebook");
     throw error;
   }
 };

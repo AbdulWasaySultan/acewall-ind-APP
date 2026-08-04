@@ -1,0 +1,13 @@
+# iOS — values read from env so nothing secret is committed. Set these in
+# your CI secret store before running any lane that talks to App Store
+# Connect (build_simulator / build_debug / build_bundle work without them).
+app_identifier("com.schoolinstance.independent")
+apple_id(ENV["FASTLANE_APPLE_ID"] || "CHANGE_ME@example.com")
+itc_team_id(ENV["FASTLANE_ITC_TEAM_ID"] || "CHANGE_ME")   # App Store Connect team ID
+team_id(ENV["FASTLANE_TEAM_ID"] || "CHANGE_ME")           # Apple Developer Portal team ID
+
+# Android
+package_name("com.acewallscholarsindep")
+# Google Play service account JSON — only required by the `android beta`
+# (upload_to_play_store) lane.
+json_key_file(ENV["PLAY_STORE_JSON_KEY_FILE"] || "CHANGE_ME.json")

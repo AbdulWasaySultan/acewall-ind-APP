@@ -20,6 +20,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { zoomService, ZoomMeeting } from "../services/zoomMeeting";
 import { openZoomMeeting } from "../utils/linking";
 import SimpleIcon from "../components/SimpleIcon";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ScreenRouteProp = RouteProp<RootStackParamList, "StudentMeetingsByCourse">;
@@ -47,7 +48,7 @@ const StudentMeetingListPage = () => {
       const res = await zoomService.getCourseMeetings(courseId);
       setMeetings(Array.isArray(res) ? res : []);
     } catch (err: any) {
-      setError(err?.message || "Failed to load meetings.");
+      setError(getFriendlyErrorMessage(err, "Failed to load meetings."));
       setMeetings([]);
     } finally {
       setLoading(false);

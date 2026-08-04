@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getUserToken } from "../utils/storage";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -31,6 +31,7 @@ import {
   addComment,
 } from "../services/socialPosts";
 import { toggleLike } from "../components/spillTheTea/mnt/user-data/outputs/SpillTheTea/helpers";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 // ── Icon wrapper ──────────────────────────────────────────────────────────────
 const Icon: React.FC<{ name: string; size: number; color: string }> = ({
@@ -53,7 +54,7 @@ const normalizePost = (p: any): Post => ({
 // ── Decode JWT ────────────────────────────────────────────────────────────────
 const getUserIdFromToken = async (): Promise<string | null> => {
   try {
-    const token = await AsyncStorage.getItem("token");
+    const token = await getUserToken();
     if (!token) return null;
     const payload = JSON.parse(atob(token.split(".")[1]));
     console.log("userid:", payload.user?._id ?? payload._id ?? null);
@@ -170,7 +171,7 @@ const SpillTheTeaProfilePage: React.FC = () => {
         attachLikeCounts(rawPosts, updatePostLike);
         attachCommentCounts(rawPosts, updatePostComment);
       } catch (error: any) {
-        Alert.alert("Error", error.message || "Failed to load profile.");
+        Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to load profile."));
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -198,7 +199,7 @@ const SpillTheTeaProfilePage: React.FC = () => {
           } catch (error: any) {
             // Revert on failure
             fetchData();
-            Alert.alert("Error", error.message || "Failed to delete post.");
+            Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to delete post."));
           }
         },
       },
@@ -235,7 +236,7 @@ const SpillTheTeaProfilePage: React.FC = () => {
             : p
         )
       );
-      Alert.alert("Error", error.message || "Failed to update like.");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to update like."));
     }
   };
 
@@ -266,7 +267,7 @@ const SpillTheTeaProfilePage: React.FC = () => {
     try {
       await addComment(postId, text);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to send comment.");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to send comment."));
     }
   };
 
@@ -279,6 +280,7 @@ const SpillTheTeaProfilePage: React.FC = () => {
 
       {/* Back */}
       <TouchableOpacity
+        testID="profile-back-button"
         style={styles.backBtn}
         onPress={() => navigation.goBack()}
       >

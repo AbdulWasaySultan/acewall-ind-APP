@@ -1,5 +1,6 @@
 // supportService.ts
 import { getApiInstance } from "./apiInstance";
+import { parseApiError } from "../utils/apiError";
 
 export interface SupportData {
   fullName: string;
@@ -7,28 +8,6 @@ export interface SupportData {
   feedback: string;
   subject?: string;
 }
-
-// Error handler
-const handleApiError = (error: any, defaultMessage: string) => {
-  console.error(`${defaultMessage}:`, error);
-
-  if (error.response) {
-    // Server responded with error
-    const message =
-      error.response.data?.message ||
-      error.response.data?.error ||
-      defaultMessage;
-    throw new Error(message);
-  } else if (error.request) {
-    // No response from server
-    throw new Error(
-      "No response from server. Please check your internet connection."
-    );
-  } else {
-    // Request setup error
-    throw new Error(`Error: ${error.message}`);
-  }
-};
 
 export const sendSupportMessage = async (supportData: SupportData) => {
   try {
@@ -57,6 +36,6 @@ export const sendSupportMessage = async (supportData: SupportData) => {
     console.log("Support message sent successfully:", response.data);
     return response.data;
   } catch (error) {
-    handleApiError(error, "Failed to send support message");
+    throw parseApiError(error, "Failed to send support message");
   }
 };

@@ -36,6 +36,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 // Type for navigation param
 const avatarPlaceholder = require("../assets/placeholder.png");
 interface Params {
@@ -117,7 +118,7 @@ const CourseDetailStudentPageEnrolled = () => {
       }
     } catch (error: any) {
       console.error("Failed to fetch chapters:", error);
-      Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch chapters."), Toast.LONG);
       setChaptersMessage("Failed to fetch chapters.");
     } finally {
       setLoadingChaptersForQuarter(false);
@@ -349,7 +350,7 @@ const CourseDetailStudentPageEnrolled = () => {
       const res = await getQuartersForSemester(semester._id);
       setSemesterQuarters(res.quarters || []);
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch quarters.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch quarters."), Toast.LONG);
     } finally {
       setLoadingSemesterQuarters(false);
     }
@@ -370,7 +371,7 @@ const CourseDetailStudentPageEnrolled = () => {
         setChaptersMessage(res.message || "No chapters found.");
       }
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch chapters."), Toast.LONG);
       setChaptersMessage("Failed to fetch chapters.");
     } finally {
       setLoadingChaptersForQuarter(false);

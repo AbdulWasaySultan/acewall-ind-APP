@@ -8,7 +8,9 @@ interface Props {
   onChange: (v: PostTarget) => void;
 }
 
-const OPTIONS: { key: PostTarget; label: string; icon: string }[] = [
+type MaterialIconName = React.ComponentProps<typeof MaterialIcons>['name'];
+
+const OPTIONS: { key: PostTarget; label: string; icon: MaterialIconName }[] = [
   { key: 'public', label: 'Public Feed',  icon: 'public' },
   { key: 'course', label: 'Course Class', icon: 'school' },
 ];

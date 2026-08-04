@@ -1,0 +1,68 @@
+default_platform(:ios)
+
+# Lanes below are split into what runs today with zero extra setup
+# (test, build_debug/build_simulator, build_bundle) and what needs
+# credentials this repo doesn't ship (release signing via `match`,
+# an App Store Connect API key, a Play Store service account JSON —
+# see fastlane/Appfile). Wire those up before relying on `beta`/`release`.
+
+platform :ios do
+  desc "Run ESLint and the Jest suite"
+  lane :test do
+    sh("yarn lint")
+    sh("yarn test")
+  end
+
+  desc "Build the app for the iOS Simulator, unsigned — smoke-tests that the native project compiles"
+  lane :build_simulator do
+    build_app(
+      workspace: "ios/SpeakYourMenu.xcworkspace",
+      scheme: "SpeakYourMenu",
+      configuration: "Debug",
+      skip_package_ipa: true,
+      skip_archive: true,
+      destination: "generic/platform=iOS Simulator"
+    )
+  end
+
+  desc "Archive a release .ipa. Requires code signing (certificates/provisioning via `match` or manual profiles) to already be set up."
+  lane :release do
+    build_app(
+      workspace: "ios/SpeakYourMenu.xcworkspace",
+      scheme: "SpeakYourMenu",
+      configuration: "Release",
+      export_method: "app-store"
+    )
+  end
+
+  desc "Bump the build number, archive, and upload to TestFlight. Requires an App Store Connect API key."
+  lane :beta do
+    increment_build_number(xcodeproj: "ios/SpeakYourMenu.xcodeproj")
+    release
+    upload_to_testflight(skip_waiting_for_build_processing: true)
+  end
+end
+
+platform :android do
+  desc "Run ESLint and the Jest suite"
+  lane :test do
+    sh("yarn lint")
+    sh("yarn test")
+  end
+
+  desc "Build a debug APK"
+  lane :build_debug do
+    gradle(task: "assembleDebug", project_dir: "android")
+  end
+
+  desc "Build a release App Bundle (.aab), signed per android/app/build.gradle's signingConfig"
+  lane :build_bundle do
+    gradle(task: "bundleRelease", project_dir: "android")
+  end
+
+  desc "Build and upload the latest release bundle to the Play Store's internal testing track. Requires a Google Play service account JSON."
+  lane :beta do
+    build_bundle
+    upload_to_play_store(track: "internal")
+  end
+end

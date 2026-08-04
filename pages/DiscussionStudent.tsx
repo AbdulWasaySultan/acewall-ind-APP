@@ -41,6 +41,16 @@ import {
   setDiscussionDueDateForStudents,
   getAssessmentCategories,
 } from "../services/course";
+import { getQuarterDates } from "../services/quarter";
+import {
+  getQuarterEditMinDate,
+  getQuarterEditMaxDate,
+  validateEditedDate,
+  getQuarterPickerMinDate,
+  getQuarterPickerMaxDate,
+  validateSelectedDate,
+  QuarterDateRange,
+} from "../utils/dateValidation";
 
 interface DiscussionDetailParams {
   discussionId: string;
@@ -184,6 +194,8 @@ const DiscussionStudent = () => {
   const [showOverrideDatePicker, setShowOverrideDatePicker] = useState(false);
   const [showOverrideTimePicker, setShowOverrideTimePicker] = useState(false);
   const [savingOverride, setSavingOverride] = useState(false);
+  const [overrideQuarterDates, setOverrideQuarterDates] =
+    useState<QuarterDateRange | null>(null);
 
   // ── Edit sheet (teacher): topic / description / category / due date ──
   const [showEditSheet, setShowEditSheet] = useState(false);
@@ -197,6 +209,8 @@ const DiscussionStudent = () => {
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
   const [showEditTimePicker, setShowEditTimePicker] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [editQuarterDates, setEditQuarterDates] =
+    useState<QuarterDateRange | null>(null);
 
   useEffect(() => {
     fetchDiscussionDetails();
@@ -315,6 +329,7 @@ const DiscussionStudent = () => {
     setSelectedStudentIds([]);
     setOverrideDate(null);
     setTempOverrideDate(null);
+    setOverrideQuarterDates(null);
     setLoadingStudents(true);
     try {
       const students = await getStudentsOfCourse(discussion.course._id);
@@ -323,6 +338,14 @@ const DiscussionStudent = () => {
       Toast.show("Failed to load students.", Toast.LONG);
     } finally {
       setLoadingStudents(false);
+    }
+    if (discussion.quarter) {
+      try {
+        const dates = await getQuarterDates(discussion.quarter);
+        setOverrideQuarterDates(dates);
+      } catch (error) {
+        /* ignore — falls back to no quarter restriction beyond "no past dates" */
+      }
     }
   };
 
@@ -364,6 +387,11 @@ const DiscussionStudent = () => {
     }
     if (!overrideDate) {
       Toast.show("Pick an override date and time.", Toast.LONG);
+      return;
+    }
+    const dateCheck = validateSelectedDate(overrideDate, overrideQuarterDates);
+    if (!dateCheck.valid) {
+      Toast.show(dateCheck.reason || "Invalid date.", Toast.LONG);
       return;
     }
     setSavingOverride(true);
@@ -420,11 +448,20 @@ const DiscussionStudent = () => {
       setEditDueDate(null);
     }
     setShowEditSheet(true);
+    setEditQuarterDates(null);
     try {
       const res = await getAssessmentCategories(discussion.course._id);
       setEditCategories(res?.categories || []);
     } catch (error) {
       Toast.show("Failed to load categories.", Toast.LONG);
+    }
+    if (discussion.quarter) {
+      try {
+        const dates = await getQuarterDates(discussion.quarter);
+        setEditQuarterDates(dates);
+      } catch (error) {
+        /* ignore — falls back to no quarter restriction beyond "no past dates" */
+      }
     }
   };
 
@@ -436,6 +473,11 @@ const DiscussionStudent = () => {
     }
     if (!editDueDate) {
       Toast.show("Please select a due date.", Toast.LONG);
+      return;
+    }
+    const dueDateCheck = validateEditedDate(editDueDate, editQuarterDates);
+    if (!dueDateCheck.valid) {
+      Toast.show(dueDateCheck.reason || "Invalid due date.", Toast.LONG);
       return;
     }
     setSavingEdit(true);
@@ -1181,6 +1223,19 @@ const DiscussionStudent = () => {
             </TouchableOpacity>
           </View>
 
+          {overrideQuarterDates && (
+            <Text style={{ color: "#6B7280", fontSize: 12, marginTop: 4 }}>
+              Quarter range:{" "}
+              {getQuarterPickerMinDate(overrideQuarterDates).toLocaleDateString(
+                "en-US"
+              )}{" "}
+              –{" "}
+              {getQuarterPickerMaxDate(overrideQuarterDates)?.toLocaleDateString(
+                "en-US"
+              )}
+            </Text>
+          )}
+
           {showOverrideDatePicker && (
             <>
               {Platform.OS === "ios" && (
@@ -1197,9 +1252,15 @@ const DiscussionStudent = () => {
                 </TouchableOpacity>
               )}
               <DateTimePicker
-                value={tempOverrideDate || overrideDate || new Date()}
+                value={
+                  tempOverrideDate ||
+                  overrideDate ||
+                  getQuarterPickerMinDate(overrideQuarterDates)
+                }
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
+                minimumDate={getQuarterPickerMinDate(overrideQuarterDates)}
+                maximumDate={getQuarterPickerMaxDate(overrideQuarterDates)}
                 onChange={(event, selectedDate) => {
                   if (Platform.OS === "android") {
                     setShowOverrideDatePicker(false);
@@ -1340,6 +1401,10 @@ const DiscussionStudent = () => {
             </Text>
           </TouchableOpacity>
 
+          {/* Editing an existing discussion allows any date within the
+              quarter's range even if it (or the quarter) has already
+              passed — matches web's EditDiscussion.jsx, which never floors
+              at "today" for edits. */}
           <Text style={styles.sheetLabel}>Standard Due Date</Text>
           <View style={{ flexDirection: "row", gap: 10 }}>
             <TouchableOpacity
@@ -1373,6 +1438,19 @@ const DiscussionStudent = () => {
             </TouchableOpacity>
           </View>
 
+          {editQuarterDates && (
+            <Text style={{ color: "#6B7280", fontSize: 12, marginTop: 4 }}>
+              Quarter range:{" "}
+              {getQuarterEditMinDate(editQuarterDates)?.toLocaleDateString(
+                "en-US"
+              )}{" "}
+              –{" "}
+              {getQuarterEditMaxDate(editQuarterDates)?.toLocaleDateString(
+                "en-US"
+              )}
+            </Text>
+          )}
+
           {showEditDatePicker && (
             <>
               {Platform.OS === "ios" && (
@@ -1389,9 +1467,16 @@ const DiscussionStudent = () => {
                 </TouchableOpacity>
               )}
               <DateTimePicker
-                value={tempEditDate || editDueDate || new Date()}
+                value={
+                  tempEditDate ||
+                  editDueDate ||
+                  getQuarterEditMinDate(editQuarterDates) ||
+                  new Date()
+                }
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
+                minimumDate={getQuarterEditMinDate(editQuarterDates)}
+                maximumDate={getQuarterEditMaxDate(editQuarterDates)}
                 onChange={(event, selectedDate) => {
                   if (Platform.OS === "android") {
                     setShowEditDatePicker(false);

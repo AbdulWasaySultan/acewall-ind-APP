@@ -12,6 +12,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import SimpleIcon from "../components/SimpleIcon";
 import { getOverallGradeReport } from "../services/gradebook";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 // Percentage color tiers - matches web's Gradebook.jsx AssessmentTable exactly
 const getPercentColor = (pct: number) => {
@@ -59,7 +60,7 @@ const GradebookPage = () => {
         const res = await getOverallGradeReport();
         setData(res);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch grade report");
+        setError(getFriendlyErrorMessage(err, "Failed to fetch grade report"));
       } finally {
         setLoading(false);
       }

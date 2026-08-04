@@ -12,6 +12,7 @@ import {
   Platform,
   Linking,
   Keyboard,
+  UIManager,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -30,7 +31,7 @@ import ChapterDetailsModal from "../components/modals/ChapterDetailsModal";
 import GradebookModal from "../components/modals/GradebookModal";
 import EditCourseModal from "../components/modals/EditCourseModal";
 import AddAssessmentCategoryModal from "../components/modals/AddAssessmentCategoryModal";
-import ManageCategoriesModal from "../components/modals/ManageCategoriesModal";
+import ManageCategoriesModal from "../components/modals/ManageAssessmentCategoriesModal";
 import NewSemesterModal from "../components/modals/NewSemesterModal";
 import EditSemesterModal from "../components/modals/EditSemesterModal";
 import NewQuarterModal from "../components/modals/NewQuarterModal";
@@ -93,13 +94,15 @@ import {
   toggleQuarterArchive,
 } from "../services/course";
 import { getCourseRating, createRating } from "../services/rating";
-import { getApiInstance } from "../services/apiInstance";
+import { getQuarterDates } from "../services/quarter";
 import { getComments, sendComment } from "../services/comment";
 import { deletePage } from "../services/page";
 import { getCourseGradebook } from "../services/gradebook";
 import { fetchCouponsByCourse } from "../services/coupon";
 import { useUser } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
+import { validateEditedDate } from "../utils/dateValidation";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 const fallbackImage = require("../assets/star.png");
 
@@ -137,6 +140,11 @@ const CourseDetailsPage = () => {
   const [showGradebookModal, setShowGradebookModal] = useState(false);
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
   const [showChapterDetailsModal, setShowChapterDetailsModal] = useState(false);
+  // Bumped every time ChapterDetailsModal is reopened after navigating away
+  // via the "+" dropdown (Add Page/Lesson/Assessment/Discussion) and back.
+  // Passed as this component's `key` — see reopenChapterDetailsModalAfterNavigation
+  // for why toggling `visible` alone isn't enough here.
+  const [chapterModalInstanceKey, setChapterModalInstanceKey] = useState(0);
   const [showLessonCreationModal, setShowLessonCreationModal] = useState(false);
   const [showLessonEditModal, setShowLessonEditModal] = useState(false);
   const [showAddFilesModal, setShowAddFilesModal] = useState(false);
@@ -506,7 +514,7 @@ const CourseDetailsPage = () => {
       const res = await getSemesters();
       setAllSemesters(res.semesters || []);
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch semesters.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch semesters."), Toast.LONG);
     } finally {
       setLoadingSemesters(false);
     }
@@ -562,7 +570,7 @@ const CourseDetailsPage = () => {
         setChaptersMessage("No chapters found.");
       }
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch chapters."), Toast.LONG);
       setChaptersMessage("Failed to fetch chapters.");
     } finally {
       setLoadingChaptersForQuarter(false);
@@ -581,7 +589,7 @@ const CourseDetailsPage = () => {
         setChaptersMessage("No chapters found.");
       }
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch chapters.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch chapters."), Toast.LONG);
       setChaptersMessage("Failed to fetch chapters.");
     } finally {
       setLoadingChaptersForQuarter(false);
@@ -619,7 +627,7 @@ const CourseDetailsPage = () => {
         // Optionally set gradeScale to empty array so management modal shows "empty" state
         setGradeScale([]);
       } else {
-        Toast.show(err?.message || "Failed to load grade scale", Toast.LONG);
+        Toast.show(getFriendlyErrorMessage(err, "Failed to load grade scale"), Toast.LONG);
       }
     } finally {
       setShowGradeScaleManagementLoader(false);
@@ -651,7 +659,7 @@ const CourseDetailsPage = () => {
         Toast.show("Failed to load GPA due to server error.", Toast.LONG);
       } else {
         setGpaError(err?.message || "Failed to load GPA");
-        Toast.show(err?.message || "Failed to load GPA", Toast.LONG);
+        Toast.show(getFriendlyErrorMessage(err, "Failed to load GPA"), Toast.LONG);
       }
     } finally {
       setShowGPAManagementLoader(false);
@@ -663,9 +671,10 @@ const CourseDetailsPage = () => {
   };
 
   const loadStandardGradeScale = () => {
-    navigation.navigate("StandardGradeScaleManagement", { courseId: course._id });
-
-  }
+    navigation.navigate("StandardGradeScaleManagement", {
+      courseId: course._id,
+    });
+  };
 
   // ---- Handlers ----
   const handleDelete = async () => {
@@ -675,7 +684,7 @@ const CourseDetailsPage = () => {
       setShowDeleteModal(false);
       navigation.navigate("Main" as never);
     } catch (error: any) {
-      Toast.show(error.message || "Failed to delete course", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to delete course"), Toast.LONG);
     } finally {
       setLoading(false);
     }
@@ -688,7 +697,7 @@ const CourseDetailsPage = () => {
       Toast.show("Course archived successfully", Toast.LONG);
       navigation.navigate("Main" as never);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to archive course");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to archive course"));
     }
   };
 
@@ -699,7 +708,7 @@ const CourseDetailsPage = () => {
       Toast.show("Course unarchived successfully", Toast.LONG);
       navigation.navigate("Main" as never);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to unarchive course");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to unarchive course"));
     }
   };
 
@@ -830,7 +839,78 @@ const CourseDetailsPage = () => {
     }
 
     setShowEditChapterModal(false);
-    setShowChapterDetailsModal(true);
+    reopenChapterDetailsModal();
+  };
+
+  // The actual root cause of the Android freeze (confirmed against RN's own
+  // Modal.js: on Android, <Modal visible={false}> already unmounts its
+  // children outright — a forced remount would be a no-op, so that's not
+  // what was wrong). What's really happening is Android's native JS
+  // responder registry (JSResponderHandler — a single global "who currently
+  // owns touch/scroll" reference) keeps pointing at the FlatList's ScrollView
+  // from BEFORE the modal was hidden. That old view is destroyed once the
+  // modal unmounts, but nothing tells the native responder registry to let
+  // go, so it keeps holding a dangling reference — which blocks the new
+  // FlatList (mounted fresh when the modal reopens) from ever winning the
+  // scroll responder. Plain taps still work because those don't go through
+  // this claimed-responder path; only continuous drag/scroll gestures do.
+  // This also explains why dragging inside the dropdown "unsticks" things:
+  // that drag is itself a normal claim+release cycle that clears the same
+  // stale reference. `UIManager.clearJSResponder()` releases it directly
+  // instead of relying on the user doing that by accident.
+  const clearStaleAndroidScrollResponder = () => {
+    const clearJSResponder = (UIManager as any)?.clearJSResponder;
+    if (Platform.OS === "android" && typeof clearJSResponder === "function") {
+      clearJSResponder();
+    }
+  };
+
+  // Reopens ChapterDetailsModal after a sibling modal (Add/Edit Lesson, Add
+  // Files, Edit Chapter) closes. Dismissing the keyboard and giving Android a
+  // brief moment to tear down the old window before presenting the new one,
+  // plus releasing any stale scroll responder (see above), avoids the list
+  // freezing — same "let Android settle" delay pattern already used for the
+  // date→time picker handoff elsewhere in this file.
+  const reopenChapterDetailsModal = () => {
+    Keyboard.dismiss();
+    clearStaleAndroidScrollResponder();
+    setTimeout(() => {
+      clearStaleAndroidScrollResponder();
+      setShowChapterDetailsModal(true);
+    }, 150);
+  };
+
+  // Same freeze as above, but for the "+" dropdown's Add Page / Add Lesson /
+  // Add Assessment / Discussion options, which navigate to a real pushed
+  // screen (CreateAssessment, ChapterPages, ChapterDiscussions) instead of a
+  // sibling <Modal>. This is the one path that kept freezing even with the
+  // transitionEnd wait + clearJSResponder() below — both are timing/
+  // stale-reference mitigations, and neither fixes it, which means the
+  // problem isn't just "wait a bit longer" or "release one stale responder
+  // claim": something about this SAME <Modal>/FlatList instance's native
+  // state doesn't survive a screen being pushed and popped over it. Rather
+  // than keep guessing at what exactly is corrupted, force React to fully
+  // tear down and recreate ChapterDetailsModal from scratch — a brand new
+  // Modal + FlatList native view, not just the same instance re-toggled to
+  // visible=true — by bumping the `key` passed to it below. This is a
+  // strictly bigger reset than relying on Android's Modal.js already
+  // unmounting children on hide (that happens either way and clearly isn't
+  // sufficient on its own), so it's used only for this confirmed-broken
+  // path, not the sibling-modal flows above that already work.
+  const reopenChapterDetailsModalAfterNavigation = () => {
+    Keyboard.dismiss();
+    clearStaleAndroidScrollResponder();
+    let settled = false;
+    const openModal = () => {
+      if (settled) return;
+      settled = true;
+      unsubscribe();
+      clearStaleAndroidScrollResponder();
+      setChapterModalInstanceKey((k) => k + 1);
+      setShowChapterDetailsModal(true);
+    };
+    const unsubscribe = navigation.addListener("transitionEnd", openModal);
+    setTimeout(openModal, 400);
   };
 
   const handleAddLesson = () => {
@@ -874,7 +954,7 @@ const CourseDetailsPage = () => {
         currentChapterForLesson
       );
       setChapterDetails(updated.chapter);
-      setShowChapterDetailsModal(true);
+      reopenChapterDetailsModal();
     } catch (error: any) {
       setLessonCreationError(error.message || "Failed to create lesson");
     } finally {
@@ -919,7 +999,7 @@ const CourseDetailsPage = () => {
         );
         setChapterDetails(updated.chapter);
       }
-      setShowChapterDetailsModal(true);
+      reopenChapterDetailsModal();
     } catch (error: any) {
       setLessonEditError(error.message || "Failed to update lesson");
     } finally {
@@ -964,7 +1044,7 @@ const CourseDetailsPage = () => {
         );
         setChapterDetails(updated.chapter);
       }
-      setShowChapterDetailsModal(true);
+      reopenChapterDetailsModal();
     } catch (error: any) {
       setAddFilesError(error.message || "Failed to add files");
     } finally {
@@ -992,7 +1072,7 @@ const CourseDetailsPage = () => {
                 setChapterDetails(updated.chapter);
               }
             } catch (error: any) {
-              Toast.show(error.message || "Failed to delete file", Toast.LONG);
+              Toast.show(getFriendlyErrorMessage(error, "Failed to delete file"), Toast.LONG);
             }
           },
         },
@@ -1094,7 +1174,7 @@ const CourseDetailsPage = () => {
         await refreshChaptersForQuarter(selectedQuarterId);
       }
     } catch (err: any) {
-      Toast.show(err.message || "Failed to delete assessment.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to delete assessment."), Toast.LONG);
     }
   };
 
@@ -1109,19 +1189,13 @@ const CourseDetailsPage = () => {
       Toast.show("All fields are required", Toast.LONG);
       return;
     }
-    if (editQuarterDates) {
-      const due = editAssessmentDueDate.getTime();
-      const start = new Date(editQuarterDates.startDate).getTime();
-      const end = new Date(editQuarterDates.endDate).getTime();
-      if (due < start || due > end) {
-        Toast.show(
-          `Due date must be between ${formatDate(
-            new Date(start)
-          )} and ${formatDate(new Date(end))}`,
-          Toast.LONG
-        );
-        return;
-      }
+    const dueDateCheck = validateEditedDate(
+      editAssessmentDueDate,
+      editQuarterDates
+    );
+    if (!dueDateCheck.valid) {
+      Toast.show(dueDateCheck.reason || "Invalid due date", Toast.LONG);
+      return;
     }
     setEditAssessmentLoading(true);
     try {
@@ -1144,7 +1218,7 @@ const CourseDetailsPage = () => {
         if (newSelected) setSelectedAssessmentForModal(newSelected);
       }
     } catch (err: any) {
-      Toast.show(err.message || "Failed to update assessment", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to update assessment"), Toast.LONG);
     } finally {
       setEditAssessmentLoading(false);
     }
@@ -1187,12 +1261,8 @@ const CourseDetailsPage = () => {
 
   const fetchQuarterDatesForEdit = async (quarterId: string) => {
     try {
-      const api = await getApiInstance();
-      const res = await api.get(`/api/quarter/getDatesofQuarter/${quarterId}`);
-      setEditQuarterDates({
-        startDate: res.data.startDate,
-        endDate: res.data.endDate,
-      });
+      const dates = await getQuarterDates(quarterId);
+      setEditQuarterDates(dates);
     } catch (error) {
       /* ignore */
     }
@@ -1210,7 +1280,7 @@ const CourseDetailsPage = () => {
         await refreshChaptersForQuarter(selectedQuarterId);
       }
     } catch (err: any) {
-      Toast.show(err.message || "Failed to delete page.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to delete page."), Toast.LONG);
     }
   };
 
@@ -1237,7 +1307,7 @@ const CourseDetailsPage = () => {
         Toast.show("Failed to post comment", Toast.SHORT);
       }
     } catch (err: any) {
-      Toast.show(err.message || "Failed to post comment.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to post comment."), Toast.LONG);
     } finally {
       setIsSubmittingComment(false);
     }
@@ -1255,7 +1325,7 @@ const CourseDetailsPage = () => {
       setSelectedStars(0);
       setRefreshKey((prev) => prev + 1);
     } catch (err: any) {
-      Toast.show(err.message || "Failed to submit rating", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to submit rating"), Toast.LONG);
     } finally {
       setIsSubmittingRating(false);
     }
@@ -1271,7 +1341,7 @@ const CourseDetailsPage = () => {
       const res = await getQuartersBySemesters([semester._id]);
       setQuarters(res.quarters || []);
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch quarters.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch quarters."), Toast.LONG);
     } finally {
       setLoadingQuarters(false);
     }
@@ -1326,7 +1396,7 @@ const CourseDetailsPage = () => {
           : fetched;
       setSemesterQuarters(quartersToShow);
     } catch (error: any) {
-      Toast.show(error.message || "Failed to fetch quarters.", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch quarters."), Toast.LONG);
     } finally {
       setLoadingSemesterQuarters(false);
     }
@@ -1384,7 +1454,7 @@ const CourseDetailsPage = () => {
       await fetchGradingPeriods();
       await fetchCourseDetails();
     } catch (error: any) {
-      Toast.show(error.message || "Failed to create semester", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to create semester"), Toast.LONG);
     }
   };
 
@@ -1417,7 +1487,7 @@ const CourseDetailsPage = () => {
       await fetchGradingPeriods();
       await fetchCourseDetails();
     } catch (error: any) {
-      Toast.show(error.message || "Failed to update semester", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to update semester"), Toast.LONG);
     }
   };
 
@@ -1459,7 +1529,7 @@ const CourseDetailsPage = () => {
       await fetchGradingPeriods();
       await fetchCourseDetails();
     } catch (error: any) {
-      Toast.show(error.message || "Failed to create quarter", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to create quarter"), Toast.LONG);
     }
   };
 
@@ -1509,7 +1579,7 @@ const CourseDetailsPage = () => {
       await fetchGradingPeriods();
       await fetchCourseDetails();
     } catch (error: any) {
-      Toast.show(error.message || "Failed to update quarter", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to update quarter"), Toast.LONG);
     }
   };
 
@@ -1523,7 +1593,7 @@ const CourseDetailsPage = () => {
       await fetchGradingPeriods();
       await fetchCourseDetails();
     } catch (error: any) {
-      Toast.show(error.message || "Failed to update semester", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to update semester"), Toast.LONG);
     }
   };
 
@@ -1537,7 +1607,7 @@ const CourseDetailsPage = () => {
       await fetchGradingPeriods();
       await fetchCourseDetails();
     } catch (error: any) {
-      Toast.show(error.message || "Failed to update quarter", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to update quarter"), Toast.LONG);
     }
   };
 
@@ -1617,7 +1687,7 @@ const CourseDetailsPage = () => {
       Toast.show("Thumbnail updated successfully!", Toast.SHORT);
     } catch (err: any) {
       setThumbnailError(err.message || "Failed to update thumbnail");
-      Toast.show(err.message || "Failed to update thumbnail", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to update thumbnail"), Toast.LONG);
     } finally {
       setThumbnailUploading(false);
     }
@@ -1729,6 +1799,7 @@ const CourseDetailsPage = () => {
         break;
       case "assessment":
         setShowChapterDetailsModal(false);
+        clearStaleAndroidScrollResponder();
         if (chapterDetails) {
           const semesterId =
             selectedQuarter?.semester || course?.semester?.[0]?._id;
@@ -1741,8 +1812,8 @@ const CourseDetailsPage = () => {
             refreshAssessments: () =>
               handleViewChapterDetails(chapterDetails._id),
             navigateBack: () => {
-              setShowChapterDetailsModal(true);
               navigation.goBack();
+              reopenChapterDetailsModalAfterNavigation();
             },
           });
         } else {
@@ -1752,12 +1823,13 @@ const CourseDetailsPage = () => {
       case "page":
         if (chapterDetails && course?._id) {
           setShowChapterDetailsModal(false);
+          clearStaleAndroidScrollResponder();
           (navigation as any).navigate("ChapterPages", {
             courseId: course._id,
             chapterId: chapterDetails._id,
             navigateBack: () => {
               navigation.goBack();
-              setShowChapterDetailsModal(true);
+              reopenChapterDetailsModalAfterNavigation();
             },
           });
         } else {
@@ -1767,6 +1839,7 @@ const CourseDetailsPage = () => {
       case "discussion":
         if (chapterDetails) {
           setShowChapterDetailsModal(false);
+          clearStaleAndroidScrollResponder();
           (navigation as any).navigate("ChapterDiscussions", {
             chapterId: chapterDetails._id,
             courseId: course._id,
@@ -1774,7 +1847,7 @@ const CourseDetailsPage = () => {
             quarterId: selectedQuarterId || undefined,
             navigateBack: () => {
               navigation.goBack();
-              setShowChapterDetailsModal(true);
+              reopenChapterDetailsModalAfterNavigation();
             },
           });
         } else {
@@ -1792,6 +1865,7 @@ const CourseDetailsPage = () => {
     switch (option) {
       case "assessment":
         setShowChapterDetailsModal(false);
+        clearStaleAndroidScrollResponder();
         if (currentLessonForAssessment) {
           // Use any to include lessonId
           (navigation as any).navigate("CreateAssessment", {
@@ -1803,8 +1877,8 @@ const CourseDetailsPage = () => {
             refreshAssessments: () =>
               handleViewChapterDetails(chapterDetails._id),
             navigateBack: () => {
-              setShowChapterDetailsModal(true);
               navigation.goBack();
+              reopenChapterDetailsModalAfterNavigation();
             },
           });
         } else {
@@ -1814,13 +1888,14 @@ const CourseDetailsPage = () => {
       case "page":
         if (currentLessonForAssessment && course?._id) {
           setShowChapterDetailsModal(false);
+          clearStaleAndroidScrollResponder();
           (navigation as any).navigate("ChapterPages", {
             courseId: course._id,
             chapterId: chapterDetails._id,
             lessonId: currentLessonForAssessment._id,
             navigateBack: () => {
-              setShowChapterDetailsModal(true);
               navigation.goBack();
+              reopenChapterDetailsModalAfterNavigation();
             },
           });
         } else {
@@ -1830,6 +1905,7 @@ const CourseDetailsPage = () => {
       case "discussion":
         if (chapterDetails && currentLessonForAssessment) {
           setShowChapterDetailsModal(false);
+          clearStaleAndroidScrollResponder();
           (navigation as any).navigate("ChapterDiscussions", {
             chapterId: chapterDetails._id,
             courseId: course._id,
@@ -1837,8 +1913,8 @@ const CourseDetailsPage = () => {
             quarterId: selectedQuarterId || undefined,
             lessonId: currentLessonForAssessment._id,
             navigateBack: () => {
-              setShowChapterDetailsModal(true);
               navigation.goBack();
+              reopenChapterDetailsModalAfterNavigation();
             },
           });
         } else {
@@ -2140,7 +2216,8 @@ const CourseDetailsPage = () => {
       />
 
       {/* Main ScrollView */}
-      <ScrollView contentContainerStyle={{ padding: keyboardPadding }}
+      <ScrollView
+        contentContainerStyle={{ padding: keyboardPadding }}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       >
@@ -2191,7 +2268,11 @@ const CourseDetailsPage = () => {
               onPress={() => navigation.navigate("Coupons", { courseId })}
               style={[
                 styles.topActionButton,
-                { backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc" },
+                {
+                  backgroundColor: "#fff",
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                },
               ]}
             >
               <Text style={[styles.topActionButtonText, { color: "#000" }]}>
@@ -2725,12 +2806,11 @@ const CourseDetailsPage = () => {
         visible={showAssessmentDetailsModal}
         onClose={() => {
           setShowAssessmentDetailsModal(false);
-          setShowChapterDetailsModal(true);
+          reopenChapterDetailsModal();
         }}
         assessment={selectedAssessmentForModal}
         onEdit={openEditAssessmentModal}
       />
-
 
       <EditAssessmentModal
         visible={showEditAssessmentModal}
@@ -2755,6 +2835,7 @@ const CourseDetailsPage = () => {
         setShowEditTimePicker={setShowEditTimePicker}
         editAssessmentLoading={editAssessmentLoading}
         handleEditAssessment={handleEditAssessment}
+        quarterDates={editQuarterDates}
         insets={insets}
         styles={styles}
       />
@@ -2828,6 +2909,7 @@ const CourseDetailsPage = () => {
       />
 
       <ChapterDetailsModal
+        key={chapterModalInstanceKey}
         // ref={plusButtonRef}
         visible={showChapterDetailsModal}
         onClose={stableOnCloseChapterDetailsModal}
@@ -2857,7 +2939,7 @@ const CourseDetailsPage = () => {
       <LessonCreationModal
         visible={showLessonCreationModal}
         onClose={() => setShowLessonCreationModal(false)}
-        onBackToChapter={() => setShowChapterDetailsModal(true)}
+        onBackToChapter={reopenChapterDetailsModal}
         lessonCreationTitle={lessonCreationTitle}
         setLessonCreationTitle={setLessonCreationTitle}
         lessonCreationDescription={lessonCreationDescription}
@@ -2879,7 +2961,7 @@ const CourseDetailsPage = () => {
         visible={showEditChapterModal}
         onClose={() => {
           setShowEditChapterModal(false);
-          setShowChapterDetailsModal(true);
+          reopenChapterDetailsModal();
         }}
         chapterDetails={chapterDetails}
         onUpdated={handleChapterUpdated}
@@ -2888,7 +2970,7 @@ const CourseDetailsPage = () => {
       <LessonEditModal
         visible={showLessonEditModal}
         onClose={() => setShowLessonEditModal(false)}
-        onBackToChapter={() => setShowChapterDetailsModal(true)}
+        onBackToChapter={reopenChapterDetailsModal}
         lessonEditTitle={lessonEditTitle}
         setLessonEditTitle={setLessonEditTitle}
         lessonEditDescription={lessonEditDescription}
@@ -2907,7 +2989,7 @@ const CourseDetailsPage = () => {
       <AddFilesModal
         visible={showAddFilesModal}
         onClose={() => setShowAddFilesModal(false)}
-        onBackToChapter={() => setShowChapterDetailsModal(true)}
+        onBackToChapter={reopenChapterDetailsModal}
         handleFilePickForAddFiles={handleFilePickForAddFiles}
         selectedFiles={selectedFiles}
         handleRemoveSelectedFile={handleRemoveSelectedFile}
@@ -2984,92 +3066,6 @@ const CourseDetailsPage = () => {
     </View>
   );
 };
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: "#fff", padding: 16 },
-//   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-//   image: { width: "100%", height: 180, borderRadius: 8, marginBottom: 16 },
-//   thumbnailContainer: { position: "relative", marginBottom: 16 },
-//   thumbnailUploadButton: {
-//     position: "absolute",
-//     bottom: 8,
-//     right: 8,
-//     backgroundColor: "rgba(0, 0, 0, 0.6)",
-//     borderRadius: 20,
-//     width: 40,
-//     height: 40,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     elevation: 3,
-//     shadowColor: "#000",
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.25,
-//     shadowRadius: 3.84,
-//   },
-//   headerRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
-//   uploadedText: { color: "#888", fontSize: 12 },
-//   updatedText: { color: "#888", fontSize: 12 },
-//   title: { fontSize: 26, fontWeight: "bold", color: "#222" },
-//   infoCard: {
-//     backgroundColor: "#fdf6f0",
-//     borderRadius: 8,
-//     padding: 12,
-//     marginBottom: 8,
-//     flexDirection: "row",
-//     alignItems: "center",
-//   },
-//   infoLabel: { fontWeight: "bold", color: "#5e35b1", marginRight: 8, fontSize: 15 },
-//   infoValue: { color: "#333", fontSize: 15 },
-//   section: { marginTop: 18, marginBottom: 8 },
-//   ratingSectionTitle: { fontSize: 22, fontWeight: "bold", color: "#111", marginBottom: 12 },
-//   ratingCard: {
-//     backgroundColor: "#EAFBF2",
-//     borderRadius: 16,
-//     padding: 24,
-//     alignItems: "center",
-//     marginBottom: 24,
-//   },
-//   ratingNumber: { fontSize: 48, fontWeight: "bold", color: "#111", marginBottom: 6 },
-//   ratingStarsRow: { flexDirection: "row", justifyContent: "center" },
-//   ratingCountText: { color: "#A0AEC0", fontSize: 16, marginTop: 14, fontWeight: "500" },
-//   commentsSectionTitle: { fontSize: 22, fontWeight: "bold", color: "#111", marginBottom: 12 },
-//   commentInputBox: {
-//     backgroundColor: "#fff",
-//     borderRadius: 12,
-//     borderWidth: 1,
-//     borderColor: "#E2E8F0",
-//     padding: 16,
-//     marginBottom: 16,
-//   },
-//   commentInput: { minHeight: 60, fontSize: 16, color: "#222", padding: 0, textAlignVertical: "top" },
-//   postCommentButton: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     backgroundColor: "#10B144",
-//     borderRadius: 8,
-//     paddingVertical: 10,
-//     paddingHorizontal: 20,
-//   },
-//   postCommentButtonDisabled: { backgroundColor: "#A0E7B2" },
-//   postCommentButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-//   noCommentsText: { color: "#A0AEC0", fontSize: 16, textAlign: "center", marginTop: 32, fontWeight: "500" },
-//   errorText: { color: "red", fontSize: 16 },
-//   topActionButtonsContainer: { flexDirection: "column", marginVertical: 10 },
-//   topActionButton: { marginVertical: 5, paddingVertical: 12, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-//   topActionButtonText: { color: "#fff", fontSize: 14, fontWeight: "bold", textAlign: "center" },
-//   semesterSection: { marginTop: 10 },
-//   semesterCard: {
-//     backgroundColor: "#f8f9fa",
-//     borderRadius: 8,
-//     borderWidth: 1,
-//     borderColor: "#e9ecef",
-//     padding: 16,
-//     marginBottom: 10,
-//   },
-//   semesterTitle: { fontSize: 16, fontWeight: "bold", color: "#212529" },
-//   semesterDates: { fontSize: 14, color: "#6c757d", marginTop: 4 },
-//   chapterDetailsDescription: { fontSize: 16, color: "#6b7280", lineHeight: 24 },
-// });
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 16 },
@@ -5342,4 +5338,5 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
   },
 });
+
 export default CourseDetailsPage;

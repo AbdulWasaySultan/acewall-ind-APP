@@ -1,6 +1,9 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+// Injects the active .env file (selected via the ENVFILE env var, defaulting
+// to .env.development / .env.production) as BuildConfig fields.
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
 // Ensure hermesEnabled is safely extracted from gradle.properties or defaults to true
 def hermesEnabled = project.ext.has("hermesEnabled") ? project.ext.get("hermesEnabled") : "true"

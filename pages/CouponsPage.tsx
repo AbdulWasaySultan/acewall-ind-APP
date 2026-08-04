@@ -17,6 +17,7 @@ import CreateCouponModal from '../components/modals/CreateCouponModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Coupon, fetchCouponsByCourse, updateCouponStatus } from '../services/coupon';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Coupons'>;
@@ -36,7 +37,7 @@ export default function CouponsPage({ navigation, route }: Props) {
       const data = await fetchCouponsByCourse(courseId);
       setCoupons(data);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to load coupons');
+      Alert.alert('Error', getFriendlyErrorMessage(error, 'Failed to load coupons'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,7 +57,7 @@ export default function CouponsPage({ navigation, route }: Props) {
         prev.map((c) => (c._id === couponId ? { ...c, isActive: !currentStatus } : c))
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update coupon status');
+      Alert.alert('Error', getFriendlyErrorMessage(error, 'Failed to update coupon status'));
     }
   };
 

@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import SimpleIcon from "../SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getFriendlyErrorMessage } from "../../utils/errorMessage";
 
 interface SBLItem {
   _id?: string;
@@ -187,7 +188,7 @@ const StandardGradeScaleModal: React.FC<StandardGradeScaleModalProps> = ({
       await onSave?.(scale);
       onClose();
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to save scale");
+      Alert.alert("Error", getFriendlyErrorMessage(err, "Failed to save scale"));
     } finally {
       setSaving(false);
     }

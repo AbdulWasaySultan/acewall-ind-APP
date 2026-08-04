@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Platform } from "react-native";
+import Config from "react-native-config";
 import {
   getStoredBaseUrl,
   setStoredUserData,
@@ -7,10 +8,10 @@ import {
 } from "../utils/storage";
 import { getApiInstance } from "./apiInstance";
 
-// Default API URL for school search
-// Use hosted API to avoid localhost/ATS issues on iOS
+// Registry server URL, sourced from .env.development / .env.production
+// (react-native-config) instead of being hardcoded here.
 const getLocalBaseUrl = () => {
-  return "https://admin-panel-server-lac.vercel.app/api";
+  return Config.REGISTRY_API_URL || "https://admin-panel-server-lac.vercel.app/api";
 };
 
 // Create axios instance for local API (school search)
@@ -202,19 +203,13 @@ export const resendOTP = async (data: { email: string }) => {
 
 export const checkAuth = async () => {
   try {
-    const baseUrl = await getStoredBaseUrl();
-    if (!baseUrl) {
-      throw new Error("No base URL configured. Please select a school first.");
-    }
-
-    const authApi = axios.create({
-      baseURL: baseUrl,
-      timeout: 10000,
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    });
+    // Must run through the token-attaching client — this is called right
+    // after login() has already saved the token, and /api/auth/checkAuth is
+    // a protected route. A bare axios.create() here (as before) sent no
+    // Authorization header at all, so this call always 401'd with
+    // "No auth token provided" regardless of whether login actually
+    // succeeded.
+    const authApi = await getApiInstance();
     const response = await authApi.get("/api/auth/checkAuth");
     console.log(response.data);
     if (response.data && response.data.user) {

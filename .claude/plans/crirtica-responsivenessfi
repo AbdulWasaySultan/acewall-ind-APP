@@ -1,0 +1,28 @@
+# Fix Guide: Android Scroll Freeze in `ChapterDetailsModal`
+
+## Overview
+This document details the root cause, TypeScript fix for error `Cannot find name 'refreshKey'.ts(2304)`, and complete implementation for resolving an Android-specific touch/scroll responder freeze in `ChapterDetailsModal`.
+
+---
+
+## 🐛 Problem & Root Cause
+
+### Symptom
+On Android devices, opening `ChapterDetailsModal`, navigating away via any **+** action button (Add Lesson, Add Page, Assessment, Discussion), and returning causes the `FlatList` inside the modal to freeze completely.
+
+### Root Cause
+1. **Responder Detachment:** When `ChapterDetailsModal` is hidden behind a newly pushed screen/sub-modal and later re-shown without unmounting, Android's underlying `DecorView`/`Window` context changes. The `FlatList` touch responder detaches from the native view hierarchy.
+2. **Elevated View Workaround:** Open dropdown menus with `elevation` create a temporary separate drawing layer that forwards touches. Once closed, the underlying list returns to its broken, non-responsive state.
+
+---
+
+## ⚠️ TypeScript Error Fix: `Cannot find name 'refreshKey'.ts(2304)`
+
+If TypeScript throws `ts(2304)` inside `ChapterDetailsModal.tsx`, it means `refreshKey` was added to the `Props` interface but **not destructured inside the component arguments**.
+
+### Incorrect Destructuring:
+```tsx
+// ❌ FAILS with ts(2304) because refreshKey is not in the scope
+export const ChapterDetailsModal = ({ chapterDetails, visible, onClose }: ChapterDetailsModalProps) => {
+  return <FlatList ... key="{`${chapterDetails?._id}-${refreshKey}`}"/>;
+};

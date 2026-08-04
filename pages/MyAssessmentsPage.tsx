@@ -31,6 +31,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar";
 import { DropdownFilter } from "../components/filters/DropDown"
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 // ---------- INTERFACE ----------
 export interface AssessmentItem {
@@ -205,7 +206,7 @@ const MyAssessmentsPage = () => {
       extractChapters(courseList);
     } catch (err: any) {
       console.log("[getAllAssessmentForStudent] error:", err);
-      setError(err?.message || "Failed to load assessments");
+      setError(getFriendlyErrorMessage(err, "Failed to load assessments"));
       setAssessments([]);
     } finally {
       setLoading(false);

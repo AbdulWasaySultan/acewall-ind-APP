@@ -1,4 +1,5 @@
 import { getApiInstance } from "./apiInstance";
+import { parseApiError } from "../utils/apiError";
 
 // const createApiInstance = async () => {
 //   const baseUrl = await getStoredBaseUrl();
@@ -25,27 +26,13 @@ import { getApiInstance } from "./apiInstance";
 //   return instance;
 // };
 
-// Add a helper for consistent error handling
-const handleApiError = (error: any, defaultMessage: string) => {
-  console.error(`${defaultMessage}:`, error);
-  if (error.response) {
-    throw new Error(error.response.data.message || defaultMessage);
-  } else if (error.request) {
-    throw new Error(
-      "No response from server. Please check your internet connection."
-    );
-  } else {
-    throw new Error(`Error setting up the request: ${error.message}`);
-  }
-};
-
 export const getMessages = async (conversationId: string) => {
   try {
     const api = await getApiInstance();
     const response = await api.get(`/api/messeges/get/${conversationId}`);
     return response.data;
   } catch (error) {
-    handleApiError(error, "Failed to fetch messages");
+    throw parseApiError(error, "Failed to fetch messages");
   }
 };
 
@@ -56,7 +43,7 @@ export const getConversations = async () => {
     // console.log(response)
     return response.data;
   } catch (error) {
-    handleApiError(error, "Failed to fetch conversations");
+    throw parseApiError(error, "Failed to fetch conversations");
   }
 };
 
@@ -70,7 +57,7 @@ export const getStudentsByCourse = async (courseId: string) => {
     );
     return response.data;
   } catch (error) {
-    handleApiError(error, "Failed to fetch students for this course");
+    throw parseApiError(error, "Failed to fetch students for this course");
   }
 };
 
@@ -82,7 +69,7 @@ export const createConversation = async (memberId: string) => {
     const response = await api.post("/api/conversation/create", { memberId });
     return response.data;
   } catch (error) {
-    handleApiError(error, "Failed to start conversation");
+    throw parseApiError(error, "Failed to start conversation");
   }
 };
 
@@ -94,6 +81,6 @@ export const sendMessage = async (conversationId: string, text: string) => {
     });
     return response.data;
   } catch (error) {
-    handleApiError(error, "Failed to send message");
+    throw parseApiError(error, "Failed to send message");
   }
 };

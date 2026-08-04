@@ -38,6 +38,7 @@ interface SubmissionsModalProps {
   formatDate: (d: string) => string;
   formatDateTime: (d: string) => string;
   onViewAnalytics?: () => void;
+  onEdit?: (assessment: any) => void;
 }
 
 const statusItems = [
@@ -52,34 +53,40 @@ const gradingItems = [
   { label: "Not Graded", value: "not_graded" },
 ];
 
-// ── Analytics Modal (separate full-screen modal) ────────────────────────────
-const AnalyticsModal: React.FC<{
-  visible: boolean;
+// ── Analytics view ───────────────────────────────────────────────────────────
+// NOT its own <Modal> — it used to be a second, separately-visible Modal
+// stacked on top of SubmissionsModal's still-open one. Android doesn't
+// reliably route scroll/pan gestures to the topmost of two stacked native
+// Modals (taps still work, which is why this looked like a "can't scroll"
+// bug rather than a totally broken screen), so it's rendered as plain
+// inline content swapped in within SubmissionsModal's single Modal instead
+// — matching the "close the modal you're in before opening the next one"
+// pattern used everywhere else in this codebase (e.g. CourseDetailsPage's
+// handleAddLesson closing the chapter modal before opening lesson creation).
+const AnalyticsView: React.FC<{
   onClose: () => void;
   analytics: any;
   assessmentTitle: string;
-}> = ({ visible, onClose, analytics, assessmentTitle }) => {
+}> = ({ onClose, analytics, assessmentTitle }) => {
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <ScrollView style={analyticsStyles.container}
+    <View style={analyticsStyles.container}>
+      {/* Header — fixed, not part of the scroll area */}
+      <View style={[analyticsStyles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity onPress={onClose} style={analyticsStyles.backBtn}>
+          <SimpleIcon name="arrow-back" size={22} color="#111827" />
+        </TouchableOpacity>
+        <Text style={analyticsStyles.headerTitle}>Assessment Analytics</Text>
+        <View style={{ width: 38 }} />
+      </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={analyticsStyles.scrollContent}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={[analyticsStyles.header, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity onPress={onClose} style={analyticsStyles.backBtn}>
-            <SimpleIcon name="arrow-back" size={22} color="#111827" />
-          </TouchableOpacity>
-          <Text style={analyticsStyles.headerTitle}>Assessment Analytics</Text>
-          <View style={{ width: 38 }} />
-        </View>
-
-        <ScrollView contentContainerStyle={analyticsStyles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-        >
-          {/* Assessment name */}
+        {/* Assessment name */}
           <Text style={analyticsStyles.assessmentName}>{assessmentTitle}</Text>
 
           {/* Summary Cards */}
@@ -228,9 +235,8 @@ const AnalyticsModal: React.FC<{
               </Text>
             </View>
           )}
-        </ScrollView>
       </ScrollView>
-    </Modal>
+    </View>
   );
 };
 
@@ -366,6 +372,7 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
   formatDate,
   formatDateTime,
   onViewAnalytics,
+  onEdit,
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -430,6 +437,13 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
       transparent={false}
       onRequestClose={onClose}
     >
+      {analyticsVisible ? (
+        <AnalyticsView
+          onClose={() => setAnalyticsVisible(false)}
+          analytics={analytics}
+          assessmentTitle={selectedAssessment?.title ?? ""}
+        />
+      ) : (
       <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
         {/* ── Top bar ── */}
         <View style={styles.topBar}>
@@ -610,21 +624,18 @@ const SubmissionsModal: React.FC<SubmissionsModalProps> = ({
           )}
         </View>
 
-        {/* ── Analytics Modal (separate full-screen) ── */}
-        <AnalyticsModal
-          visible={analyticsVisible}
-          onClose={() => setAnalyticsVisible(false)}
-          analytics={analytics}
-          assessmentTitle={selectedAssessment?.title ?? ""}
-        />
-
         {/* ── Assessment Details Modal ── */}
         <AssessmentDetailsModal
           visible={detailsVisible}
           onClose={() => setDetailsVisible(false)}
           assessment={selectedAssessment}
+          onEdit={(assessment) => {
+            setDetailsVisible(false);
+            onEdit?.(assessment);
+          }}
         />
       </View>
+      )}
     </Modal>
   );
 };

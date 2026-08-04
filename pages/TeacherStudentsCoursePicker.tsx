@@ -8,6 +8,7 @@ import CoursePickerGrid, {
   CoursePickerItem,
 } from "../components/common/CoursePickerGrid";
 import { DropdownFilter } from "../components/filters/DropDown";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -32,7 +33,7 @@ const TeacherStudentsCoursePicker = () => {
       const res = await getVerifiedCourses();
       setCourses(Array.isArray(res?.courses) ? res.courses : []);
     } catch (err: any) {
-      setError(err?.message || "Failed to load courses.");
+      setError(getFriendlyErrorMessage(err, "Failed to load courses."));
       setCourses([]);
     } finally {
       setLoading(false);

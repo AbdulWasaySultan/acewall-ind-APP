@@ -7,6 +7,7 @@ import CoursePickerGrid, {
   CoursePickerItem,
 } from "../components/common/CoursePickerGrid";
 import { DropdownFilter } from "../components/filters/DropDown";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 interface DerivedCourse {
   _id: string;
@@ -47,7 +48,7 @@ const StudentAssessmentsCoursePicker = () => {
       });
       setCourses(Array.from(uniqueCoursesMap.values()));
     } catch (err: any) {
-      setError(err?.message || "Failed to load your assessments.");
+      setError(getFriendlyErrorMessage(err, "Failed to load your assessments."));
       setCourses([]);
     } finally {
       setLoading(false);

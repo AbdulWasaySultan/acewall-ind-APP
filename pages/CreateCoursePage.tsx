@@ -29,7 +29,11 @@ import { DrawerNavigationProp } from "@react-navigation/drawer";
 import Toast from "react-native-simple-toast";
 import { useUser } from "../contexts/UserContext";
 import { Sparkles } from "lucide-react-native";
-import { getApiInstance } from "../services/apiInstance";
+import {
+  generateCourseThumbnail,
+  generateContentForTeacher,
+} from "../services/aiAssistant";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 interface Category {
   _id: string;
@@ -1012,13 +1016,9 @@ const CreateCoursePage = () => {
 
     try {
       setIsGeneratingImage(true);
-      const api = await getApiInstance();
+      const data = await generateCourseThumbnail(aiPrompt);
 
-      const response = await api.post("/api/aichat/generateImage", {
-        prompt: aiPrompt,
-      });
-
-      const { uri, filename, type } = normalizeGeneratedImage(response.data);
+      const { uri, filename, type } = normalizeGeneratedImage(data);
 
       if (uri) {
         setSelectedImageUri(uri);
@@ -1032,18 +1032,12 @@ const CreateCoursePage = () => {
         setShowAIModal(false);
         setAiPrompt("");
       } else {
-        console.log("Unexpected generateImage response:", response.data);
+        console.log("Unexpected generateImage response:", data);
         Toast.show("Failed to generate thumbnail", Toast.LONG);
       }
     } catch (error: any) {
       console.error("Error generating thumbnail:", error);
-      console.log(
-        error.response?.data?.message || "Failed to generate thumbnail"
-      );
-      Toast.show(
-        error.response?.data?.message || "Failed to generate thumbnail",
-        Toast.LONG
-      );
+      Toast.show(getFriendlyErrorMessage(error, "Failed to generate thumbnail"), Toast.LONG);
     } finally {
       setIsGeneratingImage(false);
     }
@@ -1061,16 +1055,10 @@ const CreateCoursePage = () => {
 
     try {
       setIsGeneratingTitle(true);
-      const api = await getApiInstance();
+      const data = await generateContentForTeacher(aiTitlePrompt, "title");
 
-      const response = await api.post("/api/aichat/generateContentForTeacher", {
-        command: aiTitlePrompt,
-        usedfor: "title",
-        difficulty: "medium",
-      });
-
-      if (response.data && response.data.content) {
-        setCourseTitle(response.data.content);
+      if (data && data.content) {
+        setCourseTitle(data.content);
         Toast.show("Course title generated!", Toast.SHORT);
         setShowAITitleModal(false);
         setAiTitlePrompt("");
@@ -1079,10 +1067,7 @@ const CreateCoursePage = () => {
       }
     } catch (error: any) {
       console.error("Error generating course title:", error);
-      Toast.show(
-        error.response?.data?.message || "Failed to generate title",
-        Toast.LONG
-      );
+      Toast.show(getFriendlyErrorMessage(error, "Failed to generate title"), Toast.LONG);
     } finally {
       setIsGeneratingTitle(false);
     }
@@ -1097,16 +1082,13 @@ const CreateCoursePage = () => {
 
     try {
       setIsGeneratingDescription(true);
-      const api = await getApiInstance();
+      const data = await generateContentForTeacher(
+        aiDescriptionPrompt,
+        "courseDescription"
+      );
 
-      const response = await api.post("/api/aichat/generateContentForTeacher", {
-        command: aiDescriptionPrompt,
-        usedfor: "courseDescription",
-        difficulty: "medium",
-      });
-
-      if (response.data && response.data.content) {
-        setCourseDescription(response.data.content);
+      if (data && data.content) {
+        setCourseDescription(data.content);
         Toast.show("Description generated successfully!", Toast.SHORT);
         setShowAIDescriptionModal(false);
         setAiDescriptionPrompt("");
@@ -1115,10 +1097,7 @@ const CreateCoursePage = () => {
       }
     } catch (error: any) {
       console.error("Error generating description:", error);
-      Toast.show(
-        error.response?.data?.message || "Failed to generate description",
-        Toast.LONG
-      );
+      Toast.show(getFriendlyErrorMessage(error, "Failed to generate description"), Toast.LONG);
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -1133,16 +1112,13 @@ const CreateCoursePage = () => {
 
     try {
       setIsGeneratingTeachingPoints(true);
-      const api = await getApiInstance();
+      const data = await generateContentForTeacher(
+        aiTeachingPointsPrompt,
+        "teachingPoints"
+      );
 
-      const response = await api.post("/api/aichat/generateContentForTeacher", {
-        command: aiTeachingPointsPrompt,
-        usedfor: "teachingPoints",
-        difficulty: "medium",
-      });
-
-      if (response.data && response.data.content) {
-        const points = parseAiListItems(response.data.content);
+      if (data && data.content) {
+        const points = parseAiListItems(data.content);
 
         setTeachingPoints(points.length > 0 ? points : [""]);
         Toast.show("Teaching points generated successfully!", Toast.SHORT);
@@ -1153,10 +1129,7 @@ const CreateCoursePage = () => {
       }
     } catch (error: any) {
       console.error("Error generating teaching points:", error);
-      Toast.show(
-        error.response?.data?.message || "Failed to generate teaching points",
-        Toast.LONG
-      );
+      Toast.show(getFriendlyErrorMessage(error, "Failed to generate teaching points"), Toast.LONG);
     } finally {
       setIsGeneratingTeachingPoints(false);
     }
@@ -1171,16 +1144,13 @@ const CreateCoursePage = () => {
 
     try {
       setIsGeneratingRequirements(true);
-      const api = await getApiInstance();
+      const data = await generateContentForTeacher(
+        aiRequirementsPrompt,
+        "courseRequirements"
+      );
 
-      const response = await api.post("/api/aichat/generateContentForTeacher", {
-        command: aiRequirementsPrompt,
-        usedfor: "courseRequirements",
-        difficulty: "medium",
-      });
-
-      if (response.data && response.data.content) {
-        const requirements = parseAiListItems(response.data.content);
+      if (data && data.content) {
+        const requirements = parseAiListItems(data.content);
 
         setCourseRequirements(requirements.length > 0 ? requirements : [""]);
         Toast.show("Requirements generated successfully!", Toast.SHORT);
@@ -1191,10 +1161,7 @@ const CreateCoursePage = () => {
       }
     } catch (error: any) {
       console.error("Error generating requirements:", error);
-      Toast.show(
-        error.response?.data?.message || "Failed to generate requirements",
-        Toast.LONG
-      );
+      Toast.show(getFriendlyErrorMessage(error, "Failed to generate requirements"), Toast.LONG);
     } finally {
       setIsGeneratingRequirements(false);
     }

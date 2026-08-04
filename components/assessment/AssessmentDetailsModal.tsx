@@ -350,6 +350,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Linking,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SimpleIcon from "../SimpleIcon";
@@ -556,12 +557,38 @@ const AssessmentDetailsModal: React.FC<Props> = ({
   onEdit,
 }) => {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
 
   if (!assessment) return null;
 
   const grouped = groupByType(assessment.questions ?? []);
+
+  // ── Responsive sizing so Edit / Remind Now / Set Reminder / Setting
+  // always fit on a single row, regardless of screen size — never wraps.
+  // Edit is icon-only so it gets a small fixed square; the three text
+  // buttons share whatever width is left via flex, weighted roughly by
+  // label length (Remind Now: icon + 10 chars, Set Reminder: 12 chars
+  // with no icon, Setting: icon + 7 chars) rather than split evenly —
+  // an even split truncated "Set Reminder" down to "S…" since it's the
+  // longest label. adjustsFontSizeToFit on each label is a safety net so
+  // text shrinks instead of clipping if a button still runs tight. ──
+  const ACTION_BAR_H_PADDING = 32; // actionBar's paddingHorizontal (16) * 2
+  const BUTTON_GAP = 8;
+  const TEXT_BUTTON_COUNT = 3; // Remind Now, Set Reminder, Setting
+  const iconButtonSize = screenWidth < 360 ? 36 : 40;
+  const widthPerTextButton =
+    (screenWidth -
+      ACTION_BAR_H_PADDING -
+      iconButtonSize -
+      BUTTON_GAP * TEXT_BUTTON_COUNT) /
+    TEXT_BUTTON_COUNT;
+  const isCompact = widthPerTextButton < 100;
+  const actionFontSize = isCompact ? 11 : 13;
+  const actionIconSize = isCompact ? 12 : 14;
+  const actionPaddingH = isCompact ? 6 : 12;
+  const actionPaddingV = isCompact ? 6 : 8;
 
   const handleRemindNow = async () => {
     if (!assessment._id) return;
@@ -589,35 +616,82 @@ const AssessmentDetailsModal: React.FC<Props> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Action bar */}
+        {/* Action bar — fixed single row; Edit is a small fixed square,
+            the 3 text buttons flex to share the remaining width (see
+            iconButtonSize / widthPerTextButton above). */}
         <View style={styles.actionBar}>
           <TouchableOpacity
-            style={styles.iconBtn}
+            style={[
+              styles.iconBtn,
+              {
+                width: iconButtonSize,
+                height: iconButtonSize,
+                paddingVertical: 0,
+              },
+            ]}
             onPress={() => onEdit?.(assessment)}
           >
-            <SimpleIcon name="edit" size={14} color="#374151" />
+            <SimpleIcon name="edit" size={actionIconSize} color="#374151" />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.outlineBtn}
+            style={[
+              styles.outlineBtn,
+              {
+                flex: 1.3,
+                paddingHorizontal: actionPaddingH,
+                paddingVertical: actionPaddingV,
+              },
+            ]}
             onPress={handleRemindNow}
             disabled={sendingReminder}
           >
-            <SimpleIcon name="notifications" size={14} color="#000" />
-            <Text style={styles.greenText}>
+            <SimpleIcon
+              name="notifications"
+              size={actionIconSize}
+              color="#000"
+            />
+            <Text
+              style={[styles.greenText, { fontSize: actionFontSize }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               {sendingReminder ? "Sending..." : "Remind Now"}
             </Text>
           </TouchableOpacity>
 
           {/* Self‑contained Reminder Modal – only needs assessment ID */}
-          <ReminderModal assessmentId={assessment._id} />
+          <ReminderModal
+            assessmentId={assessment._id}
+            style={{
+              flex: 1.2,
+              paddingHorizontal: actionPaddingH,
+              paddingVertical: actionPaddingV,
+            }}
+            textStyle={{ fontSize: actionFontSize }}
+          />
 
           <TouchableOpacity
-            style={styles.solidBtn}
+            style={[
+              styles.solidBtn,
+              {
+                flex: 1,
+                paddingHorizontal: actionPaddingH,
+                paddingVertical: actionPaddingV,
+              },
+            ]}
             onPress={() => setSettingsVisible(true)}
           >
-            <SimpleIcon name="settings" size={14} color="#fff" />
-            <Text style={styles.whiteText}>Setting</Text>
+            <SimpleIcon name="settings" size={actionIconSize} color="#fff" />
+            <Text
+              style={[styles.whiteText, { fontSize: actionFontSize }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              Setting
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -683,10 +757,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  // Never wraps — Edit gets a fixed icon-only square, the other 3 buttons
+  // flex to share the rest of the row (see iconButtonSize / widthPerTextButton).
   actionBar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,

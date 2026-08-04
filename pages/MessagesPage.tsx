@@ -4,6 +4,7 @@ import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/nativ
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { getConversations } from '../services/message';
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -63,7 +64,7 @@ const MessagesPage = () => {
       console.log(data)
       setConversations(data.conversations || []);
     } catch (err: any) {
-      setError(err.message || 'Failed to load conversations.');
+      setError(getFriendlyErrorMessage(err, 'Failed to load conversations.'));
     } finally {
       setLoading(false);
     }

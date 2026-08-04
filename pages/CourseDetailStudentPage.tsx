@@ -32,6 +32,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 const fallbackImage = require("../assets/jpg.jpg");
 const avatarPlaceholder = require("../assets/placeholder.png");
@@ -253,7 +254,7 @@ const CourseDetailStudentPage = () => {
       setQuarters(quartersData.quarters || []);
       setShowQuartersModal(true);
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to fetch quarters");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to fetch quarters"));
     } finally {
       setLoadingQuarters(false);
     }
@@ -267,7 +268,7 @@ const CourseDetailStudentPage = () => {
       setShowQuartersModal(false); // Close quarters modal
       setShowChaptersModal(true); // Open chapters modal
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to fetch chapters");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to fetch chapters"));
     } finally {
       setLoadingChapters(false);
     }
@@ -281,7 +282,7 @@ const CourseDetailStudentPage = () => {
       setShowChaptersModal(false); // Close chapters modal
       setShowChapterDetailsModal(true); // Open chapter details modal
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to fetch chapter details");
+      Alert.alert("Error", getFriendlyErrorMessage(error, "Failed to fetch chapter details"));
     } finally {
       setLoadingChapterDetails(false);
     }

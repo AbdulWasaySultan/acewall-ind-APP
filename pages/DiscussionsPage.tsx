@@ -31,6 +31,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 // You will need to install react-native-document-picker: npm install react-native-document-picker or yarn add react-native-document-picker
 // import DocumentPicker from 'react-native-document-picker'; // Commenting out the import
 export interface Discussion {
@@ -137,7 +138,7 @@ const DiscussionsPage = () => {
       setDiscussions(list.filter((d) => d.course?._id === courseId));
     } catch (err: any) {
       console.error("Failed to fetch discussions:", err);
-      setError(err.message || "Failed to load discussions.");
+      setError(getFriendlyErrorMessage(err, "Failed to load discussions."));
     } finally {
       setLoading(false);
     }
@@ -198,7 +199,7 @@ const DiscussionsPage = () => {
       fetchDiscussions(); // Refresh the list of discussions
     } catch (err: any) {
       console.error("Error creating discussion:", err);
-      Alert.alert("Error", err.message || "Failed to create discussion.");
+      Alert.alert("Error", getFriendlyErrorMessage(err, "Failed to create discussion."));
     } finally {
       setCreateLoading(false);
     }
@@ -303,6 +304,7 @@ const DiscussionsPage = () => {
     <View style={styles.screen}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
+          testID="discussions-back-button"
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >

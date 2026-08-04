@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { sendSupportMessage } from '../services/support';
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 const SupportPage = () => {
   const [fullName, setFullName] = useState('');
@@ -54,7 +55,7 @@ const SupportPage = () => {
       }
     } catch (error: any) {
       console.error('Error sending support message:', error);
-      Alert.alert('Error', error.message || 'Failed to send support message. Please try again.');
+      Alert.alert('Error', getFriendlyErrorMessage(error, 'Failed to send support message. Please try again.'));
     } finally {
       setIsLoading(false);
     }

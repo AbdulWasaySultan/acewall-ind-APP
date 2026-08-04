@@ -20,6 +20,7 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { getStudentsByCourse, createConversation } from "../services/message";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type ScreenRouteProp = RouteProp<RootStackParamList, "TeacherMessagesByCourse">;
@@ -62,7 +63,7 @@ const TeacherCourseStudentsPage = () => {
       setStudents(Array.isArray(res?.students) ? res.students : []);
       setTotalStudents(res?.totalStudents ?? res?.students?.length ?? 0);
     } catch (err: any) {
-      setError(err?.message || "Failed to load students.");
+      setError(getFriendlyErrorMessage(err, "Failed to load students."));
       setStudents([]);
     } finally {
       setLoading(false);

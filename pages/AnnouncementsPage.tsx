@@ -33,6 +33,7 @@ import SearchFilterView from "../components/filters/SearchFilter";
 import { FilterBar } from "../components/filters/FilterBar";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 // ====================== Helper Components ======================
 
@@ -275,7 +276,7 @@ const AnnouncementsPage = () => {
       fetchAnnouncements();
       Toast.show("Announcement created successfully.", Toast.LONG);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to create announcement");
+      Alert.alert("Error", getFriendlyErrorMessage(err, "Failed to create announcement"));
     } finally {
       setCreatingAnnouncement(false);
     }

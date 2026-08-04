@@ -78,6 +78,42 @@ export const sendAIMessage = async (payload: AIMessagePayload) => {
   }
 };
 
+// ----------------- generate course/chapter thumbnail --------------------
+// Was duplicated inline (getApiInstance + api.post) in CreateCoursePage.tsx's
+// handleGenerateThumbnail. Deliberately does not catch/rewrap: callers
+// display the error via getFriendlyErrorMessage, which needs the raw
+// AxiosError shape to extract the backend message.
+export const generateCourseThumbnail = async (prompt: string) => {
+  const api = await getApiInstance();
+  const response = await api.post("/api/aichat/generateImage", { prompt });
+  return response.data;
+};
+
+// ----------------- generate teacher content (title/description/etc) -----
+// Was duplicated inline across CreateCoursePage.tsx (title, description,
+// teaching points, requirements) and CreateChapterModal.tsx (title,
+// description) — same endpoint, only `usedfor` changed each time.
+export type TeacherContentUsedFor =
+  | "title"
+  | "courseDescription"
+  | "chapterDescription"
+  | "teachingPoints"
+  | "courseRequirements";
+
+export const generateContentForTeacher = async (
+  command: string,
+  usedfor: TeacherContentUsedFor,
+  difficulty: string = "medium"
+) => {
+  const api = await getApiInstance();
+  const response = await api.post("/api/aichat/generateContentForTeacher", {
+    command,
+    usedfor,
+    difficulty,
+  });
+  return response.data;
+};
+
 // ----------------- get chatHistory --------------------
 export const getChatHistory = async () => {
   try {

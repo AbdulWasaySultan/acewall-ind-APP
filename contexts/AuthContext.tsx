@@ -1,5 +1,8 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-simple-toast';
+import { onUnauthorized } from '../utils/authEvents';
+import { clearUserToken } from '../utils/storage';
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -36,7 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           AsyncStorage.getItem('isPreviewMode'),
           // AsyncStorage.getItem('selectedBaseUrl'),
         ]);
-        const baseUrl = "https://api.acewallscholarslearningonline.org"
         setIsAuthenticated(auth === 'true');
 
         // Show landing page only if baseUrl is not saved
@@ -80,6 +82,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.removeItem('userData');
       await AsyncStorage.removeItem('isPreviewMode');
       await AsyncStorage.removeItem('teacherBackupUser');
+      // A stale token must not survive a logout — otherwise the next login
+      // on this device could briefly race against (or, if a login response
+      // is ever missing its token, permanently fall back to) a leftover
+      // token from a previous, unrelated session. The token lives in the
+      // Keychain/Keystore (not AsyncStorage), so it's cleared separately.
+      await clearUserToken();
       // await AsyncStorage.removeItem('selectedBaseUrl');
       // await AsyncStorage.removeItem('hasSeenLanding');
       setIsAuthenticated(false);
@@ -91,6 +99,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error during logout:', error);
     }
   };
+
+  // Keep a stable ref to the latest logout() so the one-time subscription
+  // below never needs to re-subscribe (and never calls a stale closure).
+  const logoutRef = useRef(logout);
+  logoutRef.current = logout;
+
+  // apiInstance.ts's response interceptor broadcasts this when any
+  // authenticated request comes back 401 — meaning the stored token is
+  // missing, invalid, or expired. Without this, the app had no recovery
+  // path: isAuthenticated/userData persist in storage independently of the
+  // token, so a session that lost its token would keep rendering the full
+  // authenticated UI (Dashboard, Sidebar, etc.) while every real API call
+  // silently 401'd forever. Logging out here drops isAuthenticated to
+  // false, which the navigator already uses to swap back to the login
+  // stack on its own.
+  useEffect(() => {
+    const unsubscribe = onUnauthorized(() => {
+      Toast.show('Your session has expired. Please log in again.', Toast.LONG);
+      logoutRef.current();
+    });
+    return unsubscribe;
+  }, []);
 
   // Switch a teacher's session into "preview as student" mode
   const enterPreviewMode = async (previewUser: any) => {

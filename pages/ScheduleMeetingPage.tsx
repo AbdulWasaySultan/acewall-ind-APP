@@ -309,6 +309,7 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
     <>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
+          testID="schedule-meeting-back-button"
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
@@ -389,6 +390,7 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
                 {/* Buttons grouped together on the right */}
                 <View style={styles.stepperButtonGroup}>
                   <TouchableOpacity
+                    testID="duration-decrease"
                     style={styles.stepperBtn}
                     onPress={handleDecreaseDuration}
                   >
@@ -396,6 +398,7 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
                   </TouchableOpacity>
 
                   <TouchableOpacity
+                    testID="duration-increase"
                     style={[styles.stepperBtn, styles.stepperBtnRight]}
                     onPress={handleIncreaseDuration}
                   >
@@ -531,6 +534,7 @@ export const ScheduleMeetingPage: React.FC<Props> = ({ route }) => {
                       m.status === "ended" ||
                       !m.status) && (
                       <TouchableOpacity
+                        testID={`delete-meeting-${m._id}`}
                         style={styles.deleteBtn}
                         onPress={() => handleDelete(m._id)}
                         disabled={loading}

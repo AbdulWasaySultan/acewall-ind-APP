@@ -7,6 +7,7 @@ import { getAnnouncementsByStudent } from "../services/announcement";
 import CoursePickerGrid, {
   CoursePickerItem,
 } from "../components/common/CoursePickerGrid";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 interface DerivedCourse {
   _id: string;
@@ -45,7 +46,7 @@ const StudentAnnouncementsCoursePicker = () => {
       });
       setCourses(Array.from(uniqueCoursesMap.values()));
     } catch (err: any) {
-      setError(err?.message || "Failed to load your announcements.");
+      setError(getFriendlyErrorMessage(err, "Failed to load your announcements."));
       setCourses([]);
     } finally {
       setLoading(false);

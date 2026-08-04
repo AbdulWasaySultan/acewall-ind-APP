@@ -1108,6 +1108,7 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  BackHandler,
 } from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -1127,6 +1128,13 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import Toast from "react-native-simple-toast";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  getQuarterPickerMinDate,
+  getQuarterPickerMaxDate,
+  isQuarterOpenForSelection,
+  validateSelectedDate,
+} from "../utils/dateValidation";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type RouteParams = RouteProp<RootStackParamList, "ChapterDiscussions">;
 
@@ -1141,6 +1149,25 @@ const ChapterDiscussionsPage = () => {
   const { chapterId, courseId, semesterId, quarterId, lessonId, navigateBack } =
     route.params;
   const insets = useSafeAreaInsets();
+
+  // Without this, the Android hardware/gesture back button bypasses the
+  // on-screen back arrow's `navigateBack` call entirely (native-stack's
+  // default back handling just pops the screen), so ChapterDetailsModal on
+  // the screen underneath never gets reopened.
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (navigateBack) {
+          navigateBack();
+        } else {
+          (navigation as any).goBack();
+        }
+        return true;
+      }
+    );
+    return () => subscription.remove();
+  }, [navigateBack, navigation]);
 
   // ----- State for discussion list -----
   const [loading, setLoading] = useState(true);
@@ -1279,7 +1306,7 @@ const ChapterDiscussionsPage = () => {
           : await getDiscussionsForChapter(chapterId);
         setItems((lessonId ? res.discussion : res.discussions) || []);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch discussions");
+        setError(getFriendlyErrorMessage(err, "Failed to fetch discussions"));
       } finally {
         setLoading(false);
       }
@@ -1305,42 +1332,15 @@ const ChapterDiscussionsPage = () => {
     }
 
     // --- Date validations ---
-    const now = new Date();
-    now.setHours(0, 0, 0, 0); // start of today
-
     if (!dueDate) {
       Alert.alert("Validation", "Please select a due date.");
       return;
     }
 
-    // 1. Check against today (no past dates)
-    const dueDateOnly = new Date(
-      dueDate.getFullYear(),
-      dueDate.getMonth(),
-      dueDate.getDate()
-    );
-    if (dueDateOnly < now) {
-      Toast.show("Due date cannot be in the past.", Toast.LONG);
+    const dueDateCheck = validateSelectedDate(dueDate, quarterDates);
+    if (!dueDateCheck.valid) {
+      Toast.show(dueDateCheck.reason || "Invalid due date.", Toast.LONG);
       return;
-    }
-
-    // 2. Check against quarter range (if available)
-    if (quarterDates) {
-      const quarterStart = new Date(quarterDates.startDate);
-      const quarterEnd = new Date(quarterDates.endDate);
-      const dueTimestamp = dueDate.getTime();
-      if (
-        dueTimestamp < quarterStart.getTime() ||
-        dueTimestamp > quarterEnd.getTime()
-      ) {
-        Toast.show(
-          `Due date must be between ${formatDate(
-            quarterStart
-          )} and ${formatDate(quarterEnd)}`,
-          Toast.LONG
-        );
-        return;
-      }
     }
 
     try {
@@ -1402,7 +1402,7 @@ const ChapterDiscussionsPage = () => {
         : await getDiscussionsForChapter(chapterId);
       setItems((lessonId ? refreshed.discussion : refreshed.discussions) || []);
     } catch (err: any) {
-      Toast.show(err.message || "Failed to create discussion", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to create discussion"), Toast.LONG);
     } finally {
       setCreating(false);
       setLoading(false);
@@ -1454,23 +1454,8 @@ const ChapterDiscussionsPage = () => {
   // ======================== RENDER ========================
 
   // Compute min/max for date picker
-  const getPickerMinDate = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (quarterDates) {
-      const quarterStart = new Date(quarterDates.startDate);
-      // min = max(today, quarterStart)
-      return quarterStart > today ? quarterStart : today;
-    }
-    return today;
-  };
-
-  const getPickerMaxDate = () => {
-    if (quarterDates) {
-      return new Date(quarterDates.endDate);
-    }
-    return undefined;
-  };
+  const getPickerMinDate = () => getQuarterPickerMinDate(quarterDates);
+  const getPickerMaxDate = () => getQuarterPickerMaxDate(quarterDates);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -1660,8 +1645,21 @@ const ChapterDiscussionsPage = () => {
               {/* Due Date with quarter hint & validation */}
               <Text style={styles.inputLabel}>Due Date</Text>
               <TouchableOpacity
-                style={styles.textInput}
-                onPress={() => setShowDatePicker(true)}
+                style={[
+                  styles.textInput,
+                  !isQuarterOpenForSelection(quarterDates) && { opacity: 0.5 },
+                ]}
+                onPress={() => {
+                  if (!isQuarterOpenForSelection(quarterDates)) {
+                    Toast.show(
+                      "This quarter has already ended, so no due date can be selected.",
+                      Toast.LONG
+                    );
+                    return;
+                  }
+                  setShowDatePicker(true);
+                }}
+                disabled={!isQuarterOpenForSelection(quarterDates)}
               >
                 <Text style={{ color: dueDate ? "#111" : "#9ca3af" }}>
                   {dueDate
@@ -1669,6 +1667,14 @@ const ChapterDiscussionsPage = () => {
                     : "Select Due Date"}
                 </Text>
               </TouchableOpacity>
+
+              {quarterDates && !isQuarterOpenForSelection(quarterDates) && (
+                <Text style={styles.quarterErrorText}>
+                  This quarter ended on{" "}
+                  {formatDate(new Date(quarterDates.endDate))}. No due date
+                  can be selected.
+                </Text>
+              )}
 
               {quarterDatesLoading && (
                 <View style={styles.quarterStatusRow}>
@@ -1772,7 +1778,7 @@ const ChapterDiscussionsPage = () => {
                 </Text>
               )}
               <DateTimePicker
-                value={dueDate || new Date()}
+                value={dueDate || getPickerMinDate()}
                 mode="date"
                 style={{ alignSelf: "center" }}
                 display={Platform.OS === "ios" ? "spinner" : "default"}

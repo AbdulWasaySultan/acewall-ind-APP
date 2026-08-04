@@ -30,6 +30,7 @@ import {
 import { getUserInfo } from "../services/schoolService";
 import SimpleIcon from "../components/SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 const WalletPage = () => {
   const insets = useSafeAreaInsets();
@@ -77,7 +78,7 @@ const WalletPage = () => {
       setRecentWithdrawals(data.recentWithdrawals || []);
     } catch (error: any) {
       console.error("Error fetching wallet data:", error);
-      Toast.show(error.message || "Failed to fetch wallet data", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch wallet data"), Toast.LONG);
     } finally {
       setLoading(false);
     }
@@ -111,7 +112,7 @@ const WalletPage = () => {
       });
     } catch (error: any) {
       console.error("Error fetching all withdrawals:", error);
-      Toast.show(error.message || "Failed to fetch withdrawals", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to fetch withdrawals"), Toast.LONG);
     } finally {
       setLoadingWithdrawals(false);
     }
@@ -196,7 +197,7 @@ const WalletPage = () => {
       setOnboardingUrl(url);
       setShowOnboardingWebView(true);
     } catch (error: any) {
-      Toast.show(error.message || "Failed to start onboarding", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(error, "Failed to start onboarding"), Toast.LONG);
     } finally {
       setStripeActionLoading(false);
     }

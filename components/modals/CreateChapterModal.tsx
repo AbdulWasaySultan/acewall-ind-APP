@@ -12,7 +12,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SimpleIcon from '../SimpleIcon';
 import { createChapter } from '../../services/course';
-import { getApiInstance } from '../../services/apiInstance';
+import { generateContentForTeacher } from '../../services/aiAssistant';
+import { getFriendlyErrorMessage } from '../../utils/errorMessage';
 import Toast from 'react-native-simple-toast';
 import { Sparkles } from 'lucide-react-native';
 
@@ -202,16 +203,13 @@ const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
 
     try {
       setIsGeneratingDescription(true);
-      const api = await getApiInstance();
+      const data = await generateContentForTeacher(
+        aiDescriptionPrompt,
+        'chapterDescription'
+      );
 
-      const response = await api.post('/api/aichat/generateContentForTeacher', {
-        command: aiDescriptionPrompt,
-        usedfor: 'chapterDescription', // backend must support this
-        difficulty: 'medium',
-      });
-
-      if (response.data && response.data.content) {
-        setChapterDescription(response.data.content);
+      if (data && data.content) {
+        setChapterDescription(data.content);
         Toast.show('Chapter description generated!', Toast.SHORT);
         setShowAIDescriptionModal(false);
         setAiDescriptionPrompt('');
@@ -220,10 +218,7 @@ const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
       }
     } catch (error: any) {
       console.error('Error generating chapter description:', error);
-      Toast.show(
-        error.response?.data?.message || 'Failed to generate description',
-        Toast.LONG
-      );
+      Toast.show(getFriendlyErrorMessage(error, 'Failed to generate description'), Toast.LONG);
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -237,16 +232,10 @@ const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
 
     try {
       setIsGeneratingTitle(true);
-      const api = await getApiInstance();
+      const data = await generateContentForTeacher(aiTitlePrompt, 'title');
 
-      const response = await api.post('/api/aichat/generateContentForTeacher', {
-        command: aiTitlePrompt,
-        usedfor: 'title',
-        difficulty: 'medium',
-      });
-
-      if (response.data && response.data.content) {
-        setChapterTitle(response.data.content);
+      if (data && data.content) {
+        setChapterTitle(data.content);
         Toast.show('Chapter title generated!', Toast.SHORT);
         setShowAITitleModal(false);
         setAiTitlePrompt('');
@@ -255,10 +244,7 @@ const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
       }
     } catch (error: any) {
       console.error('Error generating chapter title:', error);
-      Toast.show(
-        error.response?.data?.message || 'Failed to generate title',
-        Toast.LONG
-      );
+      Toast.show(getFriendlyErrorMessage(error, 'Failed to generate title'), Toast.LONG);
     } finally {
       setIsGeneratingTitle(false); // ✅ fixed
     }

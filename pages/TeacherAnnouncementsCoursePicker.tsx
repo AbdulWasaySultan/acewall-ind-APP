@@ -7,6 +7,7 @@ import CoursePickerGrid, {
   CoursePickerItem,
 } from "../components/common/CoursePickerGrid";
 import { DropdownFilter } from "../components/filters/DropDown";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -30,7 +31,7 @@ const TeacherAnnouncementsCoursePicker = () => {
       const res = await getVerifiedCourses();
       setCourses(Array.isArray(res?.courses) ? res.courses : []);
     } catch (err: any) {
-      setError(err?.message || "No courses found");
+      setError(getFriendlyErrorMessage(err, "No courses found"));
       setCourses([]);
     } finally {
       setLoading(false);

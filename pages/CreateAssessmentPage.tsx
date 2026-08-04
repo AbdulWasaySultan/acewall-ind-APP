@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  BackHandler,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -71,6 +72,22 @@ const CreateAssessmentPage = () => {
       navigation.goBack();
     }
   };
+
+  // Without this, the Android hardware/gesture back button bypasses
+  // handleBack entirely (native-stack's default back handling just pops the
+  // screen), so `navigateBack` — which reopens ChapterDetailsModal on the
+  // screen underneath — never runs. The on-screen back arrow below already
+  // goes through handleBack; this makes the hardware button do the same.
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        handleBack();
+        return true;
+      }
+    );
+    return () => subscription.remove();
+  }, [params?.navigateBack]);
 
   if (loadingQuarter) {
     return (

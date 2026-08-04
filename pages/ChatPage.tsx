@@ -96,7 +96,7 @@ const ChatPage = () => {
         <View style={{ paddingVertical: 10, marginTop: 10 }}>
           <Text style={styles.headerName}>{otherMemberName}</Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity testID="chat-close-button" onPress={() => navigation.goBack()}>
           <SimpleIcon name="close" size={32} color="#888" />
         </TouchableOpacity>
       </View>
@@ -129,6 +129,7 @@ const ChatPage = () => {
           multiline
         />
         <TouchableOpacity
+          testID="chat-send-button"
           style={[
             styles.sendButton,
             (sending || !newMessage.trim()) && styles.sendButtonDisabled,

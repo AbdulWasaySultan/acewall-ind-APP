@@ -7,6 +7,9 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
 } from "react-native";
 import {
   loadReminderSetting,
@@ -15,6 +18,10 @@ import {
 
 interface Props {
   assessmentId: string;
+  // Lets a parent (e.g. AssessmentDetailsModal's responsive action bar)
+  // override this trigger button's size to match sibling buttons.
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 const REMINDER_OPTIONS = [
@@ -24,7 +31,7 @@ const REMINDER_OPTIONS = [
   { label: "No Reminder", value: "noReminder" },
 ];
 
-export default function ReminderModal({ assessmentId }: Props) {
+export default function ReminderModal({ assessmentId, style, textStyle }: Props) {
   const [reminder, setReminder] = useState<string>("noReminder");
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,12 +69,19 @@ export default function ReminderModal({ assessmentId }: Props) {
   return (
     <>
       <TouchableOpacity
-        style={styles.triggerButton}
+        style={[styles.triggerButton, style]}
         onPress={() => setVisible(true)}
         accessibilityRole="button"
         accessibilityLabel="Set Reminder"
       >
-        <Text style={styles.triggerButtonText}>Set Reminder</Text>
+        <Text
+          style={[styles.triggerButtonText, textStyle]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+        >
+          Set Reminder
+        </Text>
       </TouchableOpacity>
 
       <Modal

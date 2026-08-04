@@ -1,7 +1,7 @@
 // services/apiInstance.ts
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getStoredBaseUrl } from "../utils/storage";
+import { getStoredBaseUrl, getUserToken } from "../utils/storage";
+import { emitUnauthorized } from "../utils/authEvents";
 
 // Types for runtime customization overrides
 interface CustomInstanceOptions {
@@ -65,7 +65,7 @@ export const getApiInstance = async (
   // 6. Global Request Interceptor (Handles Authorization Header Injection)
   instance.interceptors.request.use(
     async (config) => {
-      const token = await AsyncStorage.getItem("token");
+      const token = await getUserToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -94,8 +94,15 @@ export const getApiInstance = async (
       if (metadata) console.timeEnd(metadata.label);
 
       if (error.response?.status === 401) {
-        // Global Error Handling (e.g., Auth Broadcast Event / Clean Token Storage)
-        // You can add custom logic here
+        // This client always attaches whatever token is in storage (step 6
+        // above) — a 401 through here means that token is missing, invalid,
+        // or expired, i.e. the session is dead. Previously nothing handled
+        // this: every screen using an authenticated call would just log the
+        // raw error and keep re-rendering with stale/empty data forever,
+        // silently re-hitting the same 401 on every refetch. Broadcasting
+        // this lets AuthContext log the user out and drop them back on the
+        // login screen instead of leaving them stuck in a broken session.
+        emitUnauthorized();
       }
       return Promise.reject(error);
     }

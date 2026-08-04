@@ -2,6 +2,7 @@
 import { getApiInstance } from "./apiInstance";
 import React, { useEffect } from "react";
 import { SBLItem } from "../types/course";
+import { getCacheItem, setCacheItem } from "../utils/cache";
 
 // Legacy helpers used by discussion.ts, page.ts, socialPosts.ts, aiAssestant.ts, etc.
 // Auth is handled globally inside getApiInstance. useApiSuffix:false keeps /api/... paths working.
@@ -380,12 +381,23 @@ export const getTeacherCourses = async (
   }
 };
 
+// Cached (encrypted at rest — see utils/cache.ts) so a purchased course's
+// details are still viewable offline, and so the audit's "unencrypted
+// marketplace course data on disk" finding has something real to fix.
+// Network is always tried first — the cache is a fallback for when the
+// request fails, not a stale-while-revalidate layer.
+const COURSE_DETAILS_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
 export const getCourseDetails = async (courseId: string) => {
+  const cacheKey = `courseDetails:${courseId}`;
   try {
     const api = await getApiInstance();
     const response = await api.get(`/api/course/details/${courseId}`);
+    await setCacheItem(cacheKey, response.data, COURSE_DETAILS_CACHE_TTL_MS);
     return response.data;
   } catch (error) {
+    const cached = await getCacheItem<any>(cacheKey);
+    if (cached) return cached;
     throw error;
   }
 };
@@ -928,14 +940,23 @@ export const getCourseById = async (courseId: string) => {
   }
 };
 
+// Same cache-as-offline-fallback pattern as getCourseDetails above. Keyed
+// per search query since an empty-query "My Courses" list and a filtered
+// search are different result sets that shouldn't overwrite each other.
+const ENROLLED_COURSES_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
 export const getStudentEnrolledCourses = async (searchQuery: string = "") => {
+  const cacheKey = `enrolledCourses:${searchQuery}`;
   try {
     const api = await getApiInstance();
     const response = await api.get(
       `/api/enrollment/studentCourses?search=${encodeURIComponent(searchQuery)}`
     );
+    await setCacheItem(cacheKey, response.data, ENROLLED_COURSES_CACHE_TTL_MS);
     return response.data;
   } catch (error) {
+    const cached = await getCacheItem<any>(cacheKey);
+    if (cached) return cached;
     throw error;
   }
 };
@@ -1606,14 +1627,6 @@ export const getCourseEnrollments = async (courseId: string) => {
   } catch (error) { throw error; }
 };
 
-export const getCourseForStudentPreview = async (courseId: string) => {
-  try {
-    const api = await getApiInstance();
-    const response = await api.get(`/course/getstdprew/${courseId}`);
-    return response.data;
-  } catch (error) { throw error; }
-};
-
 export const getAssessmentsByLesson = async (lessonId: string) => {
   try {
     const api = await getApiInstance();
@@ -1659,6 +1672,18 @@ export const createAssessment = async (
   } catch (error) { throw error; }
 };
 */
+
+// Pulled out of the "PROBABLY SCHOOL APP ONLY" block comment above — it's
+// actually live-used by acewall-ind-APP (CourseDetailStudentPage.tsx's
+// teacher "Preview as Student" flow), unlike the rest of that block.
+export const getCourseForStudentPreview = async (courseId: string) => {
+  try {
+    const api = await getApiInstance();
+    const response = await api.get(`/course/getstdprew/${courseId}`);
+    return response.data;
+  } catch (error) { throw error; }
+};
+
 // import axios from "axios";
 // import { getStoredBaseUrl } from "../utils/storage";
 // import { getApiInstance } from "../services/apiInstance";

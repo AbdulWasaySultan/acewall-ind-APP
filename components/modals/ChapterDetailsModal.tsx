@@ -8,7 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  useWindowDimensions,
 } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import SimpleIcon from "../SimpleIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -37,6 +39,7 @@ interface ChapterDetailsModalProps {
   onAssessmentDetailsModalOpen: () => void;
   onChaptersForQuarterModalOpen: () => void;
   plusButtonRef?: React.RefObject<any>;
+  refreshKey?: number | string; // <-- ADD THIS
 }
 
 // ─── Memoized assessment row ───
@@ -200,7 +203,12 @@ const LessonCard = React.memo<LessonCardProps>(
               <SimpleIcon name="trash" size={30} color="#ef4444" />
             </TouchableOpacity>
 
-            {/* add lesson button */}
+            {/* add lesson button — elevation is applied ONLY while its own
+                dropdown is open (via plusButtonContainerActive below). An
+                always-on elevation here, repeated on every lesson row, was
+                degrading Android's touch/scroll hit-testing for the whole
+                FlatList — dragging only worked when it started inside an
+                already-elevated (i.e. open-dropdown) region. */}
             <View
               style={[
                 styles.lessonsPlusButtonContainer,
@@ -382,6 +390,25 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
   onChaptersForQuarterModalOpen,
 }) => {
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+
+  // CONFIRMED root cause (via onLayout/onContentSizeChange logging): on
+  // reopen, the FlatList's own viewport `onLayout` fires with height equal
+  // to its CONTENT height, not the real available screen height — Yoga
+  // resolves the flex:1 chain from the Modal's root down to this FlatList
+  // ambiguously on its first pass, concluding "content fits, nothing to
+  // scroll." A second layout pass (triggered here by opening the "+"
+  // dropdown, which changes a prop several levels up) always fixes it,
+  // which is why touching the dropdown "unsticks" scrolling. On first open
+  // this is masked because chapterDetails arrives asynchronously, forcing
+  // an extra render/layout pass for free; on reopen chapterDetails is
+  // already populated, so there's only ever the one (wrong) pass unless
+  // something forces another. Giving the container an explicit height
+  // instead of relying on the ambiguous flex:1 chain removes the ambiguity
+  // Yoga needed a second pass to resolve, so it's correct on the very first
+  // layout every time.
+  const modalContentHeight = screenHeight;
+
   const handleClose = () => {
     onClose();
     onChaptersForQuarterModalOpen();
@@ -460,7 +487,12 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
               >
                 <SimpleIcon name="pencil" size={23} useEmoji={true} />
               </TouchableOpacity>
-              <View style={styles.plusButtonContainer}>
+              <View
+                style={[
+                  styles.plusButtonContainer,
+                  showPlusDropdown && styles.plusButtonContainerActive,
+                ]}
+              >
                 <TouchableOpacity
                   style={[
                     styles.chapterDetailsActionButton,
@@ -484,9 +516,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                       onPress={() => onDropdownOption("lesson")}
                     >
                       <SimpleIcon name="menu-book" size={16} color="#10B144" />
-                      <Text style={styles.dropdownItemText}>
-                        + Add Lesson
-                      </Text>
+                      <Text style={styles.dropdownItemText}>+ Add Lesson</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.dropdownItem}
@@ -513,9 +543,7 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
                       onPress={() => onDropdownOption("discussion")}
                     >
                       <SimpleIcon name="chat" size={16} color="#6b7280" />
-                      <Text style={styles.dropdownItemText}>
-                        + Discussion
-                      </Text>
+                      <Text style={styles.dropdownItemText}>+ Discussion</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -623,63 +651,70 @@ const ChapterDetailsModal: React.FC<ChapterDetailsModalProps> = ({
       animationType="slide"
       onRequestClose={handleClose}
     >
-      <View style={styles.fullScreenModalContainer}>
-        <View
-          style={[
-            styles.fullScreenModalContent,
-            { paddingTop: insets.top + 20 },
-          ]}
-        >
-          <View style={styles.fullScreenModalHeader}>
-            <TouchableOpacity onPress={handleClose} style={styles.backButton}>
-              <SimpleIcon name="arrow-back" size={24} color="#10B144" />
-            </TouchableOpacity>
-            <Text style={styles.fullScreenModalTitle}>Chapter Details</Text>
-            <View style={styles.chapterDetailsModalSpacer} />
-          </View>
-
-          {chapterDetailsLoading ? (
-            <View style={styles.chapterDetailsLoadingContainer}>
-              <ActivityIndicator size="large" color="#10B144" />
-              <Text style={styles.chapterDetailsLoadingText}>
-                Loading chapter details...
-              </Text>
-            </View>
-          ) : chapterDetailsError ? (
-            <View style={styles.chapterDetailsErrorContainer}>
-              <SimpleIcon name="alert-circle" size={48} color="#ff6b6b" />
-              <Text style={styles.chapterDetailsErrorText}>
-                {chapterDetailsError}
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.chapterViewButton,
-                  styles.chapterDetailsCloseButtonMargin,
-                ]}
-                onPress={onClose}
-              >
-                <Text style={styles.chapterViewButtonText}>Close</Text>
+      {/* Kept for general safety around Modal + gesture-handler interop —
+          RN's <Modal> renders into its own native window on Android, which
+          the single GestureHandlerRootView installed at the app root
+          (App.tsx) doesn't cover. Not the cause of the scroll freeze below
+          (that was a layout measurement issue, see modalContentHeight). */}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={[styles.fullScreenModalContainer, { height: modalContentHeight }]}>
+          <View
+            style={[
+              styles.fullScreenModalContent,
+              { height: modalContentHeight, paddingTop: insets.top + 20 },
+            ]}
+          >
+            <View style={styles.fullScreenModalHeader}>
+              <TouchableOpacity onPress={handleClose} style={styles.backButton}>
+                <SimpleIcon name="arrow-back" size={24} color="#10B144" />
               </TouchableOpacity>
+              <Text style={styles.fullScreenModalTitle}>Chapter Details</Text>
+              <View style={styles.chapterDetailsModalSpacer} />
             </View>
-          ) : chapterDetails ? (
-            <FlatList
-              style={styles.lessonsList}
-              data={chapterDetails.lessons || []}
-              keyExtractor={lessonKeyExtractor}
-              renderItem={renderLesson}
-              ListHeaderComponent={lessonsListHeader}
-              ListFooterComponent={
-                <View style={styles.lessonsListFooterSpacer} />
-              }
-              ListEmptyComponent={lessonsListEmpty}
-              showsVerticalScrollIndicator={false}
-              showsHorizontalScrollIndicator={false}
-              removeClippedSubviews={false}
-              contentContainerStyle={styles.lessonsListContent}
-            />
-          ) : null}
+
+            {chapterDetailsLoading ? (
+              <View style={styles.chapterDetailsLoadingContainer}>
+                <ActivityIndicator size="large" color="#10B144" />
+                <Text style={styles.chapterDetailsLoadingText}>
+                  Loading chapter details...
+                </Text>
+              </View>
+            ) : chapterDetailsError ? (
+              <View style={styles.chapterDetailsErrorContainer}>
+                <SimpleIcon name="alert-circle" size={48} color="#ff6b6b" />
+                <Text style={styles.chapterDetailsErrorText}>
+                  {chapterDetailsError}
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.chapterViewButton,
+                    styles.chapterDetailsCloseButtonMargin,
+                  ]}
+                  onPress={onClose}
+                >
+                  <Text style={styles.chapterViewButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            ) : chapterDetails ? (
+              <FlatList
+                style={styles.lessonsList}
+                data={chapterDetails.lessons || []}
+                keyExtractor={lessonKeyExtractor}
+                renderItem={renderLesson}
+                ListHeaderComponent={lessonsListHeader}
+                ListFooterComponent={
+                  <View style={styles.lessonsListFooterSpacer} />
+                }
+                ListEmptyComponent={lessonsListEmpty}
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
+                removeClippedSubviews={false}
+                contentContainerStyle={styles.lessonsListContent}
+              />
+            ) : null}
+          </View>
         </View>
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 };
@@ -765,13 +800,13 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 4,
   },
-  // Always-on wrapper around the chapter-level plus button. Small, constant
-  // elevation so the button + its dropdown always sit above the card's own
-  // static content (title/description), independent of open/closed state.
+  // Wrapper around the chapter-level plus button. Elevation is applied only
+  // while its dropdown is open (via plusButtonContainerActive) — leaving it
+  // always-on degraded Android's touch/scroll hit-testing for the FlatList
+  // this sits inside (dragging only worked when it started inside an
+  // already-elevated region, e.g. an open dropdown).
   plusButtonContainer: {
     position: "relative",
-    zIndex: 10,
-    elevation: 10,
   },
   // The actual floating menu — highest elevation in its stacking context so
   // it always paints (and is tappable) above everything around it.
@@ -854,6 +889,7 @@ const styles = StyleSheet.create({
   lessonsListFooterSpacer: { height: 20 },
   assessmentItemContainer: {
     backgroundColor: "#f9f9f9",
+    // backgroundColor: "#000",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
@@ -939,12 +975,12 @@ const styles = StyleSheet.create({
   lessonCardNumberText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
   lessonCardActions: { flexDirection: "row", gap: 8 },
   lessonActionIcon: { padding: 8, borderRadius: 4, backgroundColor: "#f5f5f5" },
-  // Always-on wrapper around the per-lesson plus button — same reasoning as
-  // plusButtonContainer above.
+  // Wrapper around the per-lesson plus button — same reasoning as
+  // plusButtonContainer above. Every lesson row has one of these, so an
+  // always-on elevation here was the main source of the FlatList-wide
+  // Android scroll bug (one elevated view per row, at all times).
   lessonsPlusButtonContainer: {
     position: "relative",
-    zIndex: 10,
-    elevation: 10,
   },
   plusButtonContainerActive: {
     zIndex: 30,

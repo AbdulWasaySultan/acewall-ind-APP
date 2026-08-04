@@ -26,6 +26,7 @@ import {
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useAuth } from "../contexts/AuthContext";
+import { getFriendlyErrorMessage } from "../utils/errorMessage";
 
 interface Category {
   _id: string;
@@ -100,7 +101,7 @@ const MoreCoursesPage = () => {
       }
     } catch (err: any) {
       console.error("Error fetching subcategories:", err);
-      Toast.show(err.message || "Failed to fetch subcategories", Toast.LONG);
+      Toast.show(getFriendlyErrorMessage(err, "Failed to fetch subcategories"), Toast.LONG);
       setSubcategoryItems([]);
     }
   }, []);
@@ -146,9 +147,9 @@ const MoreCoursesPage = () => {
             // }
           }
         } catch (err: any) {
-          setError(err.message || "Failed to fetch courses");
+          setError(getFriendlyErrorMessage(err, "Failed to fetch courses"));
           setCourses([]);
-          Toast.show(err.message || "Failed to fetch courses", Toast.LONG);
+          Toast.show(getFriendlyErrorMessage(err, "Failed to fetch courses"), Toast.LONG);
         } finally {
           setLoading(false);
         }
@@ -242,8 +243,8 @@ const MoreCoursesPage = () => {
 
       Toast.show("Courses refreshed successfully!", Toast.SHORT);
     } catch (err: any) {
-      setError(err.message || "Failed to refresh courses");
-      Toast.show(err.message || "Failed to refresh courses", Toast.LONG);
+      setError(getFriendlyErrorMessage(err, "Failed to refresh courses"));
+      Toast.show(getFriendlyErrorMessage(err, "Failed to refresh courses"), Toast.LONG);
     } finally {
       setRefreshing(false);
     }
